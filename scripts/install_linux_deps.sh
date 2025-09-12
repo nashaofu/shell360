@@ -15,3 +15,4 @@ sudo apt-get install -y \
   libgtk-3-dev \
   libwebkit2gtk-4.1-dev \
   libayatana-appindicator3-dev
+
