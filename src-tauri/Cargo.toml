@@ -1,0 +1,46 @@
+[package]
+name = "shell360"
+version = "0.0.0"
+description = "A cross-platform SSH and SFTP client."
+authors = ["nashaofu"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "shell360_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true, features = [] }
+
+[dependencies]
+tauri = { workspace = true, features = [] }
+tauri-plugin-clipboard-manager = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-dialog = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-fs = { version = "2.4.2", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-process = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-store = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
+tauri-plugin-data = { path = "../tauri-plugin-data" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+rand = "0.8.5"
+ssh-key = { version = "0.6.7", features = [
+    "ed25519",
+    "rsa",
+    "encryption",
+    "p256",
+    "p384",
+    "p521",
+] }
+webbrowser = "1.0.5"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = { version = "2.9.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2", default-features = false, features = [
+    "native-tls-vendored",
+] }
+
+[target.'cfg(any(target_os = "ios", target_os="android"))'.dependencies]
+tauri-plugin-mobile = { path = "../tauri-plugin-mobile" }

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-ssh-authenticate"
+description = "Enables the ssh_authenticate command without any pre-configured scope."
+commands.allow = ["ssh_authenticate"]
+
+[[permission]]
+identifier = "deny-ssh-authenticate"
+description = "Denies the ssh_authenticate command without any pre-configured scope."
+commands.deny = ["ssh_authenticate"]

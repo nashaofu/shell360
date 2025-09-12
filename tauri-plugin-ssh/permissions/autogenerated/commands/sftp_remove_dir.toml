@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-remove-dir"
+description = "Enables the sftp_remove_dir command without any pre-configured scope."
+commands.allow = ["sftp_remove_dir"]
+
+[[permission]]
+identifier = "deny-sftp-remove-dir"
+description = "Denies the sftp_remove_dir command without any pre-configured scope."
+commands.deny = ["sftp_remove_dir"]

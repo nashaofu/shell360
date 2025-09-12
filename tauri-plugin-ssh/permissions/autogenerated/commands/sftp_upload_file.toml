@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-upload-file"
+description = "Enables the sftp_upload_file command without any pre-configured scope."
+commands.allow = ["sftp_upload_file"]
+
+[[permission]]
+identifier = "deny-sftp-upload-file"
+description = "Denies the sftp_upload_file command without any pre-configured scope."
+commands.deny = ["sftp_upload_file"]

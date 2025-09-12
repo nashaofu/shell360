@@ -1,0 +1,9 @@
+/desktop
+/mobile
+/scripts
+/shared
+/target
+/src-tauri/gen
+/tauri-plugin-data
+/tauri-plugin-mobile
+/tauri-plugin-ssh

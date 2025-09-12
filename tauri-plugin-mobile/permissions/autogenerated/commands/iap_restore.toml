@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-iap-restore"
+description = "Enables the iap_restore command without any pre-configured scope."
+commands.allow = ["iap_restore"]
+
+[[permission]]
+identifier = "deny-iap-restore"
+description = "Denies the iap_restore command without any pre-configured scope."
+commands.deny = ["iap_restore"]

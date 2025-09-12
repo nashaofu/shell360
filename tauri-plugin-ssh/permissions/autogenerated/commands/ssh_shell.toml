@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-ssh-shell"
+description = "Enables the ssh_shell command without any pre-configured scope."
+commands.allow = ["ssh_shell"]
+
+[[permission]]
+identifier = "deny-ssh-shell"
+description = "Denies the ssh_shell command without any pre-configured scope."
+commands.deny = ["ssh_shell"]

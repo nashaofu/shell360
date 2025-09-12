@@ -1,0 +1,654 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PermissionFile",
+  "description": "Permission file that can define a default permission, a set of permissions or a list of inlined permissions.",
+  "type": "object",
+  "properties": {
+    "default": {
+      "description": "The default permission set for the plugin",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DefaultPermission"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "set": {
+      "description": "A list of permissions sets defined",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PermissionSet"
+      }
+    },
+    "permission": {
+      "description": "A list of inlined permissions",
+      "default": [],
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Permission"
+      }
+    }
+  },
+  "definitions": {
+    "DefaultPermission": {
+      "description": "The default permission set of the plugin.\n\nWorks similarly to a permission with the \"default\" identifier.",
+      "type": "object",
+      "required": [
+        "permissions"
+      ],
+      "properties": {
+        "version": {
+          "description": "The version of the permission.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1.0
+        },
+        "description": {
+          "description": "Human-readable description of what the permission does. Tauri convention is to use `<h4>` headings in markdown content for Tauri documentation generation purposes.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "permissions": {
+          "description": "All permissions this set contains.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PermissionSet": {
+      "description": "A set of direct permissions grouped together under a new name.",
+      "type": "object",
+      "required": [
+        "description",
+        "identifier",
+        "permissions"
+      ],
+      "properties": {
+        "identifier": {
+          "description": "A unique identifier for the permission.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Human-readable description of what the permission does.",
+          "type": "string"
+        },
+        "permissions": {
+          "description": "All permissions this set contains.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PermissionKind"
+          }
+        }
+      }
+    },
+    "Permission": {
+      "description": "Descriptions of explicit privileges of commands.\n\nIt can enable commands to be accessible in the frontend of the application.\n\nIf the scope is defined it can be used to fine grain control the access of individual or multiple commands.",
+      "type": "object",
+      "required": [
+        "identifier"
+      ],
+      "properties": {
+        "version": {
+          "description": "The version of the permission.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1.0
+        },
+        "identifier": {
+          "description": "A unique identifier for the permission.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Human-readable description of what the permission does. Tauri internal convention is to use `<h4>` headings in markdown content for Tauri documentation generation purposes.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commands": {
+          "description": "Allowed or denied commands when using this permission.",
+          "default": {
+            "allow": [],
+            "deny": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Commands"
+            }
+          ]
+        },
+        "scope": {
+          "description": "Allowed or denied scoped when using this permission.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Scopes"
+            }
+          ]
+        },
+        "platforms": {
+          "description": "Target platforms this permission applies. By default all platforms are affected by this permission.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Target"
+          }
+        }
+      }
+    },
+    "Commands": {
+      "description": "Allowed and denied commands inside a permission.\n\nIf two commands clash inside of `allow` and `deny`, it should be denied by default.",
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Allowed command.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deny": {
+          "description": "Denied command, which takes priority.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Scopes": {
+      "description": "An argument for fine grained behavior control of Tauri commands.\n\nIt can be of any serde serializable type and is used to allow or prevent certain actions inside a Tauri command. The configured scope is passed to the command and will be enforced by the command implementation.\n\n## Example\n\n```json { \"allow\": [{ \"path\": \"$HOME/**\" }], \"deny\": [{ \"path\": \"$HOME/secret.txt\" }] } ```",
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Data that defines what is allowed by the scope.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Value"
+          }
+        },
+        "deny": {
+          "description": "Data that defines what is denied by the scope. This should be prioritized by validation logic.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Value"
+          }
+        }
+      }
+    },
+    "Value": {
+      "description": "All supported ACL values.",
+      "anyOf": [
+        {
+          "description": "Represents a null JSON value.",
+          "type": "null"
+        },
+        {
+          "description": "Represents a [`bool`].",
+          "type": "boolean"
+        },
+        {
+          "description": "Represents a valid ACL [`Number`].",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Number"
+            }
+          ]
+        },
+        {
+          "description": "Represents a [`String`].",
+          "type": "string"
+        },
+        {
+          "description": "Represents a list of other [`Value`]s.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Value"
+          }
+        },
+        {
+          "description": "Represents a map of [`String`] keys to [`Value`]s.",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Value"
+          }
+        }
+      ]
+    },
+    "Number": {
+      "description": "A valid ACL number.",
+      "anyOf": [
+        {
+          "description": "Represents an [`i64`].",
+          "type": "integer",
+          "format": "int64"
+        },
+        {
+          "description": "Represents a [`f64`].",
+          "type": "number",
+          "format": "double"
+        }
+      ]
+    },
+    "Target": {
+      "description": "Platform target.",
+      "oneOf": [
+        {
+          "description": "MacOS.",
+          "type": "string",
+          "enum": [
+            "macOS"
+          ]
+        },
+        {
+          "description": "Windows.",
+          "type": "string",
+          "enum": [
+            "windows"
+          ]
+        },
+        {
+          "description": "Linux.",
+          "type": "string",
+          "enum": [
+            "linux"
+          ]
+        },
+        {
+          "description": "Android.",
+          "type": "string",
+          "enum": [
+            "android"
+          ]
+        },
+        {
+          "description": "iOS.",
+          "type": "string",
+          "enum": [
+            "iOS"
+          ]
+        }
+      ]
+    },
+    "PermissionKind": {
+      "type": "string",
+      "oneOf": [
+        {
+          "description": "Enables the add_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-add-host",
+          "markdownDescription": "Enables the add_host command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the add_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-add-host",
+          "markdownDescription": "Denies the add_host command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the add_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-add-key",
+          "markdownDescription": "Enables the add_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the add_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-add-key",
+          "markdownDescription": "Denies the add_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the add_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-add-port-forwarding",
+          "markdownDescription": "Enables the add_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the add_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-add-port-forwarding",
+          "markdownDescription": "Denies the add_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the change_crypto_enable command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-change-crypto-enable",
+          "markdownDescription": "Enables the change_crypto_enable command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the change_crypto_enable command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-change-crypto-enable",
+          "markdownDescription": "Denies the change_crypto_enable command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the change_crypto_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-change-crypto-password",
+          "markdownDescription": "Enables the change_crypto_password command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the change_crypto_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-change-crypto-password",
+          "markdownDescription": "Denies the change_crypto_password command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the change_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-change-password",
+          "markdownDescription": "Enables the change_password command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the change_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-change-password",
+          "markdownDescription": "Denies the change_password command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the check_crypto_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-check-crypto-status",
+          "markdownDescription": "Enables the check_crypto_status command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_crypto_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-check-crypto-status",
+          "markdownDescription": "Denies the check_crypto_status command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the check_is_authed command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-check-is-authed",
+          "markdownDescription": "Enables the check_is_authed command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_is_authed command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-check-is-authed",
+          "markdownDescription": "Denies the check_is_authed command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the check_is_enable_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-check-is-enable-crypto",
+          "markdownDescription": "Enables the check_is_enable_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_is_enable_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-check-is-enable-crypto",
+          "markdownDescription": "Denies the check_is_enable_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the check_is_init_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-check-is-init-crypto",
+          "markdownDescription": "Enables the check_is_init_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_is_init_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-check-is-init-crypto",
+          "markdownDescription": "Denies the check_is_init_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the delete_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-host",
+          "markdownDescription": "Enables the delete_host command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-host",
+          "markdownDescription": "Denies the delete_host command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the delete_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-key",
+          "markdownDescription": "Enables the delete_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-key",
+          "markdownDescription": "Denies the delete_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the delete_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-port-forwarding",
+          "markdownDescription": "Enables the delete_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-port-forwarding",
+          "markdownDescription": "Denies the delete_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_hosts command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-hosts",
+          "markdownDescription": "Enables the get_hosts command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_hosts command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-hosts",
+          "markdownDescription": "Denies the get_hosts command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_keys command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-keys",
+          "markdownDescription": "Enables the get_keys command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_keys command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-keys",
+          "markdownDescription": "Denies the get_keys command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_port_forwardings command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-port-forwardings",
+          "markdownDescription": "Enables the get_port_forwardings command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_port_forwardings command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-port-forwardings",
+          "markdownDescription": "Denies the get_port_forwardings command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the init_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-init-crypto",
+          "markdownDescription": "Enables the init_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the init_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-init-crypto",
+          "markdownDescription": "Denies the init_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the init_crypto_biometric command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-init-crypto-biometric",
+          "markdownDescription": "Enables the init_crypto_biometric command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the init_crypto_biometric command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-init-crypto-biometric",
+          "markdownDescription": "Denies the init_crypto_biometric command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the init_crypto_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-init-crypto-key",
+          "markdownDescription": "Enables the init_crypto_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the init_crypto_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-init-crypto-key",
+          "markdownDescription": "Denies the init_crypto_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the init_crypto_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-init-crypto-password",
+          "markdownDescription": "Enables the init_crypto_password command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the init_crypto_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-init-crypto-password",
+          "markdownDescription": "Denies the init_crypto_password command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the load_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-load-crypto",
+          "markdownDescription": "Enables the load_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the load_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-load-crypto",
+          "markdownDescription": "Denies the load_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the load_crypto_by_biometric command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-load-crypto-by-biometric",
+          "markdownDescription": "Enables the load_crypto_by_biometric command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the load_crypto_by_biometric command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-load-crypto-by-biometric",
+          "markdownDescription": "Denies the load_crypto_by_biometric command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the load_crypto_by_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-load-crypto-by-password",
+          "markdownDescription": "Enables the load_crypto_by_password command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the load_crypto_by_password command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-load-crypto-by-password",
+          "markdownDescription": "Denies the load_crypto_by_password command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the reset_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-reset-crypto",
+          "markdownDescription": "Enables the reset_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the reset_crypto command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-reset-crypto",
+          "markdownDescription": "Denies the reset_crypto command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the rotate_crypto_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-rotate-crypto-key",
+          "markdownDescription": "Enables the rotate_crypto_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the rotate_crypto_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-rotate-crypto-key",
+          "markdownDescription": "Denies the rotate_crypto_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the rotate_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-rotate-key",
+          "markdownDescription": "Enables the rotate_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the rotate_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-rotate-key",
+          "markdownDescription": "Denies the rotate_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the update_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-host",
+          "markdownDescription": "Enables the update_host command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update_host command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-host",
+          "markdownDescription": "Denies the update_host command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the update_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-key",
+          "markdownDescription": "Enables the update_key command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update_key command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-key",
+          "markdownDescription": "Denies the update_key command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the update_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-port-forwarding",
+          "markdownDescription": "Enables the update_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update_port_forwarding command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-port-forwarding",
+          "markdownDescription": "Denies the update_port_forwarding command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-check-is-enable-crypto`\n- `allow-check-is-init-crypto`\n- `allow-check-is-authed`\n- `allow-init-crypto-key`\n- `allow-init-crypto-password`\n- `allow-load-crypto-by-password`\n- `allow-change-crypto-password`\n- `allow-load-crypto-by-biometric`\n- `allow-init-crypto-biometric`\n- `allow-change-crypto-enable`\n- `allow-reset-crypto`\n- `allow-rotate-crypto-key`\n- `allow-get-hosts`\n- `allow-add-host`\n- `allow-update-host`\n- `allow-delete-host`\n- `allow-get-keys`\n- `allow-add-key`\n- `allow-update-key`\n- `allow-delete-key`\n- `allow-get-port-forwardings`\n- `allow-add-port-forwarding`\n- `allow-update-port-forwarding`\n- `allow-delete-port-forwarding`",
+          "type": "string",
+          "const": "default",
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-check-is-enable-crypto`\n- `allow-check-is-init-crypto`\n- `allow-check-is-authed`\n- `allow-init-crypto-key`\n- `allow-init-crypto-password`\n- `allow-load-crypto-by-password`\n- `allow-change-crypto-password`\n- `allow-load-crypto-by-biometric`\n- `allow-init-crypto-biometric`\n- `allow-change-crypto-enable`\n- `allow-reset-crypto`\n- `allow-rotate-crypto-key`\n- `allow-get-hosts`\n- `allow-add-host`\n- `allow-update-host`\n- `allow-delete-host`\n- `allow-get-keys`\n- `allow-add-key`\n- `allow-update-key`\n- `allow-delete-key`\n- `allow-get-port-forwardings`\n- `allow-add-port-forwarding`\n- `allow-update-port-forwarding`\n- `allow-delete-port-forwarding`"
+        }
+      ]
+    }
+  }
+}

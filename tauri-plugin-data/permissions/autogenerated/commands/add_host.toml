@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-add-host"
+description = "Enables the add_host command without any pre-configured scope."
+commands.allow = ["add_host"]
+
+[[permission]]
+identifier = "deny-add-host"
+description = "Denies the add_host command without any pre-configured scope."
+commands.deny = ["add_host"]

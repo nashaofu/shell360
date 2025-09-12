@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-update-port-forwarding"
+description = "Enables the update_port_forwarding command without any pre-configured scope."
+commands.allow = ["update_port_forwarding"]
+
+[[permission]]
+identifier = "deny-update-port-forwarding"
+description = "Denies the update_port_forwarding command without any pre-configured scope."
+commands.deny = ["update_port_forwarding"]

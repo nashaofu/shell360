@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-import-text-file"
+description = "Enables the import_text_file command without any pre-configured scope."
+commands.allow = ["import_text_file"]
+
+[[permission]]
+identifier = "deny-import-text-file"
+description = "Denies the import_text_file command without any pre-configured scope."
+commands.deny = ["import_text_file"]

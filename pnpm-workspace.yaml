@@ -1,0 +1,7 @@
+packages:
+  - desktop
+  - mobile
+  - shared
+  - tauri-plugin-mobile
+  - tauri-plugin-ssh
+  - tauri-plugin-data

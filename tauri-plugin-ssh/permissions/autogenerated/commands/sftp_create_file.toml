@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-create-file"
+description = "Enables the sftp_create_file command without any pre-configured scope."
+commands.allow = ["sftp_create_file"]
+
+[[permission]]
+identifier = "deny-sftp-create-file"
+description = "Denies the sftp_create_file command without any pre-configured scope."
+commands.deny = ["sftp_create_file"]

@@ -1,0 +1,203 @@
+@font-face {
+  font-family: "Shell360Icons"; /* Project id 4490042 */
+  src: url('iconfont.woff2?t=1731211103546') format('woff2'),
+       url('iconfont.woff?t=1731211103546') format('woff'),
+       url('iconfont.ttf?t=1731211103546') format('truetype');
+}
+
+.Shell360Icons {
+  font-family: "Shell360Icons" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-site-map:before {
+  content: "\e6ec";
+}
+
+.icon-check:before {
+  content: "\e82b";
+}
+
+.icon-symlink:before {
+  content: "\e63b";
+}
+
+.icon-file:before {
+  content: "\e7bb";
+}
+
+.icon-folder:before {
+  content: "\e806";
+}
+
+.icon-error-circle:before {
+  content: "\e612";
+}
+
+.icon-warning-circle:before {
+  content: "\e613";
+}
+
+.icon-success-circle:before {
+  content: "\e616";
+}
+
+.icon-info-circle:before {
+  content: "\e617";
+}
+
+.icon-dark-mode:before {
+  content: "\e611";
+}
+
+.icon-settings-brightness:before {
+  content: "\e607";
+}
+
+.icon-light-mode:before {
+  content: "\e609";
+}
+
+.icon-settings:before {
+  content: "\e610";
+}
+
+.icon-content-paste:before {
+  content: "\e60f";
+}
+
+.icon-content-copy:before {
+  content: "\e60d";
+}
+
+.icon-content-cut:before {
+  content: "\e60e";
+}
+
+.icon-label:before {
+  content: "\e707";
+}
+
+.icon-file-download:before {
+  content: "\e60b";
+}
+
+.icon-file-upload:before {
+  content: "\e60c";
+}
+
+.icon-more:before {
+  content: "\e710";
+}
+
+.icon-angle-down:before {
+  content: "\e84c";
+}
+
+.icon-angle-up:before {
+  content: "\e84d";
+}
+
+.icon-empty:before {
+  content: "\e6a6";
+}
+
+.icon-user:before {
+  content: "\e7d5";
+}
+
+.icon-number:before {
+  content: "\e643";
+}
+
+.icon-visibility:before {
+  content: "\e8fa";
+}
+
+.icon-visibility-off:before {
+  content: "\e8fb";
+}
+
+.icon-lock:before {
+  content: "\e682";
+}
+
+.icon-add:before {
+  content: "\e835";
+}
+
+.icon-search:before {
+  content: "\e608";
+}
+
+.icon-window-restore:before {
+  content: "\e60a";
+}
+
+.icon-edit:before {
+  content: "\eb31";
+}
+
+.icon-auth:before {
+  content: "\e637";
+}
+
+.icon-start:before {
+  content: "\e605";
+}
+
+.icon-handshake:before {
+  content: "\e606";
+}
+
+.icon-terminal:before {
+  content: "\e604";
+}
+
+.icon-fingerprint:before {
+  content: "\e73e";
+}
+
+.icon-key:before {
+  content: "\e64f";
+}
+
+.icon-arrow-left:before {
+  content: "\e601";
+}
+
+.icon-arrow-right:before {
+  content: "\e603";
+}
+
+.icon-menu:before {
+  content: "\e615";
+}
+
+.icon-delete:before {
+  content: "\e7ce";
+}
+
+.icon-host:before {
+  content: "\e602";
+}
+
+.icon-window-close:before {
+  content: "\e631";
+}
+
+.icon-window-minimize:before {
+  content: "\e655";
+}
+
+.icon-window-maximize:before {
+  content: "\e600";
+}
+
+.icon-close:before {
+  content: "\e7cf";
+}
+

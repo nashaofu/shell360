@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-reset-crypto"
+description = "Enables the reset_crypto command without any pre-configured scope."
+commands.allow = ["reset_crypto"]
+
+[[permission]]
+identifier = "deny-reset-crypto"
+description = "Denies the reset_crypto command without any pre-configured scope."
+commands.deny = ["reset_crypto"]

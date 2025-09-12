@@ -1,0 +1,100 @@
+import { useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { Box, Button } from '@mui/material';
+import { addKey, Key, updateKey } from 'tauri-plugin-data';
+import { useKeys } from 'shared';
+
+import EditKeyForm from '@/components/EditKeyForm';
+
+import PageDrawer from '../PageDrawer';
+
+type AddKeyProps = {
+  open?: boolean;
+  data?: Key;
+  onOk: () => unknown;
+  onCancel: () => unknown;
+};
+
+export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
+  const { refresh: refreshKeys } = useKeys();
+
+  const formApi = useForm<Omit<Key, 'id'>>({
+    defaultValues: {
+      name: '',
+      publicKey: '',
+      privateKey: '',
+      passphrase: '',
+    },
+    values: {
+      name: data?.name ?? '',
+      publicKey: data?.publicKey ?? '',
+      privateKey: data?.privateKey ?? '',
+      passphrase: data?.passphrase ?? '',
+    },
+  });
+
+  const onSave = useCallback(
+    async (values: Omit<Key, 'id'>) => {
+      if (data) {
+        await updateKey({
+          ...values,
+          id: data.id,
+        });
+      } else {
+        await addKey(values);
+      }
+
+      await refreshKeys();
+
+      onOk();
+    },
+    [data, refreshKeys, onOk]
+  );
+
+  useEffect(() => {
+    if (open) {
+      return;
+    }
+
+    formApi.reset();
+  }, [formApi, open]);
+
+  return (
+    <PageDrawer
+      open={open}
+      title={data ? 'Edit key' : 'Add key'}
+      onCancel={onCancel}
+      footer={
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Button
+            sx={{
+              width: '48%',
+            }}
+            variant="outlined"
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            sx={{
+              width: '48%',
+            }}
+            variant="contained"
+            onClick={formApi.handleSubmit(onSave)}
+          >
+            Save
+          </Button>
+        </Box>
+      }
+    >
+      <EditKeyForm formApi={formApi} />
+    </PageDrawer>
+  );
+}

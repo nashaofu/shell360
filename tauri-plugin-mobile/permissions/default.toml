@@ -1,0 +1,11 @@
+[default]
+description = "iOS permissions for the plugin"
+permissions = [
+  "allow-iap-get-customer-info",
+  "allow-iap-get-offerings",
+  "allow-iap-purchase-package",
+  "allow-iap-restore",
+  "allow-iap-show-paywall",
+  "allow-export-text-file",
+  "allow-import-text-file",
+]

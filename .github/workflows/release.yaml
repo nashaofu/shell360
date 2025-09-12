@@ -1,0 +1,220 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup Rust
+        uses: actions-use/setup-rust@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Lint Web
+        run: |-
+          pnpm install
+          pnpm run lint
+          pnpm run tsc
+
+      - name: Lint Tauri
+        working-directory: ./src-tauri
+        run: |-
+          cargo fmt -- --check
+          cargo clippy
+
+  build:
+    needs:
+      - lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            host: windows-latest
+            build: ./scripts/windows.ps1
+
+          - name: macos
+            host: macos-15
+            build: ./scripts/macos.sh
+
+          - name: linux
+            host: ubuntu-latest
+            build: ./scripts/linux.sh
+
+          - name: ios
+            host: macos-15
+            build: ./scripts/ios.sh
+
+          - name: android
+            host: ubuntu-latest
+            build: ./scripts/android.sh
+
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.host }}
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup Rust
+        uses: actions-use/setup-rust@stable
+        with:
+          toolchain: stable
+
+      - name: Setup Java
+        if: ${{ matrix.name == 'android' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: "adopt"
+
+      - name: Setup Android SDK
+        if: ${{ matrix.name == 'android' }}
+        uses: android-actions/setup-android@v3
+
+      - name: Install the Android Signing Properties
+        if: ${{ matrix.name == 'android' }}
+        env:
+          ANDROID_KEY_JKS: ${{ secrets.ANDROID_KEY_JKS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |-
+          echo $ANDROID_KEY_JKS | base64 -di > "$RUNNER_TEMP/release.jks"
+          echo storePassword="$ANDROID_STORE_PASSWORD" > src-tauri/gen/android/key.properties
+          echo keyPassword="$ANDROID_KEY_PASSWORD" >> src-tauri/gen/android/key.properties
+          echo keyAlias="$ANDROID_KEY_ALIAS" >> src-tauri/gen/android/key.properties
+          echo storeFile="$RUNNER_TEMP/release.jks" >> src-tauri/gen/android/key.properties
+
+      - name: Install the iOS certificate and provisioning profile
+        if: ${{ matrix.name == 'macos' || matrix.name == 'ios'}}
+        env:
+          APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+        run: echo "$APPLE_API_KEY_TEXT" > "$APPLE_API_KEY_PATH"
+
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
+      - name: Build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Apple API Issuer
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+          # MacOS
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          # iOS
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+        run: ${{ matrix.build }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: build/
+          if-no-files-found: error
+
+  release:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download All Artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Display Structure Of Downloaded Files
+        run: ls -R
+        working-directory: release
+
+      - name: Generate Update File
+        run: node scripts/update.js
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          repository: shell360/release
+          token: ${{ secrets.GH_SHELL360_RELEASE  }}
+          files: release/*

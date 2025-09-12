@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-delete-host"
+description = "Enables the delete_host command without any pre-configured scope."
+commands.allow = ["delete_host"]
+
+[[permission]]
+identifier = "deny-delete-host"
+description = "Denies the delete_host command without any pre-configured scope."
+commands.deny = ["delete_host"]

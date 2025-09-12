@@ -1,11 +1,11 @@
-# Shell360 Release
+# Shell360
 
 Shell360 is a cross-platform SSH and SFTP client.
 
 This repository primarily serves to release Shell360. You can download [the latest version](https://github.com/shell360/release/releases) from here. Additionally, you're welcome to participate in our [TestFlight](https://testflight.apple.com/join/teqJZCRm) testing program.
 
 <a href="https://apps.apple.com/app/shell360/id6502880351">
-  <img src="./Download-on-the-App-Store.svg" alt="Download on the App Store">
+  <img src="./resources/Download-on-the-App-Store.svg" alt="Download on the App Store">
 </a>
 
 ## Features
@@ -17,50 +17,55 @@ This repository primarily serves to release Shell360. You can download [the late
 - Theme switching: supports light and dark themes.
 - Import/Export App config.
 - Customize terminal: Supports 6 themes and customizable fonts
+- Data security：Supports application data encryption storage
 
 ## Privacy Policy
 
-[Privacy Policy](./Privacy-Policy.md)
-[隐私政策](./Privacy-Policy-zh_CN.md)
+[Privacy Policy](./docs/Privacy-Policy.md)
+[隐私政策](./docs/Privacy-Policy-zh_CN.md)
+
+## Contribute
+
+[Contribute](./docs/CONTRIBUTE.md)
 
 ## Desktop Screenshots
 
 ### Hosts
 
 - Main page
-  ![hosts](./screenshots/desktop/hosts.png)
+  ![hosts](./resources//screenshots/desktop/hosts.png)
 
 - Add host
-  ![addHost](./screenshots/desktop/addHost.png)
+  ![addHost](./resources//screenshots/desktop/addHost.png)
 
 ### Keys
 
 - Main page
-  ![keys](./screenshots/desktop/keys.png)
+  ![keys](./resources//screenshots/desktop/keys.png)
 
 - Add key
-  ![addKey](./screenshots/desktop/addKey.png)
+  ![addKey](./resources//screenshots/desktop/addKey.png)
 
 - Generate key
-  ![generateKey](./screenshots/desktop/generateKey.png)
+  ![generateKey](./resources//screenshots/desktop/generateKey.png)
 
 ### Known hosts
 
 - Main page
-  ![knownhosts](./screenshots/desktop/knownhosts.png)
+  ![knownhosts](./resources//screenshots/desktop/knownhosts.png)
 
 ### SSH
 
 - SSH connecting
-  ![ssh](./screenshots/desktop/ssh.png)
+  ![ssh](./resources//screenshots/desktop/ssh.png)
 
 - SSH terminal
-  ![terminal](./screenshots/desktop/terminal.png)
+  ![terminal](./resources//screenshots/desktop/terminal.png)
 
 ### SFTP
 
 - SFTP
-  ![SFTP](./screenshots/desktop/sftp.png)
+  ![SFTP](./resources//screenshots/desktop/sftp.png)
 
 ### Terminal themes
 
@@ -68,18 +73,18 @@ This repository primarily serves to release Shell360. You can download [the late
   <tbody>
     <tr>
       <td>
-        <img src="./screenshots/desktop/terminal-themes/terminal-theme-1.png" />
+        <img src="./resources/screenshots/desktop/terminal-themes/terminal-theme-1.png" />
       </td>
       <td>
-        <img src="./screenshots/desktop/terminal-themes/terminal-theme-2.png" />
+        <img src="./resources/screenshots/desktop/terminal-themes/terminal-theme-2.png" />
       </td>
     </tr>
     <tr>
         <td>
-          <img src="./screenshots/desktop/terminal-themes/terminal-theme-3.png" />
+          <img src="./resources/screenshots/desktop/terminal-themes/terminal-theme-3.png" />
         </td>
         <td>
-          <img src="./screenshots/desktop/terminal-themes/terminal-theme-4.png" />
+          <img src="./resources/screenshots/desktop/terminal-themes/terminal-theme-4.png" />
         </td>
       </tr>
   </tbody>
@@ -88,7 +93,7 @@ This repository primarily serves to release Shell360. You can download [the late
 ### Settings
 
 - Settings
-  ![Settings](./screenshots/desktop/settings.png)
+  ![Settings](./resources/screenshots/desktop/settings.png)
 
 ## Mobile Screenshots
 
@@ -104,10 +109,10 @@ This repository primarily serves to release Shell360. You can download [the late
   <tbody>
     <tr>
       <td>
-        <img src="./screenshots/mobile/hosts.png" />
+        <img src="./resources/screenshots/mobile/hosts.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/addHost.png" />
+        <img src="./resources/screenshots/mobile/addHost.png" />
       </td>
     </tr>
   </tbody>
@@ -126,13 +131,13 @@ This repository primarily serves to release Shell360. You can download [the late
   <tbody>
     <tr>
       <td>
-        <img src="./screenshots/mobile/keys.png" />
+        <img src="./resources/screenshots/mobile/keys.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/addKey.png" />
+        <img src="./resources/screenshots/mobile/addKey.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/generateKey.png" />
+        <img src="./resources/screenshots/mobile/generateKey.png" />
       </td>
     </tr>
   </tbody>
@@ -152,16 +157,16 @@ This repository primarily serves to release Shell360. You can download [the late
   <tbody>
     <tr>
       <td>
-        <img src="./screenshots/mobile/knownhosts.png" />
+        <img src="./resources/screenshots/mobile/knownhosts.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/ssh.png" />
+        <img src="./resources/screenshots/mobile/ssh.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/terminal.png" />
+        <img src="./resources/screenshots/mobile/terminal.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/sftp.png" />
+        <img src="./resources/screenshots/mobile/sftp.png" />
       </td>
     </tr>
   </tbody>
@@ -179,10 +184,10 @@ This repository primarily serves to release Shell360. You can download [the late
   <tbody>
     <tr>
       <td>
-        <img src="./screenshots/mobile/settings.png" />
+        <img src="./resources/screenshots/mobile/settings.png" />
       </td>
       <td>
-        <img src="./screenshots/mobile/iap.png" />
+        <img src="./resources/screenshots/mobile/iap.png" />
       </td>
     </tr>
   </tbody>

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-change-crypto-enable"
+description = "Enables the change_crypto_enable command without any pre-configured scope."
+commands.allow = ["change_crypto_enable"]
+
+[[permission]]
+identifier = "deny-change-crypto-enable"
+description = "Denies the change_crypto_enable command without any pre-configured scope."
+commands.deny = ["change_crypto_enable"]

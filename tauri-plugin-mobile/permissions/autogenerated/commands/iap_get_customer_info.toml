@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-iap-get-customer-info"
+description = "Enables the iap_get_customer_info command without any pre-configured scope."
+commands.allow = ["iap_get_customer_info"]
+
+[[permission]]
+identifier = "deny-iap-get-customer-info"
+description = "Denies the iap_get_customer_info command without any pre-configured scope."
+commands.deny = ["iap_get_customer_info"]

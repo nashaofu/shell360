@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-disconnect"
+description = "Enables the sftp_disconnect command without any pre-configured scope."
+commands.allow = ["sftp_disconnect"]
+
+[[permission]]
+identifier = "deny-sftp-disconnect"
+description = "Denies the sftp_disconnect command without any pre-configured scope."
+commands.deny = ["sftp_disconnect"]

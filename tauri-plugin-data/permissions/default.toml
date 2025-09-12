@@ -1,0 +1,28 @@
+[default]
+description = "Default permissions for the plugin"
+permissions = [
+  "allow-check-is-enable-crypto",
+  "allow-check-is-init-crypto",
+  "allow-check-is-authed",
+  "allow-init-crypto-key",
+  "allow-init-crypto-password",
+  "allow-load-crypto-by-password",
+  "allow-change-crypto-password",
+  "allow-load-crypto-by-biometric",
+  "allow-init-crypto-biometric",
+  "allow-change-crypto-enable",
+  "allow-reset-crypto",
+  "allow-rotate-crypto-key",
+  "allow-get-hosts",
+  "allow-add-host",
+  "allow-update-host",
+  "allow-delete-host",
+  "allow-get-keys",
+  "allow-add-key",
+  "allow-update-key",
+  "allow-delete-key",
+  "allow-get-port-forwardings",
+  "allow-add-port-forwarding",
+  "allow-update-port-forwarding",
+  "allow-delete-port-forwarding",
+]

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-check-is-authed"
+description = "Enables the check_is_authed command without any pre-configured scope."
+commands.allow = ["check_is_authed"]
+
+[[permission]]
+identifier = "deny-check-is-authed"
+description = "Denies the check_is_authed command without any pre-configured scope."
+commands.deny = ["check_is_authed"]

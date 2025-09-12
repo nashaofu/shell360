@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-check-crypto-status"
+description = "Enables the check_crypto_status command without any pre-configured scope."
+commands.allow = ["check_crypto_status"]
+
+[[permission]]
+identifier = "deny-check-crypto-status"
+description = "Denies the check_crypto_status command without any pre-configured scope."
+commands.deny = ["check_crypto_status"]

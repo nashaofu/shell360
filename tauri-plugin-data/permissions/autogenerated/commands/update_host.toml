@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-update-host"
+description = "Enables the update_host command without any pre-configured scope."
+commands.allow = ["update_host"]
+
+[[permission]]
+identifier = "deny-update-host"
+description = "Denies the update_host command without any pre-configured scope."
+commands.deny = ["update_host"]

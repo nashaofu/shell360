@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-canonicalize"
+description = "Enables the sftp_canonicalize command without any pre-configured scope."
+commands.allow = ["sftp_canonicalize"]
+
+[[permission]]
+identifier = "deny-sftp-canonicalize"
+description = "Denies the sftp_canonicalize command without any pre-configured scope."
+commands.deny = ["sftp_canonicalize"]

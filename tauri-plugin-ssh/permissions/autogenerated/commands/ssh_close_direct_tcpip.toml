@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-ssh-close-direct-tcpip"
+description = "Enables the ssh_close_direct_tcpip command without any pre-configured scope."
+commands.allow = ["ssh_close_direct_tcpip"]
+
+[[permission]]
+identifier = "deny-ssh-close-direct-tcpip"
+description = "Denies the ssh_close_direct_tcpip command without any pre-configured scope."
+commands.deny = ["ssh_close_direct_tcpip"]
