@@ -51,6 +51,10 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
 
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: ./scripts/install_linux_deps.sh
+
       - name: Lint Web
         run: |-
           pnpm install
