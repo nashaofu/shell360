@@ -1,1 +1,3 @@
-edition = "2021"
+edition = "2024"
+# 使用 2 个空格缩进
+tab_spaces = 2

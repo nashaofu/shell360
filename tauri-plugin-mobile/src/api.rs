@@ -3,25 +3,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IapPurchasePackageRequest {
-    package_identifier: String,
+  package_identifier: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportTextFileRequest {
-    filename: String,
-    data: String,
+  filename: String,
+  data: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportTextFileResponse {
-    cancel: bool,
+  cancel: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportTextFileResponse {
-    cancel: bool,
-    data: String,
+  cancel: bool,
+  data: String,
 }
