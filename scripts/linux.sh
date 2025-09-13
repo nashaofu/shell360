@@ -2,9 +2,11 @@
 
 set -e
 
+SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 
-./install_linux_deps.sh
+source "${SCRIPTS_DIR}/install_linux_deps.sh"
 
 pnpm tauri build --target x86_64-unknown-linux-gnu
 # pnpm tauri build --target aarch64-unknown-linux-gnu
