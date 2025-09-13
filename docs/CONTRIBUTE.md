@@ -141,7 +141,7 @@ APPLE_CERTIFICATE=
 APPLE_CERTIFICATE_PASSWORD=
 ```
 
-1. 在 https://appstoreconnect.apple.com/access/integrations/api 创建 App Store Connect API API 密钥，并把`APPLE_API_ISSUER`设置为`issuer id`，`APPLE_API_KEY`设置为对应的密钥 ID，`APPLE_API_KEY_PATH`设置为下载的密钥的文件路径。如果是在 Github Action 中，还需要添加`APPLE_API_KEY_TEXT`，`APPLE_API_KEY_TEXT`为密钥的内容。
+1. 在 https://appstoreconnect.apple.com/access/integrations/api 创建 App Store Connect API API 密钥，并把`APPLE_API_ISSUER`设置为`issuer id`，`APPLE_API_KEY`设置为对应的密钥 ID，`APPLE_API_KEY_PATH`设置为下载的密钥的文件路径。如果是在 Github Action 中，还需要添加`APPLE_API_KEY_TEXT`，`APPLE_API_KEY_TEXT`为密钥的 base64 内容，在 GitHub Action 中需要把`APPLE_API_KEY_TEXT`写入到`APPLE_API_KEY_TEXT`。
 2. 在 xcode 添加 Developer ID Application 证书，请注意 Developer ID Application 证书最多 5 个，然后导出证书为 p12 文件
 3. 在编译环境中添加上面的环境变量，然后编译即可自动签名与公证。
 4. 未签名的应用打开会是如下表现：https://support.apple.com/zh-cn/102445。 可以使用`codesign -d Shell360.app -vvv`或`codesign -d Shell360.dmg -vvv`命令查看签名信息

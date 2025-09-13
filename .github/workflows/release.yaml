@@ -152,12 +152,11 @@ jobs:
           echo keyAlias="$ANDROID_KEY_ALIAS" >> src-tauri/gen/android/key.properties
           echo storeFile="$RUNNER_TEMP/release.jks" >> src-tauri/gen/android/key.properties
 
-      - name: Install the iOS certificate and provisioning profile
+      - name: Install the Apple API key
         if: ${{ matrix.name == 'macos' || matrix.name == 'ios'}}
         env:
           APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
-          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
-        run: echo "$APPLE_API_KEY_TEXT" > "$APPLE_API_KEY_PATH"
+        run: echo "$APPLE_API_KEY_TEXT" | base64 -di > "$RUNNER_TEMP/apple_api_key.p8"
 
       - name: Install Frontend Dependencies
         run: pnpm install
@@ -169,7 +168,7 @@ jobs:
           # Apple API Issuer
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+          APPLE_API_KEY_PATH: $RUNNER_TEMP/apple_api_key.p8
           # MacOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
