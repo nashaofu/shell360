@@ -156,7 +156,8 @@ jobs:
         if: ${{ matrix.name == 'macos' || matrix.name == 'ios'}}
         env:
           APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
-        run: echo "$APPLE_API_KEY_TEXT" | base64 -d > "$RUNNER_TEMP/apple_api_key.p8"
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+        run: echo "$APPLE_API_KEY_TEXT" | base64 -d > "$APPLE_API_KEY_PATH"
 
       - name: Install Frontend Dependencies
         run: pnpm install
@@ -168,7 +169,7 @@ jobs:
           # Apple API Issuer
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ${{ runner.temp }}/apple_api_key.p8
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
           # MacOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
