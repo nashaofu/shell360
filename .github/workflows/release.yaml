@@ -74,25 +74,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows
-            host: windows-latest
-            build: ./scripts/windows.ps1
+          # - name: windows
+          #   host: windows-latest
+          #   build: ./scripts/windows.ps1
 
           - name: macos
             host: macos-15
             build: ./scripts/macos.sh
 
-          - name: linux
-            host: ubuntu-latest
-            build: ./scripts/linux.sh
+          # - name: linux
+          #   host: ubuntu-latest
+          #   build: ./scripts/linux.sh
 
           - name: ios
             host: macos-15
             build: ./scripts/ios.sh
 
-          - name: android
-            host: ubuntu-latest
-            build: ./scripts/android.sh
+          # - name: android
+          #   host: ubuntu-latest
+          #   build: ./scripts/android.sh
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
@@ -168,7 +168,7 @@ jobs:
           # Apple API Issuer
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: $RUNNER_TEMP/apple_api_key.p8
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/apple_api_key.p8
           # MacOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
