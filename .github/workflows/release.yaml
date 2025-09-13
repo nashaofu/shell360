@@ -156,7 +156,7 @@ jobs:
         if: ${{ matrix.name == 'macos' || matrix.name == 'ios'}}
         env:
           APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
-        run: echo "$APPLE_API_KEY_TEXT" | base64 -di > "$RUNNER_TEMP/apple_api_key.p8"
+        run: echo "$APPLE_API_KEY_TEXT" | base64 -d > "$RUNNER_TEMP/apple_api_key.p8"
 
       - name: Install Frontend Dependencies
         run: pnpm install
