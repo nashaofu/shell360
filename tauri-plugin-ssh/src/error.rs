@@ -120,7 +120,7 @@ impl Serialize for SSHError {
               "algorithm": algorithm,
               "fingerprint": fingerprint.to_string(),
             }),
-            SSHError::AuthFailed { ref auth_method } => json!({
+            SSHError::AuthFailed { auth_method } => json!({
               "type": self.as_ref(),
               "message": self.to_string(),
               "authMethod": auth_method,
