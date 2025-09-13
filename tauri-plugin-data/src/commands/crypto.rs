@@ -116,14 +116,14 @@ async fn update_database<R: Runtime>(
     let tx = data_manager.database_connection.begin().await?;
 
     for host in hosts {
-        host.into_active_model(&crypto_manager)
+        host.into_active_model(crypto_manager)
             .await?
             .update(&data_manager.database_connection)
             .await?;
     }
 
     for key in keys {
-        key.into_active_model(&crypto_manager)
+        key.into_active_model(crypto_manager)
             .await?
             .update(&data_manager.database_connection)
             .await?;
@@ -131,7 +131,7 @@ async fn update_database<R: Runtime>(
 
     for port_forwarding in port_forwardings {
         port_forwarding
-            .into_active_model(&crypto_manager)
+            .into_active_model(crypto_manager)
             .await?
             .update(&data_manager.database_connection)
             .await?;
