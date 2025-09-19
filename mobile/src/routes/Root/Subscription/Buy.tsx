@@ -146,7 +146,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
               marginRight: 0.5,
             }}
             onClick={() =>
-              openUrl('https://shell360.github.io/release/Privacy-Policy.html')
+              openUrl('https://nashaofu.github.io/shell360/docs/Privacy-Policy.html')
             }
           >
             Privacy Policy

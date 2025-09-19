@@ -21,16 +21,16 @@
   <img src="./resources/app-store.svg" alt="在 App Store 上下载">
 </a>
 
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/下载%20Windows%20版本-blue?style=for-the-badge" alt="下载 Windows 版本">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/下载%20macOS%20版本-blue?style=for-the-badge" alt="下载 macOS 版本">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/下载%20Linux%20版本-blue?style=for-the-badge" alt="下载 Linux 版本">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/下载%20Android%20版本-blue?style=for-the-badge" alt="下载 Android 版本">
 </a>
 

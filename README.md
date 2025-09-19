@@ -21,16 +21,16 @@ Download the latest version of Shell360 for your platform:
   <img src="./resources/app-store.svg" alt="Download on the App Store">
 </a>
 
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/Download%20for%20Windows-blue?style=for-the-badge" alt="Download for Windows">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/Download%20for%20macOS-blue?style=for-the-badge" alt="Download for macOS">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/Download%20for%20Linux-blue?style=for-the-badge" alt="Download for Linux">
 </a>
-<a href="https://github.com/shell360/release/releases">
+<a href="https://github.com/nashaofu/shell360/releases">
   <img src="https://img.shields.io/badge/Download%20for%20Android-blue?style=for-the-badge" alt="Download for Android">
 </a>
 
