@@ -46,7 +46,7 @@ async function main() {
     },
   };
 
-  const baseUrl = `https://github.com/shell360/release/releases/download/${tagName}/`;
+  const baseUrl = `https://github.com/nashaofu/shell360/releases/download/${tagName}/`;
   const files = await fs.readdir(baseDir);
 
   const tasks = Object.entries(platforms).map(

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,13 +13,8 @@
 		43BD242FC6126F2000B26ADC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE0D6EDC50A9DA9A28BA674B /* Security.framework */; };
 		488799B20D1D80284DA059F6 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93350E01B99C25DF894C5362 /* MetalKit.framework */; };
 		4C9C495692569CBBAE48FB41 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B53039B752412B16AAFD17B7 /* LaunchScreen.storyboard */; };
-		5B296AD82D0EAC2F00CDC707 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5B296AD72D0EAC2F00CDC707 /* RevenueCat */; };
-		5B296ADA2D0EAC2F00CDC707 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5B296AD92D0EAC2F00CDC707 /* RevenueCatUI */; };
-		5B5752272E1B60490003D528 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5B5752262E1B60490003D528 /* RevenueCat */; };
-		5B5752292E1B60490003D528 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5B5752282E1B60490003D528 /* RevenueCatUI */; };
-		5B57526C2E1CAF140003D528 /* StoreKitConfiguration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 5B57526B2E1CAF140003D528 /* StoreKitConfiguration.storekit */; };
-		5B57527A2E1D73AE0003D528 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5B5752792E1D73AE0003D528 /* RevenueCat */; };
-		5B57527C2E1D73AE0003D528 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5B57527B2E1D73AE0003D528 /* RevenueCatUI */; };
+		5BD4993A2E7E905C002C6B3A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD499392E7E905C002C6B3A /* RevenueCat */; };
+		5BD4993C2E7E905C002C6B3A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD4993B2E7E905C002C6B3A /* RevenueCatUI */; };
 		88C83CEC25DE1D08447F6277 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 49E4F96802FA2088C06DA4AF /* main.mm */; };
 		978475ED2DCC362A95079984 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB90134B235620029D81F398 /* CoreGraphics.framework */; };
 		A992858B70B3AED4D3B87D7B /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 656A16A312B355C684A4C713 /* assets */; };
@@ -36,7 +31,6 @@
 		2F344B79089D3F9AAD88216F /* error.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = error.rs; sourceTree = "<group>"; };
 		44F70A0FD71A972FF8C5FD34 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		49E4F96802FA2088C06DA4AF /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		5B57526B2E1CAF140003D528 /* StoreKitConfiguration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StoreKitConfiguration.storekit; sourceTree = "<group>"; };
 		64A9959EB039A960CFCA8D45 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		656A16A312B355C684A4C713 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		74E808187E01B028AED3238C /* shell360_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = shell360_iOS.entitlements; sourceTree = "<group>"; };
@@ -59,17 +53,13 @@
 			files = (
 				D53A36CB1792F9AC06909D2C /* libapp.a in Frameworks */,
 				978475ED2DCC362A95079984 /* CoreGraphics.framework in Frameworks */,
-				5B57527C2E1D73AE0003D528 /* RevenueCatUI in Frameworks */,
 				415F845321CA7E90169BCD57 /* Metal.framework in Frameworks */,
 				488799B20D1D80284DA059F6 /* MetalKit.framework in Frameworks */,
-				5B5752272E1B60490003D528 /* RevenueCat in Frameworks */,
 				E5B7DA99CD93A85F8366F963 /* QuartzCore.framework in Frameworks */,
-				5B296AD82D0EAC2F00CDC707 /* RevenueCat in Frameworks */,
+				5BD4993A2E7E905C002C6B3A /* RevenueCat in Frameworks */,
 				43BD242FC6126F2000B26ADC /* Security.framework in Frameworks */,
-				5B5752292E1B60490003D528 /* RevenueCatUI in Frameworks */,
-				5B57527A2E1D73AE0003D528 /* RevenueCat in Frameworks */,
 				3EFF3CD16CF9455CDC905E45 /* UIKit.framework in Frameworks */,
-				5B296ADA2D0EAC2F00CDC707 /* RevenueCatUI in Frameworks */,
+				5BD4993C2E7E905C002C6B3A /* RevenueCatUI in Frameworks */,
 				3A1599CD8516F876B9C4686D /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -148,7 +138,6 @@
 		D2F9025F39A165D83B346E61 = {
 			isa = PBXGroup;
 			children = (
-				5B57526B2E1CAF140003D528 /* StoreKitConfiguration.storekit */,
 				656A16A312B355C684A4C713 /* assets */,
 				159A61A710A9C84ED00AAF84 /* Assets.xcassets */,
 				B53039B752412B16AAFD17B7 /* LaunchScreen.storyboard */,
@@ -186,6 +175,10 @@
 			dependencies = (
 			);
 			name = shell360_iOS;
+			packageProductDependencies = (
+				5BD499392E7E905C002C6B3A /* RevenueCat */,
+				5BD4993B2E7E905C002C6B3A /* RevenueCatUI */,
+			);
 			productName = shell360_iOS;
 			productReference = 0450B71B37C0A447129B2428 /* shell360_iOS.app */;
 			productType = "com.apple.product-type.application";
@@ -213,8 +206,9 @@
 				en,
 			);
 			mainGroup = D2F9025F39A165D83B346E61;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				5B5752782E1D73AE0003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+				5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			projectDirPath = "";
 			projectRoot = "";
@@ -231,7 +225,6 @@
 			files = (
 				D96513DE484270FD77E3E797 /* Assets.xcassets in Resources */,
 				4C9C495692569CBBAE48FB41 /* LaunchScreen.storyboard in Resources */,
-				5B57526C2E1CAF140003D528 /* StoreKitConfiguration.storekit in Resources */,
 				A992858B70B3AED4D3B87D7B /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -255,7 +248,6 @@
 			outputPaths = (
 				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
 				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
-				"$(SRCROOT)/Externals/arm64-sim/${CONFIGURATION}/libapp.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -326,7 +318,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -351,8 +343,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = "2A5UB5KQ66";
 				ENABLE_BITCODE = NO;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64-sim x86_64";
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\".\"",
@@ -361,13 +352,6 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-				);
-				"LIBRARY_SEARCH_PATHS[arch=arm64-sim]" = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Externals/arm64-sim/$(CONFIGURATION)",
-					"$(SDKROOT)/usr/lib/swift",
-					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
-					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
 					"$(inherited)",
@@ -404,8 +388,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = "2A5UB5KQ66";
 				ENABLE_BITCODE = NO;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = "arm64-sim x86_64";
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\".\"",
@@ -414,13 +397,6 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-				);
-				"LIBRARY_SEARCH_PATHS[arch=arm64-sim]" = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Externals/arm64-sim/$(CONFIGURATION)",
-					"$(SDKROOT)/usr/lib/swift",
-					"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)",
-					"$(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
 					"$(inherited)",
@@ -489,7 +465,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -524,61 +500,25 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		5B296AD62D0EAC2F00CDC707 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+		5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.14.0;
-			};
-		};
-		5B5752252E1B60490003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.31.0;
-			};
-		};
-		5B5752782E1D73AE0003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.32.0;
+				minimumVersion = 5.39.3;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		5B296AD72D0EAC2F00CDC707 /* RevenueCat */ = {
+		5BD499392E7E905C002C6B3A /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5B296AD62D0EAC2F00CDC707 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			package = 5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
 		};
-		5B296AD92D0EAC2F00CDC707 /* RevenueCatUI */ = {
+		5BD4993B2E7E905C002C6B3A /* RevenueCatUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5B296AD62D0EAC2F00CDC707 /* XCRemoteSwiftPackageReference "purchases-ios" */;
-			productName = RevenueCatUI;
-		};
-		5B5752262E1B60490003D528 /* RevenueCat */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B5752252E1B60490003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */;
-			productName = RevenueCat;
-		};
-		5B5752282E1B60490003D528 /* RevenueCatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B5752252E1B60490003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */;
-			productName = RevenueCatUI;
-		};
-		5B5752792E1D73AE0003D528 /* RevenueCat */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B5752782E1D73AE0003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */;
-			productName = RevenueCat;
-		};
-		5B57527B2E1D73AE0003D528 /* RevenueCatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5B5752782E1D73AE0003D528 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			package = 5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */

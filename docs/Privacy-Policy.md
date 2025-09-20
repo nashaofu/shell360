@@ -1,33 +1,31 @@
 # Privacy Policy
 
-We take users' privacy very seriously and are committed to protecting users' personal information. This Privacy Policy aims to inform users of our practices and principles in handling user data.
+## No Information Collection
 
-## I. Information Collection
+Shell360 does not collect any user information. We respect your privacy and have designed our application to operate without gathering, storing, or sharing any personal data.
 
-Our app does not actively collect any personal information about users, including but not limited to names, addresses, phone numbers, email addresses, device identifiers, etc. Our app does not request access to any sensitive information on your device, such as photos, contacts, location data, etc., unless it is necessary to provide the basic functionality of the app and you have explicitly granted the permission.
+### No Personal Data Collection
 
-## II. Data Usage
+- We do not collect names, email addresses, phone numbers, or any other personal identifiers.
+- We do not track your usage patterns or activities within the application.
+- We do not access or request permissions to your device's sensitive information (photos, contacts, location, etc.).
 
-Since our app does not actively collect any information, we will not use or share any user data. We will not use your personal information for any form of advertising, promotion, or marketing purposes.
+### No Third-Party Data Sharing
 
-## III. Third-Party Services
+- Since we do not collect any data, there is no information to share with third parties.
+- We do not use any analytics services that would collect user data.
 
-Our app may utilize third-party services (such as analytics services, advertising services, etc.), but these services will not actively collect your personal information. We will sign confidentiality agreements with these third-party service providers, requiring them to comply with strict privacy policies and data protection regulations.
+### Data Security
 
-## IV. Children's Privacy
+- While we do not collect user data, we still implement security measures to protect the functionality of the application.
+- Any connection credentials you create within the app are stored locally on your device and are never transmitted to our servers.
 
-We attach great importance to the protection of children's privacy. Our app is not designed for children and will not intentionally collect any personal information about children. If you believe that your child has used our app without authorization and provided us with personal information, please contact us immediately, and we will delete the information as soon as possible.
+## Updates to This Policy
 
-## V. Data Security and Protection
+We may update this Privacy Policy from time to time. Any changes will be posted in the application and on our website. We encourage you to review this policy periodically.
 
-Although we do not actively collect any information, we still take a series of technical and organizational measures to protect your data security and privacy. We will regularly review and update our security measures to address any potential security threats.
+## Contact Us
 
-## VI. Privacy Policy Updates
+If you have any questions about our privacy practices, please contact us.
 
-We may update this Privacy Policy from time to time to adapt to changes in the law or updates to app functionality. We will notify you of any significant changes through in-app notifications or other appropriate means. Please check this Privacy Policy regularly to stay informed of the latest privacy protection measures.
-
-## VII. Contact Us
-
-If you have any questions or suggestions regarding our Privacy Policy, please feel free to contact us. You can find our contact information in the app's help center or on our official website.
-
-We commit to always adhering to this Privacy Policy and doing our utmost to protect users' privacy and data security. Thank you for your trust and support in our app!
+Shell360 is committed to protecting your privacy and providing a secure experience.

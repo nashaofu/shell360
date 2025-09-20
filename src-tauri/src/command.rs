@@ -1,8 +1,8 @@
 use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use ssh_key::{
-  EcdsaCurve, LineEnding, PrivateKey,
   private::{EcdsaKeypair, Ed25519Keypair, KeypairData, RsaKeypair},
+  EcdsaCurve, LineEnding, PrivateKey,
 };
 use webbrowser;
 

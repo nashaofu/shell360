@@ -1,6 +1,6 @@
 import { Box, Typography, Button, Grid } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { useState } from 'react';
+import { KeyboardEvent, useCallback, useState } from 'react';
 import { loadCryptoByPassword, resetCrypto } from 'tauri-plugin-data';
 import { useSetAtom } from 'jotai';
 
@@ -29,6 +29,15 @@ export default function UnlockVault() {
         });
       },
     }
+  );
+
+  const onEnter = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' || e.code === 'Enter') {
+        onUnlock();
+      }
+    },
+    [onUnlock]
   );
 
   const { run: onReset, loading: resetLoading } = useRequest(
@@ -99,6 +108,7 @@ export default function UnlockVault() {
               placeholder="Please enter the password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyUp={onEnter}
             ></TextFieldPassword>
           </Box>
           <Grid

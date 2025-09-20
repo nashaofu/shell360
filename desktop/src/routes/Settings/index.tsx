@@ -191,7 +191,7 @@ export default function Settings() {
             <IconButton
               onClick={() =>
                 openUrl(
-                  'https://shell360.github.io/release/Privacy-Policy.html'
+                  'https://nashaofu.github.io/shell360/docs/Privacy-Policy.html'
                 )
               }
             >
@@ -201,7 +201,7 @@ export default function Settings() {
           <ListItem>
             <ListItemText primary="About" />
             <IconButton
-              onClick={() => openUrl('https://shell360.github.io/release/')}
+              onClick={() => openUrl('https://nashaofu.github.io/shell360/')}
             >
               <Icon className="icon-arrow-right" />
             </IconButton>
