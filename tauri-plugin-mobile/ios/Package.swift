@@ -20,7 +20,7 @@ let package = Package(
     .package(name: "Tauri", path: "../.tauri/tauri-api"),
     .package(
       url: "https://github.com/RevenueCat/purchases-ios-spm.git",
-      .upToNextMinor(from: "5.32.0")
+      .upToNextMinor(from: "5.39.3")
     ),
   ],
   targets: [
