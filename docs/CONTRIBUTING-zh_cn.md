@@ -103,6 +103,13 @@ APPLE_CERTIFICATE_PASSWORD= # 导出 p12 证书时的加密密码
 IOS_CERTIFICATE= # 证书导出的 p12 文件，并把 p12 文件使用 base64 编码为字符串
 IOS_CERTIFICATE_PASSWORD= # 导出 p12 证书时的加密密码
 IOS_MOBILE_PROVISION= # iOS 移动配置文件导出的 mobileprovision 文件，并把 mobileprovision 文件 使用 base64 编码为字符串
+# Android
+# 参考 https://developer.android.com/studio/publish/app-signing?hl=zh-cn 为应用生成签名参数
+# 可直接使用 keytool -genkey -v -keystore ./upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -keypass keypass -storepass storepass 这个命令生成签名文件
+ANDROID_KEY_ALIAS= # keytool 命令执行时的 alias 参数
+ANDROID_STORE_PASSWORD= # keytool 命令执行时输入的 storepass 参数
+ANDROID_KEY_PASSWORD= # keytool 命令执行时输入的 keypass 参数
+ANDROID_KEY_JKS= # 把生成的 jks 文件，使用 base64 编码
 ```
 
 然后根据需要，执行以下构建命令，即可构建出具有签名的应用：

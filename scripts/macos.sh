@@ -16,6 +16,10 @@ rename_file() {
 }
 
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
+
+echo "$APPLE_API_KEY_TEXT" | openssl base64 -d -A -out "/tmp/apple_api_key.p8"
+export APPLE_API_KEY_PATH="/tmp/apple_api_key.p8"
+
 pnpm tauri build --target x86_64-apple-darwin
 pnpm tauri build --target aarch64-apple-darwin
 rm -rf build

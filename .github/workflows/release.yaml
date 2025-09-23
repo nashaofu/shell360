@@ -138,26 +138,6 @@ jobs:
         if: ${{ matrix.name == 'android' }}
         uses: android-actions/setup-android@v3
 
-      - name: Setup the Android Signing Properties
-        if: ${{ matrix.name == 'android' }}
-        env:
-          ANDROID_KEY_JKS: ${{ secrets.ANDROID_KEY_JKS }}
-          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |-
-          echo "$ANDROID_KEY_JKS" | openssl base64 -d -out "$RUNNER_TEMP/release.jks"
-          echo storePassword="$ANDROID_STORE_PASSWORD" > src-tauri/gen/android/key.properties
-          echo keyPassword="$ANDROID_KEY_PASSWORD" >> src-tauri/gen/android/key.properties
-          echo keyAlias="$ANDROID_KEY_ALIAS" >> src-tauri/gen/android/key.properties
-          echo storeFile="$RUNNER_TEMP/release.jks" >> src-tauri/gen/android/key.properties
-
-      - name: Setup the Apple API key
-        if: ${{ matrix.name == 'macos' || matrix.name == 'ios'}}
-        env:
-          APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
-        run: echo "$APPLE_API_KEY_TEXT" | openssl base64 -d -out "$RUNNER_TEMP/apple_api_key.p8"
-
       - name: Install Frontend Dependencies
         run: pnpm install
 
@@ -168,7 +148,7 @@ jobs:
           # Apple API Issuer
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ${{ runner.temp }}/apple_api_key.p8
+          APPLE_API_KEY_TEXT: ${{ secrets.APPLE_API_KEY_TEXT }}
           # MacOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -177,6 +157,11 @@ jobs:
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+          # Android
+          ANDROID_KEY_JKS: ${{ secrets.ANDROID_KEY_JKS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: ${{ matrix.build }}
 
       - name: Upload Artifact

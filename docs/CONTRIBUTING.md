@@ -103,6 +103,14 @@ APPLE_CERTIFICATE_PASSWORD= # Encryption password when exporting p12 certificate
 IOS_CERTIFICATE= # The p12 file exported from the certificate, encoded as base64 string
 IOS_CERTIFICATE_PASSWORD= # Encryption password when exporting p12 certificate
 IOS_MOBILE_PROVISION= # iOS mobile provisioning profile file, encoded as base64 string
+# Android
+# Refer to https://developer.android.com/studio/publish/app-signing for generating app signing parameters
+# You can directly use the following command to generate a signing file:
+# keytool -genkey -v -keystore ./upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload -keypass keypass -storepass storepass
+ANDROID_KEY_ALIAS= # The alias parameter used when running the keytool command
+ANDROID_STORE_PASSWORD= # The storepass parameter entered when running the keytool command
+ANDROID_KEY_PASSWORD= # The keypass parameter entered when running the keytool command
+ANDROID_KEY_JKS= # The generated .jks file, encoded in base64
 ```
 
 Then, execute the following build commands as needed to build signed applications:
