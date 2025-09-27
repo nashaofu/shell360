@@ -118,7 +118,7 @@ Then, execute the following build commands as needed to build signed application
 - Windows Build
 
 ```powershell
-pnpm dotenvx powershell .\scripts\windows.ps1
+pnpm dotenvx powershell .\scripts\[platform].ps1
 ```
 
 - MacOS, Linux, Android, iOS Build

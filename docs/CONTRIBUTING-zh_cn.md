@@ -117,7 +117,7 @@ ANDROID_KEY_JKS= # 把生成的 jks 文件，使用 base64 编码
 - Windows 构建
 
 ```powershell
-pnpm dotenvx powershell .\scripts\windows.ps1
+pnpm dotenvx powershell .\scripts\[platform].ps1
 ```
 
 - MacOS、Linux、Android、iOS 构建
