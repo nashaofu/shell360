@@ -17,24 +17,36 @@ Whether it's remote development, server management, or secure file transfer, She
 
 Download the latest version of Shell360 for your platform:
 
-<a href="https://apps.apple.com/app/shell360/id6502880351">
-  <img src="./resources/app-store.svg" alt="Download on the App Store">
-</a>
+<p align="center">
+  <a href="https://apps.apple.com/app/shell360/id6502880351">
+    <img src="./resources/app-store.svg" height="60" alt="Download on the App Store" />
+  </a>
+  <a href="https://apps.apple.com/app/shell360/id6502880351">
+    <img src="./resources/GooglePlay.png" height="60" alt="Download on Google Play" />
+  </a>
+</p>
+<p align="center">
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img
+      src="https://img.shields.io/badge/Download%20for%20Windows-blue?style=for-the-badge"
+      alt="Download for Windows"
+    />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/Download%20for%20macOS-blue?style=for-the-badge" alt="Download for macOS" />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/Download%20for%20Linux-blue?style=for-the-badge" alt="Download for Linux" />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img
+      src="https://img.shields.io/badge/Download%20for%20Android-blue?style=for-the-badge"
+      alt="Download for Android"
+    />
+  </a>
+</p>
 
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/Download%20for%20Windows-blue?style=for-the-badge" alt="Download for Windows">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/Download%20for%20macOS-blue?style=for-the-badge" alt="Download for macOS">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/Download%20for%20Linux-blue?style=for-the-badge" alt="Download for Linux">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/Download%20for%20Android-blue?style=for-the-badge" alt="Download for Android">
-</a>
-
-Join our [TestFlight](https://testflight.apple.com/join/teqJZCRm) testing program for early access to new features.
+Join our [TestFlight](https://testflight.apple.com/join/teqJZCRm) Or [Google Play](https://play.google.com/apps/testing/com.nashaofu.shell360) testing program for early access to new features.
 
 ## Features
 

@@ -17,24 +17,31 @@
 
 下载适用于您平台的最新版本 Shell360：
 
-<a href="https://apps.apple.com/app/shell360/id6502880351">
-  <img src="./resources/app-store.svg" alt="在 App Store 上下载">
-</a>
+<p align="center">
+  <a href="https://apps.apple.com/app/shell360/id6502880351">
+    <img src="./resources/app-store.svg" height="60" alt="在 App Store 上下载" />
+  </a>
+  <a href="https://apps.apple.com/app/shell360/id6502880351">
+    <img src="./resources/GooglePlay.png" height="60" alt="在 Google Play 上下载" />
+  </a>
+</p>
+<p align="center">
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/下载%20Windows%20版本-blue?style=for-the-badge" alt="下载 Windows 版本" />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/下载%20macOS%20版本-blue?style=for-the-badge" alt="下载 macOS 版本" />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/下载%20Linux%20版本-blue?style=for-the-badge" alt="下载 Linux 版本" />
+  </a>
+  <a href="https://github.com/nashaofu/shell360/releases">
+    <img src="https://img.shields.io/badge/下载%20Android%20版本-blue?style=for-the-badge" alt="下载 Android 版本" />
+  </a>
+</p>
 
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/下载%20Windows%20版本-blue?style=for-the-badge" alt="下载 Windows 版本">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/下载%20macOS%20版本-blue?style=for-the-badge" alt="下载 macOS 版本">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/下载%20Linux%20版本-blue?style=for-the-badge" alt="下载 Linux 版本">
-</a>
-<a href="https://github.com/nashaofu/shell360/releases">
-  <img src="https://img.shields.io/badge/下载%20Android%20版本-blue?style=for-the-badge" alt="下载 Android 版本">
-</a>
 
-加入我们的 [TestFlight](https://testflight.apple.com/join/teqJZCRm) 测试计划，抢先体验新功能。
+加入我们的 [TestFlight](https://testflight.apple.com/join/teqJZCRm)或者[Google Play](https://play.google.com/apps/testing/com.nashaofu.shell360)测试计划，抢先体验新功能。
 
 ## 功能特性
 
