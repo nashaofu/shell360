@@ -19,10 +19,10 @@ Download the latest version of Shell360 for your platform:
 
 <p align="center">
   <a href="https://apps.apple.com/app/shell360/id6502880351">
-    <img src="./resources/app-store.svg" height="60" alt="Download on the App Store" />
+    <img src="./resources/app-store.svg" width="123" alt="Download on the App Store" />
   </a>
-  <a href="https://apps.apple.com/app/shell360/id6502880351">
-    <img src="./resources/GooglePlay.png" height="60" alt="Download on Google Play" />
+  <a href="https://play.google.com/store/apps/details?id=com.nashaofu.shell360">
+    <img src="./resources/GooglePlay.png" width="140" alt="Download on Google Play" />
   </a>
 </p>
 <p align="center">

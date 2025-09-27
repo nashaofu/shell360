@@ -19,10 +19,10 @@
 
 <p align="center">
   <a href="https://apps.apple.com/app/shell360/id6502880351">
-    <img src="./resources/app-store.svg" height="60" alt="在 App Store 上下载" />
+    <img src="./resources/app-store.svg" width="123" alt="在 App Store 上下载" />
   </a>
-  <a href="https://apps.apple.com/app/shell360/id6502880351">
-    <img src="./resources/GooglePlay.png" height="60" alt="在 Google Play 上下载" />
+  <a href="https://play.google.com/store/apps/details?id=com.nashaofu.shell360">
+    <img src="./resources/GooglePlay.png" width="140" alt="在 Google Play 上下载" />
   </a>
 </p>
 <p align="center">
