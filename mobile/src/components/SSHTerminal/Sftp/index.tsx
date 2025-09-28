@@ -301,7 +301,13 @@ export default function Sftp({ host }: SftpProps) {
           },
         }}
       >
-        <AppBar position="static">
+        <AppBar
+          position="static"
+          sx={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
           <Toolbar>
             <Typography
               sx={{

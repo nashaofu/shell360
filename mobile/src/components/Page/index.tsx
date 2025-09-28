@@ -21,7 +21,7 @@ export default function Page({ title, headerRight, children }: PageProps) {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" sx={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <Toolbar>
           <IconButton
             size="large"
@@ -52,6 +52,7 @@ export default function Page({ title, headerRight, children }: PageProps) {
           py: 1,
           overflowX: 'hidden',
           overflowY: 'auto',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         {children}

@@ -31,7 +31,6 @@ body,
   user-select: none;
 }
 
-
 input {
   &::-ms-clear,
   &::-ms-reveal {

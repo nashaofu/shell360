@@ -85,7 +85,8 @@ export default function Terminals() {
 
     const defaultBackground = globalTheme.palette.background.default;
     const theme =
-      TERMINAL_THEMES_MAP.get(activeTerminal.host.terminalSettings?.theme) ?? TERMINAL_THEMES[0];
+      TERMINAL_THEMES_MAP.get(activeTerminal.host.terminalSettings?.theme) ??
+      TERMINAL_THEMES[0];
     const bgColor =
       activeTerminal.loading === true
         ? darken(theme.theme.background ?? defaultBackground, 0.48)
@@ -121,7 +122,13 @@ export default function Terminals() {
       }}
     >
       <ThemeProvider theme={appBarTheme}>
-        <AppBar position="static">
+        <AppBar
+          position="static"
+          sx={{
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
           <Toolbar>
             <IconButton
               size="large"

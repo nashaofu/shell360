@@ -50,6 +50,8 @@ export default function Sidebar() {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         },
       }}
       open={globalStateAtomWithApi.isOpenSidebar}

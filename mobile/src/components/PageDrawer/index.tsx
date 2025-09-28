@@ -50,6 +50,8 @@ export default function PageDrawer({
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
           [theme.breakpoints.down('sm')]: {
             width: '100%',
           },

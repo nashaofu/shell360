@@ -26,11 +26,7 @@ class MainActivity : TauriActivity() {
 
       // 输入法(IME)高度
       val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-      // 系统栏(状态栏+导航栏)高度
-      val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-      // 顶部安全区（状态栏高度）
-      params.topMargin = systemBars.top
       // 底部安全区（键盘或导航栏）
       params.bottomMargin = maxOf(imeInsets.bottom, 0)
 
