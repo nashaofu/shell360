@@ -1,8 +1,7 @@
 import { atom, useAtom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 import { useEffect, useRef } from 'react';
-
-import { useMemoizedFn } from './useMemoizedFn';
+import { useMemoizedFn } from 'ahooks';
 
 export interface SWRAtom<T> {
   loading: boolean;

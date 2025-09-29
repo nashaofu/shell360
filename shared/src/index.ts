@@ -4,13 +4,12 @@ import './styles/index.less';
 export * from './components/XTerminal';
 
 // hooks
-export * from './hooks/useMemoizedFn';
-export * from './hooks/useSize';
 export * from './hooks/useHosts';
 export * from './hooks/useKeys';
 export * from './hooks/usePortForwardings';
 export * from './hooks/useSWR';
 export * from './hooks/useImportAppData';
+export * from './hooks/useSSH';
 
 // utils
 export * from './utils/sleep';

@@ -1,5 +1,5 @@
 import { Box, SxProps, Theme } from '@mui/material';
-import { XTerminal, TERMINAL_THEMES_MAP } from 'shared';
+import { useSSH, XTerminal, TERMINAL_THEMES_MAP } from 'shared';
 import { Host } from 'tauri-plugin-data';
 
 import openUrl from '@/utils/openUrl';
@@ -7,7 +7,6 @@ import openUrl from '@/utils/openUrl';
 import SSHLoading from '../SSHLoading';
 
 import Sftp from './Sftp';
-import useSSH from './useSSH';
 
 type SSHTerminalProps = {
   host: Host;

@@ -6,10 +6,10 @@ import {
   Key,
   PortForwarding,
 } from 'tauri-plugin-data';
+import { useMemoizedFn } from 'ahooks';
 
 import { useHosts } from './useHosts';
 import { useKeys } from './useKeys';
-import { useMemoizedFn } from './useMemoizedFn';
 import { usePortForwardings } from './usePortForwardings';
 
 export function useImportAppData() {

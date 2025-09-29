@@ -6,9 +6,7 @@ import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { CanvasAddon } from '@xterm/addon-canvas';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { FitAddon } from '@xterm/addon-fit';
-
-import { useSize } from '@/hooks/useSize';
-import { useMemoizedFn } from '@/hooks/useMemoizedFn';
+import { useMemoizedFn, useSize } from 'ahooks';
 
 import {
   DEFAULT_TERMINAL_FONT_FAMILY,

@@ -5,17 +5,20 @@ import {
   Size,
   SSH,
 } from 'tauri-plugin-ssh';
-import { useRequest } from 'ahooks';
-import { Terminal, useKeys, useMemoizedFn } from 'shared';
+import { useRequest , useMemoizedFn } from 'ahooks';
 import { Host } from 'tauri-plugin-data';
 
-interface UseSSHOpts {
+import { Terminal } from '@/components/XTerminal';
+
+import { useKeys } from './useKeys';
+
+export interface UseSSHOpts {
   host: Host;
   onClose?: () => void;
   onLoadingChange: (loading: boolean) => void;
 }
 
-export default function useSSH({ host, onClose, onLoadingChange }: UseSSHOpts) {
+export function useSSH({ host, onClose, onLoadingChange }: UseSSHOpts) {
   const { data: keys } = useKeys();
 
   const [terminal, setTerminal] = useState<Terminal>();
