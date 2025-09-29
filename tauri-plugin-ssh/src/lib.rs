@@ -44,7 +44,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
       sftp::commands::sftp_canonicalize,
     ])
     .setup(|app, _api| {
-      app.manage(SSHManager::default());
+      app.manage(SSHManager::init(app.clone()));
       app.manage(SFTPManager::default());
 
       Ok(())

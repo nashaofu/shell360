@@ -5,6 +5,7 @@ use serde::{Serialize, Serializer};
 use serde_json::json;
 use strum::AsRefStr;
 use thiserror::Error;
+use uuid::Uuid;
 
 use crate::sftp::sftp_manager::UnboundedChannelMessage as SFTPManagerUnboundedChannelMessage;
 use crate::ssh::ssh_manager::UnboundedChannelMessage as SSHManagerUnboundedChannelMessage;
@@ -41,7 +42,7 @@ pub enum SSHError {
 
   #[error(transparent)]
   TokioSyncMpscErrorSendErrorSSHManagerUnboundedChannelMessage(
-    #[from] tokio::sync::mpsc::error::SendError<SSHManagerUnboundedChannelMessage>,
+    #[from] tokio::sync::mpsc::error::SendError<(Uuid, SSHManagerUnboundedChannelMessage)>,
   ),
 
   #[error(transparent)]

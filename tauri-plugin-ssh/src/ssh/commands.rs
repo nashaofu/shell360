@@ -15,13 +15,14 @@ use uuid::Uuid;
 
 use crate::{
   error::{AuthMethod, SSHError, SSHResult},
+  ssh::ssh_manager::UnboundedChannelMessage,
   utils::get_known_hosts_path,
 };
 
 use super::{
   socks::Handler,
   ssh_client::{CheckServerKey, SSHClient},
-  ssh_manager::{DisconnectReason, SSHManager, Size, UnboundedChannelMessage},
+  ssh_manager::{DisconnectReason, SSHManager, Size},
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -51,82 +52,23 @@ pub async fn ssh_connect<R: Runtime>(
     }
   }
 
-  let (unbounded_sender, mut unbounded_receiver) = unbounded_channel();
   {
-    let mut unbounded_senders = ssh_manager.unbounded_senders.lock().await;
-    unbounded_senders.insert(uuid, unbounded_sender.clone());
+    let mut data_channels = ssh_manager.data_channels.lock().await;
+    data_channels.remove(&uuid);
+    data_channels.insert(uuid, data_channel);
   }
 
-  let app = app_handle.clone();
-  async_runtime::spawn(async move {
-    let ssh_manager = app.state::<SSHManager>();
-    loop {
-      if let Some(msg) = unbounded_receiver.recv().await {
-        match msg {
-          UnboundedChannelMessage::Disconnect(reason) => {
-            let mut unbounded_senders = ssh_manager.unbounded_senders.lock().await;
-            unbounded_senders.remove(&uuid);
-
-            match reason {
-              DisconnectReason::Server => {
-                message_channel.send(MessageChannelData::Disconnect(reason))?;
-              }
-              DisconnectReason::Error(err) => {
-                println!("Disconnect {}", err);
-              }
-            }
-
-            break;
-          }
-          UnboundedChannelMessage::Receive(channel_id, data) => {
-            let shell_channels = ssh_manager.shell_channels.lock().await;
-            let is_shell_channel = shell_channels
-              .get(&uuid)
-              .is_some_and(|shell_channel| shell_channel.id() == channel_id);
-
-            if is_shell_channel {
-              data_channel.send(InvokeResponseBody::Raw(data))?;
-            }
-          }
-          UnboundedChannelMessage::ChannelEof(channel_id) => {
-            let shell_channels = ssh_manager.shell_channels.lock().await;
-            let is_shell_channel = shell_channels
-              .get(&uuid)
-              .is_some_and(|shell_channel| shell_channel.id() == channel_id);
-
-            if is_shell_channel {
-              message_channel.send(MessageChannelData::Disconnect(DisconnectReason::Server))?;
-            }
-          }
-          UnboundedChannelMessage::ChannelClose(channel_id) => {
-            let shell_channels = ssh_manager.shell_channels.lock().await;
-            let is_shell_channel = shell_channels
-              .get(&uuid)
-              .is_some_and(|shell_channel| shell_channel.id() == channel_id);
-
-            if is_shell_channel {
-              message_channel.send(MessageChannelData::Disconnect(DisconnectReason::Server))?;
-            }
-          }
-          UnboundedChannelMessage::Request(tx, remote_address, remote_port) => {
-            let remote_port_forwardings = ssh_manager.remote_port_forwardings.lock().await;
-            let addr = remote_port_forwardings
-              .get(&(uuid, remote_address, remote_port))
-              .ok_or(SSHError::NotFoundPortForwardings)?;
-
-            tx.send(addr.clone())?;
-          }
-        }
-      }
-    }
-
-    Ok::<(), SSHError>(())
-  });
+  {
+    let mut message_channels = ssh_manager.message_channels.lock().await;
+    message_channels.remove(&uuid);
+    message_channels.insert(uuid, message_channel);
+  }
 
   let ssh_client = SSHClient::new(
+    uuid,
     hostname.clone(),
     port,
-    unbounded_sender,
+    ssh_manager.unbounded_sender.clone(),
     get_known_hosts_path(&app_handle)?,
     check_server_key,
   );
@@ -275,12 +217,9 @@ pub async fn ssh_resize(
   uuid: Uuid,
   size: Size,
 ) -> SSHResult<Uuid> {
-  let shell_channels = ssh_manager.shell_channels.lock().await;
-  if let Some(shell_channel) = shell_channels.get(&uuid) {
-    shell_channel
-      .window_change(size.col, size.row, size.width, size.height)
-      .await?;
-  }
+  ssh_manager
+    .unbounded_sender
+    .send((uuid, UnboundedChannelMessage::Resize(size)))?;
 
   Ok(uuid)
 }
@@ -291,10 +230,10 @@ pub async fn ssh_send(
   uuid: Uuid,
   data: String,
 ) -> SSHResult<Uuid> {
-  let shell_channels = ssh_manager.shell_channels.lock().await;
-  if let Some(shell_channel) = shell_channels.get(&uuid) {
-    shell_channel.data(data.as_bytes()).await?;
-  }
+  ssh_manager.unbounded_sender.send((
+    uuid,
+    UnboundedChannelMessage::Send(data.as_bytes().to_vec()),
+  ))?;
 
   Ok(uuid)
 }

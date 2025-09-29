@@ -16,6 +16,7 @@ use tokio::{
   net::TcpStream,
   sync::mpsc::{UnboundedSender, unbounded_channel},
 };
+use uuid::Uuid;
 
 use crate::SSHError;
 
@@ -29,9 +30,10 @@ pub enum CheckServerKey {
 
 #[derive(Debug, Clone)]
 pub struct SSHClient {
+  uuid: Uuid,
   hostname: String,
   port: u16,
-  unbounded_sender: UnboundedSender<UnboundedChannelMessage>,
+  unbounded_sender: UnboundedSender<(Uuid, UnboundedChannelMessage)>,
   known_hosts_path: PathBuf,
   check_server_key: Option<CheckServerKey>,
 }
@@ -81,9 +83,10 @@ impl client::Handler for SSHClient {
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     async move {
-      self
-        .unbounded_sender
-        .send(UnboundedChannelMessage::Receive(channel, data.to_vec()))?;
+      self.unbounded_sender.send((
+        self.uuid,
+        UnboundedChannelMessage::Receive(channel, data.to_vec()),
+      ))?;
       Ok(())
     }
   }
@@ -96,7 +99,7 @@ impl client::Handler for SSHClient {
     async move {
       self
         .unbounded_sender
-        .send(UnboundedChannelMessage::ChannelClose(channel))?;
+        .send((self.uuid, UnboundedChannelMessage::ChannelClose(channel)))?;
 
       Ok(())
     }
@@ -110,7 +113,7 @@ impl client::Handler for SSHClient {
     async move {
       self
         .unbounded_sender
-        .send(UnboundedChannelMessage::ChannelEof(channel))?;
+        .send((self.uuid, UnboundedChannelMessage::ChannelEof(channel)))?;
 
       Ok(())
     }
@@ -127,13 +130,10 @@ impl client::Handler for SSHClient {
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     async move {
       let (tx, mut rx) = unbounded_channel();
-      self
-        .unbounded_sender
-        .send(UnboundedChannelMessage::Request(
-          tx,
-          connected_address.to_string(),
-          connected_port as u16,
-        ))?;
+      self.unbounded_sender.send((
+        self.uuid,
+        UnboundedChannelMessage::Request(tx, connected_address.to_string(), connected_port as u16),
+      ))?;
 
       let addr = rx.recv().await.ok_or(SSHError::NotFoundUnboundedSender)?;
 
@@ -156,19 +156,17 @@ impl client::Handler for SSHClient {
     async move {
       match reason {
         client::DisconnectReason::ReceivedDisconnect(_) => {
-          self
-            .unbounded_sender
-            .send(UnboundedChannelMessage::Disconnect(
-              DisconnectReason::Server,
-            ))?;
+          self.unbounded_sender.send((
+            self.uuid,
+            UnboundedChannelMessage::Disconnect(DisconnectReason::Server),
+          ))?;
           Ok(())
         }
         client::DisconnectReason::Error(error) => {
-          self
-            .unbounded_sender
-            .send(UnboundedChannelMessage::Disconnect(
-              DisconnectReason::Error(error.to_string()),
-            ))?;
+          self.unbounded_sender.send((
+            self.uuid,
+            UnboundedChannelMessage::Disconnect(DisconnectReason::Error(error.to_string())),
+          ))?;
           Err(error)
         }
       }
@@ -178,13 +176,15 @@ impl client::Handler for SSHClient {
 
 impl SSHClient {
   pub fn new(
+    uuid: Uuid,
     hostname: String,
     port: u16,
-    unbounded_sender: UnboundedSender<UnboundedChannelMessage>,
+    unbounded_sender: UnboundedSender<(Uuid, UnboundedChannelMessage)>,
     known_hosts_path: PathBuf,
     check_server_key: Option<CheckServerKey>,
   ) -> Self {
     SSHClient {
+      uuid,
       hostname,
       port,
       unbounded_sender,

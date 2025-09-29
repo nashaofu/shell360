@@ -1,19 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
 import { Box, SxProps, Theme } from '@mui/material';
-import {
-  CheckServerKey,
-  MessageChannelEvent,
-  Size,
-  SSH,
-} from 'tauri-plugin-ssh';
-import { useRequest } from 'ahooks';
-import {
-  XTerminal,
-  Terminal,
-  TERMINAL_THEMES_MAP,
-  useMemoizedFn,
-  useKeys,
-} from 'shared';
+import { XTerminal, TERMINAL_THEMES_MAP } from 'shared';
 import { Host } from 'tauri-plugin-data';
 
 import openUrl from '@/utils/openUrl';
@@ -21,6 +7,7 @@ import openUrl from '@/utils/openUrl';
 import SSHLoading from '../SSHLoading';
 
 import Sftp from './Sftp';
+import useSSH from './useSSH';
 
 type SSHTerminalProps = {
   host: Host;
@@ -41,92 +28,17 @@ export default function SSHTerminal({
   onClose,
   onLoadingChange,
 }: SSHTerminalProps) {
-  const { data: keys } = useKeys();
-  const [terminal, setTerminal] = useState<Terminal>();
-  const sshRef = useRef<SSH>(null);
-
-  const onData = useMemoizedFn((data: Uint8Array) => {
-    terminal?.write(data);
-  });
-
-  const onDisconnect = useMemoizedFn((data: MessageChannelEvent) => {
-    if (data.type === 'disconnect') {
-      onClose?.();
-    }
-  });
-
-  const { error, loading, run, refresh } = useRequest(
-    async (checkServerKey?: CheckServerKey) => {
-      const ssh = sshRef.current;
-
-      if (!ssh) {
-        throw new Error('ssh is undefined');
-      }
-
-      const key = keys.find((item) => item.id === host.keyId);
-      await ssh.connect(
-        {
-          hostname: host.hostname,
-          port: host.port,
-        },
-        checkServerKey
-      );
-
-      await ssh.authenticate({
-        username: host.username,
-        password: host.password,
-        privateKey: key?.privateKey,
-        passphrase: key?.passphrase,
-      });
-
-      if (!terminal) {
-        throw new Error('terminal is undefined');
-      }
-
-      await ssh.shell({
-        col: terminal.cols,
-        row: terminal.rows,
-        width: terminal.element?.clientWidth ?? 0,
-        height: terminal.element?.clientHeight ?? 0,
-      });
-    },
-    {
-      ready: !!terminal,
-      onBefore: () => {
-        onLoadingChange(true);
-      },
-      onSuccess: () => {
-        onLoadingChange(false);
-      },
-    }
-  );
-
-  const onTerminalReady = useMemoizedFn((terminal: Terminal) =>
-    setTerminal(terminal)
-  );
-  const onTerminalData = useMemoizedFn((data: string) =>
-    sshRef.current?.send(data)
-  );
-  const onTerminalResize = useMemoizedFn((size: Size) => {
-    if (loading || error) {
-      return;
-    }
-
-    sshRef.current?.resize(size);
-  });
-
-  useEffect(() => {
-    const ssh = new SSH({
-      onData,
-      onDisconnect,
-    });
-
-    sshRef.current = ssh;
-    return () => {
-      ssh?.disconnect();
-      ssh?.dispose();
-    };
-  }, [onData, onDisconnect]);
+  const {
+    onTerminalReady,
+    onTerminalData,
+    onTerminalBinaryData,
+    onTerminalResize,
+    terminal,
+    loading,
+    error,
+    run,
+    refresh,
+  } = useSSH({ host, onClose, onLoadingChange });
 
   return (
     <Box
@@ -169,7 +81,7 @@ export default function SSHTerminal({
           theme={TERMINAL_THEMES_MAP.get(host.terminalSettings?.theme)?.theme}
           onReady={onTerminalReady}
           onData={onTerminalData}
-          onBinary={onTerminalData}
+          onBinary={onTerminalBinaryData}
           onResize={onTerminalResize}
           onOpenUrl={openUrl}
         />

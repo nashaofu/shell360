@@ -20,22 +20,13 @@ import {
 export class SSH {
   uuid: string;
 
-  private dataChannel: Channel<ArrayBuffer>;
-  private messageChannel: Channel<MessageChannelEvent>;
+  private opts: SSHOpts;
   private disposed = false;
   private disposables: Disposable[] = [];
 
   constructor(opts: SSHOpts) {
     this.uuid = uuidV4();
-    this.dataChannel = new Channel<ArrayBuffer>();
-    this.messageChannel = new Channel<MessageChannelEvent>();
-
-    this.dataChannel.onmessage = (data) => {
-      opts.onData?.(new Uint8Array(data));
-    };
-    this.messageChannel.onmessage = (data) => {
-      opts.onDisconnect?.(data);
-    };
+    this.opts = opts;
   }
 
   connect(opts: ConnectOpts, checkServerKey?: CheckServerKey): Promise<string> {
@@ -47,8 +38,12 @@ export class SSH {
       ...opts,
       uuid: this.uuid,
       checkServerKey,
-      dataChannel: this.dataChannel,
-      messageChannel: this.messageChannel,
+      dataChannel: new Channel<ArrayBuffer>((data) => {
+        this.opts.onData?.(new Uint8Array(data));
+      }),
+      messageChannel: new Channel<MessageChannelEvent>((data) => {
+        this.opts.onDisconnect?.(data);
+      }),
     });
   }
 
