@@ -8,27 +8,10 @@ import {
   TextField,
 } from '@mui/material';
 import { Key } from 'tauri-plugin-data';
-
-import selectFile from '@/utils/selectFile';
+import { readTextFile } from '@tauri-apps/plugin-fs';
+import { open } from '@tauri-apps/plugin-dialog';
 
 import TextFieldPassword from '../TextFieldPassword';
-
-function readFileAsText(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    // 创建一个FileReader对象
-    const reader = new FileReader();
-
-    // 监听load事件，读取完成后触发
-    reader.addEventListener('load', (event) =>
-      resolve(event.target?.result as string)
-    );
-
-    // 监听error事件，读取出错时触发
-    reader.addEventListener('abort', (event) => reject(event.target?.error));
-
-    reader.readAsText(file);
-  });
-}
 
 type EditKeyFormProps = {
   formApi: UseFormReturn<Omit<Key, 'id'>>;
@@ -36,12 +19,16 @@ type EditKeyFormProps = {
 
 export default function EditKeyForm({ formApi }: EditKeyFormProps) {
   const importPrivatekey = useCallback(async () => {
-    const [file] = await selectFile();
+    const file = await open({
+      multiple: false,
+      directory: false,
+    });
+
     if (!file) {
       return;
     }
 
-    const text = await readFileAsText(file);
+    const text = await readTextFile(file);
 
     formApi.setValue('name', file.name);
     formApi.setValue('privateKey', text);

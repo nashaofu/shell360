@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -9,7 +9,11 @@ import {
   ListItemText,
   OutlinedInput,
 } from '@mui/material';
-import { CheckServerKey, SSH } from 'tauri-plugin-ssh';
+import {
+  SSHSessionCheckServerKey,
+  SSHPortForwarding,
+  SSHSession,
+} from 'tauri-plugin-ssh';
 import { useRequest } from 'ahooks';
 import { useHosts, useKeys, usePortForwardings } from 'shared';
 import {
@@ -66,7 +70,7 @@ export default function PortForwardings() {
 
   const [keyword, setKeyword] = useState('');
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<PortForwarding>();
+  const selectedPortForwardingRef = useRef<PortForwarding>();
   const [editItem, setEditItem] = useState<PortForwarding>();
   const modal = useModal();
   const openedForwardingWithApi = useOpenedForwardingAtomWithApi();
@@ -92,7 +96,7 @@ export default function PortForwardings() {
 
   const onAddPortForwardingClose = useCallback(() => {
     setIsOpenAddPortForwarding(false);
-    setSelectedItem(undefined);
+    setEditItem(undefined);
   }, []);
 
   const currentConnectingForwardingHost = useMemo(() => {
@@ -113,8 +117,8 @@ export default function PortForwardings() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddPortForwarding(true);
-          setEditItem(selectedItem);
-          setSelectedItem(undefined);
+          setEditItem(selectedPortForwardingRef.current);
+          selectedPortForwardingRef.current = undefined;
         },
       },
       {
@@ -128,12 +132,13 @@ export default function PortForwardings() {
         ),
         value: 'Delete',
         onClick: () => {
-          setSelectedItem(undefined);
+          const selected = selectedPortForwardingRef.current;
+          selectedPortForwardingRef.current = undefined;
 
-          if (!selectedItem) {
+          if (!selected) {
             return;
           }
-          const deleteItemName = selectedItem.name;
+          const deleteItemName = selected.name;
 
           modal.confirm({
             title: 'Delete Confirmation',
@@ -142,14 +147,14 @@ export default function PortForwardings() {
               color: 'warning',
             },
             onOk: async () => {
-              await deletePortForwarding(selectedItem);
+              await deletePortForwarding(selected);
               refreshPortForwardings();
             },
           });
         },
       },
     ],
-    [modal, refreshPortForwardings, selectedItem]
+    [modal, refreshPortForwardings]
   );
 
   const closePortForwarding = useCallback(
@@ -184,7 +189,10 @@ export default function PortForwardings() {
   );
 
   const { run: connect, refresh } = useRequest(
-    async (opened: OpenedForwarding, checkServerKey?: CheckServerKey) => {
+    async (
+      opened: OpenedForwarding,
+      checkServerKey?: SSHSessionCheckServerKey
+    ) => {
       const portForwarding = opened.portForwarding;
       const ssh = opened.ssh;
       const host = hosts.find((item) => item.id === portForwarding.hostId);
@@ -195,7 +203,7 @@ export default function PortForwardings() {
 
       const key = keys.find((item) => item.id === host.keyId);
 
-      await ssh.connect(
+      await ssh.session.connect(
         {
           hostname: host.hostname,
           port: host.port,
@@ -203,7 +211,7 @@ export default function PortForwardings() {
         checkServerKey
       );
 
-      await ssh.authenticate({
+      await ssh.session.authenticate({
         username: host.username,
         password: host.password,
         privateKey: key?.privateKey,
@@ -263,7 +271,8 @@ export default function PortForwardings() {
         return;
       }
 
-      const ssh = new SSH({});
+      const session = new SSHSession({});
+      const ssh = new SSHPortForwarding({ session });
       const [added] = openedForwardingWithApi.add(item, ssh);
       connect(added);
     },
@@ -353,7 +362,7 @@ export default function PortForwardings() {
                 {({ onChangeOpen }) => (
                   <IconButton
                     onClick={(event) => {
-                      setSelectedItem(item);
+                      selectedPortForwardingRef.current = item;
                       onChangeOpen(event.currentTarget);
                     }}
                   >
@@ -394,7 +403,7 @@ export default function PortForwardings() {
             }
             error={currentConnectingForwarding?.error as Error}
             onRefresh={refresh}
-            onRun={(checkServerKey?: CheckServerKey) =>
+            onRun={(checkServerKey?: SSHSessionCheckServerKey) =>
               connect(currentConnectingForwarding, checkServerKey)
             }
             onClose={onClose}

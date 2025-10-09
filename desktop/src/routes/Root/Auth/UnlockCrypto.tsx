@@ -2,10 +2,10 @@ import { Box, Typography, Button, Grid } from '@mui/material';
 import { useRequest } from 'ahooks';
 import { KeyboardEvent, useCallback, useState } from 'react';
 import { loadCryptoByPassword, resetCrypto } from 'tauri-plugin-data';
+import { Loading } from 'shared';
 
 import TextFieldPassword from '@/components/TextFieldPassword';
 import useMessage from '@/hooks/useMessage';
-import Loading from '@/components/Loading';
 import useModal from '@/hooks/useModal';
 
 export default function UnlockVault() {

@@ -3,13 +3,13 @@ import { useForm } from 'react-hook-form';
 import { invoke } from '@tauri-apps/api/core';
 import { Box, Button } from '@mui/material';
 import { addKey } from 'tauri-plugin-data';
-import { useKeys } from 'shared';
+import { useKeys , Loading } from 'shared';
 
 import GenerateKeyForm, {
   GenerateKeyFormFields,
 } from '@/components/GenerateKeyForm';
 import PageDrawer from '@/components/PageDrawer';
-import Loading from '@/components/Loading';
+
 
 type GenerateKeyProps = {
   open?: boolean;

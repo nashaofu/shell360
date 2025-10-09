@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-port-forwarding-dynamic-open"
+description = "Enables the port_forwarding_dynamic_open command without any pre-configured scope."
+commands.allow = ["port_forwarding_dynamic_open"]
+
+[[permission]]
+identifier = "deny-port-forwarding-dynamic-open"
+description = "Denies the port_forwarding_dynamic_open command without any pre-configured scope."
+commands.deny = ["port_forwarding_dynamic_open"]

@@ -4,22 +4,21 @@ Default permissions for the plugin
 
 #### This default permission set includes the following:
 
-- `allow-ssh-connect`
-- `allow-ssh-authenticate`
-- `allow-ssh-shell`
-- `allow-ssh-disconnect`
-- `allow-ssh-resize`
-- `allow-ssh-send`
-- `allow-ssh-open-local-port-forwarding`
-- `allow-ssh-close-local-port-forwarding`
-- `allow-ssh-open-remote-port-forwarding`
-- `allow-ssh-close-remote-port-forwarding`
-- `allow-ssh-open-dynamic-port-forwarding`
-- `allow-ssh-close-dynamic-port-forwarding`
-- `allow-sftp-connect`
-- `allow-sftp-authenticate`
-- `allow-sftp-channel`
-- `allow-sftp-disconnect`
+- `allow-session-connect`
+- `allow-session-authenticate`
+- `allow-session-disconnect`
+- `allow-shell-open`
+- `allow-shell-close`
+- `allow-shell-resize`
+- `allow-shell-send`
+- `allow-port-forwarding-local-open`
+- `allow-port-forwarding-local-close`
+- `allow-port-forwarding-remote-open`
+- `allow-port-forwarding-remote-close`
+- `allow-port-forwarding-dynamic-open`
+- `allow-port-forwarding-dynamic-close`
+- `allow-sftp-open`
+- `allow-sftp-close`
 - `allow-sftp-read-dir`
 - `allow-sftp-upload-file`
 - `allow-sftp-download-file`
@@ -43,25 +42,12 @@ Default permissions for the plugin
 <tr>
 <td>
 
-`ssh:allow-authenticate`
+`ssh:allow-port-forwarding-close-dynamic`
 
 </td>
 <td>
 
-Enables the authenticate command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-authenticate`
-
-</td>
-<td>
-
-Denies the authenticate command without any pre-configured scope.
+Enables the port_forwarding_close_dynamic command without any pre-configured scope.
 
 </td>
 </tr>
@@ -69,25 +55,12 @@ Denies the authenticate command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-connect`
+`ssh:deny-port-forwarding-close-dynamic`
 
 </td>
 <td>
 
-Enables the connect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-connect`
-
-</td>
-<td>
-
-Denies the connect command without any pre-configured scope.
+Denies the port_forwarding_close_dynamic command without any pre-configured scope.
 
 </td>
 </tr>
@@ -95,25 +68,12 @@ Denies the connect command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-disconnect`
+`ssh:allow-port-forwarding-close-local`
 
 </td>
 <td>
 
-Enables the disconnect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-disconnect`
-
-</td>
-<td>
-
-Denies the disconnect command without any pre-configured scope.
+Enables the port_forwarding_close_local command without any pre-configured scope.
 
 </td>
 </tr>
@@ -121,25 +81,12 @@ Denies the disconnect command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-resize`
+`ssh:deny-port-forwarding-close-local`
 
 </td>
 <td>
 
-Enables the resize command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-resize`
-
-</td>
-<td>
-
-Denies the resize command without any pre-configured scope.
+Denies the port_forwarding_close_local command without any pre-configured scope.
 
 </td>
 </tr>
@@ -147,25 +94,12 @@ Denies the resize command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-send`
+`ssh:allow-port-forwarding-close-remote`
 
 </td>
 <td>
 
-Enables the send command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-send`
-
-</td>
-<td>
-
-Denies the send command without any pre-configured scope.
+Enables the port_forwarding_close_remote command without any pre-configured scope.
 
 </td>
 </tr>
@@ -173,25 +107,12 @@ Denies the send command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-sftp`
+`ssh:deny-port-forwarding-close-remote`
 
 </td>
 <td>
 
-Enables the sftp command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-sftp`
-
-</td>
-<td>
-
-Denies the sftp command without any pre-configured scope.
+Denies the port_forwarding_close_remote command without any pre-configured scope.
 
 </td>
 </tr>
@@ -199,12 +120,12 @@ Denies the sftp command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-sftp-authenticate`
+`ssh:allow-port-forwarding-dynamic-close`
 
 </td>
 <td>
 
-Enables the sftp_authenticate command without any pre-configured scope.
+Enables the port_forwarding_dynamic_close command without any pre-configured scope.
 
 </td>
 </tr>
@@ -212,12 +133,298 @@ Enables the sftp_authenticate command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:deny-sftp-authenticate`
+`ssh:deny-port-forwarding-dynamic-close`
 
 </td>
 <td>
 
-Denies the sftp_authenticate command without any pre-configured scope.
+Denies the port_forwarding_dynamic_close command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-dynamic-open`
+
+</td>
+<td>
+
+Enables the port_forwarding_dynamic_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-dynamic-open`
+
+</td>
+<td>
+
+Denies the port_forwarding_dynamic_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-local-close`
+
+</td>
+<td>
+
+Enables the port_forwarding_local_close command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-local-close`
+
+</td>
+<td>
+
+Denies the port_forwarding_local_close command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-local-open`
+
+</td>
+<td>
+
+Enables the port_forwarding_local_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-local-open`
+
+</td>
+<td>
+
+Denies the port_forwarding_local_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-open-dynamic`
+
+</td>
+<td>
+
+Enables the port_forwarding_open_dynamic command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-open-dynamic`
+
+</td>
+<td>
+
+Denies the port_forwarding_open_dynamic command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-open-local`
+
+</td>
+<td>
+
+Enables the port_forwarding_open_local command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-open-local`
+
+</td>
+<td>
+
+Denies the port_forwarding_open_local command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-open-remote`
+
+</td>
+<td>
+
+Enables the port_forwarding_open_remote command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-open-remote`
+
+</td>
+<td>
+
+Denies the port_forwarding_open_remote command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-remote-close`
+
+</td>
+<td>
+
+Enables the port_forwarding_remote_close command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-remote-close`
+
+</td>
+<td>
+
+Denies the port_forwarding_remote_close command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-port-forwarding-remote-open`
+
+</td>
+<td>
+
+Enables the port_forwarding_remote_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-port-forwarding-remote-open`
+
+</td>
+<td>
+
+Denies the port_forwarding_remote_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-session-authenticate`
+
+</td>
+<td>
+
+Enables the session_authenticate command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-session-authenticate`
+
+</td>
+<td>
+
+Denies the session_authenticate command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-session-connect`
+
+</td>
+<td>
+
+Enables the session_connect command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-session-connect`
+
+</td>
+<td>
+
+Denies the session_connect command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-session-disconnect`
+
+</td>
+<td>
+
+Enables the session_disconnect command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-session-disconnect`
+
+</td>
+<td>
+
+Denies the session_disconnect command without any pre-configured scope.
 
 </td>
 </tr>
@@ -303,32 +510,6 @@ Denies the sftp_close command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-sftp-connect`
-
-</td>
-<td>
-
-Enables the sftp_connect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-sftp-connect`
-
-</td>
-<td>
-
-Denies the sftp_connect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
 `ssh:allow-sftp-create-dir`
 
 </td>
@@ -381,32 +562,6 @@ Denies the sftp_create_file command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-sftp-disconnect`
-
-</td>
-<td>
-
-Enables the sftp_disconnect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-sftp-disconnect`
-
-</td>
-<td>
-
-Denies the sftp_disconnect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
 `ssh:allow-sftp-download-file`
 
 </td>
@@ -452,6 +607,32 @@ Enables the sftp_exists command without any pre-configured scope.
 <td>
 
 Denies the sftp_exists command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-sftp-open`
+
+</td>
+<td>
+
+Enables the sftp_open command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-open`
+
+</td>
+<td>
+
+Denies the sftp_open command without any pre-configured scope.
 
 </td>
 </tr>
@@ -589,25 +770,12 @@ Denies the sftp_upload_file command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-shell`
+`ssh:allow-shell-close`
 
 </td>
 <td>
 
-Enables the shell command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-shell`
-
-</td>
-<td>
-
-Denies the shell command without any pre-configured scope.
+Enables the shell_close command without any pre-configured scope.
 
 </td>
 </tr>
@@ -615,25 +783,12 @@ Denies the shell command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-ssh-authenticate`
+`ssh:deny-shell-close`
 
 </td>
 <td>
 
-Enables the ssh_authenticate command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-authenticate`
-
-</td>
-<td>
-
-Denies the ssh_authenticate command without any pre-configured scope.
+Denies the shell_close command without any pre-configured scope.
 
 </td>
 </tr>
@@ -641,25 +796,12 @@ Denies the ssh_authenticate command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-ssh-close-direct-tcpip`
+`ssh:allow-shell-open`
 
 </td>
 <td>
 
-Enables the ssh_close_direct_tcpip command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-close-direct-tcpip`
-
-</td>
-<td>
-
-Denies the ssh_close_direct_tcpip command without any pre-configured scope.
+Enables the shell_open command without any pre-configured scope.
 
 </td>
 </tr>
@@ -667,25 +809,12 @@ Denies the ssh_close_direct_tcpip command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-ssh-close-dynamic-port-forwarding`
+`ssh:deny-shell-open`
 
 </td>
 <td>
 
-Enables the ssh_close_dynamic_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-close-dynamic-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_close_dynamic_port_forwarding command without any pre-configured scope.
+Denies the shell_open command without any pre-configured scope.
 
 </td>
 </tr>
@@ -693,25 +822,12 @@ Denies the ssh_close_dynamic_port_forwarding command without any pre-configured 
 <tr>
 <td>
 
-`ssh:allow-ssh-close-local-port-forwarding`
+`ssh:allow-shell-resize`
 
 </td>
 <td>
 
-Enables the ssh_close_local_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-close-local-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_close_local_port_forwarding command without any pre-configured scope.
+Enables the shell_resize command without any pre-configured scope.
 
 </td>
 </tr>
@@ -719,25 +835,12 @@ Denies the ssh_close_local_port_forwarding command without any pre-configured sc
 <tr>
 <td>
 
-`ssh:allow-ssh-close-remote-port-forwarding`
+`ssh:deny-shell-resize`
 
 </td>
 <td>
 
-Enables the ssh_close_remote_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-close-remote-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_close_remote_port_forwarding command without any pre-configured scope.
+Denies the shell_resize command without any pre-configured scope.
 
 </td>
 </tr>
@@ -745,25 +848,12 @@ Denies the ssh_close_remote_port_forwarding command without any pre-configured s
 <tr>
 <td>
 
-`ssh:allow-ssh-connect`
+`ssh:allow-shell-send`
 
 </td>
 <td>
 
-Enables the ssh_connect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-connect`
-
-</td>
-<td>
-
-Denies the ssh_connect command without any pre-configured scope.
+Enables the shell_send command without any pre-configured scope.
 
 </td>
 </tr>
@@ -771,155 +861,12 @@ Denies the ssh_connect command without any pre-configured scope.
 <tr>
 <td>
 
-`ssh:allow-ssh-direct-tcpip`
+`ssh:deny-shell-send`
 
 </td>
 <td>
 
-Enables the ssh_direct_tcpip command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-direct-tcpip`
-
-</td>
-<td>
-
-Denies the ssh_direct_tcpip command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:allow-ssh-disconnect`
-
-</td>
-<td>
-
-Enables the ssh_disconnect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-disconnect`
-
-</td>
-<td>
-
-Denies the ssh_disconnect command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:allow-ssh-open-direct-tcpip`
-
-</td>
-<td>
-
-Enables the ssh_open_direct_tcpip command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-open-direct-tcpip`
-
-</td>
-<td>
-
-Denies the ssh_open_direct_tcpip command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:allow-ssh-open-dynamic-port-forwarding`
-
-</td>
-<td>
-
-Enables the ssh_open_dynamic_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-open-dynamic-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_open_dynamic_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:allow-ssh-open-local-port-forwarding`
-
-</td>
-<td>
-
-Enables the ssh_open_local_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-open-local-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_open_local_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:allow-ssh-open-remote-port-forwarding`
-
-</td>
-<td>
-
-Enables the ssh_open_remote_port_forwarding command without any pre-configured scope.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-`ssh:deny-ssh-open-remote-port-forwarding`
-
-</td>
-<td>
-
-Denies the ssh_open_remote_port_forwarding command without any pre-configured scope.
+Denies the shell_send command without any pre-configured scope.
 
 </td>
 </tr>

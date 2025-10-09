@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-port-forwarding-local-open"
+description = "Enables the port_forwarding_local_open command without any pre-configured scope."
+commands.allow = ["port_forwarding_local_open"]
+
+[[permission]]
+identifier = "deny-port-forwarding-local-open"
+description = "Denies the port_forwarding_local_open command without any pre-configured scope."
+commands.deny = ["port_forwarding_local_open"]

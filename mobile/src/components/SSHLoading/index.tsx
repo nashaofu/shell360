@@ -1,5 +1,5 @@
 import { Box, Icon, LinearProgress, SxProps, Theme } from '@mui/material';
-import { CheckServerKey } from 'tauri-plugin-ssh';
+import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 import { Host } from 'tauri-plugin-data';
 
 import ErrorInfo from './ErrorInfo';
@@ -10,7 +10,7 @@ type SSHLoadingProps = {
   error?: Error;
   sx?: SxProps<Theme>;
   onRefresh: () => unknown;
-  onRun: (checkServerKey?: CheckServerKey) => unknown;
+  onRun: (checkServerKey?: SSHSessionCheckServerKey) => unknown;
   onClose?: () => unknown;
 };
 

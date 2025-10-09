@@ -1,5 +1,5 @@
 import { Box, Button, ButtonGroup, Icon, styled } from '@mui/material';
-import { CheckServerKey } from 'tauri-plugin-ssh';
+import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 import { get } from 'lodash-es';
 
 import Dropdown from '@/components/Dropdown';
@@ -13,7 +13,7 @@ type SSHError = {
 type StatusInfoProps = {
   error?: Error;
   onRefresh: () => unknown;
-  onRun: (checkServerKey: CheckServerKey) => unknown;
+  onRun: (checkServerKey: SSHSessionCheckServerKey) => unknown;
   onClose?: () => unknown;
 };
 
@@ -88,7 +88,7 @@ const STATUS_BUTTONS = {
               {
                 label: 'Add and continue',
                 value: 'Add and continue',
-                onClick: () => onRun(CheckServerKey.AddAndContinue),
+                onClick: () => onRun(SSHSessionCheckServerKey.AddAndContinue),
               },
             ]}
             anchorOrigin={{
@@ -110,7 +110,7 @@ const STATUS_BUTTONS = {
               >
                 <Button
                   fullWidth
-                  onClick={() => onRun(CheckServerKey.Continue)}
+                  onClick={() => onRun(SSHSessionCheckServerKey.Continue)}
                 >
                   Continue
                 </Button>

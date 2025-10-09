@@ -295,88 +295,184 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "Enables the authenticate command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_close_dynamic command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-authenticate",
-          "markdownDescription": "Enables the authenticate command without any pre-configured scope."
+          "const": "allow-port-forwarding-close-dynamic",
+          "markdownDescription": "Enables the port_forwarding_close_dynamic command without any pre-configured scope."
         },
         {
-          "description": "Denies the authenticate command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_close_dynamic command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-authenticate",
-          "markdownDescription": "Denies the authenticate command without any pre-configured scope."
+          "const": "deny-port-forwarding-close-dynamic",
+          "markdownDescription": "Denies the port_forwarding_close_dynamic command without any pre-configured scope."
         },
         {
-          "description": "Enables the connect command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_close_local command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-connect",
-          "markdownDescription": "Enables the connect command without any pre-configured scope."
+          "const": "allow-port-forwarding-close-local",
+          "markdownDescription": "Enables the port_forwarding_close_local command without any pre-configured scope."
         },
         {
-          "description": "Denies the connect command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_close_local command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-connect",
-          "markdownDescription": "Denies the connect command without any pre-configured scope."
+          "const": "deny-port-forwarding-close-local",
+          "markdownDescription": "Denies the port_forwarding_close_local command without any pre-configured scope."
         },
         {
-          "description": "Enables the disconnect command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_close_remote command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-disconnect",
-          "markdownDescription": "Enables the disconnect command without any pre-configured scope."
+          "const": "allow-port-forwarding-close-remote",
+          "markdownDescription": "Enables the port_forwarding_close_remote command without any pre-configured scope."
         },
         {
-          "description": "Denies the disconnect command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_close_remote command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-disconnect",
-          "markdownDescription": "Denies the disconnect command without any pre-configured scope."
+          "const": "deny-port-forwarding-close-remote",
+          "markdownDescription": "Denies the port_forwarding_close_remote command without any pre-configured scope."
         },
         {
-          "description": "Enables the resize command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_dynamic_close command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-resize",
-          "markdownDescription": "Enables the resize command without any pre-configured scope."
+          "const": "allow-port-forwarding-dynamic-close",
+          "markdownDescription": "Enables the port_forwarding_dynamic_close command without any pre-configured scope."
         },
         {
-          "description": "Denies the resize command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_dynamic_close command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-resize",
-          "markdownDescription": "Denies the resize command without any pre-configured scope."
+          "const": "deny-port-forwarding-dynamic-close",
+          "markdownDescription": "Denies the port_forwarding_dynamic_close command without any pre-configured scope."
         },
         {
-          "description": "Enables the send command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_dynamic_open command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-send",
-          "markdownDescription": "Enables the send command without any pre-configured scope."
+          "const": "allow-port-forwarding-dynamic-open",
+          "markdownDescription": "Enables the port_forwarding_dynamic_open command without any pre-configured scope."
         },
         {
-          "description": "Denies the send command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_dynamic_open command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-send",
-          "markdownDescription": "Denies the send command without any pre-configured scope."
+          "const": "deny-port-forwarding-dynamic-open",
+          "markdownDescription": "Denies the port_forwarding_dynamic_open command without any pre-configured scope."
         },
         {
-          "description": "Enables the sftp command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_local_close command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-sftp",
-          "markdownDescription": "Enables the sftp command without any pre-configured scope."
+          "const": "allow-port-forwarding-local-close",
+          "markdownDescription": "Enables the port_forwarding_local_close command without any pre-configured scope."
         },
         {
-          "description": "Denies the sftp command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_local_close command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-sftp",
-          "markdownDescription": "Denies the sftp command without any pre-configured scope."
+          "const": "deny-port-forwarding-local-close",
+          "markdownDescription": "Denies the port_forwarding_local_close command without any pre-configured scope."
         },
         {
-          "description": "Enables the sftp_authenticate command without any pre-configured scope.",
+          "description": "Enables the port_forwarding_local_open command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-sftp-authenticate",
-          "markdownDescription": "Enables the sftp_authenticate command without any pre-configured scope."
+          "const": "allow-port-forwarding-local-open",
+          "markdownDescription": "Enables the port_forwarding_local_open command without any pre-configured scope."
         },
         {
-          "description": "Denies the sftp_authenticate command without any pre-configured scope.",
+          "description": "Denies the port_forwarding_local_open command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-sftp-authenticate",
-          "markdownDescription": "Denies the sftp_authenticate command without any pre-configured scope."
+          "const": "deny-port-forwarding-local-open",
+          "markdownDescription": "Denies the port_forwarding_local_open command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the port_forwarding_open_dynamic command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-port-forwarding-open-dynamic",
+          "markdownDescription": "Enables the port_forwarding_open_dynamic command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the port_forwarding_open_dynamic command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-port-forwarding-open-dynamic",
+          "markdownDescription": "Denies the port_forwarding_open_dynamic command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the port_forwarding_open_local command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-port-forwarding-open-local",
+          "markdownDescription": "Enables the port_forwarding_open_local command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the port_forwarding_open_local command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-port-forwarding-open-local",
+          "markdownDescription": "Denies the port_forwarding_open_local command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the port_forwarding_open_remote command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-port-forwarding-open-remote",
+          "markdownDescription": "Enables the port_forwarding_open_remote command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the port_forwarding_open_remote command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-port-forwarding-open-remote",
+          "markdownDescription": "Denies the port_forwarding_open_remote command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the port_forwarding_remote_close command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-port-forwarding-remote-close",
+          "markdownDescription": "Enables the port_forwarding_remote_close command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the port_forwarding_remote_close command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-port-forwarding-remote-close",
+          "markdownDescription": "Denies the port_forwarding_remote_close command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the port_forwarding_remote_open command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-port-forwarding-remote-open",
+          "markdownDescription": "Enables the port_forwarding_remote_open command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the port_forwarding_remote_open command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-port-forwarding-remote-open",
+          "markdownDescription": "Denies the port_forwarding_remote_open command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the session_authenticate command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-session-authenticate",
+          "markdownDescription": "Enables the session_authenticate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the session_authenticate command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-session-authenticate",
+          "markdownDescription": "Denies the session_authenticate command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the session_connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-session-connect",
+          "markdownDescription": "Enables the session_connect command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the session_connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-session-connect",
+          "markdownDescription": "Denies the session_connect command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the session_disconnect command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-session-disconnect",
+          "markdownDescription": "Enables the session_disconnect command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the session_disconnect command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-session-disconnect",
+          "markdownDescription": "Denies the session_disconnect command without any pre-configured scope."
         },
         {
           "description": "Enables the sftp_canonicalize command without any pre-configured scope.",
@@ -415,18 +511,6 @@
           "markdownDescription": "Denies the sftp_close command without any pre-configured scope."
         },
         {
-          "description": "Enables the sftp_connect command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-sftp-connect",
-          "markdownDescription": "Enables the sftp_connect command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the sftp_connect command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-sftp-connect",
-          "markdownDescription": "Denies the sftp_connect command without any pre-configured scope."
-        },
-        {
           "description": "Enables the sftp_create_dir command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sftp-create-dir",
@@ -451,18 +535,6 @@
           "markdownDescription": "Denies the sftp_create_file command without any pre-configured scope."
         },
         {
-          "description": "Enables the sftp_disconnect command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-sftp-disconnect",
-          "markdownDescription": "Enables the sftp_disconnect command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the sftp_disconnect command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-sftp-disconnect",
-          "markdownDescription": "Denies the sftp_disconnect command without any pre-configured scope."
-        },
-        {
           "description": "Enables the sftp_download_file command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sftp-download-file",
@@ -485,6 +557,18 @@
           "type": "string",
           "const": "deny-sftp-exists",
           "markdownDescription": "Denies the sftp_exists command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the sftp_open command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-open",
+          "markdownDescription": "Enables the sftp_open command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_open command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-open",
+          "markdownDescription": "Denies the sftp_open command without any pre-configured scope."
         },
         {
           "description": "Enables the sftp_read_dir command without any pre-configured scope.",
@@ -547,160 +631,52 @@
           "markdownDescription": "Denies the sftp_upload_file command without any pre-configured scope."
         },
         {
-          "description": "Enables the shell command without any pre-configured scope.",
+          "description": "Enables the shell_close command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-shell",
-          "markdownDescription": "Enables the shell command without any pre-configured scope."
+          "const": "allow-shell-close",
+          "markdownDescription": "Enables the shell_close command without any pre-configured scope."
         },
         {
-          "description": "Denies the shell command without any pre-configured scope.",
+          "description": "Denies the shell_close command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-shell",
-          "markdownDescription": "Denies the shell command without any pre-configured scope."
+          "const": "deny-shell-close",
+          "markdownDescription": "Denies the shell_close command without any pre-configured scope."
         },
         {
-          "description": "Enables the ssh_authenticate command without any pre-configured scope.",
+          "description": "Enables the shell_open command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-ssh-authenticate",
-          "markdownDescription": "Enables the ssh_authenticate command without any pre-configured scope."
+          "const": "allow-shell-open",
+          "markdownDescription": "Enables the shell_open command without any pre-configured scope."
         },
         {
-          "description": "Denies the ssh_authenticate command without any pre-configured scope.",
+          "description": "Denies the shell_open command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-ssh-authenticate",
-          "markdownDescription": "Denies the ssh_authenticate command without any pre-configured scope."
+          "const": "deny-shell-open",
+          "markdownDescription": "Denies the shell_open command without any pre-configured scope."
         },
         {
-          "description": "Enables the ssh_close_direct_tcpip command without any pre-configured scope.",
+          "description": "Enables the shell_resize command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-ssh-close-direct-tcpip",
-          "markdownDescription": "Enables the ssh_close_direct_tcpip command without any pre-configured scope."
+          "const": "allow-shell-resize",
+          "markdownDescription": "Enables the shell_resize command without any pre-configured scope."
         },
         {
-          "description": "Denies the ssh_close_direct_tcpip command without any pre-configured scope.",
+          "description": "Denies the shell_resize command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-ssh-close-direct-tcpip",
-          "markdownDescription": "Denies the ssh_close_direct_tcpip command without any pre-configured scope."
+          "const": "deny-shell-resize",
+          "markdownDescription": "Denies the shell_resize command without any pre-configured scope."
         },
         {
-          "description": "Enables the ssh_close_dynamic_port_forwarding command without any pre-configured scope.",
+          "description": "Enables the shell_send command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-ssh-close-dynamic-port-forwarding",
-          "markdownDescription": "Enables the ssh_close_dynamic_port_forwarding command without any pre-configured scope."
+          "const": "allow-shell-send",
+          "markdownDescription": "Enables the shell_send command without any pre-configured scope."
         },
         {
-          "description": "Denies the ssh_close_dynamic_port_forwarding command without any pre-configured scope.",
+          "description": "Denies the shell_send command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-ssh-close-dynamic-port-forwarding",
-          "markdownDescription": "Denies the ssh_close_dynamic_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_close_local_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-close-local-port-forwarding",
-          "markdownDescription": "Enables the ssh_close_local_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_close_local_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-close-local-port-forwarding",
-          "markdownDescription": "Denies the ssh_close_local_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_close_remote_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-close-remote-port-forwarding",
-          "markdownDescription": "Enables the ssh_close_remote_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_close_remote_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-close-remote-port-forwarding",
-          "markdownDescription": "Denies the ssh_close_remote_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_connect command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-connect",
-          "markdownDescription": "Enables the ssh_connect command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_connect command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-connect",
-          "markdownDescription": "Denies the ssh_connect command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_direct_tcpip command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-direct-tcpip",
-          "markdownDescription": "Enables the ssh_direct_tcpip command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_direct_tcpip command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-direct-tcpip",
-          "markdownDescription": "Denies the ssh_direct_tcpip command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_disconnect command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-disconnect",
-          "markdownDescription": "Enables the ssh_disconnect command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_disconnect command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-disconnect",
-          "markdownDescription": "Denies the ssh_disconnect command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_open_direct_tcpip command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-open-direct-tcpip",
-          "markdownDescription": "Enables the ssh_open_direct_tcpip command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_open_direct_tcpip command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-open-direct-tcpip",
-          "markdownDescription": "Denies the ssh_open_direct_tcpip command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_open_dynamic_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-open-dynamic-port-forwarding",
-          "markdownDescription": "Enables the ssh_open_dynamic_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_open_dynamic_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-open-dynamic-port-forwarding",
-          "markdownDescription": "Denies the ssh_open_dynamic_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_open_local_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-open-local-port-forwarding",
-          "markdownDescription": "Enables the ssh_open_local_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_open_local_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-open-local-port-forwarding",
-          "markdownDescription": "Denies the ssh_open_local_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the ssh_open_remote_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "allow-ssh-open-remote-port-forwarding",
-          "markdownDescription": "Enables the ssh_open_remote_port_forwarding command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the ssh_open_remote_port_forwarding command without any pre-configured scope.",
-          "type": "string",
-          "const": "deny-ssh-open-remote-port-forwarding",
-          "markdownDescription": "Denies the ssh_open_remote_port_forwarding command without any pre-configured scope."
+          "const": "deny-shell-send",
+          "markdownDescription": "Denies the shell_send command without any pre-configured scope."
         },
         {
           "description": "Enables the ssh_resize command without any pre-configured scope.",
@@ -739,10 +715,10 @@
           "markdownDescription": "Denies the ssh_shell command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-ssh-connect`\n- `allow-ssh-authenticate`\n- `allow-ssh-shell`\n- `allow-ssh-disconnect`\n- `allow-ssh-resize`\n- `allow-ssh-send`\n- `allow-ssh-open-local-port-forwarding`\n- `allow-ssh-close-local-port-forwarding`\n- `allow-ssh-open-remote-port-forwarding`\n- `allow-ssh-close-remote-port-forwarding`\n- `allow-ssh-open-dynamic-port-forwarding`\n- `allow-ssh-close-dynamic-port-forwarding`\n- `allow-sftp-connect`\n- `allow-sftp-authenticate`\n- `allow-sftp-channel`\n- `allow-sftp-disconnect`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-ssh-connect`\n- `allow-ssh-authenticate`\n- `allow-ssh-shell`\n- `allow-ssh-disconnect`\n- `allow-ssh-resize`\n- `allow-ssh-send`\n- `allow-ssh-open-local-port-forwarding`\n- `allow-ssh-close-local-port-forwarding`\n- `allow-ssh-open-remote-port-forwarding`\n- `allow-ssh-close-remote-port-forwarding`\n- `allow-ssh-open-dynamic-port-forwarding`\n- `allow-ssh-close-dynamic-port-forwarding`\n- `allow-sftp-connect`\n- `allow-sftp-authenticate`\n- `allow-sftp-channel`\n- `allow-sftp-disconnect`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`"
         }
       ]
     }

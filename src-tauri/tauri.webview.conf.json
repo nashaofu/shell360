@@ -1,16 +1,16 @@
 {
-    "build": {
-        "beforeDevCommand": "pnpm --filter desktop run dev --host",
-        "devUrl": "http://localhost:1420",
-        "beforeBuildCommand": "pnpm --filter desktop run build",
-        "frontendDist": "../desktop/dist"
-    },
-    "bundle": {
-        "windows": {
-            "webviewInstallMode": {
-                "silent": true,
-                "type": "offlineInstaller"
-            }
-        }
+  "build": {
+    "beforeDevCommand": "pnpm --filter desktop run dev --host",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm --filter desktop run build",
+    "frontendDist": "../desktop/dist"
+  },
+  "bundle": {
+    "windows": {
+      "webviewInstallMode": {
+        "silent": true,
+        "type": "offlineInstaller"
+      }
     }
+  }
 }

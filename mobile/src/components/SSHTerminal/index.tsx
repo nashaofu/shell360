@@ -1,6 +1,8 @@
 import { Box, SxProps, Theme } from '@mui/material';
-import { useSSH, XTerminal, TERMINAL_THEMES_MAP } from 'shared';
+import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession } from 'shared';
 import { Host } from 'tauri-plugin-data';
+import { useMemoizedFn } from 'ahooks';
+import { useLayoutEffect } from 'react';
 
 import openUrl from '@/utils/openUrl';
 
@@ -28,16 +30,47 @@ export default function SSHTerminal({
   onLoadingChange,
 }: SSHTerminalProps) {
   const {
+    session,
+    loading: sessionLoading,
+    error: sessionError,
+    runAsync: sessionRunAsync,
+    refreshAsync: sessionRefreshAsync,
+  } = useSession({ host, onDisconnect: onClose });
+
+  const {
     onTerminalReady,
     onTerminalData,
     onTerminalBinaryData,
     onTerminalResize,
     terminal,
-    loading,
-    error,
-    run,
-    refresh,
-  } = useSSH({ host, onClose, onLoadingChange });
+    loading: sshLoading,
+    error: sshError,
+    runAsync: sshRunAsync,
+    refreshAsync: sshRefreshAsync,
+  } = useShell({ session, onClose });
+
+  const run = useMemoizedFn(
+    async (checkServerKey?: SSHSessionCheckServerKey) => {
+      await sessionRunAsync(checkServerKey);
+      await sshRunAsync();
+    }
+  );
+
+  const refresh = useMemoizedFn(async () => {
+    await sessionRefreshAsync();
+    await sshRefreshAsync();
+  });
+
+  const error = sessionError || sshError;
+  const loading = sessionLoading || sshLoading;
+
+  const memoizedOnLoadingChange = useMemoizedFn((isLoading: boolean) => {
+    onLoadingChange(isLoading);
+  });
+
+  useLayoutEffect(() => {
+    memoizedOnLoadingChange(loading || !!error);
+  }, [memoizedOnLoadingChange, loading, error]);
 
   return (
     <Box
@@ -105,7 +138,9 @@ export default function SSHTerminal({
           onClose={onClose}
         />
       )}
-      {!loading && !error && <Sftp host={host}></Sftp>}
+      {!sessionLoading && !sessionError && session && (
+        <Sftp session={session}></Sftp>
+      )}
     </Box>
   );
 }

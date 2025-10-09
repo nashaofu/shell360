@@ -7,8 +7,8 @@ import {
   IconButton,
   Typography,
 } from '@mui/material';
+import { Loading } from 'shared';
 
-import Loading from '@/components/Loading';
 import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
 
 type PageDrawerProps = {

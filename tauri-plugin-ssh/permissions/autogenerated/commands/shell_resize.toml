@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-shell-resize"
+description = "Enables the shell_resize command without any pre-configured scope."
+commands.allow = ["shell_resize"]
+
+[[permission]]
+identifier = "deny-shell-resize"
+description = "Denies the shell_resize command without any pre-configured scope."
+commands.deny = ["shell_resize"]

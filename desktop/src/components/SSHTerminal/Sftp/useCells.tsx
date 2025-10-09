@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { SFTPFile, SFTPFileType } from 'tauri-plugin-ssh';
+import { SFTPFile, SSHSftpFileType } from 'tauri-plugin-ssh';
 import dayjs from 'dayjs';
 import { Box, Icon, IconButton, Typography } from '@mui/material';
 
@@ -59,7 +59,7 @@ export default function useCells({
           color: 'warning',
         },
         onOk: () => {
-          if (row.fileType === SFTPFileType.Dir) {
+          if (row.fileType === SSHSftpFileType.Dir) {
             removeDir(row);
           } else {
             removeFile(row);
@@ -80,10 +80,10 @@ export default function useCells({
       minWidth: 320,
       render: (item: SFTPFile) => {
         const icons = {
-          [SFTPFileType.Dir]: 'icon-folder',
-          [SFTPFileType.File]: 'icon-file',
-          [SFTPFileType.Symlink]: 'icon-symlink',
-          [SFTPFileType.Other]: 'icon-file',
+          [SSHSftpFileType.Dir]: 'icon-folder',
+          [SSHSftpFileType.File]: 'icon-file',
+          [SSHSftpFileType.Symlink]: 'icon-symlink',
+          [SSHSftpFileType.Other]: 'icon-file',
         };
 
         return (
@@ -168,7 +168,7 @@ export default function useCells({
       minWidth: 120,
       compare: (a: SFTPFile, b: SFTPFile) => b.size - a.size,
       render: (item: SFTPFile) => {
-        if (item.fileType !== SFTPFileType.File) {
+        if (item.fileType !== SSHSftpFileType.File) {
           return '-';
         }
 
@@ -220,7 +220,7 @@ export default function useCells({
           }}
         >
           <IconButton
-            disabled={item.fileType !== SFTPFileType.File}
+            disabled={item.fileType !== SSHSftpFileType.File}
             onClick={() => downloadFile(item)}
           >
             <Icon className="icon-file-download"></Icon>

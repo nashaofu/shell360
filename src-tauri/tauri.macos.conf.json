@@ -1,22 +1,22 @@
 {
-    "build": {
-        "beforeDevCommand": "pnpm --filter desktop run dev --host",
-        "devUrl": "http://localhost:1420",
-        "beforeBuildCommand": "pnpm --filter desktop run build",
-        "frontendDist": "../desktop/dist"
-    },
-    "app": {
-        "windows": [
-            {
-                "title": "Shell360",
-                "width": 1200,
-                "height": 720,
-                "minWidth": 680,
-                "minHeight": 480,
-                "center": true,
-                "hiddenTitle": true,
-                "titleBarStyle": "Overlay"
-            }
-        ]
-    }
+  "build": {
+    "beforeDevCommand": "pnpm --filter desktop run dev --host",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm --filter desktop run build",
+    "frontendDist": "../desktop/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Shell360",
+        "width": 1200,
+        "height": 720,
+        "minWidth": 680,
+        "minHeight": 480,
+        "center": true,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay"
+      }
+    ]
+  }
 }

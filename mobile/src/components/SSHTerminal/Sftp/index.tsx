@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   AppBar,
   Box,
@@ -15,11 +15,9 @@ import {
   Typography,
 } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { CheckServerKey, SFTP, SFTPFile, SFTPFileType } from 'tauri-plugin-ssh';
-import { Host } from 'tauri-plugin-data';
-import { useKeys } from 'shared';
+import { SFTPFile, SSHSftpFileType } from 'tauri-plugin-ssh';
+import { Loading, useSftp } from 'shared';
 
-import Loading from '@/components/Loading';
 import useModal from '@/hooks/useModal';
 import useMessage from '@/hooks/useMessage';
 import Dropdown from '@/components/Dropdown';
@@ -35,13 +33,11 @@ import useRename from './useRename';
 import useCreate, { CreateType } from './useCreate';
 
 type SftpProps = {
-  host: Host;
+  session: SSHSession;
 };
 
-export default function Sftp({ host }: SftpProps) {
-  const { data: keys } = useKeys();
+export default function Sftp({ session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const sftpRef = useRef<SFTP>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SFTPFile>('name');
@@ -51,47 +47,20 @@ export default function Sftp({ host }: SftpProps) {
   const [keyword, setKeyword] = useState('');
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
 
+  const { sftpRef, loading: initLoading } = useSftp({
+    session,
+    onSuccess: async (sftp) => {
+      const dirname = await sftp.sftpCanonicalize('.');
+      setDirname(dirname);
+    },
+  });
+
   const onSort = useCallback(
     (orderBy: keyof SFTPFile, order: SftpTableOrder) => {
       setOrderBy(orderBy);
       setOrder(order);
     },
     []
-  );
-
-  const { loading: initLoading, run: init } = useRequest(
-    async () => {
-      const sftp = sftpRef.current;
-      if (!sftp) {
-        throw new Error('sftp has not been initialized');
-      }
-      await sftp.connect(
-        {
-          hostname: host.hostname,
-          port: host.port,
-        },
-        CheckServerKey.Continue
-      );
-
-      const key = keys.find((item) => item.id === host.keyId);
-      await sftp.authenticate({
-        username: host.username,
-        password: host.password,
-        privateKey: key?.privateKey,
-        passphrase: key?.passphrase,
-      });
-
-      await sftp.channel();
-      return sftp.sftpCanonicalize('.');
-    },
-    {
-      manual: true,
-      onSuccess: (dirname) => {
-        if (dirname) {
-          setDirname(dirname);
-        }
-      },
-    }
   );
 
   const {
@@ -123,6 +92,7 @@ export default function Sftp({ host }: SftpProps) {
   );
 
   const {
+    progress,
     uploadFile,
     uploadFileLoading,
     downloadFile,
@@ -140,7 +110,7 @@ export default function Sftp({ host }: SftpProps) {
   });
 
   const onSelectDir = useCallback((item: SFTPFile) => {
-    if (item.fileType === SFTPFileType.Dir) {
+    if (item.fileType === SSHSftpFileType.Dir) {
       setDirname(item.path);
     }
   }, []);
@@ -267,17 +237,6 @@ export default function Sftp({ host }: SftpProps) {
     removeFileLoading ||
     createLoading;
 
-  useEffect(() => {
-    const sftp = new SFTP();
-    sftpRef.current = sftp;
-    init();
-    return () => {
-      sftp?.disconnect();
-      sftp?.dispose();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <>
       <Box
@@ -345,7 +304,8 @@ export default function Sftp({ host }: SftpProps) {
               overflow: 'hidden',
             }}
             loading={isLoading}
-            size={32}
+            size={48}
+            progress={progress}
           >
             <Box
               sx={{

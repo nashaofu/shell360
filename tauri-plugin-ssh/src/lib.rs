@@ -1,10 +1,10 @@
+pub(crate) mod commands;
 pub(crate) mod error;
-pub(crate) mod sftp;
-pub(crate) mod ssh;
+pub(crate) mod ssh_client;
+pub(crate) mod ssh_manager;
 pub(crate) mod utils;
 
-use sftp::sftp_manager::SFTPManager;
-use ssh::ssh_manager::SSHManager;
+use ssh_manager::SSHManager;
 use tauri::{
   Manager, Runtime,
   plugin::{Builder, TauriPlugin},
@@ -16,36 +16,35 @@ pub use error::{SSHError, SSHResult};
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
   Builder::new("ssh")
     .invoke_handler(tauri::generate_handler![
-      ssh::commands::ssh_connect,
-      ssh::commands::ssh_authenticate,
-      ssh::commands::ssh_shell,
-      ssh::commands::ssh_disconnect,
-      ssh::commands::ssh_resize,
-      ssh::commands::ssh_send,
-      ssh::commands::ssh_open_local_port_forwarding,
-      ssh::commands::ssh_close_local_port_forwarding,
-      ssh::commands::ssh_open_remote_port_forwarding,
-      ssh::commands::ssh_close_remote_port_forwarding,
-      ssh::commands::ssh_open_dynamic_port_forwarding,
-      ssh::commands::ssh_close_dynamic_port_forwarding,
-      sftp::commands::sftp_connect,
-      sftp::commands::sftp_authenticate,
-      sftp::commands::sftp_channel,
-      sftp::commands::sftp_disconnect,
-      sftp::commands::sftp_read_dir,
-      sftp::commands::sftp_upload_file,
-      sftp::commands::sftp_download_file,
-      sftp::commands::sftp_create_file,
-      sftp::commands::sftp_create_dir,
-      sftp::commands::sftp_remove_dir,
-      sftp::commands::sftp_remove_file,
-      sftp::commands::sftp_rename,
-      sftp::commands::sftp_exists,
-      sftp::commands::sftp_canonicalize,
+      commands::session::session_connect,
+      commands::session::session_authenticate,
+      commands::session::session_disconnect,
+      commands::shell::shell_open,
+      commands::shell::shell_close,
+      commands::shell::shell_resize,
+      commands::shell::shell_send,
+      commands::port_forwarding::port_forwarding_local_open,
+      commands::port_forwarding::port_forwarding_local_close,
+      commands::port_forwarding::port_forwarding_remote_open,
+      commands::port_forwarding::port_forwarding_remote_close,
+      commands::port_forwarding::port_forwarding_dynamic_open,
+      commands::port_forwarding::port_forwarding_dynamic_close,
+      commands::sftp::sftp_open,
+      commands::sftp::sftp_close,
+      commands::sftp::sftp_read_dir,
+      commands::sftp::sftp_upload_file,
+      commands::sftp::sftp_download_file,
+      commands::sftp::sftp_create_file,
+      commands::sftp::sftp_create_dir,
+      commands::sftp::sftp_remove_dir,
+      commands::sftp::sftp_remove_file,
+      commands::sftp::sftp_rename,
+      commands::sftp::sftp_exists,
+      commands::sftp::sftp_canonicalize,
     ])
     .setup(|app, _api| {
-      app.manage(SSHManager::init(app.clone()));
-      app.manage(SFTPManager::default());
+      app.manage(SSHManager::<R>::init());
+      // app.manage(SFTPManager::default());
 
       Ok(())
     })

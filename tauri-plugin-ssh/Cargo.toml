@@ -11,12 +11,8 @@ links = "tauri-plugin-ssh"
 tauri = { workspace = true, features = [] }
 serde.workspace = true
 thiserror.workspace = true
-russh = { version = "0.54.4", default-features = false, features = [
-  "flate2",
-  "ring",
-  "rsa",
-] }
-uuid = { version = "1.18.1", features = ["serde"] }
+russh = { version = "0.54.5", default-features = false, features = ["flate2", "ring", "rsa"] }
+uuid = { version = "1.18.1", features = ["serde", "v4"] }
 async-trait = "0.1.89"
 tokio = { version = "1.47.1", features = ["full"] }
 serde_json.workspace = true

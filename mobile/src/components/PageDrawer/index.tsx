@@ -8,8 +8,8 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
+import { Loading } from 'shared';
 
-import Loading from '@/components/Loading';
 import overlay from '@/utils/overlay';
 
 type PageDrawerProps = {

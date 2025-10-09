@@ -21,13 +21,13 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
-    "uuid": "^12.0.0"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.4",
-    "@types/uuid": "^10.0.0",
-    "rollup": "^4.50.0",
+    "@types/uuid": "^11.0.0",
+    "rollup": "^4.52.4",
     "tslib": "^2.8.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }

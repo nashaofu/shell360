@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-port-forwarding-open-remote"
+description = "Enables the port_forwarding_open_remote command without any pre-configured scope."
+commands.allow = ["port_forwarding_open_remote"]
+
+[[permission]]
+identifier = "deny-port-forwarding-open-remote"
+description = "Denies the port_forwarding_open_remote command without any pre-configured scope."
+commands.deny = ["port_forwarding_open_remote"]

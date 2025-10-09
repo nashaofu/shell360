@@ -3,10 +3,10 @@ import { useRequest } from 'ahooks';
 import { KeyboardEvent, useCallback, useState } from 'react';
 import { loadCryptoByPassword, resetCrypto } from 'tauri-plugin-data';
 import { useSetAtom } from 'jotai';
+import { Loading } from 'shared';
 
 import TextFieldPassword from '@/components/TextFieldPassword';
 import useMessage from '@/hooks/useMessage';
-import Loading from '@/components/Loading';
 import useModal from '@/hooks/useModal';
 import { authAtom } from '@/atom/authAtom';
 

@@ -1,3 +1,4 @@
-export * from './ssh'
-export * from './sftp'
-export * from './types'
+export * from './shell';
+export * from './sftp';
+export * from './session';
+export * from './portForwarding';

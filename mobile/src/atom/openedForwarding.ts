@@ -1,9 +1,8 @@
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { v4 as uuidV4 } from 'uuid';
-import { SSH } from 'tauri-plugin-ssh';
+import { SSHPortForwarding } from 'tauri-plugin-ssh';
 import { PortForwarding } from 'tauri-plugin-data';
-
 
 export enum OpenedForwardingStatus {
   Pending = 'Pending',
@@ -14,9 +13,9 @@ export enum OpenedForwardingStatus {
 export type OpenedForwarding = {
   uuid: string;
   portForwarding: PortForwarding;
-  ssh: SSH,
+  ssh: SSHPortForwarding;
   status: OpenedForwardingStatus;
-  error?: unknown
+  error?: unknown;
 };
 
 export const openedForwardingAtom = atom<OpenedForwarding[]>([]);
@@ -33,7 +32,7 @@ export function useOpenedForwardingAtomWithApi() {
       state,
       add: (
         portForwarding: PortForwarding,
-        ssh: SSH
+        ssh: SSHPortForwarding
       ): [OpenedForwarding, OpenedForwarding[]] => {
         const uuid = uuidV4();
 
@@ -42,7 +41,7 @@ export function useOpenedForwardingAtomWithApi() {
           portForwarding,
           ssh,
           status: OpenedForwardingStatus.Pending,
-          error: undefined
+          error: undefined,
         };
 
         const items = [...state, item];

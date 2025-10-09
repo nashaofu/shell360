@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -26,7 +26,7 @@ import AddHost from './AddHost';
 
 export default function Hosts() {
   const [keyword, setKeyword] = useState('');
-  const [selectedHost, setSelectedHost] = useState<Host>();
+  const selectedHostRef = useRef<Host>();
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
   const navigate = useNavigate();
@@ -78,8 +78,8 @@ export default function Hosts() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddHost(true);
-          setEditHost(selectedHost);
-          setSelectedHost(undefined);
+          setEditHost(selectedHostRef.current);
+          selectedHostRef.current = undefined;
         },
       },
       {
@@ -93,7 +93,8 @@ export default function Hosts() {
         ),
         value: 'Delete',
         onClick: () => {
-          setSelectedHost(undefined);
+          const selectedHost = selectedHostRef.current;
+          selectedHostRef.current = undefined;
 
           if (!selectedHost) {
             return;
@@ -127,7 +128,7 @@ export default function Hosts() {
         },
       },
     ],
-    [selectedHost, modal, refreshHosts, message]
+    [modal, refreshHosts, message]
   );
 
   return (
@@ -194,7 +195,7 @@ export default function Hosts() {
                 {({ onChangeOpen }) => (
                   <IconButton
                     onClick={(event) => {
-                      setSelectedHost(item);
+                      selectedHostRef.current = item;
                       onChangeOpen(event.currentTarget);
                     }}
                   >

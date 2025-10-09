@@ -23,6 +23,7 @@ import {
 import dayjs from 'dayjs';
 import { get } from 'lodash-es';
 import { useAtomValue } from 'jotai';
+import { Loading } from 'shared';
 
 import {
   useIsShowPaywallAtom,
@@ -31,7 +32,6 @@ import {
   useLoadableCustomerInfoAtom,
 } from '@/atom/iap';
 import { themeAtom } from '@/atom/themeAtom';
-import Loading from '@/components/Loading';
 
 import Buy from './Buy';
 

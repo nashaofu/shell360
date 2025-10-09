@@ -1,12 +1,12 @@
 import { useRequest } from 'ahooks';
 import { MutableRefObject, useCallback, useEffect, useState } from 'react';
-import { SFTP, SFTPFile } from 'tauri-plugin-ssh';
+import { SSHSftp, SFTPFile } from 'tauri-plugin-ssh';
 
 import useMessage from '@/hooks/useMessage';
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
-  sftpRef: MutableRefObject<SFTP | null>;
+  sftpRef: MutableRefObject<SSHSftp | null>;
   files?: SFTPFile[];
   refreshDir: () => unknown;
 };

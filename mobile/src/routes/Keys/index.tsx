@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Box,
   ButtonGroup,
@@ -27,7 +27,7 @@ import GenerateKey from './GenerateKey';
 
 export default function Keys() {
   const [keyword, setKeyword] = useState('');
-  const [selectedKey, setSelectedKey] = useState<Key>();
+  const selectedKeyRef = useRef<Key>();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -112,8 +112,8 @@ export default function Keys() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddKey(true);
-          setEditKey(selectedKey);
-          setSelectedKey(undefined);
+          setEditKey(selectedKeyRef.current);
+          selectedKeyRef.current = undefined;
         },
       },
       {
@@ -127,7 +127,8 @@ export default function Keys() {
         ),
         value: 'Delete',
         onClick: () => {
-          setSelectedKey(undefined);
+          const selectedKey = selectedKeyRef.current;
+          selectedKeyRef.current = undefined;
           if (!selectedKey) {
             return;
           }
@@ -158,7 +159,7 @@ export default function Keys() {
         },
       },
     ],
-    [message, modal, refreshKeys, selectedKey]
+    [message, modal, refreshKeys]
   );
 
   return (
@@ -263,7 +264,7 @@ export default function Keys() {
                   {({ onChangeOpen }) => (
                     <IconButton
                       onClick={(event) => {
-                        setSelectedKey(item);
+                        selectedKeyRef.current = item;
                         onChangeOpen(event.currentTarget);
                       }}
                     >
