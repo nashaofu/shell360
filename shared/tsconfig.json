@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.app.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "es2021",
     "module": "esnext",
@@ -14,6 +14,7 @@
     "declarationDir": "dist",
     "emitDeclarationOnly": true,
     "noEmit": false,
+    "composite": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
