@@ -12,7 +12,7 @@ import {
   useTheme,
   darken,
 } from '@mui/material';
-import { TERMINAL_THEMES, TERMINAL_THEMES_MAP } from 'shared';
+import { TERMINAL_THEMES_MAP } from 'shared';
 
 import SSHTerminal from '@/components/SSHTerminal';
 import { TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
@@ -83,18 +83,20 @@ export default function Terminals() {
       return globalTheme;
     }
 
+    if (activeTerminal.loading) {
+      return globalTheme;
+    }
+
     const defaultBackground = globalTheme.palette.background.default;
-    const theme =
-      TERMINAL_THEMES_MAP.get(activeTerminal.host.terminalSettings?.theme) ??
-      TERMINAL_THEMES[0];
-    const bgColor =
-      activeTerminal.loading === true
-        ? darken(theme.theme.background ?? defaultBackground, 0.48)
-        : defaultBackground;
+    const theme = TERMINAL_THEMES_MAP.get(
+      activeTerminal.host.terminalSettings?.theme
+    );
+
+    const bgColor = darken(theme?.theme.background ?? defaultBackground, 0.52);
 
     return createTheme({
       palette: {
-        mode: 'dark',
+        mode: globalTheme.palette.mode,
         text: {
           primary: globalTheme.palette.getContrastText(bgColor),
         },
