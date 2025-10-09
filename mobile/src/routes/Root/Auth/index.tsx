@@ -19,6 +19,7 @@ export default function Auth({ children }: AuthProps) {
     return (
       <Box
         sx={{
+          height: '100%',
           flexGrow: 1,
           flexShrink: 0,
           display: 'flex',

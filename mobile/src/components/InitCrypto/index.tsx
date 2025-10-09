@@ -59,7 +59,14 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
   const loading = initCryptoPasswordLoading;
 
   return (
-    <Dialog open={open}>
+    <Dialog
+      open={open}
+      sx={{
+        '.MuiDialog-container': {
+          paddingTop: 'env(safe-area-inset-top)',
+        },
+      }}
+    >
       <DialogTitle>Initialize Crypto</DialogTitle>
       <Loading loading={loading} size={48}>
         <DialogContent>

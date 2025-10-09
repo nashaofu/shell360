@@ -386,7 +386,14 @@ export default function PortForwardings() {
         onCancel={onAddPortForwardingClose}
       ></AddPortForwarding>
 
-      <Dialog open={!!currentConnectingForwarding}>
+      <Dialog
+        open={!!currentConnectingForwarding}
+        sx={{
+          '.MuiDialog-container': {
+            paddingTop: 'env(safe-area-inset-top)',
+          },
+        }}
+      >
         {currentConnectingForwarding && currentConnectingForwardingHost && (
           <SSHLoading
             host={currentConnectingForwardingHost}

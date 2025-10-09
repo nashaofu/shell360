@@ -47,7 +47,7 @@ export default function ChangeCryptoPassword({
       onSuccess: () => {
         message.success({
           message: 'Change crypto password success',
-        })
+        });
         onOk();
       },
       onError: () => {
@@ -66,7 +66,14 @@ export default function ChangeCryptoPassword({
   }, [open, formApi]);
 
   return (
-    <Dialog open={open}>
+    <Dialog
+      open={open}
+      sx={{
+        '.MuiDialog-container': {
+          paddingTop: 'env(safe-area-inset-top)',
+        },
+      }}
+    >
       <DialogTitle>Change Crypto Password</DialogTitle>
       <Loading loading={loading} size={32}>
         <DialogContent>

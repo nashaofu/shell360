@@ -59,6 +59,11 @@ export default function HookModal({
         maxWidth={maxWidth}
         open={open}
         onClose={onCancel}
+        sx={{
+          '.MuiDialog-container': {
+            paddingTop: 'env(safe-area-inset-top)',
+          },
+        }}
       >
         <DialogTitle
           sx={{

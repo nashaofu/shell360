@@ -128,7 +128,6 @@ export default function Terminals() {
           position="static"
           sx={{
             paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
           <Toolbar>

@@ -296,18 +296,15 @@ export default function Sftp({ host }: SftpProps) {
         fullWidth
         fullScreen
         sx={{
+          '.MuiDialog-container': {
+            paddingTop: 'env(safe-area-inset-top)',
+          },
           '.MuiDialog-paper': {
             maxWidth: 880,
           },
         }}
       >
-        <AppBar
-          position="static"
-          sx={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-        >
+        <AppBar position="static">
           <Toolbar>
             <Typography
               sx={{

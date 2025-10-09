@@ -99,6 +99,11 @@ export default function Subscription() {
         fullWidth
         fullScreen={windowWidth < 580}
         TransitionComponent={Transition}
+        sx={{
+          '.MuiDialog-container': {
+            paddingTop: 'env(safe-area-inset-top)',
+          },
+        }}
       >
         <AppBar position="static">
           <Toolbar>
