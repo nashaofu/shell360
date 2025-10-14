@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { SSHSession, SSHSftp } from "tauri-plugin-ssh";
-import { useRequest, useUnmount } from "ahooks";
+import { useRef } from 'react';
+import { SSHSession, SSHSftp } from 'tauri-plugin-ssh';
+import { useRequest, useUnmount } from 'ahooks';
 
 export interface UseSftpOpts {
   session?: SSHSession;
@@ -13,7 +13,7 @@ export function useSftp({ session, onSuccess }: UseSftpOpts) {
   const { loading, error, run, runAsync, refresh, refreshAsync } = useRequest(
     async () => {
       if (!session) {
-        throw new Error("session is undefined");
+        throw new Error('session is undefined');
       }
 
       sftpRef.current?.close();

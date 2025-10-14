@@ -37,3 +37,7 @@ input {
     display: none;
   }
 }
+
+.notistack-snackbar-root {
+  padding-top: env(safe-area-inset-top);
+}

@@ -57,7 +57,14 @@ export default function App() {
   const modalsAtomValue = useModalsAtomValue();
 
   return (
-    <SnackbarProvider dense>
+    <SnackbarProvider
+      dense
+      autoHideDuration={3000}
+      disableWindowBlurListener
+      classes={{
+        root: 'notistack-snackbar-root',
+      }}
+    >
       <ThemeProvider theme={theme}>
         <CssBaseline enableColorScheme>
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>

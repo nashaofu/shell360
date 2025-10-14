@@ -61,7 +61,7 @@ export default function App() {
   useAutoCheckUpdate();
 
   return (
-    <SnackbarProvider>
+    <SnackbarProvider autoHideDuration={3000} disableWindowBlurListener>
       <ThemeProvider theme={theme}>
         <CssBaseline enableColorScheme>
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>

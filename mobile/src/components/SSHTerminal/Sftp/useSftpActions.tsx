@@ -1,7 +1,7 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useRequest } from 'ahooks';
 import { MutableRefObject, useState } from 'react';
-import { SSHSftp, SFTPFile } from 'tauri-plugin-ssh';
+import { SSHSftp, SSHSftpFile } from 'tauri-plugin-ssh';
 import { Icon } from '@mui/material';
 
 import useMessage from '@/hooks/useMessage';
@@ -86,7 +86,7 @@ export default function useSftpActions({
   );
 
   const { loading: downloadFileLoading, run: downloadFile } = useRequest(
-    async ({ name, path }: SFTPFile) => {
+    async ({ name, path }: SSHSftpFile) => {
       const file = await save({
         defaultPath: name,
       });
@@ -123,7 +123,7 @@ export default function useSftpActions({
   );
 
   const { loading: removeFileLoading, run: removeFile } = useRequest(
-    async ({ path }: SFTPFile) => {
+    async ({ path }: SSHSftpFile) => {
       await sftpRef.current?.sftpRemoveFile(path);
     },
     {
@@ -141,7 +141,7 @@ export default function useSftpActions({
   );
 
   const { loading: removeDirLoading, run: removeDir } = useRequest(
-    async ({ path }: SFTPFile) => {
+    async ({ path }: SSHSftpFile) => {
       await sftpRef.current?.sftpRemoveDir(path);
     },
     {

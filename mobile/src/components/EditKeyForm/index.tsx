@@ -30,10 +30,10 @@ export default function EditKeyForm({ formApi }: EditKeyFormProps) {
 
     const text = await readTextFile(file);
 
-    formApi.setValue('name', file.name);
+    const filename = file.split(/[\\/]/).pop() || '';
+    formApi.setValue('name', filename);
     formApi.setValue('privateKey', text);
   }, [formApi]);
-
   return (
     <Box
       sx={{

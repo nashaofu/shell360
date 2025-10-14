@@ -1,13 +1,13 @@
 import { useRequest } from 'ahooks';
 import { MutableRefObject, useCallback, useEffect, useState } from 'react';
-import { SSHSftp, SFTPFile } from 'tauri-plugin-ssh';
+import { SSHSftp, SSHSftpFile } from 'tauri-plugin-ssh';
 
 import useMessage from '@/hooks/useMessage';
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
   sftpRef: MutableRefObject<SSHSftp | null>;
-  files?: SFTPFile[];
+  files?: SSHSftpFile[];
   refreshDir: () => unknown;
 };
 
@@ -18,7 +18,7 @@ export default function useRename({
   refreshDir,
 }: UseRenameOpts) {
   const [editingFilename, setEditingFilename] = useState<string>();
-  const [selectedFile, setSelectedFile] = useState<SFTPFile>();
+  const [selectedFile, setSelectedFile] = useState<SSHSftpFile>();
 
   const { loading: renameLoading, runAsync: rename } = useRequest(
     async (oldPath: string, newPath: string) => {
@@ -55,7 +55,7 @@ export default function useRename({
     setEditingFilename(val.replace('/', ''));
   }, []);
 
-  const onRename = useCallback((item: SFTPFile) => {
+  const onRename = useCallback((item: SSHSftpFile) => {
     const filename = item.path.split('/').pop();
     setEditingFilename(filename);
     setSelectedFile(item);

@@ -147,7 +147,7 @@ impl From<RusshSftpFileType> for SSHSftpFileType {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SFTPFile {
+pub struct SSHSftpFile {
   path: String,
   name: String,
   file_type: SSHSftpFileType,
@@ -167,18 +167,18 @@ pub async fn sftp_read_dir<R: Runtime>(
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_sftp_id: SSHSftpId,
   dirname: String,
-) -> SSHResult<Vec<SFTPFile>> {
+) -> SSHResult<Vec<SSHSftpFile>> {
   let sftps = ssh_manager.sftps.lock().await;
   let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
 
   let read_dir = sftp.read_dir(&dirname).await?;
-  let files: Vec<SFTPFile> = read_dir
+  let files: Vec<SSHSftpFile> = read_dir
     .map(|file| {
       let metadata = file.metadata();
       let name = file.file_name();
       let path = format!("{}/{}", dirname, name).replace("//", "/");
 
-      SFTPFile {
+      SSHSftpFile {
         path,
         name,
         file_type: file.file_type().into(),

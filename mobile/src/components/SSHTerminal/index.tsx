@@ -3,6 +3,7 @@ import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession } from 'shared';
 import { Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 import { useLayoutEffect } from 'react';
+import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 
 import openUrl from '@/utils/openUrl';
 

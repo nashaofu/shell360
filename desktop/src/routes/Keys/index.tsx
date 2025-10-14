@@ -26,7 +26,7 @@ import GenerateKey from './GenerateKey';
 
 export default function Keys() {
   const [keyword, setKeyword] = useState('');
-  const selectedKeyRef = useRef<Key>();
+  const selectedKeyRef = useRef<Key>(null);
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -78,8 +78,8 @@ export default function Keys() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddKey(true);
-          setEditKey(selectedKeyRef.current);
-          selectedKeyRef.current = undefined;
+          setEditKey(selectedKeyRef.current || undefined);
+          selectedKeyRef.current = null;
         },
       },
       {
@@ -94,7 +94,7 @@ export default function Keys() {
         value: 'Delete',
         onClick: () => {
           const selectedKey = selectedKeyRef.current;
-          selectedKeyRef.current = undefined;
+          selectedKeyRef.current = null;
 
           if (!selectedKey) {
             return;
@@ -126,7 +126,7 @@ export default function Keys() {
         },
       },
     ],
-    [modal, refreshKeys, message]
+    [modal, refreshKeys, message, selectedKeyRef]
   );
 
   return (

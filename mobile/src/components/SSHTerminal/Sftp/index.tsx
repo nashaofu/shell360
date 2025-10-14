@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { SFTPFile, SSHSftpFileType } from 'tauri-plugin-ssh';
+import { SSHSession, SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
 import { Loading, useSftp } from 'shared';
 
 import useModal from '@/hooks/useModal';
@@ -40,7 +40,7 @@ export default function Sftp({ session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
-  const [orderBy, setOrderBy] = useState<keyof SFTPFile>('name');
+  const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>('name');
   const [order, setOrder] = useState<SftpTableOrder>(SftpTableOrder.Asc);
   const modal = useModal();
   const message = useMessage();
@@ -56,7 +56,7 @@ export default function Sftp({ session }: SftpProps) {
   });
 
   const onSort = useCallback(
-    (orderBy: keyof SFTPFile, order: SftpTableOrder) => {
+    (orderBy: keyof SSHSftpFile, order: SftpTableOrder) => {
       setOrderBy(orderBy);
       setOrder(order);
     },
@@ -109,7 +109,7 @@ export default function Sftp({ session }: SftpProps) {
     refreshDir,
   });
 
-  const onSelectDir = useCallback((item: SFTPFile) => {
+  const onSelectDir = useCallback((item: SSHSftpFile) => {
     if (item.fileType === SSHSftpFileType.Dir) {
       setDirname(item.path);
     }

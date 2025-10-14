@@ -70,7 +70,7 @@ export default function PortForwardings() {
 
   const [keyword, setKeyword] = useState('');
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
-  const selectedPortForwardingRef = useRef<PortForwarding>();
+  const selectedPortForwardingRef = useRef<PortForwarding>(null);
   const [editItem, setEditItem] = useState<PortForwarding>();
   const modal = useModal();
   const openedForwardingWithApi = useOpenedForwardingAtomWithApi();
@@ -117,8 +117,8 @@ export default function PortForwardings() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddPortForwarding(true);
-          setEditItem(selectedPortForwardingRef.current);
-          selectedPortForwardingRef.current = undefined;
+          setEditItem(selectedPortForwardingRef.current || undefined);
+          selectedPortForwardingRef.current = null;
         },
       },
       {
@@ -133,7 +133,7 @@ export default function PortForwardings() {
         value: 'Delete',
         onClick: () => {
           const selected = selectedPortForwardingRef.current;
-          selectedPortForwardingRef.current = undefined;
+          selectedPortForwardingRef.current = null;
 
           if (!selected) {
             return;
@@ -180,8 +180,7 @@ export default function PortForwardings() {
         }
       } finally {
         if (dispose) {
-          await ssh.disconnect();
-          await ssh.dispose();
+          await ssh.session.disconnect();
         }
       }
     },

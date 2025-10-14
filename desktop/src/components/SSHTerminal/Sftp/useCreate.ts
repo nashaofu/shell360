@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { SSHSftp, SFTPFile } from 'tauri-plugin-ssh';
+import { SSHSftp, SSHSftpFile } from 'tauri-plugin-ssh';
 import { useRequest } from 'ahooks';
 
 import useMessage from '@/hooks/useMessage';
@@ -14,7 +14,7 @@ type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
   message: ReturnType<typeof useMessage>;
   dirname?: string;
-  files?: SFTPFile[];
+  files?: SSHSftpFile[];
   sftpRef: MutableRefObject<SSHSftp | null>;
   refreshDir: () => unknown;
 };

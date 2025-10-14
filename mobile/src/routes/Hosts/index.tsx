@@ -27,7 +27,7 @@ import AddHost from './AddHost';
 
 export default function Hosts() {
   const [keyword, setKeyword] = useState('');
-  const selectedHostRef = useRef<Host>();
+  const selectedHostRef = useRef<Host>(null);
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
   const navigate = useNavigate();
@@ -90,8 +90,8 @@ export default function Hosts() {
         value: 'Edit',
         onClick: () => {
           setIsOpenAddHost(true);
-          setEditHost(selectedHostRef.current);
-          selectedHostRef.current = undefined;
+          setEditHost(selectedHostRef.current || undefined);
+          selectedHostRef.current = null;
         },
       },
       {
@@ -106,7 +106,7 @@ export default function Hosts() {
         value: 'Delete',
         onClick: () => {
           const selectedHost = selectedHostRef.current;
-          selectedHostRef.current = undefined;
+          selectedHostRef.current = null;
 
           if (!selectedHost) {
             return;

@@ -1,6 +1,7 @@
 import { Update, check } from '@tauri-apps/plugin-updater';
 import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useLatest } from 'ahooks';
 
 export type UpdateAtom = {
   openUpdateDialog: boolean;
@@ -25,8 +26,7 @@ export const updateAtom = atom<UpdateAtom>({
 export function useCheckUpdate() {
   const [state, setState] = useAtom(updateAtom);
 
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const stateRef = useLatest(state);
 
   const checkUpdate = useCallback(async () => {
     if (stateRef.current.checking) {
@@ -55,7 +55,7 @@ export function useCheckUpdate() {
       });
       throw err;
     }
-  }, [setState]);
+  }, [setState, stateRef]);
 
   return checkUpdate;
 }
@@ -86,8 +86,7 @@ export function useUpdateAtom() {
   const [state, setState] = useAtom(updateAtom);
   const checkUpdate = useCheckUpdate();
 
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const stateRef = useLatest(state);
 
   const setOpenUpdateDialog = useCallback(
     (openUpdateDialog: boolean) => {
@@ -96,7 +95,7 @@ export function useUpdateAtom() {
         openUpdateDialog,
       });
     },
-    [setState],
+    [setState, stateRef]
   );
 
   const downloadAndInstall = useCallback(async () => {
@@ -146,7 +145,7 @@ export function useUpdateAtom() {
         error: err,
       });
     }
-  }, [setState]);
+  }, [setState, stateRef]);
 
   return {
     ...state,
