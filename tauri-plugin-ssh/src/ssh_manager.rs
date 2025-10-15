@@ -1,12 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use russh::ChannelId;
 use tauri::Runtime;
-use tokio::sync::{Mutex, mpsc::UnboundedSender};
+use tokio::sync::{Mutex, Notify, mpsc::UnboundedSender};
 
 use crate::{
   SSHResult,
   commands::{
+    port_forwarding::{SSHPortForwarding, SSHPortForwardingId},
     session::{SSHSession, SSHSessionId},
     sftp::{SSHSftp, SSHSftpId, SSHSftpIpcChannelData},
     shell::{SHHShellIpcChannelData, SSHShell, SSHShellId},
@@ -16,8 +17,8 @@ use crate::{
 pub type Sessions<R> = Mutex<HashMap<SSHSessionId, SSHSession<R>>>;
 pub type Shells = Mutex<HashMap<SSHShellId, SSHShell>>;
 pub type SftpChannels = Mutex<HashMap<SSHSftpId, SSHSftp>>;
-pub type LocalPortForwardingSenders =
-  Mutex<HashMap<(SSHSessionId, String, u16), UnboundedSender<()>>>;
+pub type PortForwardings = Mutex<HashMap<SSHPortForwardingId, SSHPortForwarding>>;
+pub type LocalPortForwardingSenders = Mutex<HashMap<SSHPortForwardingId, Arc<Notify>>>;
 pub type RemotePortForwardings = Mutex<HashMap<(SSHSessionId, String, u16), (String, u16)>>;
 pub type DynamicPortForwardingSenders =
   Mutex<HashMap<(SSHSessionId, String, u16), UnboundedSender<()>>>;
@@ -26,6 +27,7 @@ pub struct SSHManager<R: Runtime> {
   pub sessions: Sessions<R>,
   pub shells: Shells,
   pub sftps: SftpChannels,
+  pub port_forwardings: PortForwardings,
   pub local_port_forwarding_senders: LocalPortForwardingSenders,
   pub remote_port_forwardings: RemotePortForwardings,
   pub dynamic_port_forwarding_senders: DynamicPortForwardingSenders,
@@ -37,6 +39,7 @@ impl<R: Runtime> SSHManager<R> {
       sessions: Mutex::default(),
       shells: Mutex::default(),
       sftps: Mutex::default(),
+      port_forwardings: Mutex::default(),
       local_port_forwarding_senders: Mutex::default(),
       remote_port_forwardings: Mutex::default(),
       dynamic_port_forwarding_senders: Mutex::default(),

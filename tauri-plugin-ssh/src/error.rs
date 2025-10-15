@@ -67,15 +67,6 @@ pub enum SSHError {
   #[error("Not found session")]
   NotFoundSession,
 
-  #[error("Not found shell channel")]
-  NotFoundShellChannel,
-
-  #[error("Not found unbounded sender")]
-  NotFoundUnboundedSender,
-
-  #[error("Not found port forwarding")]
-  NotFoundPortForwardings,
-
   #[error("Not found sftp")]
   NotFoundSftp,
 
@@ -85,11 +76,8 @@ pub enum SSHError {
   #[error(transparent)]
   UuidError(#[from] uuid::Error),
 
-  #[error("Not found parameter {0}")]
-  NotFoundParameter(String),
-
-  #[error("Invalid parameter {0}")]
-  InvalidParameter(String),
+  #[error("{0}")]
+  Error(String),
 }
 
 impl Serialize for SSHError {

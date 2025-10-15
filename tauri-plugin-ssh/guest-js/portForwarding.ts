@@ -14,19 +14,9 @@ export type SSHOpenLocalPortForwarding = {
   remotePort: number;
 };
 
-export type SSHCloseLocalPortForwarding = {
-  localAddress: string;
-  localPort: number;
-};
-
 export type SSHOpenRemotePortForwarding = {
   localAddress: string;
   localPort: number;
-  remoteAddress: string;
-  remotePort: number;
-};
-
-export type SSHCloseRemotePortForwarding = {
   remoteAddress: string;
   remotePort: number;
 };
@@ -36,18 +26,13 @@ export type SSHOpenDynamicPortForwarding = {
   localPort: number;
 };
 
-export type SSHCloseDynamicPortForwarding = {
-  localAddress: string;
-  localPort: number;
-};
-
 export class SSHPortForwarding {
-  portForwardingId: string;
+  sshPortForwardingId: string;
 
   session: SSHSession;
 
   constructor(opts: SSHPortForwardingOpts) {
-    this.portForwardingId = uuidV4();
+    this.sshPortForwardingId = uuidV4();
     this.session = opts.session;
   }
 
@@ -59,6 +44,7 @@ export class SSHPortForwarding {
   }: SSHOpenLocalPortForwarding): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_local_open', {
       sshSessionId: this.session.sshSessionId,
+      sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
       localPort,
       remoteAddress,
@@ -66,14 +52,10 @@ export class SSHPortForwarding {
     });
   }
 
-  closeLocalPortForwarding({
-    localAddress,
-    localPort,
-  }: SSHCloseLocalPortForwarding): Promise<string> {
+  closeLocalPortForwarding(): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_local_close', {
       sshSessionId: this.session.sshSessionId,
-      localAddress,
-      localPort,
+      sshPortForwardingId: this.sshPortForwardingId,
     });
   }
 
@@ -85,6 +67,7 @@ export class SSHPortForwarding {
   }: SSHOpenRemotePortForwarding): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_remote_open', {
       sshSessionId: this.session.sshSessionId,
+      sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
       localPort,
       remoteAddress,
@@ -92,14 +75,10 @@ export class SSHPortForwarding {
     });
   }
 
-  closeRemotePortForwarding({
-    remoteAddress,
-    remotePort,
-  }: SSHCloseRemotePortForwarding): Promise<string> {
+  closeRemotePortForwarding(): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_remote_close', {
       sshSessionId: this.session.sshSessionId,
-      remoteAddress,
-      remotePort,
+      sshPortForwardingId: this.sshPortForwardingId,
     });
   }
 
@@ -109,19 +88,16 @@ export class SSHPortForwarding {
   }: SSHOpenDynamicPortForwarding): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_dynamic_open', {
       sshSessionId: this.session.sshSessionId,
+      sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
       localPort,
     });
   }
 
-  closeDynamicPortForwarding({
-    localAddress,
-    localPort,
-  }: SSHCloseDynamicPortForwarding): Promise<string> {
+  closeDynamicPortForwarding(): Promise<string> {
     return invoke<string>('plugin:ssh|port_forwarding_dynamic_close', {
       sshSessionId: this.session.sshSessionId,
-      localAddress,
-      localPort,
+      sshPortForwardingId: this.sshPortForwardingId,
     });
   }
 }

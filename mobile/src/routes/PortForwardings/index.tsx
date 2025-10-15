@@ -163,20 +163,11 @@ export default function PortForwardings() {
       const ssh = openedForwarding.ssh;
       try {
         if (item.portForwardingType === PortForwardingType.Local) {
-          await ssh.closeLocalPortForwarding({
-            localAddress: item.localAddress,
-            localPort: item.localPort,
-          });
+          await ssh.closeLocalPortForwarding();
         } else if (item.portForwardingType === PortForwardingType.Remote) {
-          await ssh.closeRemotePortForwarding({
-            remoteAddress: item.remoteAddress as string,
-            remotePort: item.remotePort as number,
-          });
+          await ssh.closeRemotePortForwarding();
         } else if (item.portForwardingType === PortForwardingType.Dynamic) {
-          await ssh.closeDynamicPortForwarding({
-            localAddress: item.localAddress,
-            localPort: item.localPort,
-          });
+          await ssh.closeDynamicPortForwarding();
         }
       } finally {
         if (dispose) {

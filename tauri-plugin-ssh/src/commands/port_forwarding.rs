@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
 use rusocks::{
@@ -8,15 +8,47 @@ use rusocks::{
   socks5::{Socks5Handler, command::Socks5Command, method::Socks5Method, reply::Socks5Reply},
 };
 use russh::{ChannelStream, client::Msg};
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, Runtime, State, async_runtime};
 use tokio::{
   io,
   net::{TcpListener, TcpStream},
   select,
-  sync::mpsc::unbounded_channel,
+  sync::Notify,
 };
+use uuid::Uuid;
 
 use crate::{SSHError, SSHResult, commands::session::SSHSessionId, ssh_manager::SSHManager};
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct SSHPortForwardingId(Uuid);
+
+pub enum SSHPortForwarding {
+  Local {
+    ssh_port_forwarding_id: SSHPortForwardingId,
+    ssh_session_id: SSHSessionId,
+    notify: Arc<Notify>,
+    local_address: String,
+    local_port: u16,
+    remote_address: String,
+    remote_port: u16,
+  },
+  Remote {
+    ssh_port_forwarding_id: SSHPortForwardingId,
+    ssh_session_id: SSHSessionId,
+    local_address: String,
+    local_port: u16,
+    remote_address: String,
+    remote_port: u16,
+  },
+  Dynamic {
+    ssh_port_forwarding_id: SSHPortForwardingId,
+    ssh_session_id: SSHSessionId,
+    notify: Arc<Notify>,
+    local_address: String,
+    local_port: u16,
+  },
+}
 
 pub struct Handler<'a, R: Runtime> {
   sessions: State<'a, SSHManager<R>>,
@@ -117,26 +149,36 @@ pub async fn port_forwarding_local_open<R: Runtime>(
   app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
+  ssh_port_forwarding_id: SSHPortForwardingId,
   local_address: String,
   local_port: u16,
   remote_address: String,
   remote_port: u16,
 ) -> SSHResult<SSHSessionId> {
-  let mut receiver = {
-    let (sender, receiver) = unbounded_channel();
-    let mut local_port_forwarding_senders = ssh_manager.local_port_forwarding_senders.lock().await;
-    local_port_forwarding_senders
-      .insert((ssh_session_id, local_address.clone(), local_port), sender);
-    receiver
-  };
+  let notify = Arc::new(Notify::new());
+
+  {
+    let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+    port_forwardings.insert(
+      ssh_port_forwarding_id,
+      SSHPortForwarding::Local {
+        ssh_port_forwarding_id,
+        ssh_session_id,
+        notify: notify.clone(),
+        local_address: local_address.clone(),
+        local_port,
+        remote_address: remote_address.clone(),
+        remote_port,
+      },
+    );
+  }
 
   let listener = TcpListener::bind((local_address, local_port)).await?;
 
   async_runtime::spawn(async move {
     loop {
       select! {
-          Some(_) = receiver.recv() => {
-            receiver.close();
+          _ = notify.notified() => {
             break;
           },
           Ok((mut stream, addr)) = listener.accept() => {
@@ -164,7 +206,12 @@ pub async fn port_forwarding_local_open<R: Runtime>(
       }
     }
 
-    #[allow(unreachable_code)]
+    {
+      let ssh_manager = app_handle.state::<SSHManager<R>>();
+      let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+      port_forwardings.remove(&ssh_port_forwarding_id);
+    }
+
     Ok::<(), SSHError>(())
   });
 
@@ -176,15 +223,14 @@ pub async fn port_forwarding_local_close<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
-  local_address: String,
-  local_port: u16,
+  ssh_port_forwarding_id: SSHPortForwardingId,
 ) -> SSHResult<SSHSessionId> {
-  let mut local_port_forwarding_senders = ssh_manager.local_port_forwarding_senders.lock().await;
-  let local_port_forwarding_sender = local_port_forwarding_senders
-    .remove(&(ssh_session_id, local_address, local_port))
-    .ok_or(SSHError::NotFoundPortForwardings)?;
+  let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+  let ssh_port_forwarding = port_forwardings.remove(&ssh_port_forwarding_id);
 
-  local_port_forwarding_sender.send(())?;
+  if let Some(SSHPortForwarding::Local { notify, .. }) = ssh_port_forwarding {
+    notify.notify_last();
+  }
 
   Ok(ssh_session_id)
 }
@@ -194,27 +240,37 @@ pub async fn port_forwarding_remote_open<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
+  ssh_port_forwarding_id: SSHPortForwardingId,
   local_address: String,
   local_port: u16,
   remote_address: String,
   remote_port: u16,
 ) -> SSHResult<SSHSessionId> {
   {
-    let mut remote_port_forwardings = ssh_manager.remote_port_forwardings.lock().await;
-    remote_port_forwardings.insert(
-      (ssh_session_id, remote_address.clone(), remote_port),
-      (local_address, local_port),
+    let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+    port_forwardings.insert(
+      ssh_port_forwarding_id,
+      SSHPortForwarding::Remote {
+        ssh_port_forwarding_id,
+        ssh_session_id,
+        local_address,
+        local_port,
+        remote_address: remote_address.clone(),
+        remote_port,
+      },
     );
   }
 
-  let mut sessions = ssh_manager.sessions.lock().await;
-  let session = sessions
-    .get_mut(&ssh_session_id)
-    .ok_or(SSHError::NotFoundSession)?;
+  {
+    let mut sessions = ssh_manager.sessions.lock().await;
+    let session = sessions
+      .get_mut(&ssh_session_id)
+      .ok_or(SSHError::NotFoundSession)?;
 
-  session
-    .tcpip_forward(remote_address, remote_port as u32)
-    .await?;
+    session
+      .tcpip_forward(remote_address, remote_port as u32)
+      .await?;
+  }
 
   Ok(ssh_session_id)
 }
@@ -224,9 +280,18 @@ pub async fn port_forwarding_remote_close<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
-  remote_address: String,
-  remote_port: u16,
+  ssh_port_forwarding_id: SSHPortForwardingId,
 ) -> SSHResult<SSHSessionId> {
+  let ssh_port_forwarding = {
+    let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+    port_forwardings.remove(&ssh_port_forwarding_id)
+  };
+
+  if let Some(SSHPortForwarding::Remote {
+    remote_address,
+    remote_port,
+    ..
+  }) = ssh_port_forwarding
   {
     let mut sessions = ssh_manager.sessions.lock().await;
     let session = sessions
@@ -234,13 +299,8 @@ pub async fn port_forwarding_remote_close<R: Runtime>(
       .ok_or(SSHError::NotFoundSession)?;
 
     session
-      .cancel_tcpip_forward(remote_address.clone(), remote_port as u32)
+      .cancel_tcpip_forward(remote_address, remote_port as u32)
       .await?;
-  }
-
-  {
-    let mut remote_port_forwardings = ssh_manager.remote_port_forwardings.lock().await;
-    remote_port_forwardings.remove(&(ssh_session_id, remote_address, remote_port));
   }
 
   Ok(ssh_session_id)
@@ -251,25 +311,32 @@ pub async fn port_forwarding_dynamic_open<R: Runtime>(
   app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
+  ssh_port_forwarding_id: SSHPortForwardingId,
   local_address: String,
   local_port: u16,
 ) -> SSHResult<SSHSessionId> {
-  let mut receiver = {
-    let (sender, receiver) = unbounded_channel();
-    let mut dynamic_port_forwarding_senders =
-      ssh_manager.dynamic_port_forwarding_senders.lock().await;
-    dynamic_port_forwarding_senders
-      .insert((ssh_session_id, local_address.clone(), local_port), sender);
-    receiver
-  };
+  let notify = Arc::new(Notify::new());
+
+  {
+    let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+    port_forwardings.insert(
+      ssh_port_forwarding_id,
+      SSHPortForwarding::Dynamic {
+        ssh_port_forwarding_id,
+        ssh_session_id,
+        notify: notify.clone(),
+        local_address: local_address.clone(),
+        local_port,
+      },
+    );
+  }
 
   let listener = TcpListener::bind((local_address, local_port)).await?;
 
   async_runtime::spawn(async move {
     loop {
       select! {
-          Some(_) = receiver.recv() => {
-            receiver.close();
+          _ = notify.notified() => {
             break;
           },
           Ok((mut stream, _)) = listener.accept() => {
@@ -289,7 +356,12 @@ pub async fn port_forwarding_dynamic_open<R: Runtime>(
       }
     }
 
-    #[allow(unreachable_code)]
+    {
+      let ssh_manager = app_handle.state::<SSHManager<R>>();
+      let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+      port_forwardings.remove(&ssh_port_forwarding_id);
+    }
+
     Ok::<(), SSHError>(())
   });
 
@@ -301,16 +373,14 @@ pub async fn port_forwarding_dynamic_close<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
-  local_address: String,
-  local_port: u16,
+  ssh_port_forwarding_id: SSHPortForwardingId,
 ) -> SSHResult<SSHSessionId> {
-  let mut dynamic_port_forwarding_senders =
-    ssh_manager.dynamic_port_forwarding_senders.lock().await;
-  let dynamic_port_forwarding_sender = dynamic_port_forwarding_senders
-    .remove(&(ssh_session_id, local_address, local_port))
-    .ok_or(SSHError::NotFoundPortForwardings)?;
+  let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+  let port_forwarding = port_forwardings.remove(&ssh_port_forwarding_id);
 
-  dynamic_port_forwarding_sender.send(())?;
+  if let Some(SSHPortForwarding::Dynamic { notify, .. }) = port_forwarding {
+    notify.notify_last();
+  }
 
   Ok(ssh_session_id)
 }

@@ -15,7 +15,10 @@ use tokio::{io, net::TcpStream};
 
 use crate::{
   SSHError,
-  commands::session::{SSHSessionCheckServerKey, SSHSessionId, SessionIpcChannelData},
+  commands::{
+    port_forwarding::SSHPortForwarding,
+    session::{SSHSessionCheckServerKey, SSHSessionId, SessionIpcChannelData},
+  },
   ssh_manager::SSHManager,
   utils::get_known_hosts_path,
 };
@@ -154,24 +157,44 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
     async move {
       let ssh_manager = self.ssh_manager();
 
-      let remote_port_forwardings = ssh_manager.remote_port_forwardings.lock().await;
-      let addr = remote_port_forwardings
-        .get(&(
-          self.ssh_session_id,
-          connected_address.to_string(),
-          connected_port as u16,
-        ))
-        .ok_or(SSHError::NotFoundPortForwardings)?;
+      let port_forwardings = ssh_manager.port_forwardings.lock().await;
 
-      let mut stream = TcpStream::connect(addr).await?;
-
-      async_runtime::spawn(async move {
-        io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await?;
-
-        Ok::<(), SSHError>(())
+      let addr = port_forwardings.values().find_map(|ssh_port_forwarding| {
+        if let SSHPortForwarding::Remote {
+          ssh_session_id,
+          local_address,
+          local_port,
+          remote_address,
+          remote_port,
+          ..
+        } = ssh_port_forwarding
+        {
+          if self.ssh_session_id == *ssh_session_id
+            && remote_address == connected_address
+            && *remote_port == connected_port as u16
+          {
+            let addr = format!("{}:{}", local_address, local_port);
+            return Some(addr);
+          }
+        }
+        None
       });
 
-      Ok(())
+      if let Some(addr) = addr {
+        let mut stream = TcpStream::connect(addr).await?;
+        async_runtime::spawn(async move {
+          io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await?;
+
+          Ok::<(), SSHError>(())
+        });
+
+        Ok(())
+      } else {
+        Err(SSHError::Error(format!(
+          "Remote port forwarding not found: {}:{}",
+          connected_address, connected_port
+        )))
+      }
     }
   }
 
