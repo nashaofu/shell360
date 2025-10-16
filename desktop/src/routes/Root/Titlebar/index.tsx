@@ -81,7 +81,7 @@ export default function TitleBar() {
         }}
         data-tauri-drag-region="true"
       />
-      {__TAURI_PLATFORM__ !== 'darwin' && (
+      {import.meta.env.TAURI_PLATFORM !== 'darwin' && (
         <Box
           sx={{
             display: 'flex',

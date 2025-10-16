@@ -12,7 +12,9 @@ export default defineConfig(async () => ({
   },
   plugins: [react()],
   define: {
-    __TAURI_PLATFORM__: JSON.stringify(process.env.TAURI_ENV_PLATFORM),
+    'import.meta.env.TAURI_PLATFORM': JSON.stringify(
+      process.env.TAURI_ENV_PLATFORM
+    ),
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

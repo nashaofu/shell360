@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 const IAP_CUSTOMER_INFO = 'iap-customer-info';
 
 const iapGetCustomerInfoWithMock = () => {
-  if (__TAURI_PLATFORM__ === 'android') {
+  if (import.meta.env.TAURI_PLATFORM === 'android') {
     return Promise.resolve({
       activeSubscriptions: [],
       allPurchasedProductIdentifiers: [],
@@ -66,7 +66,7 @@ const iapGetCustomerInfoWithMock = () => {
 };
 
 const iapGetOfferingsWithMock = async () => {
-  if (__TAURI_PLATFORM__ === 'android') {
+  if (import.meta.env.TAURI_PLATFORM === 'android') {
     return Promise.resolve([
       {
         annual: {

@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
-declare const __TAURI_PLATFORM__:
-  | 'windows'
-  | 'darwin'
-  | 'linux'
-  | 'ios'
-  | 'android';
+interface ImportMetaEnv {
+  readonly TAURI_PLATFORM: 'windows' | 'darwin' | 'linux' | 'ios' | 'android';
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
