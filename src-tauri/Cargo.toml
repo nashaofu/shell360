@@ -36,6 +36,7 @@ ssh-key = { version = "0.6.7", features = [
     "p521",
 ] }
 webbrowser = "1.0.5"
+tauri-plugin-machine-uid = "0.1.2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = { version = "2.9.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2", default-features = false, features = [

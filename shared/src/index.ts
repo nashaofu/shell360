@@ -17,3 +17,4 @@ export * from './hooks/useSftp';
 // utils
 export * from './utils/sleep';
 export * from './utils/migrationData';
+export * from './utils/umami';

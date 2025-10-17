@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@mui/material": "^7.3.4",
+    "@skipperndt/plugin-machine-uid": "^0.1.2",
     "@xterm/addon-canvas": "^0.7.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-unicode11": "^0.8.0",
@@ -33,7 +34,8 @@
     "jotai": "^2.15.0",
     "react": "^19.2.0",
     "tauri-plugin-data": "workspace:*",
-    "tauri-plugin-ssh": "workspace:*"
+    "tauri-plugin-ssh": "workspace:*",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.2",

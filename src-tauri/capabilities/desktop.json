@@ -46,6 +46,7 @@
         "dialog:allow-destroy-path",
         "dialog:allow-ask",
         "store:default",
-        "data:default"
+        "data:default",
+        "machine-uid:default"
     ]
 }

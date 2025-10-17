@@ -310,6 +310,9 @@ importers:
       '@mui/material':
         specifier: ^7.3.4
         version: 7.3.4(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@skipperndt/plugin-machine-uid':
+        specifier: ^0.1.2
+        version: 0.1.2
       '@xterm/addon-canvas':
         specifier: ^0.7.0
         version: 0.7.0(@xterm/xterm@5.5.0)
@@ -346,6 +349,9 @@ importers:
       tauri-plugin-ssh:
         specifier: workspace:*
         version: link:../tauri-plugin-ssh
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
     devDependencies:
       '@types/react':
         specifier: ^19.2.2
@@ -1098,6 +1104,9 @@ packages:
   '@sindresorhus/is@7.0.1':
     resolution: {integrity: sha512-QWLl2P+rsCJeofkDNIT3WFmb6NrRud1SUYW8dIhXK/46XFV8Q/g7Bsvib0Askb0reRLe+WYPeeE+l5cH7SlkuQ==}
     engines: {node: '>=18'}
+
+  '@skipperndt/plugin-machine-uid@0.1.2':
+    resolution: {integrity: sha512-6rO+hfdpukwexmiw5YcSl5GcuDO/YX2Bc5lsgZYdXc+EUUJKlzEHEGUwYD1hSXfZh4gRYdNtX6C7LTWSzgWcrg==}
 
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
@@ -3801,6 +3810,10 @@ snapshots:
   '@sec-ant/readable-stream@0.4.1': {}
 
   '@sindresorhus/is@7.0.1': {}
+
+  '@skipperndt/plugin-machine-uid@0.1.2':
+    dependencies:
+      '@tauri-apps/api': 2.8.0
 
   '@szmarczak/http-timer@5.0.1':
     dependencies:
