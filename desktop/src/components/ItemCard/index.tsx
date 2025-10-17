@@ -70,7 +70,6 @@ export default function ItemCard({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}
-          title={title}
         >
           {title}
         </Box>
@@ -84,7 +83,6 @@ export default function ItemCard({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}
-            title={desc}
           >
             {desc}
           </Box>
