@@ -28,16 +28,6 @@ pub enum Shell360Error {
   StdSyncTryLockError(String),
 
   #[error("{0}")]
-  KnownHostsNotFound(String),
-  #[error("{0}")]
-  KnownHostsMismatch(String),
-  #[error("{0}")]
-  KnownHostsFailure(String),
-
-  #[error("{0}")]
-  UserAuthFailed(String),
-
-  #[error("{0}")]
   Error(String),
 }
 

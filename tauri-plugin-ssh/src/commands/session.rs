@@ -7,7 +7,7 @@ use std::{
 use russh::{
   Disconnect, Error as RusshError,
   client::{self, Handle},
-  keys::{decode_secret_key, key::PrivateKeyWithHashAlg},
+  keys::{HashAlg, decode_secret_key, key::PrivateKeyWithHashAlg},
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Runtime, State, ipc::Channel};
@@ -132,27 +132,42 @@ pub async fn session_authenticate<R: Runtime>(
   private_key: Option<&str>,
   passphrase: Option<&str>,
 ) -> SSHResult<SSHSessionId> {
+  log::info!("authenticate session");
+
   let mut sessions = ssh_manager.sessions.lock().await;
   let session = sessions
     .get_mut(&ssh_session_id)
     .ok_or(SSHError::NotFoundSession)?;
 
   if let Some(private_key) = private_key {
+    log::info!("authenticate by private key");
+
     let password = passphrase.and_then(|passphrase| {
       if passphrase.is_empty() {
         None
       } else {
+        log::info!("authenticate by private key with passphrase");
         Some(passphrase)
       }
     });
 
     let key_pair = decode_secret_key(private_key, password)?;
+    log::info!(
+      "authenticate by private key with key pair {:?}",
+      key_pair.algorithm()
+    );
     let auth_res = session
       .authenticate_publickey(
         username,
-        PrivateKeyWithHashAlg::new(Arc::new(key_pair), None),
+        // Some(HashAlg::Sha512) 只在 RSA 算法中生效，其他算法内部会忽略该参数
+        PrivateKeyWithHashAlg::new(Arc::new(key_pair), Some(HashAlg::Sha512)),
       )
       .await?;
+
+    log::info!(
+      "authenticate by private key with result {:?}",
+      auth_res.success()
+    );
 
     if !auth_res.success() {
       return Err(SSHError::AuthFailed {
