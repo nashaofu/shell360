@@ -1,6 +1,6 @@
 {
   "productName": "Shell360",
-  "version": "0.1.7",
+  "version": "0.1.6",
   "identifier": "com.nashaofu.shell360",
   "app": {
     "windows": [
@@ -17,7 +17,12 @@
     "security": {
       "csp": {
         "default-src": ["'self'"],
-        "connect-src": ["'self'", "http://ipc.localhost"],
+        "script-src": ["'self'", "https://cloud.umami.is"],
+        "connect-src": [
+          "'self'",
+          "http://ipc.localhost",
+          "https://api-gateway.umami.dev"
+        ],
         "style-src": ["'self'", "'unsafe-inline'"],
         "font-src": ["'self'", "data:"],
         "img-src": ["'self'", "data:"]
