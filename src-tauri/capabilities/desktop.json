@@ -1,52 +1,50 @@
 {
-    "$schema": "../gen/schemas/desktop-schema.json",
-    "identifier": "desktop-capability",
-    "description": "Capability for the main window",
-    "windows": ["main"],
-    "platforms": ["linux", "macOS", "windows"],
-    "permissions": [
-        "core:event:default",
-        "core:window:default",
-        "core:window:allow-start-dragging",
-        "core:window:allow-minimize",
-        "core:window:allow-toggle-maximize",
-        "core:window:allow-close",
-        "core:window:allow-is-maximized",
-        "core:app:allow-version",
-        "core:path:default",
-        "ssh:default",
-        "fs:default",
-        "fs:allow-write-text-file",
-        "fs:allow-write-file",
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop-capability",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": [
+    "core:event:default",
+    "core:window:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-is-maximized",
+    "core:app:allow-version",
+    "core:path:default",
+    "fs:default",
+    "fs:allow-write-text-file",
+    "fs:allow-write-file",
+    {
+      "identifier": "fs:scope",
+      "allow": [
         {
-            "identifier": "fs:scope",
-            "allow": [
-                {
-                    "path": "$APPDATA"
-                },
-                {
-                    "path": "$APPDATA/**"
-                },
-                {
-                    "path": "$APPLOCALDATA"
-                },
-                {
-                    "path": "$APPLOCALDATA/**"
-                }
-            ]
+          "path": "$APPDATA"
         },
-        "clipboard-manager:default",
-        "clipboard-manager:allow-read-text",
-        "clipboard-manager:allow-write-text",
-        "updater:allow-check",
-        "updater:allow-download-and-install",
-        "process:allow-restart",
-        "dialog:allow-open",
-        "dialog:allow-save",
-        "dialog:allow-destroy-path",
-        "dialog:allow-ask",
-        "store:default",
-        "data:default",
-        "machine-uid:default"
-    ]
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$APPLOCALDATA"
+        },
+        {
+          "path": "$APPLOCALDATA/**"
+        }
+      ]
+    },
+    "clipboard-manager:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
+    "updater:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-destroy-path",
+    "dialog:allow-ask",
+    "store:default",
+    "data:default",
+    "ssh:default",
+    "machine-uid:default"
+  ]
 }

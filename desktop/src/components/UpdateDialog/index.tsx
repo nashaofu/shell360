@@ -9,7 +9,6 @@ import {
   DialogTitle,
   LinearProgress,
 } from '@mui/material';
-import { relaunch } from '@tauri-apps/plugin-process';
 
 import { useUpdateAtom } from '@/atom/updateAtom';
 
@@ -21,7 +20,8 @@ export default function UpdateDialog() {
     error,
     total,
     downloaded,
-    downloadAndInstall,
+    download,
+    install,
   } = useUpdateAtom();
 
   const progress = useMemo(() => {
@@ -35,12 +35,25 @@ export default function UpdateDialog() {
   const isDownloadSuccess = progress === 100 && !error;
 
   return (
-    <Dialog open={openUpdateDialog} maxWidth="xs">
-      <DialogTitle>New Version</DialogTitle>
+    <Dialog open={openUpdateDialog}>
+      <DialogTitle>
+        {isDownloadSuccess ? '🎉 Update Ready' : '🚀 New Version Available'}
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Find a new version, clicking on update will automatically upgrade.
-          Please confirm to save all work before continuing
+          {isDownloadSuccess ? (
+            <Box>
+              The update has been downloaded successfully.
+              <br />
+              Click <b>“Install”</b> to apply the new version.
+            </Box>
+          ) : (
+            <Box>
+              A new version of the application is available.
+              <br />
+              Click <b>“Download”</b> to start the update process.
+            </Box>
+          )}
         </DialogContentText>
       </DialogContent>
       {(isDownloading || !!error) && (
@@ -74,12 +87,13 @@ export default function UpdateDialog() {
         >
           Cancel
         </Button>
-        {!isDownloadSuccess && (
-          <Button disabled={isDownloading} onClick={downloadAndInstall}>
-            Update
+        {isDownloadSuccess ? (
+          <Button onClick={install}>Install</Button>
+        ) : (
+          <Button disabled={isDownloading} onClick={download}>
+            Download
           </Button>
         )}
-        {isDownloadSuccess && <Button onClick={relaunch}>Relaunch</Button>}
       </DialogActions>
     </Dialog>
   );

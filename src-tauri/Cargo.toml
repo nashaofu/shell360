@@ -19,7 +19,6 @@ tauri = { workspace = true, features = [] }
 tauri-plugin-clipboard-manager = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
 tauri-plugin-dialog = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
 tauri-plugin-fs = { version = "2.4.2", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
-tauri-plugin-process = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
 tauri-plugin-store = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
 tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
 tauri-plugin-data = { path = "../tauri-plugin-data" }

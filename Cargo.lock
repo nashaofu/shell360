@@ -5650,7 +5650,6 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-machine-uid",
  "tauri-plugin-mobile",
- "tauri-plugin-process",
  "tauri-plugin-ssh",
  "tauri-plugin-store",
  "tauri-plugin-updater",
@@ -6583,15 +6582,6 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.17",
-]
-
-[[package]]
-name = "tauri-plugin-process"
-version = "2.3.0"
-source = "git+https://github.com/nashaofu/plugins-workspace.git?branch=v2#4761d22528c74b552f2f71892129157aef2d7fa1"
-dependencies = [
- "tauri",
- "tauri-plugin",
 ]
 
 [[package]]

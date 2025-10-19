@@ -90,67 +90,80 @@ export function useUpdateAtom() {
 
   const setOpenUpdateDialog = useCallback(
     (openUpdateDialog: boolean) => {
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         openUpdateDialog,
-      });
+      };
+      setState(stateRef.current);
     },
     [setState, stateRef]
   );
 
-  const downloadAndInstall = useCallback(async () => {
+  const download = useCallback(async () => {
     const { update } = stateRef.current;
     if (!update) {
       return;
     }
 
     try {
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         isDownloading: true,
         error: undefined,
         total: 0,
         downloaded: 0,
-      });
+      };
+      setState(stateRef.current);
 
-      await update.downloadAndInstall((event) => {
+      await update.download((event) => {
         if (event.event === 'Started') {
-          setState({
+          stateRef.current = {
             ...stateRef.current,
             total: event.data.contentLength,
             downloaded: 0,
-          });
+          };
+          setState(stateRef.current);
         } else if (event.event === 'Progress') {
-          setState({
+          stateRef.current = {
             ...stateRef.current,
-            downloaded: event.data.chunkLength,
-          });
+            downloaded:
+              event.data.chunkLength + (stateRef.current.downloaded || 0),
+          };
+          setState(stateRef.current);
         } else if (event.event === 'Finished') {
-          setState({
+          stateRef.current = {
             ...stateRef.current,
             downloaded: stateRef.current.total,
-          });
+          };
+          setState(stateRef.current);
         }
       });
 
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         isDownloading: false,
         error: undefined,
-      });
+      };
+      setState(stateRef.current);
     } catch (err) {
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         isDownloading: false,
         error: err,
-      });
+      };
+      setState(stateRef.current);
     }
   }, [setState, stateRef]);
+
+  const install = useCallback(async () => {
+    await stateRef.current.update?.install();
+  }, [stateRef]);
 
   return {
     ...state,
     setOpenUpdateDialog,
     checkUpdate,
-    downloadAndInstall,
+    download,
+    install,
   };
 }
