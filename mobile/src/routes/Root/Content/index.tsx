@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet, useMatch } from 'react-router-dom';
 import { Box } from '@mui/material';
+import { useHosts, useKeys, usePortForwardings } from 'shared';
 
 import Sidebar from '../Sidebar';
 import Terminals from '../Terminals';
@@ -9,6 +10,10 @@ import Subscription from '../Subscription';
 export default function Content() {
   const match = useMatch('/terminal/:uuid');
   const isShowTerminal = !!match?.params.uuid;
+
+  useHosts();
+  useKeys();
+  usePortForwardings();
 
   return (
     <>

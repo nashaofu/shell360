@@ -2,7 +2,13 @@ import { Suspense, useLayoutEffect, useMemo } from 'react';
 import { Outlet, useMatch } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { useAtomValue } from 'jotai';
-import { TERMINAL_THEMES, TERMINAL_THEMES_MAP } from 'shared';
+import {
+  TERMINAL_THEMES,
+  TERMINAL_THEMES_MAP,
+  useHosts,
+  useKeys,
+  usePortForwardings,
+} from 'shared';
 
 import { useTerminalsAtom } from '@/atom/terminalsAtom';
 import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
@@ -19,6 +25,10 @@ export default function Content() {
   const colorsAtomWithApi = useColorsAtomWithApi();
 
   const themeValue = useAtomValue(themeAtom);
+
+  useHosts();
+  useKeys();
+  usePortForwardings();
 
   const activeTerminal = useMemo(
     () => terminals.find((item) => item.uuid === match?.params.uuid),
