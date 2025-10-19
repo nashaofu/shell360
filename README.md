@@ -1,8 +1,6 @@
 # Shell360
 
-<p align="center">
-  <img src="./resources/icon.png" alt="Shell360 Logo" width="128">
-</p>
+![gallary](./resources/screenshots/gallary.jpg)
 
 <p align="center">
   <span>English</span> | <a href="./README-zh_cn.md">简体中文</a>
@@ -89,57 +87,13 @@ Shell360 is built with modern technologies:
 
 ## Screenshots
 
-### Desktop
+![Mobile Gallery](./resources/screenshots/mobile-gallary.jpg)
 
-#### Host Management
-
-| Main Screen                                                     | Add Host                                                  |
-| --------------------------------------------------------------- | --------------------------------------------------------- |
-| ![Hosts Main Screen](./resources/screenshots/desktop/hosts.png) | ![Add Host](./resources/screenshots/desktop/add-host.png) |
-
-#### Port Forwarding
-
-| Port Forwarding List                                                          | Add Port Forwarding                                                             |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| ![Port Forwarding List](./resources/screenshots/desktop/port-forwardings.png) | ![Add Port Forwarding](./resources/screenshots/desktop/add-port-forwarding.png) |
-
-#### Key Management
-
-| Keys List                                              | Add Key                                                 | Generate Key                                                      |
-| ------------------------------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------- |
-| ![Keys List](./resources/screenshots/desktop/keys.png) | ![Add Key](./resources/screenshots/desktop/add-key.png) | ![Generate Key](./resources/screenshots/desktop/generate-key.png) |
-
-#### Known Hosts
-
-| Known Hosts List                                                    | Delete Known Host                                                          |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| ![Known Hosts List](./resources/screenshots/desktop/knownhosts.png) | ![Delete Known Host](./resources/screenshots/desktop/delete-knownhost.png) |
-
-#### Terminal and SFTP
-
-| SSH Terminal                                                  | SFTP Browser                                              |
-| ------------------------------------------------------------- | --------------------------------------------------------- |
-| ![SSH Terminal](./resources/screenshots/desktop/terminal.png) | ![SFTP Browser](./resources/screenshots/desktop/sftp.png) |
-
-### Mobile
-
-#### Hosts and Keys
-
-| Hosts List                                                     | Add Host                                                       | Keys List                                                    | Add Key                                                      | Generate Key                                                           |
-| -------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| ![Mobile Hosts List](./resources/screenshots/mobile/hosts.png) | ![Mobile Add Host](./resources/screenshots/mobile/addHost.png) | ![Mobile Keys List](./resources/screenshots/mobile/keys.png) | ![Mobile Add Key](./resources/screenshots/mobile/addKey.png) | ![Mobile Generate Key](./resources/screenshots/mobile/generateKey.png) |
-
-#### Terminal and SFTP
-
-| SSH Terminal                                                        | SFTP Browser                                                    |
-| ------------------------------------------------------------------- | --------------------------------------------------------------- |
-| ![Mobile SSH Terminal](./resources/screenshots/mobile/terminal.png) | ![Mobile SFTP Browser](./resources/screenshots/mobile/sftp.png) |
+![Pad Gallery](./resources/screenshots/pad-gallary.jpg)
 
 ### Terminal Themes
 
-| Nord Dark                                                           | Nord Light                                                            | Solarized Dark                                                                | Solarized Light                                                                 | Tango Dark                                                            | Tango Light                                                             |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| ![Nord Dark](./resources/screenshots/terminal-themes/nord-dark.png) | ![Nord Light](./resources/screenshots/terminal-themes/nord-light.png) | ![Solarized Dark](./resources/screenshots/terminal-themes/solarized-dark.png) | ![Solarized Light](./resources/screenshots/terminal-themes/solarized-light.png) | ![Tango Dark](./resources/screenshots/terminal-themes/tango-dark.png) | ![Tango Light](./resources/screenshots/terminal-themes/tango-light.png) |
+![Terminal Themes](./resources/screenshots/terminal-themes.jpg)
 
 ## Privacy Policy
 

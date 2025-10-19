@@ -1,8 +1,6 @@
 # Shell360
 
-<p align="center">
-  <img src="./resources/icon.png" alt="Shell360 Logo" width="128">
-</p>
+![画廊](./resources/screenshots/gallary.jpg)
 
 <p align="center">
   <a href="./README.md">English</a> | <span>简体中文</span>
@@ -39,7 +37,6 @@
     <img src="https://img.shields.io/badge/下载%20Android%20版本-blue?style=for-the-badge" alt="下载 Android 版本" />
   </a>
 </p>
-
 
 加入我们的 [TestFlight](https://testflight.apple.com/join/teqJZCRm)或者[Google Play](https://play.google.com/apps/testing/com.nashaofu.shell360)测试计划，抢先体验新功能。
 
@@ -84,57 +81,13 @@ Shell360 采用现代技术构建：
 
 ## 截图展示
 
-### 桌面端
+![移动端截图](./resources/screenshots/mobile-gallary.jpg)
 
-#### 主机管理
-
-| 主界面                                                       | 添加主机                                                  |
-| ------------------------------------------------------------ | --------------------------------------------------------- |
-| ![主机管理主界面](./resources/screenshots/desktop/hosts.png) | ![添加主机](./resources/screenshots/desktop/add-host.png) |
-
-#### 端口转发
-
-| 端口转发列表                                                          | 添加端口转发                                                             |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| ![端口转发列表](./resources/screenshots/desktop/port-forwardings.png) | ![添加端口转发](./resources/screenshots/desktop/add-port-forwarding.png) |
-
-#### 密钥管理
-
-| 密钥列表                                              | 添加密钥                                                 | 生成密钥                                                      |
-| ----------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
-| ![密钥列表](./resources/screenshots/desktop/keys.png) | ![添加密钥](./resources/screenshots/desktop/add-key.png) | ![生成密钥](./resources/screenshots/desktop/generate-key.png) |
-
-#### 已知主机
-
-| 已知主机列表                                                    | 删除已知主机                                                          |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| ![已知主机列表](./resources/screenshots/desktop/knownhosts.png) | ![删除已知主机](./resources/screenshots/desktop/delete-knownhost.png) |
-
-#### 终端和 SFTP
-
-| SSH 终端                                                  | SFTP 浏览器                                              |
-| --------------------------------------------------------- | -------------------------------------------------------- |
-| ![SSH 终端](./resources/screenshots/desktop/terminal.png) | ![SFTP 浏览器](./resources/screenshots/desktop/sftp.png) |
-
-### 移动端
-
-#### 主机和密钥
-
-| 主机列表                                                  | 添加主机                                                    | 密钥列表                                                 | 添加密钥                                                   | 生成密钥                                                        |
-| --------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------- |
-| ![移动主机列表](./resources/screenshots/mobile/hosts.png) | ![移动添加主机](./resources/screenshots/mobile/addHost.png) | ![移动密钥列表](./resources/screenshots/mobile/keys.png) | ![移动添加密钥](./resources/screenshots/mobile/addKey.png) | ![移动生成密钥](./resources/screenshots/mobile/generateKey.png) |
-
-#### 终端和 SFTP
-
-| SSH 终端                                                      | SFTP 浏览器                                                  |
-| ------------------------------------------------------------- | ------------------------------------------------------------ |
-| ![移动 SSH 终端](./resources/screenshots/mobile/terminal.png) | ![移动 SFTP 浏览器](./resources/screenshots/mobile/sftp.png) |
+![平板端截图](./resources/screenshots/pad-gallary.jpg)
 
 ### 终端主题
 
-| Nord Dark                                                           | Nord Light                                                            | Solarized Dark                                                                | Solarized Light                                                                 | Tango Dark                                                            | Tango Light                                                             |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| ![Nord Dark](./resources/screenshots/terminal-themes/nord-dark.png) | ![Nord Light](./resources/screenshots/terminal-themes/nord-light.png) | ![Solarized Dark](./resources/screenshots/terminal-themes/solarized-dark.png) | ![Solarized Light](./resources/screenshots/terminal-themes/solarized-light.png) | ![Tango Dark](./resources/screenshots/terminal-themes/tango-dark.png) | ![Tango Light](./resources/screenshots/terminal-themes/tango-light.png) |
+![终端主题截图](./resources/screenshots/terminal-themes.jpg)
 
 ## 隐私政策
 
