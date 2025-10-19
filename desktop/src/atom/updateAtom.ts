@@ -67,11 +67,14 @@ export function useAutoCheckUpdate() {
   const checkUpdate = useCheckUpdate();
   useEffect(() => {
     const autoCheck = async () => {
+      let update: Update | null = null;
       try {
-        await checkUpdate();
+        update = await checkUpdate();
       } finally {
         clearTimeout(timer);
-        timer = window.setTimeout(() => autoCheck(), 1000 * 60 * 3);
+        if (!update) {
+          timer = window.setTimeout(() => autoCheck(), 1000 * 60 * 3);
+        }
       }
     };
 
