@@ -40,21 +40,19 @@ export default function UpdateDialog() {
         {isDownloadSuccess ? '🎉 Update Ready' : '🚀 New Version Available'}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          {isDownloadSuccess ? (
-            <Box>
-              The update has been downloaded successfully.
-              <br />
-              Click <b>“Install”</b> to apply the new version.
-            </Box>
-          ) : (
-            <Box>
-              A new version of the application is available.
-              <br />
-              Click <b>“Download”</b> to start the update process.
-            </Box>
-          )}
-        </DialogContentText>
+        {isDownloadSuccess ? (
+          <DialogContentText>
+            The update has been downloaded successfully.
+            <br />
+            Click <b>“Install”</b> to apply the new version.
+          </DialogContentText>
+        ) : (
+          <DialogContentText>
+            A new version of the application is available.
+            <br />
+            Click <b>“Download”</b> to start the update process.
+          </DialogContentText>
+        )}
       </DialogContent>
       {(isDownloading || !!error) && (
         <Box
