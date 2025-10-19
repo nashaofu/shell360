@@ -201,9 +201,6 @@ importers:
       '@tauri-apps/plugin-fs':
         specifier: ^2.4.2
         version: 2.4.2
-      '@tauri-apps/plugin-process':
-        specifier: ^2.3.0
-        version: 2.3.0
       '@tauri-apps/plugin-store':
         specifier: ^2.4.0
         version: 2.4.0

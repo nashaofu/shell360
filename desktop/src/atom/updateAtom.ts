@@ -2,6 +2,7 @@ import { Update, check } from '@tauri-apps/plugin-updater';
 import { atom, useAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
 import { useLatest } from 'ahooks';
+import { relaunch } from '@tauri-apps/plugin-process';
 
 export type UpdateAtom = {
   openUpdateDialog: boolean;
@@ -155,8 +156,12 @@ export function useUpdateAtom() {
     }
   }, [setState, stateRef]);
 
-  const install = useCallback(async () => {
-    await stateRef.current.update?.install();
+  const install = useCallback(() => {
+    stateRef.current.update?.install().finally(() => {
+      if (import.meta.env.TAURI_PLATFORM === 'darwin') {
+        relaunch();
+      }
+    });
   }, [stateRef]);
 
   return {
