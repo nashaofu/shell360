@@ -88,6 +88,7 @@ export function useUpdateAtom() {
   const checkUpdate = useCheckUpdate();
 
   const stateRef = useLatest(state);
+  const update = state.update;
 
   const setOpenUpdateDialog = useCallback(
     (openUpdateDialog: boolean) => {
@@ -157,12 +158,12 @@ export function useUpdateAtom() {
   }, [setState, stateRef]);
 
   const install = useCallback(() => {
-    stateRef.current.update?.install().finally(() => {
+    update?.install().finally(() => {
       if (import.meta.env.TAURI_PLATFORM === 'darwin') {
         relaunch();
       }
     });
-  }, [stateRef]);
+  }, [update]);
 
   return {
     ...state,
