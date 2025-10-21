@@ -9,7 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { TERMINAL_THEMES, useKeys } from 'shared';
+import { TERMINAL_THEMES, useKeys, useHosts } from 'shared';
 import { Host, AuthenticationMethod } from 'tauri-plugin-data';
 
 import AddKey from '@/components/AddKey';
@@ -23,6 +23,7 @@ type EditHostFormProps = {
 export default function EditHostForm({ formApi }: EditHostFormProps) {
   const authenticationMethod = formApi.watch('authenticationMethod');
   const { data: keys } = useKeys();
+  const { data: hosts } = useHosts();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
 
   return (
@@ -294,6 +295,46 @@ export default function EditHostForm({ formApi }: EditHostFormProps) {
             )}
           />
         )}
+
+        <Controller
+          name="proxyJumpId"
+          control={formApi.control}
+          render={({ field, fieldState }) => (
+            <TextField
+              {...field}
+              sx={{
+                mb: 3,
+              }}
+              select
+              fullWidth
+              label="Proxy Jump (Optional)"
+              placeholder="Select a jump host"
+              error={fieldState.invalid}
+              helperText={
+                fieldState.error?.message ||
+                'Select a host to use as a jump server (ProxyJump)'
+              }
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon className="icon-proxy" />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {hosts
+                .filter((host) => host.id !== formApi.getValues('id'))
+                .map((host) => (
+                  <MenuItem key={host.id} value={host.id}>
+                    {host.name || host.hostname}
+                  </MenuItem>
+                ))}
+            </TextField>
+          )}
+        />
 
         <Controller
           name="terminalSettings.fontFamily"

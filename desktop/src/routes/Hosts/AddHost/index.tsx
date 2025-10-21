@@ -40,6 +40,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       authenticationMethod: AuthenticationMethod.Password,
       password: '',
       keyId: '',
+      proxyJumpId: '',
       terminalSettings: {
         fontFamily: DEFAULT_TERMINAL_FONT_FAMILY,
         fontSize: DEFAULT_TERMINAL_FONT_SIZE,
@@ -55,6 +56,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         data?.authenticationMethod ?? AuthenticationMethod.Password,
       password: data?.password ?? '',
       keyId: data?.keyId ?? '',
+      proxyJumpId: data?.proxyJumpId ?? '',
       terminalSettings: {
         fontFamily:
           data?.terminalSettings?.fontFamily ?? DEFAULT_TERMINAL_FONT_FAMILY,
@@ -84,6 +86,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
           values.authenticationMethod === 'Certificate'
             ? values.keyId
             : undefined,
+        proxyJumpId: values.proxyJumpId || undefined,
         terminalSettings: values.terminalSettings
           ? {
               fontFamily: values.terminalSettings.fontFamily,

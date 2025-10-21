@@ -8,6 +8,13 @@ export type SSHSessionOpts = {
 export type SSHSessionConnectOpts = {
   hostname: string;
   port: number;
+  proxyJump?: ProxyJumpConfig;
+};
+
+export type ProxyJumpConfig = {
+  sessionId: string;
+  hostname: string;
+  port: number;
 };
 
 export enum SSHSessionCheckServerKey {

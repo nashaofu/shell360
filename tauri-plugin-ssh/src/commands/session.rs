@@ -74,6 +74,14 @@ pub enum SSHSessionCheckServerKey {
   AddAndContinue,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxyJumpConfig {
+  pub session_id: SSHSessionId,
+  pub hostname: String,
+  pub port: u16,
+}
+
 #[tauri::command]
 pub async fn session_connect<R: Runtime>(
   app_handle: AppHandle<R>,
@@ -82,6 +90,7 @@ pub async fn session_connect<R: Runtime>(
   hostname: String,
   port: u16,
   check_server_key: Option<SSHSessionCheckServerKey>,
+  proxy_jump: Option<ProxyJumpConfig>,
   ipc_channel: Channel<SessionIpcChannelData>,
 ) -> SSHResult<SSHSessionId> {
   let ssh_client = SSHClient::new(
@@ -101,8 +110,37 @@ pub async fn session_connect<R: Runtime>(
     nodelay: true,
     ..client::Config::default()
   });
-  let addr = format!("{}:{}", &hostname, port);
-  let handle_ssh_client =
+
+  let handle_ssh_client = if let Some(proxy_jump) = proxy_jump {
+    // 通过跳板机连接
+    let sessions = ssh_manager.sessions.lock().await;
+    let proxy_session = sessions
+      .get(&proxy_jump.session_id)
+      .ok_or(SSHError::NotFoundSession)?;
+
+    // 通过跳板机创建到目标主机的通道
+    let channel = proxy_session
+      .channel_open_direct_tcpip(&hostname, port as u32, "127.0.0.1", 0)
+      .await?;
+
+    drop(sessions);
+
+    // 使用通道作为传输层连接到目标主机
+    let stream = channel.into_stream();
+    client::connect_stream(config, stream, ssh_client)
+      .await
+      .map_err(|err| match err {
+        SSHError::RusshError(e) => match e {
+          RusshError::Disconnect => {
+            SSHError::ConnectFailed(format!("{}:{} via proxy", hostname, port))
+          }
+          err => SSHError::RusshError(err),
+        },
+        err => err,
+      })?
+  } else {
+    // 直接连接
+    let addr = format!("{}:{}", &hostname, port);
     client::connect(config, &addr, ssh_client)
       .await
       .map_err(|err| match err {
@@ -111,7 +149,8 @@ pub async fn session_connect<R: Runtime>(
           err => SSHError::RusshError(err),
         },
         err => err,
-      })?;
+      })?
+  };
 
   let session = SSHSession::new(ssh_session_id, ipc_channel, handle_ssh_client);
   {

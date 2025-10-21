@@ -39,6 +39,7 @@ pub struct Model {
   pub password: Option<Vec<u8>>,
   pub key_id: Option<i64>,
   pub terminal_settings: Option<TerminalSettings>,
+  pub proxy_jump_id: Option<i64>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -51,6 +52,12 @@ pub enum Relation {
     to = "port_forwardings::Column::HostId"
   )]
   PortForwardings,
+  #[sea_orm(
+    belongs_to = "Entity",
+    from = "Column::ProxyJumpId",
+    to = "Column::Id"
+  )]
+  ProxyJump,
 }
 
 impl Related<keys::Entity> for Entity {

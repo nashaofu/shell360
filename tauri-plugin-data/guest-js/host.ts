@@ -22,6 +22,7 @@ export interface Host {
   password?: string;
   keyId?: string;
   terminalSettings?: HostTerminalSettings;
+  proxyJumpId?: string;
 }
 
 export async function getHosts(): Promise<Host[]> {
