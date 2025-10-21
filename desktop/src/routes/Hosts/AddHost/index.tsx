@@ -41,6 +41,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       password: '',
       keyId: '',
       proxyJumpId: '',
+      startupCommand: '',
       terminalSettings: {
         fontFamily: DEFAULT_TERMINAL_FONT_FAMILY,
         fontSize: DEFAULT_TERMINAL_FONT_SIZE,
@@ -58,6 +59,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       keyId: data?.keyId ?? '',
       proxyJumpId: data?.proxyJumpId ?? '',
       proxyJumpChain: data?.proxyJumpChain,
+      startupCommand: data?.startupCommand ?? '',
       terminalSettings: {
         fontFamily:
           data?.terminalSettings?.fontFamily ?? DEFAULT_TERMINAL_FONT_FAMILY,
@@ -89,6 +91,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             : undefined,
         proxyJumpId: values.proxyJumpId || undefined,
         proxyJumpChain: values.proxyJumpChain,
+        startupCommand: values.startupCommand || undefined,
         terminalSettings: values.terminalSettings
           ? {
               fontFamily: values.terminalSettings.fontFamily,

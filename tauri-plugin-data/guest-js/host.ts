@@ -28,6 +28,7 @@ export interface Host {
   terminalSettings?: HostTerminalSettings;
   proxyJumpId?: string;
   proxyJumpChain?: ProxyJumpChain;
+  startupCommand?: string;
 }
 
 export async function getHosts(): Promise<Host[]> {

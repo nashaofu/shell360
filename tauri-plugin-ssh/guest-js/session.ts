@@ -58,6 +58,7 @@ export type SSHSessionAuthenticateCertificateOpts = {
 
 export class SSHSession {
   sshSessionId: string;
+  startupCommand?: string;
 
   private opts: SSHSessionOpts;
 

@@ -50,7 +50,9 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
         // 连接跳板机
         const proxySession = new SSHSession({
           onDisconnect: () => {
-            console.log(`Proxy session ${proxyHost.name || proxyHost.hostname} disconnected`);
+            console.log(
+              `Proxy session ${proxyHost.name || proxyHost.hostname} disconnected`
+            );
           },
         });
         proxySessionsRef.current.push(proxySession);
@@ -79,7 +81,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
           hostname: proxyHost.hostname,
           port: proxyHost.port,
         };
-        
+
         chain.push(currentProxyConfig);
         previousProxyConfig = currentProxyConfig;
       }
@@ -163,6 +165,9 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
         certificate: key?.certificate || '',
       });
     }
+
+    // Store startup command in session for later use
+    session.startupCommand = host.startupCommand;
 
     return session;
   });

@@ -103,6 +103,7 @@ pub struct Model {
   pub terminal_settings: Option<TerminalSettings>,
   pub proxy_jump_id: Option<i64>,
   pub proxy_jump_chain: Option<ProxyJumpChain>,
+  pub startup_command: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

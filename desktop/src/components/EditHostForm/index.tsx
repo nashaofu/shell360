@@ -32,7 +32,7 @@ export default function EditHostForm({ formApi, currentHostId }: EditHostFormPro
   const { data: keys } = useKeys();
   const { data: hosts } = useHosts();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
-  
+
   // 根据当前配置初始化proxyMode
   const getInitialProxyMode = () => {
     if (proxyJumpChain?.hostIds && proxyJumpChain.hostIds.length > 0) {
@@ -43,7 +43,7 @@ export default function EditHostForm({ formApi, currentHostId }: EditHostFormPro
     }
     return 'none';
   };
-  
+
   const [proxyMode, setProxyMode] = useState<'none' | 'single' | 'chain'>(getInitialProxyMode());
 
   return (
@@ -408,6 +408,39 @@ export default function EditHostForm({ formApi, currentHostId }: EditHostFormPro
             />
           )}
         </Box>
+
+        <Controller
+          name="startupCommand"
+          control={formApi.control}
+          rules={{
+            maxLength: {
+              value: 500,
+              message: 'Please enter no more than 500 characters',
+            },
+          }}
+          render={({ field, fieldState }) => (
+            <TextField
+              {...field}
+              sx={{
+                mb: 3,
+              }}
+              fullWidth
+              label="Startup Command"
+              placeholder="Command to execute after connection (optional)"
+              error={fieldState.invalid}
+              helperText={fieldState.error?.message || 'This command will be executed automatically after SSH connection'}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Icon className="icon-terminal" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          )}
+        />
 
         <Controller
           name="terminalSettings.fontFamily"

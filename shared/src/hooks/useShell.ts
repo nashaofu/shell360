@@ -40,6 +40,13 @@ export function useShell({ session, onClose }: UseShellOpts) {
         width: terminal.element?.clientWidth ?? 0,
         height: terminal.element?.clientHeight ?? 0,
       });
+
+      // Execute startup command if configured
+      if (session.startupCommand) {
+        // Wait a bit for the shell to be fully ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await shell.send(session.startupCommand + '\n');
+      }
     },
     {
       ready: !!terminal && !!session,

@@ -28,6 +28,7 @@ pub struct HostBase {
   #[serde_as(as = "Option<DisplayFromStr>")]
   proxy_jump_id: Option<i64>,
   proxy_jump_chain: Option<entities::hosts::ProxyJumpChain>,
+  startup_command: Option<String>,
 }
 impl ModelConvert for HostBase {
   type Model = entities::hosts::Model;
@@ -58,6 +59,7 @@ impl ModelConvert for HostBase {
       terminal_settings: model.terminal_settings,
       proxy_jump_id: model.proxy_jump_id,
       proxy_jump_chain: model.proxy_jump_chain,
+      startup_command: model.startup_command,
     })
   }
 
@@ -84,6 +86,7 @@ impl ModelConvert for HostBase {
       terminal_settings: ActiveValue::Set(self.terminal_settings.clone()),
       proxy_jump_id: ActiveValue::Set(self.proxy_jump_id),
       proxy_jump_chain: ActiveValue::Set(self.proxy_jump_chain.clone()),
+      startup_command: ActiveValue::Set(self.startup_command.clone()),
       ..Default::default()
     };
 
