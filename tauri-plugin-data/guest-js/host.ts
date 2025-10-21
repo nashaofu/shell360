@@ -12,6 +12,10 @@ export enum AuthenticationMethod {
   Certificate = 'Certificate',
 }
 
+export interface ProxyJumpChain {
+  hostIds: string[];
+}
+
 export interface Host {
   id: string;
   name?: string;
@@ -23,6 +27,7 @@ export interface Host {
   keyId?: string;
   terminalSettings?: HostTerminalSettings;
   proxyJumpId?: string;
+  proxyJumpChain?: ProxyJumpChain;
 }
 
 export async function getHosts(): Promise<Host[]> {

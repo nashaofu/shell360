@@ -8,23 +8,43 @@ import {
   TextField,
   ListItemIcon,
   ListItemText,
+  ToggleButtonGroup,
+  ToggleButton,
+  Typography,
 } from '@mui/material';
 import { TERMINAL_THEMES, useKeys, useHosts } from 'shared';
 import { Host, AuthenticationMethod } from 'tauri-plugin-data';
 
 import AddKey from '@/components/AddKey';
+import ProxyJumpChainEditor from '@/components/ProxyJumpChainEditor';
 
 import TextFieldPassword from '../TextFieldPassword';
 
 type EditHostFormProps = {
   formApi: UseFormReturn<Omit<Host, 'id'>>;
+  currentHostId?: string;
 };
 
-export default function EditHostForm({ formApi }: EditHostFormProps) {
+export default function EditHostForm({ formApi, currentHostId }: EditHostFormProps) {
   const authenticationMethod = formApi.watch('authenticationMethod');
+  const proxyJumpId = formApi.watch('proxyJumpId');
+  const proxyJumpChain = formApi.watch('proxyJumpChain');
   const { data: keys } = useKeys();
   const { data: hosts } = useHosts();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
+  
+  // 根据当前配置初始化proxyMode
+  const getInitialProxyMode = () => {
+    if (proxyJumpChain?.hostIds && proxyJumpChain.hostIds.length > 0) {
+      return 'chain';
+    }
+    if (proxyJumpId) {
+      return 'single';
+    }
+    return 'none';
+  };
+  
+  const [proxyMode, setProxyMode] = useState<'none' | 'single' | 'chain'>(getInitialProxyMode());
 
   return (
     <>
@@ -296,45 +316,98 @@ export default function EditHostForm({ formApi }: EditHostFormProps) {
           />
         )}
 
-        <Controller
-          name="proxyJumpId"
-          control={formApi.control}
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              select
-              fullWidth
-              label="Proxy Jump (Optional)"
-              placeholder="Select a jump host"
-              error={fieldState.invalid}
-              helperText={
-                fieldState.error?.message ||
-                'Select a host to use as a jump server (ProxyJump)'
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Proxy Jump Configuration
+          </Typography>
+          <ToggleButtonGroup
+            value={proxyMode}
+            exclusive
+            onChange={(_, newMode) => {
+              if (newMode !== null) {
+                setProxyMode(newMode);
+                if (newMode === 'none') {
+                  formApi.setValue('proxyJumpId', undefined);
+                  formApi.setValue('proxyJumpChain', undefined);
+                } else if (newMode === 'single') {
+                  formApi.setValue('proxyJumpChain', undefined);
+                } else if (newMode === 'chain') {
+                  formApi.setValue('proxyJumpId', undefined);
+                }
               }
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Icon className="icon-proxy" />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {hosts
-                .filter((host) => host.id !== formApi.getValues('id'))
-                .map((host) => (
-                  <MenuItem key={host.id} value={host.id}>
-                    {host.name || host.hostname}
+            }}
+            size="small"
+            fullWidth
+            sx={{ mb: 2 }}
+          >
+            <ToggleButton value="none">
+              <Icon className="icon-close" sx={{ mr: 0.5 }} />
+              None
+            </ToggleButton>
+            <ToggleButton value="single">
+              <Icon className="icon-proxy" sx={{ mr: 0.5 }} />
+              Single Jump
+            </ToggleButton>
+            <ToggleButton value="chain">
+              <Icon className="icon-link" sx={{ mr: 0.5 }} />
+              Multi-level Chain
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {proxyMode === 'single' && (
+            <Controller
+              name="proxyJumpId"
+              control={formApi.control}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  label="Proxy Jump Host"
+                  placeholder="Select a jump host"
+                  error={fieldState.invalid}
+                  helperText={
+                    fieldState.error?.message ||
+                    'Select a host to use as a jump server'
+                  }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Icon className="icon-proxy" />
+                      </InputAdornment>
+                    ),
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>None</em>
                   </MenuItem>
-                ))}
-            </TextField>
+                  {hosts
+                    .filter((host) => host.id !== currentHostId)
+                    .map((host) => (
+                      <MenuItem key={host.id} value={host.id}>
+                        {host.name || host.hostname}
+                      </MenuItem>
+                    ))}
+                </TextField>
+              )}
+            />
           )}
-        />
+
+          {proxyMode === 'chain' && (
+            <Controller
+              name="proxyJumpChain.hostIds"
+              control={formApi.control}
+              defaultValue={[]}
+              render={({ field }) => (
+                <ProxyJumpChainEditor
+                  value={field.value || []}
+                  onChange={field.onChange}
+                  currentHostId={currentHostId}
+                />
+              )}
+            />
+          )}
+        </Box>
 
         <Controller
           name="terminalSettings.fontFamily"

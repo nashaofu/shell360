@@ -57,6 +57,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       password: data?.password ?? '',
       keyId: data?.keyId ?? '',
       proxyJumpId: data?.proxyJumpId ?? '',
+      proxyJumpChain: data?.proxyJumpChain,
       terminalSettings: {
         fontFamily:
           data?.terminalSettings?.fontFamily ?? DEFAULT_TERMINAL_FONT_FAMILY,
@@ -87,6 +88,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             ? values.keyId
             : undefined,
         proxyJumpId: values.proxyJumpId || undefined,
+        proxyJumpChain: values.proxyJumpChain,
         terminalSettings: values.terminalSettings
           ? {
               fontFamily: values.terminalSettings.fontFamily,
@@ -194,7 +196,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         </Box>
       }
     >
-      <EditHostForm formApi={formApi} />
+      <EditHostForm formApi={formApi} currentHostId={data?.id} />
     </PageDrawer>
   );
 }

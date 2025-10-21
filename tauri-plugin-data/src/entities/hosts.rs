@@ -23,6 +23,68 @@ pub struct TerminalSettings {
   pub theme: Option<String>,
 }
 
+#[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxyJumpChain {
+  #[serde(
+    serialize_with = "serialize_host_ids",
+    deserialize_with = "deserialize_host_ids"
+  )]
+  pub host_ids: Vec<i64>,
+}
+
+fn serialize_host_ids<S>(ids: &Vec<i64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: serde::Serializer,
+{
+  use serde::ser::SerializeSeq;
+  let mut seq = serializer.serialize_seq(Some(ids.len()))?;
+  for id in ids {
+    seq.serialize_element(&id.to_string())?;
+  }
+  seq.end()
+}
+
+fn deserialize_host_ids<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
+where
+  D: serde::Deserializer<'de>,
+{
+  use serde::de::{self, Visitor};
+  use std::fmt;
+
+  struct HostIdsVisitor;
+
+  impl<'de> Visitor<'de> for HostIdsVisitor {
+    type Value = Vec<i64>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+      formatter.write_str("a sequence of integers or strings")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+      A: de::SeqAccess<'de>,
+    {
+      let mut ids = Vec::new();
+      while let Some(value) = seq.next_element::<serde_json::Value>()? {
+        let id = match value {
+          serde_json::Value::Number(n) => n
+            .as_i64()
+            .ok_or_else(|| de::Error::custom("invalid number"))?,
+          serde_json::Value::String(s) => s
+            .parse::<i64>()
+            .map_err(|_| de::Error::custom("invalid string number"))?,
+          _ => return Err(de::Error::custom("expected number or string")),
+        };
+        ids.push(id);
+      }
+      Ok(ids)
+    }
+  }
+
+  deserializer.deserialize_seq(HostIdsVisitor)
+}
+
 #[derive(Clone, Debug, DeriveEntityModel, PartialEq, Eq)]
 #[sea_orm(table_name = "hosts")]
 pub struct Model {
@@ -40,6 +102,7 @@ pub struct Model {
   pub key_id: Option<i64>,
   pub terminal_settings: Option<TerminalSettings>,
   pub proxy_jump_id: Option<i64>,
+  pub proxy_jump_chain: Option<ProxyJumpChain>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
