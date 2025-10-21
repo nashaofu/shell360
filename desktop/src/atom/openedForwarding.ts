@@ -16,6 +16,7 @@ export type OpenedForwarding = {
   ssh: SSHPortForwarding;
   status: OpenedForwardingStatus;
   error?: unknown;
+  proxySessions?: any[]; // SSHSession[] from tauri-plugin-ssh
 };
 
 export const openedForwardingAtom = atom<OpenedForwarding[]>([]);
