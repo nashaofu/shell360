@@ -8,7 +8,8 @@
     "tauri": "tauri",
     "dotenvx": "dotenvx run --",
     "lint": "eslint . --fix",
-    "tsc": "pnpm --filter \"*\" run tsc"
+    "tsc": "pnpm --filter \"*\" run tsc",
+    "build": "pnpm --filter \"*\" run build"
   },
   "license": "MIT",
   "devDependencies": {
