@@ -221,6 +221,9 @@ export default function EditHostForm({ formApi }: EditHostFormProps) {
               <MenuItem value={AuthenticationMethod.PublicKey}>
                 PublicKey
               </MenuItem>
+              <MenuItem value={AuthenticationMethod.Certificate}>
+                Certificate
+              </MenuItem>
             </TextField>
           )}
         />
@@ -251,45 +254,46 @@ export default function EditHostForm({ formApi }: EditHostFormProps) {
           />
         )}
 
-        {authenticationMethod === AuthenticationMethod.PublicKey && (
-          <Controller
-            name="keyId"
-            control={formApi.control}
-            rules={{
-              required: {
-                value: true,
-                message: 'Please select public key',
-              },
-            }}
-            render={({ field, fieldState }) => (
-              <TextField
-                {...field}
-                sx={{
-                  mb: 3,
-                }}
-                select
-                fullWidth
-                required
-                label="Key"
-                placeholder="Key"
-                error={fieldState.invalid}
-                helperText={fieldState.error?.message}
-              >
-                <MenuItem value="" onClick={() => setIsOpenAddKey(true)}>
-                  <ListItemIcon>
-                    <Icon className="icon-add" />
-                  </ListItemIcon>
-                  <ListItemText>Add public key</ListItemText>
-                </MenuItem>
-                {keys.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
+        {authenticationMethod === AuthenticationMethod.PublicKey ||
+          (authenticationMethod === AuthenticationMethod.Certificate && (
+            <Controller
+              name="keyId"
+              control={formApi.control}
+              rules={{
+                required: {
+                  value: true,
+                  message: 'Please select key',
+                },
+              }}
+              render={({ field, fieldState }) => (
+                <TextField
+                  {...field}
+                  sx={{
+                    mb: 3,
+                  }}
+                  select
+                  fullWidth
+                  required
+                  label="Key"
+                  placeholder="Key"
+                  error={fieldState.invalid}
+                  helperText={fieldState.error?.message}
+                >
+                  <MenuItem value="" onClick={() => setIsOpenAddKey(true)}>
+                    <ListItemIcon>
+                      <Icon className="icon-add" />
+                    </ListItemIcon>
+                    <ListItemText>Add key</ListItemText>
                   </MenuItem>
-                ))}
-              </TextField>
-            )}
-          />
-        )}
+                  {keys.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+          ))}
 
         <Controller
           name="terminalSettings.fontFamily"

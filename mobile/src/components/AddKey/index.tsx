@@ -17,19 +17,20 @@ type AddKeyProps = {
 
 export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
   const { refresh: refreshKeys } = useKeys();
-
   const formApi = useForm<Omit<Key, 'id'>>({
     defaultValues: {
       name: '',
       publicKey: '',
       privateKey: '',
       passphrase: '',
+      certificate: '',
     },
     values: {
       name: data?.name ?? '',
       publicKey: data?.publicKey ?? '',
       privateKey: data?.privateKey ?? '',
       passphrase: data?.passphrase ?? '',
+      certificate: data?.certificate ?? '',
     },
   });
 

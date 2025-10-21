@@ -6,6 +6,7 @@ export interface Key {
   privateKey: string;
   publicKey: string;
   passphrase?: string;
+  certificate?: string;
 }
 
 export async function getKeys(): Promise<Key[]> {

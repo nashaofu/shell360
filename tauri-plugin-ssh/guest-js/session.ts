@@ -27,6 +27,7 @@ export type SSHSessionAuthenticateOpts = {
   password?: string;
   privateKey?: string;
   passphrase?: string;
+  certificate?: string;
 };
 
 export class SSHSession {

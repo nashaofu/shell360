@@ -34,6 +34,7 @@ export default function EditKeyForm({ formApi }: EditKeyFormProps) {
     formApi.setValue('name', filename);
     formApi.setValue('privateKey', text);
   }, [formApi]);
+
   return (
     <Box
       sx={{
@@ -137,9 +138,28 @@ export default function EditKeyForm({ formApi }: EditKeyFormProps) {
         render={({ field, fieldState }) => (
           <TextFieldPassword
             {...field}
+            sx={{
+              mb: 3,
+            }}
             fullWidth
             label="Passphrase"
             placeholder="Passphrase"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+          />
+        )}
+      />
+      <Controller
+        name="certificate"
+        control={formApi.control}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            fullWidth
+            label="Certificate"
+            placeholder="Certificate"
+            multiline
+            maxRows={8}
             error={fieldState.invalid}
             helperText={fieldState.error?.message}
           />

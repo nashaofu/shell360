@@ -19,6 +19,7 @@ pub struct KeyBase {
   private_key: String,
   public_key: String,
   passphrase: Option<String>,
+  certificate: Option<String>,
 }
 
 impl ModelConvert for KeyBase {
@@ -37,12 +38,19 @@ impl ModelConvert for KeyBase {
     } else {
       None
     };
+    let certificate = if let Some(certificate) = model.certificate {
+      let decrypted = crypto_manager.decrypt(&certificate).await?;
+      Some(String::from_utf8(decrypted)?)
+    } else {
+      None
+    };
 
     Ok(KeyBase {
       name: model.name,
       private_key: String::from_utf8(private_key)?,
       public_key: String::from_utf8(public_key)?,
       passphrase,
+      certificate,
     })
   }
 
@@ -57,12 +65,18 @@ impl ModelConvert for KeyBase {
     } else {
       None
     };
+    let certificate = if let Some(certificate) = &self.certificate {
+      Some(crypto_manager.encrypt(certificate.as_bytes()).await?)
+    } else {
+      None
+    };
 
     let active_model = Self::ActiveModel {
       name: ActiveValue::Set(self.name.clone()),
       private_key: ActiveValue::Set(private_key),
       public_key: ActiveValue::Set(public_key),
       passphrase: ActiveValue::Set(passphrase),
+      certificate: ActiveValue::Set(certificate),
       ..Default::default()
     };
 

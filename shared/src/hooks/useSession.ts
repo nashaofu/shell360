@@ -44,6 +44,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
       password: host.password,
       privateKey: key?.privateKey,
       passphrase: key?.passphrase,
+      certificate: key?.certificate,
     });
 
     return session;

@@ -9,6 +9,7 @@ export interface HostTerminalSettings {
 export enum AuthenticationMethod {
   Password = 'Password',
   PublicKey = 'PublicKey',
+  Certificate = 'Certificate',
 }
 
 export interface Host {

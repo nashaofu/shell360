@@ -7,7 +7,7 @@ use std::{
 use russh::{
   Disconnect, Error as RusshError,
   client::{self, Handle},
-  keys::{HashAlg, decode_secret_key, key::PrivateKeyWithHashAlg},
+  keys::{Certificate, HashAlg, decode_secret_key, key::PrivateKeyWithHashAlg},
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Runtime, State, ipc::Channel};
@@ -131,6 +131,7 @@ pub async fn session_authenticate<R: Runtime>(
   password: Option<&str>,
   private_key: Option<&str>,
   passphrase: Option<&str>,
+  certificate: Option<&str>,
 ) -> SSHResult<SSHSessionId> {
   log::info!("authenticate session");
 
@@ -140,39 +141,61 @@ pub async fn session_authenticate<R: Runtime>(
     .ok_or(SSHError::NotFoundSession)?;
 
   if let Some(private_key) = private_key {
-    log::info!("authenticate by private key");
-
     let password = passphrase.and_then(|passphrase| {
       if passphrase.is_empty() {
         None
       } else {
-        log::info!("authenticate by private key with passphrase");
+        log::info!("authenticate with passphrase");
         Some(passphrase)
       }
     });
 
     let key_pair = decode_secret_key(private_key, password)?;
-    log::info!(
-      "authenticate by private key with key pair {:?}",
-      key_pair.algorithm()
-    );
-    let auth_res = session
-      .authenticate_publickey(
-        username,
-        // Some(HashAlg::Sha512) 只在 RSA 算法中生效，其他算法内部会忽略该参数
-        PrivateKeyWithHashAlg::new(Arc::new(key_pair), Some(HashAlg::Sha512)),
-      )
-      .await?;
+    if passphrase.is_some() {
+      log::info!(
+        "authenticate with private key {:?} and passphrase",
+        key_pair.algorithm(),
+      );
+    } else {
+      log::info!("authenticate with private key {:?}", key_pair.algorithm());
+    }
 
-    log::info!(
-      "authenticate by private key with result {:?}",
-      auth_res.success()
-    );
+    if let Some(certificate) = certificate {
+      log::info!("authenticate with certificate");
+      if let Ok(cert) = Certificate::from_openssh(certificate) {
+        let auth_res = session
+          .authenticate_openssh_cert(username, Arc::new(key_pair), cert)
+          .await?;
+        log::info!(
+          "authenticate with certificate result {:?}",
+          auth_res.success()
+        );
 
-    if !auth_res.success() {
-      return Err(SSHError::AuthFailed {
-        auth_method: AuthMethod::PrivateKey,
-      });
+        if !auth_res.success() {
+          return Err(SSHError::AuthFailed {
+            auth_method: AuthMethod::Certificate,
+          });
+        }
+      }
+    } else {
+      let auth_res = session
+        .authenticate_publickey(
+          username,
+          // Some(HashAlg::Sha512) 只在 RSA 算法中生效，其他算法内部会忽略该参数
+          PrivateKeyWithHashAlg::new(Arc::new(key_pair), Some(HashAlg::Sha512)),
+        )
+        .await?;
+
+      log::info!(
+        "authenticate with private key result {:?}",
+        auth_res.success()
+      );
+
+      if !auth_res.success() {
+        return Err(SSHError::AuthFailed {
+          auth_method: AuthMethod::PrivateKey,
+        });
+      }
     }
   } else if let Some(password) = password {
     let auth_res = session.authenticate_password(username, password).await?;

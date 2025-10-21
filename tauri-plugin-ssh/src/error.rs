@@ -10,6 +10,7 @@ use thiserror::Error;
 pub enum AuthMethod {
   PrivateKey,
   Password,
+  Certificate,
   NotSupported,
 }
 
@@ -60,6 +61,7 @@ pub enum SSHError {
   #[error("{}", match auth_method {
       AuthMethod::PrivateKey => "The username or private key is incorrect",
       AuthMethod::Password => "The username or password is incorrect",
+      AuthMethod::Certificate => "The username or certificate is incorrect",
       AuthMethod::NotSupported => "Not supported auth method",
     })]
   AuthFailed { auth_method: AuthMethod },

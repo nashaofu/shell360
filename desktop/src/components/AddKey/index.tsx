@@ -23,12 +23,14 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       publicKey: '',
       privateKey: '',
       passphrase: '',
+      certificate: '',
     },
     values: {
       name: data?.name ?? '',
       publicKey: data?.publicKey ?? '',
       privateKey: data?.privateKey ?? '',
       passphrase: data?.passphrase ?? '',
+      certificate: data?.certificate ?? '',
     },
   });
 

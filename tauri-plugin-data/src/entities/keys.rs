@@ -15,6 +15,8 @@ pub struct Model {
   pub public_key: Vec<u8>,
   #[sea_orm(column_type = "Blob", nullable)]
   pub passphrase: Option<Vec<u8>>,
+  #[sea_orm(column_type = "Blob", nullable)]
+  pub certificate: Option<Vec<u8>>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

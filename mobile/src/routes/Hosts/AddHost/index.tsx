@@ -80,7 +80,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             ? values.password
             : undefined,
         keyId:
-          values.authenticationMethod === 'PublicKey'
+          values.authenticationMethod === 'PublicKey' ||
+          values.authenticationMethod === 'Certificate'
             ? values.keyId
             : undefined,
         terminalSettings: values.terminalSettings

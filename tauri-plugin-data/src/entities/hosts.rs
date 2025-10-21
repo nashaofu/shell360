@@ -11,6 +11,8 @@ pub enum AuthenticationMethod {
   Password,
   #[sea_orm(num_value = 1)]
   PublicKey,
+  #[sea_orm(num_value = 2)]
+  Certificate,
 }
 
 #[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
