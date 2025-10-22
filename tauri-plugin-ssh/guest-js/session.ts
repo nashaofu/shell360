@@ -22,13 +22,31 @@ export type SSHSessionDisconnectEvent = {
 
 export type SSHSessionIpcChannelEvent = SSHSessionDisconnectEvent;
 
-export type SSHSessionAuthenticateOpts = {
-  username: string;
-  password?: string;
-  privateKey?: string;
-  passphrase?: string;
-  certificate?: string;
-};
+export enum AuthenticationMethod {
+  Password = 'Password',
+  PublicKey = 'PublicKey',
+  Certificate = 'Certificate',
+}
+
+export type SSHSessionAuthenticateOpts =
+  | {
+      username: string;
+      authenticationMethod: AuthenticationMethod.Password;
+      password: string;
+    }
+  | {
+      username: string;
+      authenticationMethod: AuthenticationMethod.PublicKey;
+      privateKey: string;
+      passphrase?: string;
+    }
+  | {
+      username: string;
+      authenticationMethod: AuthenticationMethod.Certificate;
+      privateKey: string;
+      passphrase?: string;
+      certificate: string;
+    };
 
 export class SSHSession {
   sshSessionId: string;
@@ -54,11 +72,43 @@ export class SSHSession {
     });
   }
 
-  authenticate(opts: SSHSessionAuthenticateOpts): Promise<string> {
-    return invoke<string>('plugin:ssh|session_authenticate', {
-      ...opts,
-      sshSessionId: this.sshSessionId,
-    });
+  authenticate({
+    username,
+    authenticationMethod,
+    ...opts
+  }: SSHSessionAuthenticateOpts): Promise<string> {
+    if (authenticationMethod === AuthenticationMethod.Password) {
+      return invoke<string>('plugin:ssh|session_authenticate', {
+        username,
+        authenticationData: {
+          authenticationMethod,
+          password: opts.password,
+        },
+        sshSessionId: this.sshSessionId,
+      });
+    }
+    if (authenticationMethod === AuthenticationMethod.PublicKey) {
+      return invoke<string>('plugin:ssh|session_authenticate', {
+        username,
+        authenticationData: {
+          authenticationMethod,
+          privateKey: opts.privateKey,
+          passphrase: opts.passphrase,
+        },
+        sshSessionId: this.sshSessionId,
+      });
+    } else {
+      return invoke<string>('plugin:ssh|session_authenticate', {
+        username,
+        authenticationData: {
+          authenticationMethod,
+          privateKey: opts.privateKey,
+          passphrase: opts.passphrase,
+          certificate: opts.certificate,
+        },
+        sshSessionId: this.sshSessionId,
+      });
+    }
   }
 
   disconnect(): Promise<string> {

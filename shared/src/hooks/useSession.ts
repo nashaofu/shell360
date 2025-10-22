@@ -41,6 +41,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     const key = keys.find((item) => item.id === host.keyId);
     await session.authenticate({
       username: host.username,
+      authenticationMethod: host.authenticationMethod,
       password: host.password,
       privateKey: key?.privateKey,
       passphrase: key?.passphrase,

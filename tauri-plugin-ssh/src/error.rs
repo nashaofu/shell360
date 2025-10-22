@@ -6,12 +6,14 @@ use serde_json::json;
 use strum::AsRefStr;
 use thiserror::Error;
 
-#[derive(Debug, Serialize)]
-pub enum AuthMethod {
-  PrivateKey,
+#[derive(Debug, Error, Serialize, AsRefStr)]
+pub enum AuthenticationMethodError {
+  #[error("The username or password is incorrect")]
   Password,
+  #[error("The username or key is incorrect")]
+  PublicKey,
+  #[error("The username or certificate is incorrect")]
   Certificate,
-  NotSupported,
 }
 
 #[derive(Debug, Error, AsRefStr)]
@@ -58,13 +60,8 @@ pub enum SSHError {
     fingerprint: Fingerprint,
   },
 
-  #[error("{}", match auth_method {
-      AuthMethod::PrivateKey => "The username or private key is incorrect",
-      AuthMethod::Password => "The username or password is incorrect",
-      AuthMethod::Certificate => "The username or certificate is incorrect",
-      AuthMethod::NotSupported => "Not supported auth method",
-    })]
-  AuthFailed { auth_method: AuthMethod },
+  #[error(transparent)]
+  AuthenticationError(#[from] AuthenticationMethodError),
 
   #[error("Not found session")]
   NotFoundSession,
@@ -97,10 +94,10 @@ impl Serialize for SSHError {
         "algorithm": algorithm,
         "fingerprint": fingerprint.to_string(),
       }),
-      SSHError::AuthFailed { auth_method } => json!({
+      SSHError::AuthenticationError(authentication_method_error) => json!({
         "type": self.as_ref(),
         "message": self.to_string(),
-        "authMethod": auth_method,
+        "authenticationMethod": authentication_method_error.as_ref(),
       }),
       _ => json!({
         "type": self.as_ref(),
@@ -121,6 +118,12 @@ impl<T> From<PoisonError<T>> for SSHError {
 impl<T> From<TryLockError<T>> for SSHError {
   fn from(value: TryLockError<T>) -> Self {
     SSHError::StdSyncTryLockError(value.to_string())
+  }
+}
+
+impl SSHError {
+  pub fn new<T: ToString>(message: T) -> Self {
+    SSHError::Error(message.to_string())
   }
 }
 

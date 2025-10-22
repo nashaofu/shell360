@@ -203,9 +203,11 @@ export default function PortForwardings() {
 
       await ssh.session.authenticate({
         username: host.username,
+        authenticationMethod: host.authenticationMethod,
         password: host.password,
         privateKey: key?.privateKey,
         passphrase: key?.passphrase,
+        certificate: key?.certificate,
       });
 
       if (portForwarding.portForwardingType === PortForwardingType.Local) {

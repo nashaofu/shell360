@@ -37,7 +37,7 @@ const STATUS_BUTTONS = {
             userSelect: 'text',
           }}
         >
-          {error?.message}
+          {error?.message || String(error)}
         </Box>
         <Box
           sx={{
@@ -70,7 +70,7 @@ const STATUS_BUTTONS = {
             userSelect: 'text',
           }}
         >
-          {error?.message}
+          {error?.message || String(error)}
         </Box>
         <Box
           sx={{
@@ -140,7 +140,7 @@ const STATUS_BUTTONS = {
             userSelect: 'text',
           }}
         >
-          {error?.message}
+          {error?.message || String(error)}
         </Box>
         <Box
           sx={{
@@ -173,7 +173,7 @@ const STATUS_BUTTONS = {
             userSelect: 'text',
           }}
         >
-          {error?.message}
+          {error?.message || String(error)}
         </Box>
         <Box
           sx={{
