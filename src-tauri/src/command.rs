@@ -4,7 +4,6 @@ use ssh_key::{
   private::{EcdsaKeypair, Ed25519Keypair, KeypairData, RsaKeypair},
   EcdsaCurve, LineEnding, PrivateKey,
 };
-use webbrowser;
 
 use crate::error::Shell360Result;
 
