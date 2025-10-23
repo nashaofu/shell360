@@ -50,8 +50,8 @@ Join our [TestFlight](https://testflight.apple.com/join/teqJZCRm) Or [Google Pla
 
 ### 🔐 Secure Connection
 
-- Advanced SSH client with support for multiple authentication methods
-- ED25519, RSA, and ECDSA SSH keys
+- Advanced SSH client with support for password, public key, and certificate authentication methods
+- Support for ED25519, RSA, and ECDSA SSH keys
 - Application data encryption for enhanced security
 
 ### 📁 File Management
