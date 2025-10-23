@@ -17,6 +17,7 @@ import {
 import { useRequest } from 'ahooks';
 import { useHosts, useKeys, usePortForwardings } from 'shared';
 import {
+  AuthenticationMethod,
   deletePortForwarding,
   Host,
   PortForwarding,
@@ -201,14 +202,25 @@ export default function PortForwardings() {
         checkServerKey
       );
 
-      await ssh.session.authenticate({
-        username: host.username,
-        authenticationMethod: host.authenticationMethod,
-        password: host.password,
-        privateKey: key?.privateKey,
-        passphrase: key?.passphrase,
-        certificate: key?.certificate,
-      });
+      if (host.authenticationMethod === AuthenticationMethod.Password) {
+        await ssh.session.authenticate_password({
+          username: host.username,
+          password: host.password || '',
+        });
+      } else if (host.authenticationMethod === AuthenticationMethod.PublicKey) {
+        await ssh.session.authenticate_public_key({
+          username: host.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+        });
+      } else {
+        await ssh.session.authenticate_certificate({
+          username: host.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+          certificate: key?.certificate || '',
+        });
+      }
 
       if (portForwarding.portForwardingType === PortForwardingType.Local) {
         await ssh.openLocalPortForwarding({

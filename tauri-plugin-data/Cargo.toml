@@ -2,7 +2,7 @@
 name = "tauri-plugin-data"
 version = "0.1.0"
 authors = ["You"]
-description = ""
+description = "Tauri plugin for data"
 edition = "2024"
 exclude = ["/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-data"

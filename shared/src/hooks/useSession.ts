@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { SSHSessionCheckServerKey, SSHSession } from 'tauri-plugin-ssh';
 import { useRequest, useUnmount } from 'ahooks';
-import { Host } from 'tauri-plugin-data';
+import { AuthenticationMethod, Host } from 'tauri-plugin-data';
 
 import { useKeys } from './useKeys';
 
@@ -39,14 +39,26 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     );
 
     const key = keys.find((item) => item.id === host.keyId);
-    await session.authenticate({
-      username: host.username,
-      authenticationMethod: host.authenticationMethod,
-      password: host.password,
-      privateKey: key?.privateKey,
-      passphrase: key?.passphrase,
-      certificate: key?.certificate,
-    });
+
+    if (host.authenticationMethod === AuthenticationMethod.Password) {
+      await session.authenticate_password({
+        username: host.username,
+        password: host.password || '',
+      });
+    } else if (host.authenticationMethod === AuthenticationMethod.PublicKey) {
+      await session.authenticate_public_key({
+        username: host.username,
+        privateKey: key?.privateKey || '',
+        passphrase: key?.passphrase || '',
+      });
+    } else {
+      await session.authenticate_certificate({
+        username: host.username,
+        privateKey: key?.privateKey || '',
+        passphrase: key?.passphrase || '',
+        certificate: key?.certificate || '',
+      });
+    }
 
     return session;
   });

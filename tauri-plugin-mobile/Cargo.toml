@@ -2,7 +2,7 @@
 name = "tauri-plugin-mobile"
 version = "0.0.0"
 authors = ["You"]
-description = ""
+description = "Tauri plugin for mobile"
 edition = "2024"
 exclude = ["/webview-dist", "/webview-src", "/node_modules"]
 links = "tauri-plugin-mobile"
