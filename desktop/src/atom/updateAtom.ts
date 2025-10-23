@@ -36,24 +36,28 @@ export function useCheckUpdate() {
 
     try {
       const checking = check();
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         checking,
-      });
+      };
+      setState(stateRef.current);
       const update = await checking;
-      setState({
+
+      stateRef.current = {
         ...stateRef.current,
         checking: undefined,
         update,
-      });
+      };
+      setState(stateRef.current);
 
       return update;
     } catch (err) {
-      setState({
+      stateRef.current = {
         ...stateRef.current,
         checking: undefined,
         update: null,
-      });
+      };
+      setState(stateRef.current);
       throw err;
     }
   }, [setState, stateRef]);
