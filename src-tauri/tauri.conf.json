@@ -20,6 +20,7 @@
         "script-src": ["'self'", "https://cloud.umami.is"],
         "connect-src": [
           "'self'",
+          "ipc://localhost",
           "http://ipc.localhost",
           "https://api-gateway.umami.dev"
         ],
