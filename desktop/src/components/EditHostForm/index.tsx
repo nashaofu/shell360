@@ -161,7 +161,7 @@ export default function EditHostForm({ formApi }: EditHostFormProps) {
               message: 'Please enter username',
             },
             minLength: {
-              value: 3,
+              value: 1,
               message: 'Please enter at least 1 characters',
             },
             maxLength: {
