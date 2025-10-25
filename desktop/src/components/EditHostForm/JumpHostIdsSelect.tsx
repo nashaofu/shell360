@@ -13,7 +13,18 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
-import { useHosts } from 'shared';
+import { getHostName, useHosts } from 'shared';
+import { Host } from 'tauri-plugin-data';
+
+function getJumpHostName(
+  hostMap: Map<string, Host>,
+  host: string,
+  index: number
+) {
+  return `${index + 1}. ${
+    hostMap.get(host) ? getHostName(hostMap.get(host)) : 'Unknown'
+  }`;
+}
 
 interface JumpHostIdsSelectProps {
   value: string[];
@@ -41,6 +52,13 @@ export default function JumpHostIdsSelect({
     [hosts, hostId, value]
   );
 
+  const hostMap = useMemo(() => {
+    return hosts.reduce((acc, host) => {
+      acc.set(host.id, host);
+      return acc;
+    }, new Map<string, Host>());
+  }, [hosts]);
+
   const handleAdd = () => {
     if (selectedHostId) {
       onChange([...value, selectedHostId]);
@@ -49,19 +67,19 @@ export default function JumpHostIdsSelect({
   };
 
   const handleRemove = (index: number) => {
-    const newChain = [...value];
-    newChain.splice(index, 1);
-    onChange(newChain);
+    const newItems = [...value];
+    newItems.splice(index, 1);
+    onChange(newItems);
   };
 
   const handleMoveUp = (index: number) => {
     if (index > 0) {
-      const newChain = [...value];
-      [newChain[index - 1], newChain[index]] = [
-        newChain[index],
-        newChain[index - 1],
+      const newItems = [...value];
+      [newItems[index - 1], newItems[index]] = [
+        newItems[index],
+        newItems[index - 1],
       ];
-      onChange(newChain);
+      onChange(newItems);
     }
   };
 
@@ -76,19 +94,14 @@ export default function JumpHostIdsSelect({
     }
   };
 
-  const getHostName = (hostId: string) => {
-    const host = hosts.find((h) => h.id === hostId);
-    return host ? host.name || host.hostname : 'Unknown';
-  };
-
   return (
     <Box sx={sx}>
       {value.length > 0 && (
-        <Paper variant="outlined" sx={{ mb: 2, p: 1 }}>
+        <Paper variant="outlined" sx={{ mb: 2 }}>
           <List dense>
-            {value.map((hostId, index) => (
+            {value.map((item, index) => (
               <ListItem
-                key={index}
+                key={item}
                 secondaryAction={
                   <Box>
                     <IconButton
@@ -118,7 +131,7 @@ export default function JumpHostIdsSelect({
                 }
               >
                 <ListItemText
-                  primary={`${index + 1}. ${getHostName(hostId)}`}
+                  primary={getJumpHostName(hostMap, item, index)}
                   secondary={`Jump host #${index + 1}`}
                 />
               </ListItem>

@@ -10,7 +10,7 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { deleteHost, Host } from 'tauri-plugin-data';
-import { useHosts } from 'shared';
+import { getHostName, useHosts } from 'shared';
 import { get } from 'lodash-es';
 
 import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
@@ -178,7 +178,7 @@ export default function Hosts() {
           <ItemCard
             key={item.id}
             icon={<Icon className="icon-host" />}
-            title={item.name || `${item.hostname}:${item.port}`}
+            title={getHostName(item)}
             desc={item.username}
             extra={
               <Dropdown
