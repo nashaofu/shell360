@@ -4,6 +4,7 @@ import { useRequest, useMemoizedFn, useUnmount } from 'ahooks';
 import type { Host } from 'tauri-plugin-data';
 
 import { Terminal, type TerminalSize } from '@/components/XTerminal';
+import { sleep } from '@/utils/sleep';
 
 export interface UseShellOpts {
   session?: SSHSession;
@@ -44,6 +45,7 @@ export function useShell({ session, host, onClose }: UseShellOpts) {
       });
 
       if (host?.startupCommand) {
+        await sleep(200);
         await shell.send(host.startupCommand + '\n');
       }
     },

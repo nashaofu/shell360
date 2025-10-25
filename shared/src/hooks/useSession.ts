@@ -1,9 +1,10 @@
 import { useRef } from 'react';
 import { SSHSessionCheckServerKey, SSHSession } from 'tauri-plugin-ssh';
 import { useRequest, useUnmount } from 'ahooks';
-import { AuthenticationMethod,type  Host } from 'tauri-plugin-data';
+import { AuthenticationMethod, type Host } from 'tauri-plugin-data';
 
 import { useKeys } from './useKeys';
+import { useHosts } from './useHosts';
 
 export interface UseSessionOpts {
   host: Host;
@@ -12,8 +13,10 @@ export interface UseSessionOpts {
 
 export function useSession({ host, onDisconnect }: UseSessionOpts) {
   const { data: keys } = useKeys();
+  const { data: hosts } = useHosts();
 
   const sessionRef = useRef<SSHSession>(null);
+  const jumpHostsRef = useRef<SSHSession[]>([]);
 
   const {
     data: session,
@@ -25,42 +28,73 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     refreshAsync,
   } = useRequest(async (checkServerKey?: SSHSessionCheckServerKey) => {
     sessionRef.current?.disconnect();
-    const session = new SSHSession({
-      onDisconnect,
-    });
-    sessionRef.current = session;
+    sessionRef.current = null;
+    jumpHostsRef.current.forEach((item) => item.disconnect());
+    jumpHostsRef.current = [];
 
-    await session.connect(
-      {
-        hostname: host.hostname,
-        port: host.port,
-      },
-      checkServerKey
-    );
+    const jumpHostIds = host.jumpHostIds || [];
+    jumpHostIds.push(host.id);
 
-    const key = keys.find((item) => item.id === host.keyId);
+    const hostsMap = hosts.reduce((acc, host) => {
+      acc.set(host.id, host);
+      return acc;
+    }, new Map<string, Host>());
 
-    if (host.authenticationMethod === AuthenticationMethod.Password) {
-      await session.authenticate_password({
-        username: host.username,
-        password: host.password || '',
+    const keysMap = keys.reduce((acc, key) => {
+      acc.set(key.id, key);
+      return acc;
+    }, new Map<string, Key>());
+
+    let prevJumpHost: SSHSession | undefined = undefined;
+
+    for (const jumpHostId of jumpHostIds) {
+      const jumpHost = hostsMap.get(jumpHostId);
+      if (!jumpHost) {
+        throw new Error(`Jump host ${jumpHostId} not found`);
+      }
+
+      const jumpSession = new SSHSession({
+        jumpHost: prevJumpHost,
+        onDisconnect,
       });
-    } else if (host.authenticationMethod === AuthenticationMethod.PublicKey) {
-      await session.authenticate_public_key({
-        username: host.username,
-        privateKey: key?.privateKey || '',
-        passphrase: key?.passphrase || '',
-      });
-    } else {
-      await session.authenticate_certificate({
-        username: host.username,
-        privateKey: key?.privateKey || '',
-        passphrase: key?.passphrase || '',
-        certificate: key?.certificate || '',
-      });
+      jumpHostsRef.current.push(jumpSession);
+      await jumpSession.connect(
+        {
+          hostname: jumpHost.hostname,
+          port: jumpHost.port,
+        },
+        checkServerKey
+      );
+
+      const key = keysMap.get(jumpHost.keyId);
+
+      if (jumpHost.authenticationMethod === AuthenticationMethod.Password) {
+        await jumpSession.authenticate_password({
+          username: jumpHost.username,
+          password: jumpHost.password || '',
+        });
+      } else if (
+        jumpHost.authenticationMethod === AuthenticationMethod.PublicKey
+      ) {
+        await jumpSession.authenticate_public_key({
+          username: jumpHost.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+        });
+      } else {
+        await jumpSession.authenticate_certificate({
+          username: jumpHost.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+          certificate: key?.certificate || '',
+        });
+      }
+
+      prevJumpHost = jumpSession;
     }
 
-    return session;
+    sessionRef.current = prevJumpHost;
+    return prevJumpHost;
   });
 
   useUnmount(() => {

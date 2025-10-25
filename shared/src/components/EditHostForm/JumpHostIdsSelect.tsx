@@ -57,7 +57,7 @@ export default function JumpHostIdsSelect({
     [hosts, hostId, value]
   );
 
-  const hostMap = useMemo(() => {
+  const hostsMap = useMemo(() => {
     return hosts.reduce((acc, host) => {
       acc.set(host.id, host);
       return acc;
@@ -136,7 +136,7 @@ export default function JumpHostIdsSelect({
                 }
               >
                 <ListItemText
-                  primary={getJumpHostName(hostMap, item, index)}
+                  primary={getJumpHostName(hostsMap, item, index)}
                   secondary={`Jump host #${index + 1}`}
                 />
               </ListItem>

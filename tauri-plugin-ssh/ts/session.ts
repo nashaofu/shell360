@@ -2,6 +2,7 @@ import { Channel, invoke } from '@tauri-apps/api/core';
 import { v4 as uuidV4 } from 'uuid';
 
 export type SSHSessionOpts = {
+  jumpHost?: SSHSession;
   onDisconnect?: (data: SSHSessionDisconnectEvent) => unknown;
 };
 
@@ -61,6 +62,7 @@ export class SSHSession {
     return invoke<string>('plugin:ssh|session_connect', {
       ...opts,
       sshSessionId: this.sshSessionId,
+      jumpHostSshSessionId: this.opts.jumpHost?.sshSessionId,
       checkServerKey,
       ipcChannel: new Channel<SSHSessionIpcChannelEvent>((data) => {
         this.opts.onDisconnect?.(data);
