@@ -15,7 +15,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
   const { data: keys } = useKeys();
   const { data: hosts } = useHosts();
 
-  const sessionRef = useRef<SSHSession>(null);
+  const sessionRef = useRef<SSHSession>(undefined);
   const jumpHostsRef = useRef<SSHSession[]>([]);
 
   const {
@@ -27,9 +27,9 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     refresh,
     refreshAsync,
   } = useRequest(async (checkServerKey?: SSHSessionCheckServerKey) => {
-    sessionRef.current?.disconnect();
-    sessionRef.current = null;
-    jumpHostsRef.current.forEach((item) => item.disconnect());
+    sessionRef.current = undefined;
+    const jumpHosts = [...jumpHostsRef.current];
+    jumpHosts.reverse().forEach((item) => item.disconnect());
     jumpHostsRef.current = [];
 
     const jumpHostIds = host.jumpHostIds || [];
@@ -98,7 +98,10 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
   });
 
   useUnmount(() => {
-    sessionRef.current?.disconnect();
+    sessionRef.current = undefined;
+    const jumpHosts = [...jumpHostsRef.current];
+    jumpHosts.reverse().forEach((item) => item.disconnect());
+    jumpHostsRef.current = [];
   });
 
   return {
