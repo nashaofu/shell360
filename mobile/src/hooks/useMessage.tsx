@@ -1,5 +1,5 @@
-import { ReactNode, useMemo } from 'react';
-import { OptionsWithExtraProps, VariantType, useSnackbar } from 'notistack';
+import { type ReactNode, useMemo } from 'react';
+import { type OptionsWithExtraProps, type VariantType, useSnackbar } from 'notistack';
 
 export default function useMessage() {
   const { enqueueSnackbar } = useSnackbar();

@@ -11,11 +11,9 @@ import { useRequest } from 'ahooks';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { changeCryptoPassword } from 'tauri-plugin-data';
-import { Loading } from 'shared';
+import { Loading , TextFieldPassword } from 'shared';
 
 import useMessage from '@/hooks/useMessage';
-
-import TextFieldPassword from '../TextFieldPassword';
 
 
 interface ChangeCryptoPasswordProps {

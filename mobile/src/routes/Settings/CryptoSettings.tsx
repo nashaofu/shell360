@@ -6,7 +6,7 @@ import {
   ListItemText,
   Switch,
 } from '@mui/material';
-import { ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { changeCryptoEnable } from 'tauri-plugin-data';
 

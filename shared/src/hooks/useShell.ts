@@ -1,15 +1,18 @@
 import { useRef, useState } from 'react';
 import { SSHSession, SSHShell } from 'tauri-plugin-ssh';
 import { useRequest, useMemoizedFn, useUnmount } from 'ahooks';
+import type { Host } from 'tauri-plugin-data';
 
-import { Terminal, TerminalSize } from '@/components/XTerminal';
+import { Terminal, type TerminalSize } from '@/components/XTerminal';
+import { sleep } from '@/utils/sleep';
 
 export interface UseShellOpts {
   session?: SSHSession;
+  host?: Host;
   onClose?: () => void;
 }
 
-export function useShell({ session, onClose }: UseShellOpts) {
+export function useShell({ session, host, onClose }: UseShellOpts) {
   const [terminal, setTerminal] = useState<Terminal>();
 
   const shellRef = useRef<SSHShell>(null);
@@ -40,6 +43,11 @@ export function useShell({ session, onClose }: UseShellOpts) {
         width: terminal.element?.clientWidth ?? 0,
         height: terminal.element?.clientHeight ?? 0,
       });
+
+      if (host?.startupCommand) {
+        await sleep(200);
+        await shell.send(host.startupCommand + '\n');
+      }
     },
     {
       ready: !!terminal && !!session,

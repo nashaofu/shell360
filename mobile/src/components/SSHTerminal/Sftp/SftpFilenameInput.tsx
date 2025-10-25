@@ -1,4 +1,4 @@
-import { ChangeEvent, KeyboardEvent, useCallback } from 'react';
+import { type ChangeEvent, type KeyboardEvent, useCallback } from 'react';
 import {
   Button,
   ButtonGroup,

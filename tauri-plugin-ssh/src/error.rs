@@ -54,6 +54,9 @@ pub enum SSHError {
   #[error("Failed connect to {0}")]
   ConnectFailed(String),
 
+  #[error("Jump host connect failed")]
+  JumpHostConnectFailed,
+
   #[error("{} key fingerprint is {}", algorithm, fingerprint)]
   UnknownKey {
     algorithm: String,
@@ -65,6 +68,9 @@ pub enum SSHError {
 
   #[error("Not found session")]
   NotFoundSession,
+
+  #[error("Not found jump host session")]
+  NotFoundJumpHostSession,
 
   #[error("Not found sftp")]
   NotFoundSftp,

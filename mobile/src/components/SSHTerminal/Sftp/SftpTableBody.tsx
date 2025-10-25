@@ -1,6 +1,6 @@
 import { Box, TableBody, TableCell, TableRow } from '@mui/material';
 
-import { SftpTableCell } from './types';
+import { type SftpTableCell } from './types';
 import SftpFilenameInput from './SftpFilenameInput';
 import { CreateType } from './useCreate';
 

@@ -4,7 +4,7 @@ import {
   writeTextFile,
 } from '@tauri-apps/plugin-fs';
 import {
-  MouseEvent, useCallback, useEffect, useState,
+  type MouseEvent, useCallback, useEffect, useState,
 } from 'react';
 import { Box, Icon, IconButton } from '@mui/material';
 

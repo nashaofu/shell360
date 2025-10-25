@@ -1,11 +1,10 @@
 import { Box, Typography, Button, Grid } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { KeyboardEvent, useCallback, useState } from 'react';
+import { type KeyboardEvent, useCallback, useState } from 'react';
 import { loadCryptoByPassword, resetCrypto } from 'tauri-plugin-data';
 import { useSetAtom } from 'jotai';
-import { Loading } from 'shared';
+import { Loading, TextFieldPassword } from 'shared';
 
-import TextFieldPassword from '@/components/TextFieldPassword';
 import useMessage from '@/hooks/useMessage';
 import useModal from '@/hooks/useModal';
 import { authAtom } from '@/atom/authAtom';

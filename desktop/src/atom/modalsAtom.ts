@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 export type ModalAtom = {

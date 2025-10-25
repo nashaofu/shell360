@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback } from 'react';
+import { type MouseEvent, useCallback } from 'react';
 import {
   matchPath,
   useLocation,
@@ -15,7 +15,7 @@ import {
   ListItemText,
 } from '@mui/material';
 
-import { TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 
 type TerminalsProps = {
   expand?: boolean;

@@ -1,5 +1,5 @@
-import { SxProps, Theme } from '@mui/material';
-import { ReactNode } from 'react';
+import { type SxProps, type Theme } from '@mui/material';
+import { type ReactNode } from 'react';
 
 export enum SftpTableOrder {
   Asc = 'asc',

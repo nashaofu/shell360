@@ -1,5 +1,5 @@
 import { Icon, ListItemIcon, ListItemText } from '@mui/material';
-import { ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
 import { cut, copy, paste } from '@/utils/clipboard';

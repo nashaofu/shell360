@@ -17,6 +17,22 @@ pub enum AuthenticationMethod {
 
 #[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct JumpHostIds(Vec<i64>);
+
+impl From<Vec<i64>> for JumpHostIds {
+  fn from(value: Vec<i64>) -> Self {
+    Self(value)
+  }
+}
+
+impl Into<Vec<i64>> for JumpHostIds {
+  fn into(self) -> Vec<i64> {
+    self.0
+  }
+}
+
+#[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TerminalSettings {
   pub font_family: Option<String>,
   pub font_size: Option<i32>,
@@ -38,6 +54,8 @@ pub struct Model {
   #[sea_orm(column_type = "Blob", nullable)]
   pub password: Option<Vec<u8>>,
   pub key_id: Option<i64>,
+  pub startup_command: Option<String>,
+  pub jump_host_ids: Option<JumpHostIds>,
   pub terminal_settings: Option<TerminalSettings>,
 }
 

@@ -1,6 +1,6 @@
-import { Box, Icon, LinearProgress, SxProps, Theme } from '@mui/material';
+import { Box, Icon, LinearProgress, type SxProps, type Theme } from '@mui/material';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { Host } from 'tauri-plugin-data';
+import { type Host } from 'tauri-plugin-data';
 
 import ErrorInfo from './ErrorInfo';
 

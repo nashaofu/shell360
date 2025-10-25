@@ -1,8 +1,8 @@
 @font-face {
   font-family: "Shell360Icons"; /* Project id 4490042 */
-  src: url('iconfont.woff2?t=1731211103546') format('woff2'),
-       url('iconfont.woff?t=1731211103546') format('woff'),
-       url('iconfont.ttf?t=1731211103546') format('truetype');
+  src: url('iconfont.woff2?t=1761376443080') format('woff2'),
+       url('iconfont.woff?t=1761376443080') format('woff'),
+       url('iconfont.ttf?t=1761376443080') format('truetype');
 }
 
 .Shell360Icons {
@@ -171,6 +171,14 @@
 
 .icon-arrow-right:before {
   content: "\e603";
+}
+
+.icon-arrow-down:before {
+  content: "\eb32";
+}
+
+.icon-arrow-up:before {
+  content: "\eb33";
 }
 
 .icon-menu:before {

@@ -45,7 +45,7 @@ export default function Menus({ onClick }: MenusProps) {
       navigate(to);
       onClick?.();
     },
-    [navigate, onClick],
+    [navigate, onClick]
   );
 
   return (
@@ -63,7 +63,7 @@ export default function Menus({ onClick }: MenusProps) {
                   path: item.to,
                   end: true,
                 },
-                pathname,
+                pathname
               )
             }
           >

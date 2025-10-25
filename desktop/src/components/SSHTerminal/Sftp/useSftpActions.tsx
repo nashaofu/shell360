@@ -1,7 +1,7 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useRequest } from 'ahooks';
-import { MutableRefObject, useState } from 'react';
-import { SSHSftp, SSHSftpFile } from 'tauri-plugin-ssh';
+import { type MutableRefObject, useState } from 'react';
+import { SSHSftp, type SSHSftpFile } from 'tauri-plugin-ssh';
 import { Icon } from '@mui/material';
 
 import useMessage from '@/hooks/useMessage';

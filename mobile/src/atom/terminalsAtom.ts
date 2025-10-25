@@ -1,7 +1,7 @@
 import { v4 as uuidV4 } from 'uuid';
 import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
-import { Host } from 'tauri-plugin-data';
+import { type Host } from 'tauri-plugin-data';
 
 export type TerminalAtom = {
   uuid: string;

@@ -10,11 +10,11 @@ import {
   Toolbar,
   Typography,
   Slide,
-  DialogProps,
+  type DialogProps,
 } from '@mui/material';
 import {
-  ReactElement,
-  Ref,
+  type ReactElement,
+  type Ref,
   forwardRef,
   useEffect,
   useMemo,

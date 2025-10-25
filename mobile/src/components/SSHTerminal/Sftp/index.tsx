@@ -15,12 +15,11 @@ import {
   Typography,
 } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { SSHSession, SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
-import { Loading, useSftp } from 'shared';
+import { SSHSession, type SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
+import { Loading, useSftp , Dropdown } from 'shared';
 
 import useModal from '@/hooks/useModal';
 import useMessage from '@/hooks/useMessage';
-import Dropdown from '@/components/Dropdown';
 
 import useCells from './useCells';
 import { SftpTableHead } from './SftpTableHead';

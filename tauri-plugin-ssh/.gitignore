@@ -1,17 +1,18 @@
-/.vs
+# Local
 .DS_Store
-.Thumbs.db
-*.sublime*
-.idea/
-debug.log
-package-lock.json
-.vscode/settings.json
-yarn.lock
+*.local
+*.log*
+
+# Dist
+node_modules
+dist/
+storybook-static
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
 
 /.tauri
 /target
 Cargo.lock
-node_modules/
-
-dist-js
-dist

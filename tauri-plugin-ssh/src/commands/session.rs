@@ -81,14 +81,17 @@ pub async fn session_connect<R: Runtime>(
   ssh_session_id: SSHSessionId,
   hostname: String,
   port: u16,
+  jump_host_ssh_session_id: Option<SSHSessionId>,
   check_server_key: Option<SSHSessionCheckServerKey>,
   ipc_channel: Channel<SessionIpcChannelData>,
 ) -> SSHResult<SSHSessionId> {
+  log::info!("session connect: {:?}", ssh_session_id);
   let ssh_client = SSHClient::new(
     app_handle.clone(),
     ssh_session_id,
     hostname.clone(),
     port,
+    jump_host_ssh_session_id,
     check_server_key,
   );
 
@@ -101,8 +104,42 @@ pub async fn session_connect<R: Runtime>(
     nodelay: true,
     ..client::Config::default()
   });
-  let addr = format!("{}:{}", &hostname, port);
-  let handle_ssh_client =
+
+  let handle_ssh_client = if let Some(jump_host_ssh_session_id) = jump_host_ssh_session_id {
+    log::info!(
+      "session connect to {}:{} with jump host session {:?}",
+      &hostname,
+      port,
+      jump_host_ssh_session_id
+    );
+    let channel = {
+      let sessions = ssh_manager.sessions.lock().await;
+
+      let jump_host_session = sessions
+        .get(&jump_host_ssh_session_id)
+        .ok_or(SSHError::NotFoundJumpHostSession)?;
+
+      jump_host_session
+        .channel_open_direct_tcpip(&hostname, port as u32, "127.0.0.1", 0)
+        .await?
+    };
+
+    client::connect_stream(config, channel.into_stream(), ssh_client)
+      .await
+      .map_err(|err| match err {
+        SSHError::RusshError(e) => match e {
+          RusshError::Disconnect => SSHError::JumpHostConnectFailed,
+          err => SSHError::RusshError(err),
+        },
+        err => err,
+      })?
+  } else {
+    log::info!(
+      "session connect to {}:{} with direct tcpip",
+      &hostname,
+      port
+    );
+    let addr = format!("{}:{}", &hostname, port);
     client::connect(config, &addr, ssh_client)
       .await
       .map_err(|err| match err {
@@ -111,7 +148,8 @@ pub async fn session_connect<R: Runtime>(
           err => SSHError::RusshError(err),
         },
         err => err,
-      })?;
+      })?
+  };
 
   let session = SSHSession::new(ssh_session_id, ipc_channel, handle_ssh_client);
   {
@@ -177,10 +215,10 @@ pub async fn session_authenticate<R: Runtime>(
 
       let password = passphrase.and_then(|passphrase| {
         if passphrase.is_empty() {
-          log::info!("authenticate by public key passphrase is empty");
+          log::info!("authenticate by public key without passphrase");
           None
         } else {
-          log::info!("authenticate by public key passphrase is not empty");
+          log::info!("authenticate by public key with passphrase");
           Some(passphrase)
         }
       });

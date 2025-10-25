@@ -24,6 +24,9 @@ pub struct HostBase {
   password: Option<String>,
   #[serde_as(as = "Option<DisplayFromStr>")]
   key_id: Option<i64>,
+  startup_command: Option<String>,
+  #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
+  jump_host_ids: Option<Vec<i64>>,
   terminal_settings: Option<entities::hosts::TerminalSettings>,
 }
 impl ModelConvert for HostBase {
@@ -52,6 +55,8 @@ impl ModelConvert for HostBase {
       authentication_method: model.authentication_method,
       password,
       key_id: model.key_id,
+      startup_command: model.startup_command,
+      jump_host_ids: model.jump_host_ids.map(|v| v.into()),
       terminal_settings: model.terminal_settings,
     })
   }
@@ -76,6 +81,8 @@ impl ModelConvert for HostBase {
       authentication_method: ActiveValue::Set(self.authentication_method.clone()),
       password: ActiveValue::Set(password),
       key_id: ActiveValue::Set(self.key_id),
+      startup_command: ActiveValue::Set(self.startup_command.clone()),
+      jump_host_ids: ActiveValue::Set(self.jump_host_ids.clone().map(|v| v.into())),
       terminal_settings: ActiveValue::Set(self.terminal_settings.clone()),
       ..Default::default()
     };

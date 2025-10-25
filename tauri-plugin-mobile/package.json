@@ -1,37 +1,27 @@
 {
   "name": "tauri-plugin-mobile",
+  "private": true,
   "version": "0.0.0",
-  "author": "You",
-  "description": "",
   "type": "module",
-  "types": "./dist-js/index.d.ts",
-  "main": "./dist-js/index.js",
-  "module": "./dist-js/index.js",
-  "source": "./guest-js/index.ts",
-  "jsnext:source": "./guest-js/index.ts",
+  "types": "./dist/ts/index.d.ts",
   "exports": {
     ".": {
-      "import": "./guest-js/index.ts",
-      "require": "./dist-js/index.js"
+      "types": "./dist/ts/index.d.ts",
+      "import": "./ts/index.ts",
+      "default": "./ts/index.ts"
     }
   },
-  "license": "UNLICENSED",
-  "files": [
-    "dist-js",
-    "README.md"
-  ],
   "scripts": {
-    "postinstall": "pnpm run build",
-    "build": "rollup -c",
+    "postinstall": "npm run build",
+    "dev": "rslib build --watch",
+    "build": "npm run tsc && rslib build",
     "tsc": "tsc -b"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^12.1.4",
-    "rollup": "^4.52.4",
-    "typescript": "^5.9.3",
-    "tslib": "^2.8.1"
+    "@rslib/core": "^0.16.1",
+    "typescript": "^5.9.3"
   }
 }

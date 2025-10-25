@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 
-import { useXTerminal, UseXTerminalOpts } from './useXTerminal';
+import { useXTerminal, type UseXTerminalOpts } from './useXTerminal';
 import styles from './index.module.less';
 
 export type XTerminalProps = { className?: string } & UseXTerminalOpts;

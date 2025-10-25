@@ -1,16 +1,16 @@
 import {
   Box,
   Button,
-  ButtonProps,
+  type ButtonProps,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentProps,
-  DialogProps,
+  type DialogContentProps,
+  type DialogProps,
   DialogTitle,
   ThemeProvider,
 } from '@mui/material';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useAtomValue } from 'jotai';
 
 import { themeAtom } from '@/atom/themeAtom';

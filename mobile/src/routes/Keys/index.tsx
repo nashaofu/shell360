@@ -9,8 +9,8 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { useKeys } from 'shared';
-import { deleteKey, Key } from 'tauri-plugin-data';
+import { useKeys , Dropdown } from 'shared';
+import { deleteKey, type Key } from 'tauri-plugin-data';
 import { get } from 'lodash-es';
 
 import Empty from '@/components/Empty';
@@ -18,7 +18,6 @@ import AddKey from '@/components/AddKey';
 import ItemCard from '@/components/ItemCard';
 import Page from '@/components/Page';
 import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import Dropdown from '@/components/Dropdown';
 import useModal from '@/hooks/useModal';
 import { useIsShowPaywallAtom, useIsSubscription } from '@/atom/iap';
 import useMessage from '@/hooks/useMessage';

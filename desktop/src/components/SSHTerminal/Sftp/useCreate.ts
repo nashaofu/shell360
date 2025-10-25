@@ -1,11 +1,11 @@
 import {
-  MutableRefObject,
-  RefObject,
+  type MutableRefObject,
+  type RefObject,
   useCallback,
   useEffect,
   useState,
 } from 'react';
-import { SSHSftp, SSHSftpFile } from 'tauri-plugin-ssh';
+import { SSHSftp, type SSHSftpFile } from 'tauri-plugin-ssh';
 import { useRequest } from 'ahooks';
 
 import useMessage from '@/hooks/useMessage';

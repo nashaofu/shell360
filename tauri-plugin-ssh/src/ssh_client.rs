@@ -35,6 +35,7 @@ pub struct SSHClient<R: Runtime> {
   ssh_session_id: SSHSessionId,
   hostname: String,
   port: u16,
+  jump_host_ssh_session_id: Option<SSHSessionId>,
   check_server_key: Option<SSHSessionCheckServerKey>,
 }
 
@@ -231,6 +232,7 @@ impl<R: Runtime> SSHClient<R> {
     ssh_session_id: SSHSessionId,
     hostname: String,
     port: u16,
+    jump_host_ssh_session_id: Option<SSHSessionId>,
     check_server_key: Option<SSHSessionCheckServerKey>,
   ) -> Self {
     SSHClient {
@@ -238,6 +240,7 @@ impl<R: Runtime> SSHClient<R> {
       ssh_session_id,
       hostname,
       port,
+      jump_host_ssh_session_id,
       check_server_key,
     }
   }

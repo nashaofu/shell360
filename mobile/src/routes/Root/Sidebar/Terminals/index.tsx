@@ -9,7 +9,7 @@ import {
   ListItemText,
 } from '@mui/material';
 
-import { TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 
 type TerminalsProps = {
   onClick?: () => unknown;

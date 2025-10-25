@@ -4,7 +4,7 @@ import {
 import { Icon } from '@mui/material';
 import { v4 as uuidV4 } from 'uuid';
 
-import HookModal, { HookModalProps } from '@/components/HookModal';
+import HookModal, { type HookModalProps } from '@/components/HookModal';
 import { useModalsAtomWithApi } from '@/atom/modalsAtom';
 
 type HookConfig = Omit<HookModalProps, 'open' | 'hideCancel' | 'hideOk'>;
