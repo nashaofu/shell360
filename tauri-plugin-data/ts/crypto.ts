@@ -1,6 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
-import type { UnlistenFn } from '@tauri-apps/api/event';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 export async function checkIsEnableCrypto(): Promise<boolean> {
   return invoke<boolean>('plugin:data|check_is_enable_crypto');
