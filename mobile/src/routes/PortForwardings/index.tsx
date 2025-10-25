@@ -15,12 +15,12 @@ import {
   SSHSession,
 } from 'tauri-plugin-ssh';
 import { useRequest } from 'ahooks';
-import { useHosts, useKeys, usePortForwardings } from 'shared';
+import { useHosts, useKeys, usePortForwardings , Dropdown } from 'shared';
 import {
   AuthenticationMethod,
   deletePortForwarding,
-  Host,
-  PortForwarding,
+  type Host,
+  type PortForwarding,
   PortForwardingType,
 } from 'tauri-plugin-data';
 
@@ -29,9 +29,8 @@ import Page from '@/components/Page';
 import ItemCard from '@/components/ItemCard';
 import AutoRepeatGrid from '@/components/AutoRepeatGrid';
 import useModal from '@/hooks/useModal';
-import Dropdown from '@/components/Dropdown';
 import {
-  OpenedForwarding,
+  type OpenedForwarding,
   OpenedForwardingStatus,
   useOpenedForwardingAtomWithApi,
 } from '@/atom/openedForwarding';

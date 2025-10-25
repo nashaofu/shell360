@@ -15,12 +15,12 @@ import {
   SSHSession,
 } from 'tauri-plugin-ssh';
 import { useRequest } from 'ahooks';
-import { useHosts, useKeys, usePortForwardings } from 'shared';
+import { useHosts, useKeys, usePortForwardings , Dropdown } from 'shared';
 import {
   AuthenticationMethod,
   deletePortForwarding,
-  Host,
-  PortForwarding,
+  type Host,
+  type PortForwarding,
   PortForwardingType,
 } from 'tauri-plugin-data';
 
@@ -29,9 +29,8 @@ import Page from '@/components/Page';
 import ItemCard from '@/components/ItemCard';
 import AutoRepeatGrid from '@/components/AutoRepeatGrid';
 import useModal from '@/hooks/useModal';
-import Dropdown from '@/components/Dropdown';
 import {
-  OpenedForwarding,
+  type OpenedForwarding,
   OpenedForwardingStatus,
   useOpenedForwardingAtomWithApi,
 } from '@/atom/openedForwarding';
@@ -173,17 +172,6 @@ export default function PortForwardings() {
       } finally {
         if (dispose) {
           await ssh.session.disconnect();
-
-          // 清理代理会话
-          if (openedForwarding.proxySessions) {
-            for (const proxySession of openedForwarding.proxySessions) {
-              try {
-                await proxySession.disconnect();
-              } catch (e) {
-                console.error('Failed to disconnect proxy session:', e);
-              }
-            }
-          }
         }
       }
     },
@@ -205,146 +193,32 @@ export default function PortForwardings() {
 
       const key = keys.find((item) => item.id === host.keyId);
 
-      // 处理多级跳板链
-      let proxyJumpConfig;
-      let proxyJumpChainConfig;
-      const proxySessions: SSHSession[] = [];
+      await ssh.session.connect(
+        {
+          hostname: host.hostname,
+          port: host.port,
+        },
+        checkServerKey
+      );
 
-      try {
-        if (host.proxyJumpChain && host.proxyJumpChain.hostIds.length > 0) {
-          // 多级跳板链
-          const chain = [];
-          let previousProxyConfig = undefined;
-
-          for (let i = 0; i < host.proxyJumpChain.hostIds.length; i++) {
-            const hostId = host.proxyJumpChain.hostIds[i];
-            const proxyHost = hosts.find((h) => h.id === hostId);
-
-            if (!proxyHost) {
-              throw new Error(`Proxy jump host ${hostId} not found`);
-            }
-
-            const proxySession = new SSHSession({
-              onDisconnect: () => {
-                console.log(
-                  `Proxy session ${
-                    proxyHost.name || proxyHost.hostname
-                  } disconnected`
-                );
-              },
-            });
-            proxySessions.push(proxySession);
-
-            await proxySession.connect(
-              {
-                hostname: proxyHost.hostname,
-                port: proxyHost.port,
-                proxyJump: previousProxyConfig,
-              },
-              SSHSessionCheckServerKey.AddAndContinue
-            );
-
-            if (host.authenticationMethod === AuthenticationMethod.Password) {
-              await ssh.session.authenticate_password({
-                username: host.username,
-                password: host.password || '',
-              });
-            } else if (
-              host.authenticationMethod === AuthenticationMethod.PublicKey
-            ) {
-              await ssh.session.authenticate_public_key({
-                username: host.username,
-                privateKey: proxyKey?.privateKey || '',
-                passphrase: proxyKey?.passphrase || '',
-              });
-            } else {
-              await ssh.session.authenticate_certificate({
-                username: host.username,
-                privateKey: proxyKey?.privateKey || '',
-                passphrase: proxyKey?.passphrase || '',
-                certificate: proxyKey?.certificate || '',
-              });
-            }
-
-            const currentProxyConfig = {
-              sessionId: proxySession.sshSessionId,
-              hostname: proxyHost.hostname,
-              port: proxyHost.port,
-            };
-
-            chain.push(currentProxyConfig);
-            previousProxyConfig = currentProxyConfig;
-          }
-
-          proxyJumpChainConfig = { chain };
-        } else if (host.proxyJumpId) {
-          // 单级跳板
-          const proxyHost = hosts.find((h) => h.id === host.proxyJumpId);
-
-          if (!proxyHost) {
-            throw new Error('Proxy jump host not found');
-          }
-
-          const proxySession = new SSHSession({
-            onDisconnect: () => {
-              console.log('Proxy session disconnected');
-            },
-          });
-          proxySessions.push(proxySession);
-
-          await proxySession.connect(
-            {
-              hostname: proxyHost.hostname,
-              port: proxyHost.port,
-            },
-            SSHSessionCheckServerKey.AddAndContinue
-          );
-
-          const proxyKey = keys.find((item) => item.id === proxyHost.keyId);
-          await proxySession.authenticate({
-            username: proxyHost.username,
-            password: proxyHost.password,
-            privateKey: proxyKey?.privateKey,
-            passphrase: proxyKey?.passphrase,
-          });
-
-          proxyJumpConfig = {
-            sessionId: proxySession.sshSessionId,
-            hostname: host.hostname,
-            port: host.port,
-          };
-        }
-
-        // 连接目标主机
-        await ssh.session.connect(
-          {
-            hostname: host.hostname,
-            port: host.port,
-            proxyJump: proxyJumpConfig,
-            proxyJumpChain: proxyJumpChainConfig,
-          },
-          checkServerKey
-        );
-
-        await ssh.session.authenticate({
+      if (host.authenticationMethod === AuthenticationMethod.Password) {
+        await ssh.session.authenticate_password({
           username: host.username,
-          password: host.password,
-          privateKey: key?.privateKey,
-          passphrase: key?.passphrase,
+          password: host.password || '',
         });
-
-        // 保存代理会话以便后续清理
-        opened.proxySessions = proxySessions;
-      } catch (error) {
-        // 如果连接失败，清理所有代理会话
-        for (const proxySession of proxySessions) {
-          try {
-            await proxySession.disconnect();
-          } catch (e) {
-            console.error('Failed to disconnect proxy session:', e);
-          }
-        }
-        throw error;
+      } else if (host.authenticationMethod === AuthenticationMethod.PublicKey) {
+        await ssh.session.authenticate_public_key({
+          username: host.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+        });
+      } else {
+        await ssh.session.authenticate_certificate({
+          username: host.username,
+          privateKey: key?.privateKey || '',
+          passphrase: key?.passphrase || '',
+          certificate: key?.certificate || '',
+        });
       }
 
       if (portForwarding.portForwardingType === PortForwardingType.Local) {

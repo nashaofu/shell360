@@ -1,8 +1,7 @@
 import { Box, Button, ButtonGroup, Icon, styled } from '@mui/material';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 import { get } from 'lodash-es';
-
-import Dropdown from '@/components/Dropdown';
+import { Dropdown } from 'shared';
 
 type SSHError = {
   type: string;

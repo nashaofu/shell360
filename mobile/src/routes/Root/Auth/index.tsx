@@ -1,5 +1,5 @@
 import { Box, CircularProgress } from '@mui/material';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useAtomValue } from 'jotai';
 
 import { authAtom } from '@/atom/authAtom';

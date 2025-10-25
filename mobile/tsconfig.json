@@ -1,11 +1,18 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "lib": ["DOM", "ES2020"],
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "vite.config.ts"],
-  "references": [{ "path": "../shared" }]
+  "include": ["src"],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../tauri-plugin-ssh" },
+    { "path": "../tauri-plugin-data" },
+    { "path": "../tauri-plugin-mobile" }
+  ]
 }

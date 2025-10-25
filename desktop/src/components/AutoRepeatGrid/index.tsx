@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Box, SxProps, Theme } from '@mui/material';
+import { type ReactNode } from 'react';
+import { Box, type SxProps, type Theme } from '@mui/material';
 
 import useAutoRepeatGridTemplateColumns from './useAutoRepeatGridTemplateColumns';
 
@@ -14,7 +14,8 @@ export default function AutoRepeatGrid({
   sx,
   children,
 }: AutoRepeatGridProps) {
-  const { gridElRef, gridTemplateColumns } = useAutoRepeatGridTemplateColumns(itemWidth);
+  const { gridElRef, gridTemplateColumns } =
+    useAutoRepeatGridTemplateColumns(itemWidth);
 
   return (
     <Box

@@ -1,6 +1,6 @@
 import '@xterm/xterm/css/xterm.css';
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { ITheme, Terminal } from '@xterm/xterm';
+import { type ITheme, Terminal } from '@xterm/xterm';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { CanvasAddon } from '@xterm/addon-canvas';

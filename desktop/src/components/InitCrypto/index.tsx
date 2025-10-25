@@ -10,9 +10,8 @@ import {
 import { useRequest } from 'ahooks';
 import { Controller, useForm } from 'react-hook-form';
 import { changeCryptoEnable } from 'tauri-plugin-data';
-import { Loading } from 'shared';
+import { Loading , TextFieldPassword } from 'shared';
 
-import TextFieldPassword from '@/components/TextFieldPassword';
 import useMessage from '@/hooks/useMessage';
 
 interface IniCryptoProps {

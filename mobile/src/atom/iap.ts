@@ -1,13 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import {
-  atom, useAtom, useAtomValue, useSetAtom,
-} from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { atomWithRefresh, loadable } from 'jotai/utils';
 import {
-  IapCustomerInfo,
+  type IapCustomerInfo,
   iapGetCustomerInfo,
   iapGetOfferings,
-  IapOffering,
+  type IapOffering,
   iapShowPaywall,
 } from 'tauri-plugin-mobile';
 import { get } from 'lodash-es';
@@ -215,7 +213,7 @@ export function useIsSubscription() {
         return false;
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error(err)
+        console.error(err);
         return undefined;
       }
     }
@@ -248,7 +246,7 @@ export function useIsShowPaywallAtom() {
         setIsShow(false);
       }
     },
-    [refreshCustomerInfoAtom, setIsShow],
+    [refreshCustomerInfoAtom, setIsShow]
   );
 
   return [isShow, setShowPaywall] as const;

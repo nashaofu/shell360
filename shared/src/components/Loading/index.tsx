@@ -1,5 +1,11 @@
-import { ReactNode } from 'react';
-import { Box, CircularProgress, SxProps, Theme, alpha } from '@mui/material';
+import { type ReactNode } from 'react';
+import {
+  Box,
+  CircularProgress,
+  type SxProps,
+  type Theme,
+  alpha,
+} from '@mui/material';
 
 export type LoadingProps = {
   sx?: SxProps<Theme>;

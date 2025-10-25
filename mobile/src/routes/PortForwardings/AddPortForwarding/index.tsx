@@ -3,16 +3,14 @@ import { useForm } from 'react-hook-form';
 import { Box, Button } from '@mui/material';
 import {
   addPortForwarding,
-  PortForwarding,
+  type PortForwarding,
   PortForwardingType,
   updatePortForwarding,
 } from 'tauri-plugin-data';
 import { usePortForwardings } from 'shared';
+import { PortForwardingForm, type PortForwardingFormFields } from 'shared';
 
 import PageDrawer from '@/components/PageDrawer';
-import PortForwardingForm, {
-  PortForwardingFormFields,
-} from '@/components/PortForwardingForm';
 
 type AddPortForwardingProps = {
   open?: boolean;

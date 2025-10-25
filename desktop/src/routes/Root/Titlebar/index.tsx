@@ -3,7 +3,7 @@ import {
 } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
-  Box, Theme, alpha, styled,
+  Box, type Theme, alpha, styled,
 } from '@mui/material';
 
 import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';

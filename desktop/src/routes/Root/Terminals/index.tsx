@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import { TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 
 export default function Terminals() {
   const match = useMatch('/terminal/:uuid');

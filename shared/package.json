@@ -3,26 +3,25 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "types": "./dist/index.d.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "source": "./src/index.ts",
-  "jsnext:source": "./src/index.ts",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "import": "./src/index.ts",
-      "require": "./dist/index.ts"
+      "default": "./src/index.ts"
     }
   },
   "scripts": {
     "postinstall": "pnpm run build && npm run tsc",
-    "dev": "node ./esbuild.js -w",
-    "build": "node ./esbuild.js",
+    "dev": "rslib build --watch",
+    "build": "rslib build",
     "tsc": "tsc -b"
   },
   "dependencies": {
     "@mui/material": "^7.3.4",
     "@skipperndt/plugin-machine-uid": "^0.1.2",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-fs": "^2.4.2",
     "@xterm/addon-canvas": "^0.7.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-unicode11": "^0.8.0",
@@ -33,13 +32,16 @@
     "clsx": "^2.1.1",
     "jotai": "^2.15.0",
     "react": "^19.2.0",
+    "react-hook-form": "^7.65.0",
     "tauri-plugin-data": "workspace:*",
     "tauri-plugin-ssh": "workspace:*",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@rsbuild/plugin-less": "^1.5.0",
+    "@rsbuild/plugin-react": "^1.4.1",
+    "@rslib/core": "^0.16.1",
     "@types/react": "^19.2.2",
-    "esbuild": "^0.25.10",
-    "esbuild-plugin-less": "^1.3.27"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm --filter desktop run dev --host",
-    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm --filter desktop run dev",
+    "devUrl": "http://0.0.0.0:1420",
     "beforeBuildCommand": "pnpm --filter desktop run build",
     "frontendDist": "../desktop/dist"
   }

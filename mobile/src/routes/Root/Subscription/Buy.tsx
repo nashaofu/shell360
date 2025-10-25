@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  IapOffering,
+  type IapOffering,
   IapPackageType,
   iapPurchasePackage,
   iapRestore,
@@ -146,7 +146,9 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
               marginRight: 0.5,
             }}
             onClick={() =>
-              openUrl('https://nashaofu.github.io/shell360/docs/Privacy-Policy.html')
+              openUrl(
+                'https://nashaofu.github.io/shell360/docs/Privacy-Policy.html'
+              )
             }
           >
             Privacy Policy

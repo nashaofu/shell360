@@ -1,6 +1,6 @@
 import { TableCell, TableHead, TableRow, TableSortLabel } from '@mui/material';
 
-import { SftpTableCell, SftpTableOrder } from './types';
+import { type SftpTableCell, SftpTableOrder } from './types';
 
 export type SftpTableHeadProps<T extends Record<string, unknown>> = {
   cells: SftpTableCell<T>[];

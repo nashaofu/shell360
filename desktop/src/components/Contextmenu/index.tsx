@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Menu, MenuItem } from '@mui/material';
 
-import useContextmenu, { ContextmenuState } from './useContextmenu';
+import useContextmenu, { type ContextmenuState } from './useContextmenu';
 
 export default function Contextmenu() {
   const [contextmenuState, setContextmenuState] = useState<ContextmenuState>({

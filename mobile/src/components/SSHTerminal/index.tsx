@@ -1,6 +1,6 @@
-import { Box, SxProps, Theme } from '@mui/material';
+import { Box, type SxProps, type Theme } from '@mui/material';
 import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession } from 'shared';
-import { Host } from 'tauri-plugin-data';
+import { type Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 import { useLayoutEffect } from 'react';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
@@ -48,7 +48,7 @@ export default function SSHTerminal({
     error: sshError,
     runAsync: sshRunAsync,
     refreshAsync: sshRefreshAsync,
-  } = useShell({ session, onClose });
+  } = useShell({ session, host, onClose });
 
   const run = useMemoizedFn(
     async (checkServerKey?: SSHSessionCheckServerKey) => {

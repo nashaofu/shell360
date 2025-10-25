@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai';
 import { useMemo } from 'react';
 import { v4 as uuidV4 } from 'uuid';
 import { SSHPortForwarding } from 'tauri-plugin-ssh';
-import { PortForwarding } from 'tauri-plugin-data';
+import { type PortForwarding } from 'tauri-plugin-data';
 
 export enum OpenedForwardingStatus {
   Pending = 'Pending',
@@ -16,7 +16,6 @@ export type OpenedForwarding = {
   ssh: SSHPortForwarding;
   status: OpenedForwardingStatus;
   error?: unknown;
-  proxySessions?: any[]; // SSHSession[] from tauri-plugin-ssh
 };
 
 export const openedForwardingAtom = atom<OpenedForwarding[]>([]);

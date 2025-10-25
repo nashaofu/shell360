@@ -1,25 +1,28 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es2021",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
+    "lib": ["DOM", "ES2022"],
+    "module": "ESNext",
+    "jsx": "react-jsx",
     "strict": true,
-    "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "allowImportingTsExtensions": false,
+    "skipLibCheck": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "useDefineForClassFields": true,
+    "noEmit": false,
+    "composite": true,
     "declaration": true,
     "declarationDir": "dist",
     "emitDeclarationOnly": true,
-    "noEmit": false,
-    "composite": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
   "include": ["src"],
-  "exclude": ["dist", "node_modules"]
+  "references": [
+    { "path": "../tauri-plugin-data" },
+    { "path": "../tauri-plugin-ssh" }
+  ]
 }

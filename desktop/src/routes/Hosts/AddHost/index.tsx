@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, ButtonGroup, Icon } from '@mui/material';
@@ -7,18 +7,20 @@ import {
   DEFAULT_TERMINAL_FONT_SIZE,
   DEFAULT_TERMINAL_THEME,
   useHosts,
+  EditHostForm,
+  type EditHostFormFields,
 } from 'shared';
 import {
   AuthenticationMethod,
-  Host,
+  type Host,
   addHost,
   updateHost,
 } from 'tauri-plugin-data';
+import { Dropdown } from 'shared';
 
 import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
-import EditHostForm from '@/components/EditHostForm';
 import PageDrawer from '@/components/PageDrawer';
-import Dropdown from '@/components/Dropdown';
+import AddKey from '@/components/AddKey';
 
 type AddHostProps = {
   open?: boolean;
@@ -30,9 +32,11 @@ type AddHostProps = {
 export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   const navigate = useNavigate();
   const { refresh: refreshHosts } = useHosts();
+  const [addKeyOpen, setAddKeyOpen] = useState(false);
 
-  const formApi = useForm<Omit<Host, 'id'>>({
+  const formApi = useForm<EditHostFormFields>({
     defaultValues: {
+      id: undefined,
       name: '',
       hostname: '',
       port: 22,
@@ -50,6 +54,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       },
     },
     values: {
+      id: data?.id || undefined,
       name: data?.name ?? '',
       hostname: data?.hostname ?? '',
       port: data?.port ?? 22,
@@ -59,7 +64,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       password: data?.password ?? '',
       keyId: data?.keyId ?? '',
       startupCommand: data?.startupCommand ?? '',
-      jumpHostEnabled: data?.jumpHostIds?.length > 0,
+      jumpHostEnabled: !!data?.jumpHostIds?.length,
       jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
         fontFamily:
@@ -74,21 +79,23 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
   const save = useCallback(
-    async (values: Omit<Host, 'id'>) => {
+    async (values: EditHostFormFields) => {
+      const authenticationMethod =
+        values.authenticationMethod || AuthenticationMethod.Password;
       const hostData = {
-        name: values.name,
-        hostname: values.hostname,
-        port: Number(values.port),
-        username: values.username,
-        authenticationMethod: values.authenticationMethod,
+        name: values.name || '',
+        hostname: values.hostname || '',
+        port: Number(values.port || 22),
+        username: values.username || '',
+        authenticationMethod: authenticationMethod,
         password:
-          values.authenticationMethod === 'Password'
-            ? values.password
+          authenticationMethod === AuthenticationMethod.Password
+            ? values.password || ''
             : undefined,
         keyId:
-          values.authenticationMethod === 'PublicKey' ||
-          values.authenticationMethod === 'Certificate'
-            ? values.keyId
+          authenticationMethod === AuthenticationMethod.PublicKey ||
+          authenticationMethod === AuthenticationMethod.Certificate
+            ? values.keyId || ''
             : undefined,
         startupCommand: values.startupCommand || undefined,
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
@@ -114,7 +121,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   );
 
   const onSaveAndConnect = useCallback(
-    async (values: Omit<Host, 'id'>) => {
+    async (values: EditHostFormFields) => {
       const savedHost = await save(values);
       await refreshHosts();
       onOk();
@@ -126,7 +133,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   );
 
   const onSave = useCallback(
-    async (values: Omit<Host, 'id'>) => {
+    async (values: EditHostFormFields) => {
       await save(values);
       await refreshHosts();
       onOk();
@@ -154,52 +161,62 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   }, [formApi, open]);
 
   return (
-    <PageDrawer
-      open={open}
-      title={data ? 'Edit host' : 'Add host'}
-      onCancel={onCancel}
-      footer={
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Button
+    <>
+      <PageDrawer
+        open={open}
+        title={data ? 'Edit host' : 'Add host'}
+        onCancel={onCancel}
+        footer={
+          <Box
             sx={{
-              width: '48%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
-            variant="outlined"
-            onClick={onCancel}
           >
-            Cancel
-          </Button>
+            <Button
+              sx={{
+                width: '48%',
+              }}
+              variant="outlined"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
 
-          <Dropdown
-            sx={{
-              width: '48%',
-            }}
-            menus={menus}
-          >
-            {({ onChangeOpen }) => (
-              <ButtonGroup fullWidth variant="contained">
-                <Button fullWidth onClick={formApi.handleSubmit(onSave)}>
-                  Save
-                </Button>
-                <Button
-                  fullWidth={false}
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
-                >
-                  <Icon className="icon-more" />
-                </Button>
-              </ButtonGroup>
-            )}
-          </Dropdown>
-        </Box>
-      }
-    >
-      <EditHostForm formApi={formApi} hostId={data?.id} />
-    </PageDrawer>
+            <Dropdown
+              sx={{
+                width: '48%',
+              }}
+              menus={menus}
+            >
+              {({ onChangeOpen }) => (
+                <ButtonGroup fullWidth variant="contained">
+                  <Button fullWidth onClick={formApi.handleSubmit(onSave)}>
+                    Save
+                  </Button>
+                  <Button
+                    fullWidth={false}
+                    onClick={(event) => onChangeOpen(event.currentTarget)}
+                  >
+                    <Icon className="icon-more" />
+                  </Button>
+                </ButtonGroup>
+              )}
+            </Dropdown>
+          </Box>
+        }
+      >
+        <EditHostForm
+          formApi={formApi}
+          onOpenAddKey={() => setAddKeyOpen(true)}
+        />
+      </PageDrawer>
+      <AddKey
+        open={addKeyOpen}
+        onCancel={() => setAddKeyOpen(false)}
+        onOk={() => setAddKeyOpen(false)}
+      />
+    </>
   );
 }

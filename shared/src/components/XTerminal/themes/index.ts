@@ -1,4 +1,4 @@
-import { ITheme } from '@xterm/xterm';
+import { type ITheme } from '@xterm/xterm';
 
 import NordDark from './NordDark';
 import NordLight from './NordLight';

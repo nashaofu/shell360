@@ -9,8 +9,8 @@ import {
   ListItemText,
   OutlinedInput,
 } from '@mui/material';
-import { deleteHost, Host } from 'tauri-plugin-data';
-import { getHostName, useHosts } from 'shared';
+import { deleteHost, type Host } from 'tauri-plugin-data';
+import { getHostName, useHosts , Dropdown } from 'shared';
 import { get } from 'lodash-es';
 
 import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
@@ -18,7 +18,6 @@ import Empty from '@/components/Empty';
 import ItemCard from '@/components/ItemCard';
 import Page from '@/components/Page';
 import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import Dropdown from '@/components/Dropdown';
 import useModal from '@/hooks/useModal';
 import useMessage from '@/hooks/useMessage';
 

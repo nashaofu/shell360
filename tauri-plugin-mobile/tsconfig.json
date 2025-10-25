@@ -1,16 +1,20 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es2021",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "noEmit": false,
     "strict": true,
-    "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": false
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": true,
+    "composite": true,
+    "declaration": true,
+    "declarationDir": "dist",
+    "emitDeclarationOnly": true
   },
-  "include": ["guest-js/*.ts"],
-  "exclude": ["dist-js", "node_modules"]
+  "include": ["ts"]
 }

@@ -1,10 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Box, Button } from '@mui/material';
-import { addKey, Key, updateKey } from 'tauri-plugin-data';
-import { useKeys } from 'shared';
-
-import EditKeyForm from '@/components/EditKeyForm';
+import { addKey, type Key, updateKey } from 'tauri-plugin-data';
+import { useKeys, EditKeyForm, type EditKeyFormFields } from 'shared';
 
 import PageDrawer from '../PageDrawer';
 
@@ -17,7 +15,7 @@ type AddKeyProps = {
 
 export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
   const { refresh: refreshKeys } = useKeys();
-  const formApi = useForm<Omit<Key, 'id'>>({
+  const formApi = useForm<EditKeyFormFields>({
     defaultValues: {
       name: '',
       publicKey: '',
@@ -35,14 +33,21 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
   });
 
   const onSave = useCallback(
-    async (values: Omit<Key, 'id'>) => {
+    async (values: EditKeyFormFields) => {
+      const key = {
+        name: values.name || '',
+        publicKey: values.publicKey || '',
+        privateKey: values.privateKey || '',
+        passphrase: values.passphrase,
+        certificate: values.certificate,
+      };
       if (data) {
         await updateKey({
-          ...values,
+          ...key,
           id: data.id,
         });
       } else {
-        await addKey(values);
+        await addKey(key);
       }
 
       await refreshKeys();

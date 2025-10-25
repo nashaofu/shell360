@@ -1,8 +1,8 @@
 import {
   AuthenticationMethod,
-  Host,
-  Key,
-  PortForwarding,
+  type Host,
+  type Key,
+  type PortForwarding,
   PortForwardingType,
 } from 'tauri-plugin-data';
 

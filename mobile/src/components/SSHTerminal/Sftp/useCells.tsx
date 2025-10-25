@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
-import { SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
+import { type SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
 import dayjs from 'dayjs';
 import { Box, Icon, IconButton, Typography } from '@mui/material';
 
 import useModal from '@/hooks/useModal';
 
-import { SftpTableCell } from './types';
+import { type SftpTableCell } from './types';
 import SftpFilenameInput from './SftpFilenameInput';
 
 type UseCellsOpts = {

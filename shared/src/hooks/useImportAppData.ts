@@ -2,9 +2,9 @@ import {
   addHost,
   addKey,
   addPortForwarding,
-  Host,
-  Key,
-  PortForwarding,
+  type Host,
+  type Key,
+  type PortForwarding,
 } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 

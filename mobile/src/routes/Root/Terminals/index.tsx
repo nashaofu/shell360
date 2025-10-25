@@ -12,12 +12,11 @@ import {
   useTheme,
   darken,
 } from '@mui/material';
-import { TERMINAL_THEMES_MAP } from 'shared';
+import { TERMINAL_THEMES_MAP , Dropdown } from 'shared';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import { TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 import { useGlobalStateAtomWithApi } from '@/atom/globalState';
-import Dropdown from '@/components/Dropdown';
 
 export default function Terminals() {
   const match = useMatch('/terminal/:uuid');
