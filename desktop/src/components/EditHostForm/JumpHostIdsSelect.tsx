@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -8,28 +8,37 @@ import {
   ListItemText,
   MenuItem,
   TextField,
-  Typography,
   Paper,
   Icon,
+  SxProps,
+  Theme,
 } from '@mui/material';
 import { useHosts } from 'shared';
 
-interface ProxyJumpChainEditorProps {
+interface JumpHostIdsSelectProps {
   value: string[];
   onChange: (value: string[]) => void;
-  currentHostId?: string;
+  hostId?: string;
+  sx?: SxProps<Theme>;
+  error?: boolean;
+  helperText?: string;
 }
 
-export default function ProxyJumpChainEditor({
+export default function JumpHostIdsSelect({
   value,
   onChange,
-  currentHostId,
-}: ProxyJumpChainEditorProps) {
+  hostId,
+  sx,
+  error,
+  helperText,
+}: JumpHostIdsSelectProps) {
   const { data: hosts } = useHosts();
   const [selectedHostId, setSelectedHostId] = useState<string>('');
 
-  const availableHosts = hosts.filter(
-    (host) => host.id !== currentHostId && !value.includes(host.id)
+  const availableHosts = useMemo(
+    () =>
+      hosts.filter((host) => host.id !== hostId && !value.includes(host.id)),
+    [hosts, hostId, value]
   );
 
   const handleAdd = () => {
@@ -48,7 +57,10 @@ export default function ProxyJumpChainEditor({
   const handleMoveUp = (index: number) => {
     if (index > 0) {
       const newChain = [...value];
-      [newChain[index - 1], newChain[index]] = [newChain[index], newChain[index - 1]];
+      [newChain[index - 1], newChain[index]] = [
+        newChain[index],
+        newChain[index - 1],
+      ];
       onChange(newChain);
     }
   };
@@ -56,7 +68,10 @@ export default function ProxyJumpChainEditor({
   const handleMoveDown = (index: number) => {
     if (index < value.length - 1) {
       const newChain = [...value];
-      [newChain[index], newChain[index + 1]] = [newChain[index + 1], newChain[index]];
+      [newChain[index], newChain[index + 1]] = [
+        newChain[index + 1],
+        newChain[index],
+      ];
       onChange(newChain);
     }
   };
@@ -67,14 +82,7 @@ export default function ProxyJumpChainEditor({
   };
 
   return (
-    <Box>
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Proxy Jump Chain (Multi-level)
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-        Configure multiple jump hosts in order. Connection will go through each host sequentially.
-      </Typography>
-
+    <Box sx={sx}>
       {value.length > 0 && (
         <Paper variant="outlined" sx={{ mb: 2, p: 1 }}>
           <List dense>
@@ -119,32 +127,28 @@ export default function ProxyJumpChainEditor({
         </Paper>
       )}
 
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <TextField
           select
           fullWidth
           size="small"
-          label="Add jump host"
+          label="Select jump host"
           value={selectedHostId}
           onChange={(e) => setSelectedHostId(e.target.value)}
           disabled={availableHosts.length === 0}
+          error={error}
+          helperText={helperText}
         >
-          {availableHosts.length === 0 ? (
-            <MenuItem value="">
-              <em>No available hosts</em>
+          {availableHosts.map((host) => (
+            <MenuItem key={host.id} value={host.id}>
+              {host.name || host.hostname}
             </MenuItem>
-          ) : (
-            availableHosts.map((host) => (
-              <MenuItem key={host.id} value={host.id}>
-                {host.name || host.hostname}
-              </MenuItem>
-            ))
-          )}
+          ))}
         </TextField>
         <Button
+          sx={{ flexShrink: 0 }}
           variant="outlined"
           onClick={handleAdd}
-          disabled={!selectedHostId}
           startIcon={<Icon className="icon-add" />}
         >
           Add

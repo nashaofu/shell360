@@ -40,8 +40,9 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       authenticationMethod: AuthenticationMethod.Password,
       password: '',
       keyId: '',
-      proxyJumpId: '',
       startupCommand: '',
+      jumpHostEnabled: false,
+      jumpHostIds: [],
       terminalSettings: {
         fontFamily: DEFAULT_TERMINAL_FONT_FAMILY,
         fontSize: DEFAULT_TERMINAL_FONT_SIZE,
@@ -57,9 +58,9 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         data?.authenticationMethod ?? AuthenticationMethod.Password,
       password: data?.password ?? '',
       keyId: data?.keyId ?? '',
-      proxyJumpId: data?.proxyJumpId ?? '',
-      proxyJumpChain: data?.proxyJumpChain,
       startupCommand: data?.startupCommand ?? '',
+      jumpHostEnabled: data?.jumpHostIds?.length > 0,
+      jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
         fontFamily:
           data?.terminalSettings?.fontFamily ?? DEFAULT_TERMINAL_FONT_FAMILY,
@@ -89,9 +90,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
           values.authenticationMethod === 'Certificate'
             ? values.keyId
             : undefined,
-        proxyJumpId: values.proxyJumpId || undefined,
-        proxyJumpChain: values.proxyJumpChain,
         startupCommand: values.startupCommand || undefined,
+        jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
           ? {
               fontFamily: values.terminalSettings.fontFamily,
@@ -199,7 +199,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         </Box>
       }
     >
-      <EditHostForm formApi={formApi} currentHostId={data?.id} />
+      <EditHostForm formApi={formApi} hostId={data?.id} />
     </PageDrawer>
   );
 }

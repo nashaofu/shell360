@@ -12,10 +12,6 @@ export enum AuthenticationMethod {
   Certificate = 'Certificate',
 }
 
-export interface ProxyJumpChain {
-  hostIds: string[];
-}
-
 export interface Host {
   id: string;
   name?: string;
@@ -26,8 +22,7 @@ export interface Host {
   password?: string;
   keyId?: string;
   terminalSettings?: HostTerminalSettings;
-  proxyJumpId?: string;
-  proxyJumpChain?: ProxyJumpChain;
+  jumpHostIds?: string[];
   startupCommand?: string;
 }
 
