@@ -53,6 +53,7 @@ Join our [TestFlight](https://testflight.apple.com/join/teqJZCRm) Or [Google Pla
 - Advanced SSH client with support for password, public key, and certificate authentication methods
 - Support for ED25519, RSA, and ECDSA SSH keys
 - Application data encryption for enhanced security
+- Support for jump host connection, convenient cross-server management
 
 ### 📁 File Management
 
