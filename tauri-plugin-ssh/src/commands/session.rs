@@ -107,7 +107,8 @@ pub async fn session_connect<R: Runtime>(
 
   let handle_ssh_client = if let Some(jump_host_ssh_session_id) = jump_host_ssh_session_id {
     log::info!(
-      "session connect to {}:{} with jump host session {:?}",
+      "session connect {:?} to {}:{} with jump host session {:?}",
+      ssh_session_id,
       &hostname,
       port,
       jump_host_ssh_session_id
@@ -135,7 +136,8 @@ pub async fn session_connect<R: Runtime>(
       })?
   } else {
     log::info!(
-      "session connect to {}:{} with direct tcpip",
+      "session connect {:?} to {}:{} with direct tcpip",
+      ssh_session_id,
       &hostname,
       port
     );
@@ -151,6 +153,7 @@ pub async fn session_connect<R: Runtime>(
       })?
   };
 
+  log::info!("session connect {:?} success", ssh_session_id);
   let session = SSHSession::new(ssh_session_id, ipc_channel, handle_ssh_client);
   {
     let mut sessions = ssh_manager.sessions.lock().await;
@@ -185,7 +188,7 @@ pub async fn session_authenticate<R: Runtime>(
   username: &str,
   authentication_data: AuthenticationData,
 ) -> SSHResult<SSHSessionId> {
-  log::info!("authenticate session");
+  log::info!("authenticate session {:?}", ssh_session_id);
   let mut sessions = ssh_manager.sessions.lock().await;
   let session = sessions
     .get_mut(&ssh_session_id)
@@ -193,11 +196,15 @@ pub async fn session_authenticate<R: Runtime>(
 
   match authentication_data {
     AuthenticationData::Password { password } => {
-      log::info!("authenticate by password");
+      log::info!("authenticate session {:?} by password", ssh_session_id);
 
       let auth_res = session.authenticate_password(username, password).await?;
 
-      log::info!("authenticate by password result {:?}", auth_res.success());
+      log::info!(
+        "authenticate session {:?} by password result {:?}",
+        ssh_session_id,
+        auth_res.success()
+      );
 
       if !auth_res.success() {
         return Err(AuthenticationMethodError::Password.into());
@@ -207,7 +214,7 @@ pub async fn session_authenticate<R: Runtime>(
       private_key,
       passphrase,
     } => {
-      log::info!("authenticate by public key");
+      log::info!("authenticate session {:?} by public key", ssh_session_id);
 
       if private_key.is_empty() {
         return Err(SSHError::new("Private key is empty"));
@@ -215,16 +222,26 @@ pub async fn session_authenticate<R: Runtime>(
 
       let password = passphrase.and_then(|passphrase| {
         if passphrase.is_empty() {
-          log::info!("authenticate by public key without passphrase");
+          log::info!(
+            "authenticate session {:?} by public key without passphrase",
+            ssh_session_id
+          );
           None
         } else {
-          log::info!("authenticate by public key with passphrase");
+          log::info!(
+            "authenticate session {:?} by public key with passphrase",
+            ssh_session_id
+          );
           Some(passphrase)
         }
       });
 
       let key_pair = decode_secret_key(&private_key, password.as_deref())?;
-      log::info!("authenticate by public key {:?}", key_pair.algorithm());
+      log::info!(
+        "authenticate session {:?} by public key {:?}",
+        ssh_session_id,
+        key_pair.algorithm()
+      );
 
       let auth_res = session
         .authenticate_publickey(
@@ -233,7 +250,11 @@ pub async fn session_authenticate<R: Runtime>(
         )
         .await?;
 
-      log::info!("authenticate by public key result {:?}", auth_res.success());
+      log::info!(
+        "authenticate session {:?} by public key result {:?}",
+        ssh_session_id,
+        auth_res.success()
+      );
 
       if !auth_res.success() {
         return Err(AuthenticationMethodError::PublicKey.into());
@@ -244,7 +265,7 @@ pub async fn session_authenticate<R: Runtime>(
       passphrase,
       certificate,
     } => {
-      log::info!("authenticate by certificate");
+      log::info!("authenticate session {:?} by certificate", ssh_session_id);
 
       if private_key.is_empty() {
         return Err(SSHError::new("Private key is empty"));
@@ -255,24 +276,32 @@ pub async fn session_authenticate<R: Runtime>(
 
       let password = passphrase.and_then(|passphrase| {
         if passphrase.is_empty() {
-          log::info!("authenticate by certificate passphrase is empty");
+          log::info!(
+            "authenticate session {:?} by certificate passphrase is empty",
+            ssh_session_id
+          );
           None
         } else {
-          log::info!("authenticate by certificate passphrase is not empty");
+          log::info!(
+            "authenticate session {:?} by certificate passphrase is not empty",
+            ssh_session_id
+          );
           Some(passphrase)
         }
       });
 
       let key_pair = decode_secret_key(&private_key, password.as_deref())?;
       log::info!(
-        "authenticate by certificate with private key {:?}",
+        "authenticate session {:?} by certificate with private key {:?}",
+        ssh_session_id,
         key_pair.algorithm()
       );
 
       let cert = Certificate::from_openssh(&certificate)
         .map_err(|err| SSHError::new(format!("Failed to parse certificate: {}", err)))?;
       log::info!(
-        "authenticate by certificate with certificate {:?}",
+        "authenticate session {:?} by certificate with certificate {:?}",
+        ssh_session_id,
         cert.algorithm()
       );
 
@@ -281,7 +310,8 @@ pub async fn session_authenticate<R: Runtime>(
         .await?;
 
       log::info!(
-        "authenticate by certificate result {:?}",
+        "authenticate session {:?} by certificate result {:?}",
+        ssh_session_id,
         auth_res.success()
       );
 
@@ -300,6 +330,7 @@ pub async fn session_disconnect<R: Runtime>(
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_session_id: SSHSessionId,
 ) -> SSHResult<SSHSessionId> {
+  log::info!("disconnect session {:?}", ssh_session_id);
   let mut sessions = ssh_manager.sessions.lock().await;
   if let Some(session) = sessions.remove(&ssh_session_id) {
     session
@@ -307,5 +338,6 @@ pub async fn session_disconnect<R: Runtime>(
       .await?;
   }
 
+  log::info!("disconnect session {:?} success", ssh_session_id);
   Ok(ssh_session_id)
 }
