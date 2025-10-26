@@ -22,4 +22,3 @@ sudo apt-get install -y \
   libayatana-appindicator3-dev # Application indicator support
 
 echo "[INFO] Linux build dependencies installation completed!"
-

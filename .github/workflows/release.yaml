@@ -53,7 +53,7 @@ jobs:
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
-        run: ./scripts/install_linux_deps.sh
+        run: bash ./scripts/install_linux_deps.sh
 
       - name: Lint Web
         run: |-
@@ -76,23 +76,23 @@ jobs:
         include:
           - name: windows
             host: windows-latest
-            build: ./scripts/windows.ps1
+            build: powershell ./scripts/windows.ps1
 
           - name: macos
             host: macos-15
-            build: ./scripts/macos.sh
+            build: zsh ./scripts/macos.sh
 
           - name: linux
             host: ubuntu-latest
-            build: ./scripts/linux.sh
+            build: bash ./scripts/linux.sh
 
           - name: ios
             host: macos-15
-            build: ./scripts/ios.sh
+            build: zsh ./scripts/ios.sh
 
           - name: android
             host: ubuntu-latest
-            build: ./scripts/android.sh
+            build: bash ./scripts/android.sh
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
