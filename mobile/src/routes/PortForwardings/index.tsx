@@ -16,6 +16,7 @@ import {
   AuthenticationMethod,
   deletePortForwarding,
   type Host,
+  type Key,
   type PortForwarding,
   PortForwardingType,
 } from 'tauri-plugin-data';
@@ -192,7 +193,7 @@ export default function PortForwardings() {
           checkServerKey
         );
 
-        const key = keysMap.get(host.keyId);
+        const key = keysMap.get(host.keyId as string);
 
         if (host.authenticationMethod === AuthenticationMethod.Password) {
           await session.authenticate_password({

@@ -83,7 +83,7 @@ export function useOpenedForwardingAtomWithApi() {
           throw new Error(`Jump host ${jumpHostId} not found`);
         }
 
-        const jumpSession = new SSHSession({
+        const jumpSession: SSHSession = new SSHSession({
           jumpHost: prevJumpHost,
           onDisconnect: () => {
             deleteOpenedForwarding(uuid);
@@ -97,7 +97,7 @@ export function useOpenedForwardingAtomWithApi() {
       }
 
       const sshPortForwarding = new SSHPortForwarding({
-        session: prevJumpHost,
+        session: prevJumpHost as SSHSession,
       });
 
       const item = {
