@@ -1,0 +1,49 @@
+# Auto detect text files and perform normalization
+*               text=auto
+
+*.rs            text diff=rust
+*.toml          text diff=toml
+*.json          text diff=json
+*.yaml          text diff=yaml
+*.yml           text diff=yaml
+*.md            text diff=markdown
+*.js            text diff=javascript
+*.ts            text diff=typescript
+*.tsx           text diff=typescript
+*.jsx           text diff=javascript
+*.html          text diff=html
+*.css           text diff=css
+*.less          text diff=css
+*.scss          text diff=css
+*.sass          text
+*.swift         text diff=swift
+*.java          text diff=java
+*.kt            text diff=kotlin
+*.groovy        text diff=java
+*.scala         text diff=java
+*.gradle        text diff=java
+*.gradle.kts    text diff=kotlin
+*.bash          text eol=lf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+*.sh            text eol=lf
+
+tsconfig.json   linguist-language=JSON-with-Comments
+Cargo.lock      text
+
+# Images
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.icns          binary
+*.webp          binary
+*.svg           text
+
+# Fonts
+*.ttf           binary
+*.otf           binary
+*.woff          binary
+*.woff2         binary
