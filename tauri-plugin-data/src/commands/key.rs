@@ -177,7 +177,10 @@ pub async fn delete_key(data_manager: State<'_, DataManager>, key: Key) -> DataR
     .await?;
 
   if host.is_some() {
-    return Err(DataError::DeleteForeignKeyError("Hosts".to_string()));
+    return Err(DataError::EntityReferenced(
+      "Key".to_string(),
+      "host".to_string(),
+    ));
   }
 
   let active_model = entities::keys::ActiveModel {

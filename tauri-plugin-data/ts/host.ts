@@ -15,6 +15,7 @@ export enum AuthenticationMethod {
 export interface Host {
   id: string;
   name?: string;
+  tags?: string[];
   hostname: string;
   port: number;
   username: string;

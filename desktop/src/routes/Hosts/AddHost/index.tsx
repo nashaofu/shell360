@@ -38,6 +38,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
     defaultValues: {
       id: undefined,
       name: '',
+      tags: [],
       hostname: '',
       port: 22,
       username: '',
@@ -56,6 +57,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
     values: {
       id: data?.id || undefined,
       name: data?.name ?? '',
+      tags: data?.tags ?? [],
       hostname: data?.hostname ?? '',
       port: data?.port ?? 22,
       username: data?.username ?? '',
@@ -84,6 +86,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         values.authenticationMethod || AuthenticationMethod.Password;
       const hostData = {
         name: values.name || '',
+        tags: values.tags || [],
         hostname: values.hostname || '',
         port: Number(values.port || 22),
         username: values.username || '',

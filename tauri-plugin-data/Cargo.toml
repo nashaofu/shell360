@@ -12,21 +12,21 @@ tauri = { workspace = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-sea-orm = { version = "1.1.15", features = [
+sea-orm = { version = "1.1.17", features = [
   "runtime-tokio-rustls",
   "sqlx-sqlite",
 ] }
-sea-orm-migration = { version = "1.1.15", features = [
+sea-orm-migration = { version = "1.1.17", features = [
   "runtime-tokio-rustls",
   "sqlx-sqlite",
 ] }
-tokio = { version = "1.47.1", features = ["fs"] }
+tokio = { version = "1.48.0", features = ["fs"] }
 strum = { version = "0.27.2", features = ["derive"] }
-serde_with = "3.14.0"
+serde_with = "3.15.1"
 defendor = "0.0.6"
-zeroize = "1.8.1"
+zeroize = "1.8.2"
 futures = "0.3.31"
-tauri-plugin-store = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-store.workspace = true
 secrecy = "0.10.3"
 base64ct = { version = "1.6.0", features = ["std"] }
 

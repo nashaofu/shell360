@@ -34,8 +34,8 @@ pub enum DataError {
   #[error("Init database error")]
   InitDatabaseError,
 
-  #[error("DeleteForeignKeyError {0} error")]
-  DeleteForeignKeyError(String),
+  #[error("{0} is still referenced by other {1}")]
+  EntityReferenced(String, String),
 
   #[error("Crypto repeated init")]
   CryptoRepeatedInit,
