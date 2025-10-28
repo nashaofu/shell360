@@ -18,6 +18,7 @@ export interface Host {
   hostname: string;
   port: number;
   username: string;
+  remark?: string;
   authenticationMethod: AuthenticationMethod;
   password?: string;
   keyId?: string;
