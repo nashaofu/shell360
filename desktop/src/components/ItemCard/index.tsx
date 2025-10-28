@@ -9,6 +9,7 @@ type ItemCardProps = {
   variant?: 'outlined' | 'elevation';
   elevation?: number;
   onDoubleClick?: () => unknown;
+  onClick?: () => unknown;
 };
 
 export default function ItemCard({
@@ -19,6 +20,7 @@ export default function ItemCard({
   variant = 'outlined',
   elevation,
   onDoubleClick,
+  onClick,
 }: ItemCardProps) {
   return (
     <Paper
@@ -33,6 +35,7 @@ export default function ItemCard({
       variant={variant}
       elevation={elevation}
       onDoubleClick={onDoubleClick}
+      onClick={onClick}
     >
       <Box
         sx={{

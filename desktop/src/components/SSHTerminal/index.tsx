@@ -1,11 +1,12 @@
 import { Box, type SxProps, type Theme } from '@mui/material';
-import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession } from 'shared';
+import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession, getDesc } from 'shared';
 import { type Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 import { useLayoutEffect } from 'react';
 
 import openUrl from '@/utils/openUrl';
+import { copy } from '@/utils/clipboard';
 
 import SSHLoading from '../SSHLoading';
 
@@ -54,7 +55,7 @@ export default function SSHTerminal({
     async (checkServerKey?: SSHSessionCheckServerKey) => {
       await sessionRunAsync(checkServerKey);
       await sshRunAsync();
-    }
+    },
   );
 
   const refresh = useMemoizedFn(async () => {
@@ -108,6 +109,14 @@ export default function SSHTerminal({
         }}
         data-paste="true"
       >
+        <Box
+          sx={{ color: 'gray', fontSize: 'xs' }}
+          onClick={() => {
+            copy(host.hostname);
+          }}
+        >
+          {getDesc(host)}
+        </Box>
         <XTerminal
           fontFamily={host.terminalSettings?.fontFamily}
           fontSize={host.terminalSettings?.fontSize}
