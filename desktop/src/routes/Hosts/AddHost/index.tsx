@@ -112,7 +112,6 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       };
 
       if (data) {
-        console.error(hostData);
         return updateHost({
           ...hostData,
           id: data.id,
