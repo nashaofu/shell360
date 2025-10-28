@@ -177,6 +177,7 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
+            remark={item.remark}
             icon={<Icon className="icon-host" />}
             title={getHostName(item)}
             desc={getDesc(item)}

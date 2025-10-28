@@ -337,6 +337,9 @@ export default function BasicForm({
               mt: 3,
             }}
             fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
             label="Remark"
             placeholder="Remark for the host (optional)"
             error={fieldState.invalid}
