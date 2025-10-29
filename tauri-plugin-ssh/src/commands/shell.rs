@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{collections::HashMap, env, ops::Deref};
 
 use russh::{Channel as RusshChannel, client};
 use serde::{Deserialize, Serialize};
@@ -79,6 +79,17 @@ pub struct ShellSize {
   pub height: u32,
 }
 
+fn get_envs() -> HashMap<String, String> {
+  let mut envs = env::vars()
+    .filter(|(key, _)| key.starts_with("LC_"))
+    .collect::<HashMap<String, String>>();
+
+  let lang = env::var("LANG").unwrap_or("C.UTF-8".to_string());
+  envs.insert("LANG".to_string(), lang);
+
+  envs
+}
+
 #[tauri::command]
 pub async fn shell_open<R: Runtime>(
   _app_handle: AppHandle<R>,
@@ -88,6 +99,7 @@ pub async fn shell_open<R: Runtime>(
   ipc_channel: Channel<SHHShellIpcChannelData>,
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
+  log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
   let shell = {
     let sessions = ssh_manager.sessions.lock().await;
     let session = sessions
@@ -98,11 +110,23 @@ pub async fn shell_open<R: Runtime>(
     SSHShell::new(ssh_session_id, ssh_shell_id, ipc_channel, shell_channel)
   };
 
-  shell
-    .set_env(true, "LANG", "en_US.UTF-8")
-    .await
-    .unwrap_or_default();
+  let envs = get_envs();
+  log::info!(
+    "shell open {:?} {:?} set env {:?}",
+    ssh_session_id,
+    ssh_shell_id,
+    envs
+  );
+  for (key, value) in envs {
+    shell.set_env(true, key.as_str(), value.as_str()).await?;
+  }
 
+  log::info!(
+    "shell open {:?} {:?} request pty {:?}",
+    ssh_session_id,
+    ssh_shell_id,
+    size
+  );
   shell
     .request_pty(
       true,
@@ -115,7 +139,16 @@ pub async fn shell_open<R: Runtime>(
     )
     .await?;
 
+  log::info!(
+    "shell open {:?} {:?} request shell",
+    ssh_session_id,
+    ssh_shell_id
+  );
   shell.request_shell(true).await?;
+
+  // shell
+  //   .request_x11(true, false, "MIT-MAGIC-COOKIE-1", Uuid::new_v4(), 0)
+  //   .await?;
 
   {
     let mut shells = ssh_manager.shells.lock().await;
