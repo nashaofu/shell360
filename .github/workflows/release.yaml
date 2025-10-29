@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - dev
     tags:
       - v*.*.*
 
@@ -74,29 +76,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows
-            host: windows-latest
-            build: powershell ./scripts/windows.ps1
+          # - name: windows
+          #   host: windows-latest
+          #   build: powershell ./scripts/windows.ps1
 
           - name: macos
             host: macos-15
             build: zsh ./scripts/macos.sh
 
-          - name: linux
-            host: ubuntu-latest
-            build: bash ./scripts/linux.sh
+          # - name: linux
+          #   host: ubuntu-latest
+          #   build: bash ./scripts/linux.sh
 
           - name: ios
             host: macos-15
             build: zsh ./scripts/ios.sh
 
-          - name: android
-            host: ubuntu-latest
-            build: bash ./scripts/android.sh
+          # - name: android
+          #   host: ubuntu-latest
+          #   build: bash ./scripts/android.sh
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
-    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    # if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

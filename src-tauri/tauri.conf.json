@@ -55,12 +55,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "iOS": {
-      "developmentTeam": "2A5UB5KQ66"
-    },
-    "macOS": {
-      "signingIdentity": "Developer ID Application: diao cheng (2A5UB5KQ66)"
-    }
+    ]
   }
 }
