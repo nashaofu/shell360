@@ -92,6 +92,7 @@ export default function SSHTerminal({
           bottom: 6,
           left: 0,
           pl: 3,
+          pb: 3,
           overflow: 'hidden',
           pointerEvents: loading || error ? 'none' : 'unset',
           visibility: loading || error ? 'hidden' : 'visible',
