@@ -12,7 +12,7 @@ import {
   ListItemText,
   OutlinedInput,
 } from '@mui/material';
-import { useHosts, Dropdown, HostTagsSelect } from 'shared';
+import { useHosts, Dropdown, HostTagsSelect, getHostName, getHostDesc } from 'shared';
 import { deleteHost, type Host } from 'tauri-plugin-data';
 import { get } from 'lodash-es';
 
@@ -265,8 +265,8 @@ export default function Hosts() {
           <ItemCard
             key={item.id}
             icon={<Icon className="icon-host" />}
-            title={item.name || `${item.hostname}:${item.port}`}
-            desc={item.username}
+            title={getHostName(item)}
+            desc={getHostDesc(item)}
             extra={
               <Box onClick={(event) => event.stopPropagation()}>
                 <Dropdown

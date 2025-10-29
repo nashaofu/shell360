@@ -8,7 +8,7 @@ import { Dropdown } from '../Dropdown';
 
 interface Tag {
   label: string;
-  value?: string;
+  value: string;
 }
 
 export type HostTagsSelectChildProps = {
