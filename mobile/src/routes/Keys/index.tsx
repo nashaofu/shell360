@@ -9,7 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { useKeys , Dropdown } from 'shared';
+import { useKeys, Dropdown } from 'shared';
 import { deleteKey, type Key } from 'tauri-plugin-data';
 import { get } from 'lodash-es';
 
@@ -143,12 +143,9 @@ export default function Keys() {
               try {
                 await deleteKey(selectedKey);
               } catch (err) {
-                if (get(err, 'type') === 'DeleteForeignKeyError') {
-                  message.error({
-                    message:
-                      'Deletion failed, other items are still using the current key',
-                  });
-                }
+                message.error({
+                  message: get(err, 'message') || 'Deletion failed',
+                });
                 throw err;
               }
 
@@ -158,7 +155,7 @@ export default function Keys() {
         },
       },
     ],
-    [message, modal, refreshKeys]
+    [message, modal, refreshKeys, selectedKeyRef]
   );
 
   return (

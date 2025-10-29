@@ -9,10 +9,14 @@ import {
   ListItemText,
   type SxProps,
   type Theme,
+  Autocomplete,
+  Chip,
 } from '@mui/material';
 import { AuthenticationMethod } from 'tauri-plugin-data';
+import { useMemo } from 'react';
 
 import { useKeys } from '@/hooks/useKeys';
+import { useHosts } from '@/hooks/useHosts';
 
 import { TextFieldPassword } from '../TextFieldPassword';
 
@@ -31,6 +35,16 @@ export default function BasicForm({
 }: BasicFormProps) {
   const authenticationMethod = formApi.watch('authenticationMethod');
   const { data: keys } = useKeys();
+  const { data: hosts } = useHosts();
+
+  const tags = useMemo(() => {
+    return hosts.reduce<string[]>((acc, cur) => {
+      if (Array.isArray(cur.tags)) {
+        acc.push(...cur.tags);
+      }
+      return acc;
+    }, []);
+  }, [hosts]);
 
   return (
     <Box sx={sx}>
@@ -54,15 +68,51 @@ export default function BasicForm({
             placeholder="Name"
             error={fieldState.invalid}
             helperText={fieldState.error?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon className="icon-label" />
-                </InputAdornment>
-              ),
-            }}
           />
         )}
+      />
+
+      <Controller
+        name="tags"
+        control={formApi.control}
+        rules={{
+          maxLength: {
+            value: 60,
+            message: 'Please enter no more than 60 characters',
+          },
+        }}
+        render={({ field, fieldState }) => {
+          return (
+            <Autocomplete
+              {...field}
+              sx={{
+                mb: 3,
+              }}
+              onChange={(_, newValue) => field.onChange([...newValue])}
+              multiple
+              freeSolo
+              fullWidth
+              limitTags={3}
+              options={tags}
+              getOptionLabel={(option) => option}
+              renderValue={(values, getItemProps) =>
+                values.map((option, index) => {
+                  const { key, ...itemProps } = getItemProps({ index });
+                  return <Chip key={key} label={option} {...itemProps} />;
+                })
+              }
+              renderInput={(props) => (
+                <TextField
+                  {...props}
+                  label="Tags"
+                  placeholder="Tags"
+                  error={fieldState.invalid}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+          );
+        }}
       />
 
       <Controller

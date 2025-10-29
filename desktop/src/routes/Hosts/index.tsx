@@ -5,12 +5,15 @@ import {
   Button,
   Icon,
   IconButton,
+  List,
+  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   OutlinedInput,
 } from '@mui/material';
 import { deleteHost, type Host } from 'tauri-plugin-data';
-import { getHostName, useHosts, Dropdown, getDesc } from 'shared';
+import { getHostName, useHosts, Dropdown, HostTagsSelect , getHostDesc } from 'shared';
 import { get } from 'lodash-es';
 
 import { copy } from '@/utils/clipboard';
@@ -38,25 +41,34 @@ export default function Hosts() {
 
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
+  const [selectedTag, setSelectedTag] = useState<string>();
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
-    if (!kw) {
-      return hosts;
+    let filterHosts = hosts;
+
+    if (selectedTag) {
+      filterHosts = filterHosts.filter((item) =>
+        item.tags?.includes(selectedTag)
+      );
     }
-    return hosts.filter(
+
+    if (!kw) {
+      return filterHosts;
+    }
+    return filterHosts.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
-        `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
+        `${item.hostname}:${item.port}`.toLowerCase().includes(kw)
     );
-  }, [hosts, keyword]);
+  }, [hosts, keyword, selectedTag]);
 
   const onOpenChannel = useCallback(
     (host: Host) => {
       const [item] = terminalsAtomWithApi.add(host);
       navigate(`/terminal/${item.uuid}`, { replace: true });
     },
-    [navigate, terminalsAtomWithApi],
+    [navigate, terminalsAtomWithApi]
   );
 
   const onAddHostClose = useCallback(() => {
@@ -114,12 +126,9 @@ export default function Hosts() {
               try {
                 await deleteHost(selectedHost);
               } catch (err) {
-                if (get(err, 'type') === 'DeleteForeignKeyError') {
-                  message.error({
-                    message:
-                      'Deletion failed, other items are still using the current host',
-                  });
-                }
+                message.error({
+                  message: get(err, 'message') || 'Deletion failed',
+                });
                 throw err;
               }
               refreshHosts();
@@ -128,7 +137,7 @@ export default function Hosts() {
         },
       },
     ],
-    [modal, refreshHosts, message, selectedHostRef],
+    [modal, refreshHosts, message, selectedHostRef]
   );
 
   return (
@@ -157,16 +166,40 @@ export default function Hosts() {
             onChange={(event) => setKeyword(event.target.value)}
           />
         </Box>
-        <Button
-          variant="contained"
-          sx={{
-            height: 40,
-          }}
-          startIcon={<Icon className="icon-add" />}
-          onClick={() => setIsOpenAddHost(true)}
-        >
-          Add host
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
+            {({ onChangeOpen, label }) => (
+              <List component="nav" dense>
+                <ListItem>
+                  <ListItemButton
+                    onClick={(event) => onChangeOpen(event.currentTarget)}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Icon className="icon-label" />
+                          <Box component="span" sx={{ paddingLeft: 0.5 }}>
+                            {label}
+                          </Box>
+                        </Box>
+                      }
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </List>
+            )}
+          </HostTagsSelect>
+          <Button
+            variant="contained"
+            sx={{
+              height: 40,
+            }}
+            startIcon={<Icon className="icon-add" />}
+            onClick={() => setIsOpenAddHost(true)}
+          >
+            Add host
+          </Button>
+        </Box>
       </Box>
       <AutoRepeatGrid
         sx={{
@@ -177,10 +210,9 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            remark={item.remark}
             icon={<Icon className="icon-host" />}
             title={getHostName(item)}
-            desc={getDesc(item)}
+            desc={item.username}
             extra={
               <Dropdown
                 menus={menus}
@@ -206,7 +238,6 @@ export default function Hosts() {
               </Dropdown>
             }
             onDoubleClick={() => onOpenChannel(item)}
-            onClick={() => copy(item.hostname)}
           />
         ))}
       </AutoRepeatGrid>

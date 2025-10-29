@@ -16,11 +16,13 @@ tauri-build = { workspace = true, features = [] }
 
 [dependencies]
 tauri = { workspace = true, features = [] }
-tauri-plugin-clipboard-manager = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
-tauri-plugin-dialog = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
-tauri-plugin-fs = { version = "2.4.2", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
-tauri-plugin-process = { version = "2.3.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
-tauri-plugin-store = { version = "2.4.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-store.workspace = true
+tauri-plugin-process.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-fs.workspace = true
+tauri-plugin-log.workspace = true
+tauri-plugin-machine-uid.workspace = true
+tauri-plugin-clipboard-manager.workspace = true
 tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
 tauri-plugin-data = { path = "../tauri-plugin-data" }
 serde = { workspace = true, features = ["derive"] }
@@ -28,20 +30,18 @@ serde_json.workspace = true
 thiserror.workspace = true
 rand = "0.8.5"
 ssh-key = { version = "0.6.7", features = [
-    "ed25519",
-    "rsa",
-    "encryption",
-    "p256",
-    "p384",
-    "p521",
+  "ed25519",
+  "rsa",
+  "encryption",
+  "p256",
+  "p384",
+  "p521",
 ] }
-webbrowser = "1.0.5"
-tauri-plugin-machine-uid = "0.1.2"
-tauri-plugin-log = { version = "2.7.0", features = ["colored"] }
+webbrowser = "1.0.6"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = { version = "2.9.0", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2", default-features = false, features = [
-    "native-tls-vendored",
+tauri-plugin-updater = { version = "2.9.0", default-features = false, features = [
+  "native-tls-vendored",
 ] }
 
 [target.'cfg(any(target_os = "ios", target_os="android"))'.dependencies]

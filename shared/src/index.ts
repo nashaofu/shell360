@@ -9,6 +9,7 @@ export * from './components/EditHostForm';
 export * from './components/EditKeyForm';
 export * from './components/GenerateKeyForm';
 export * from './components/PortForwardingForm';
+export * from './components/HostTagsSelect';
 
 // hooks
 export * from './hooks/useHosts';

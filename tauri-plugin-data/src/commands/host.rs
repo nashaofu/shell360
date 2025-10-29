@@ -17,6 +17,7 @@ use crate::{
 #[serde(rename_all = "camelCase")]
 pub struct HostBase {
   name: Option<String>,
+  tags: Option<Vec<String>>,
   hostname: String,
   port: i32,
   username: String,
@@ -50,6 +51,7 @@ impl ModelConvert for HostBase {
 
     Ok(HostBase {
       name: model.name,
+      tags: model.tags.map(|v| v.into()),
       remark: model.remark,
       hostname: String::from_utf8(hostname)?,
       port: model.port,
@@ -77,6 +79,7 @@ impl ModelConvert for HostBase {
 
     let active_model = Self::ActiveModel {
       name: ActiveValue::Set(self.name.clone()),
+      tags: ActiveValue::Set(self.tags.clone().map(|v| v.into())),
       hostname: ActiveValue::Set(hostname),
       remark: ActiveValue::Set(self.remark.clone()),
       port: ActiveValue::Set(self.port),
@@ -187,8 +190,26 @@ pub async fn delete_host(data_manager: State<'_, DataManager>, host: Host) -> Da
     .await?;
 
   if port_forwarding.is_some() {
-    return Err(DataError::DeleteForeignKeyError(
-      "Port forwardings".to_string(),
+    return Err(DataError::EntityReferenced(
+      "Host".to_string(),
+      "port forwarding".to_string(),
+    ));
+  }
+
+  let hosts = entities::hosts::Entity::find()
+    .all(&data_manager.database_connection)
+    .await?;
+
+  let jump_host_ids = hosts.iter().find(|h| {
+    h.jump_host_ids
+      .as_ref()
+      .is_some_and(|jump_host_ids| jump_host_ids.contains(&host.id))
+  });
+
+  if jump_host_ids.is_some() {
+    return Err(DataError::EntityReferenced(
+      "Host".to_string(),
+      "host".to_string(),
     ));
   }
 

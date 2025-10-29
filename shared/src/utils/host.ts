@@ -4,6 +4,6 @@ export function getHostName(host: Host) {
   return host.name || `${host.hostname}:${host.port}`;
 }
 
-export function getDesc(host: Host) {
+export function getHostDesc(host: Host) {
   return `${host.username}@${host.hostname}:${host.port}`;
 }

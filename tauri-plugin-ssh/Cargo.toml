@@ -11,16 +11,20 @@ links = "tauri-plugin-ssh"
 tauri = { workspace = true, features = [] }
 serde.workspace = true
 thiserror.workspace = true
-russh = { version = "0.54.6", default-features = false, features = ["flate2", "ring", "rsa"] }
+russh = { version = "0.54.6", default-features = false, features = [
+  "flate2",
+  "ring",
+  "rsa",
+] }
 uuid = { version = "1.18.1", features = ["serde", "v4"] }
 async-trait = "0.1.89"
-tokio = { version = "1.47.1", features = ["full"] }
+tokio = { version = "1.48.0", features = ["full"] }
 serde_json.workspace = true
 strum = { version = "0.27.2", features = ["derive"] }
 russh-sftp = "2.1.1"
 rusocks = "0.0.7"
 percent-encoding = "2.3.2"
-tauri-plugin-fs = { version = "2.4.2", git = "https://github.com/nashaofu/plugins-workspace.git", branch = "v2" }
+tauri-plugin-fs.workspace = true
 log = "0.4.28"
 
 [build-dependencies]

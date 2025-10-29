@@ -3,6 +3,7 @@ import {
   Box,
   Menu,
   MenuItem,
+  type MenuItemProps,
   type MenuProps,
   type SxProps,
   type Theme,
@@ -12,7 +13,7 @@ export type DropdownMenu = {
   label: ReactNode;
   value: string | number;
   onClick?: () => unknown;
-};
+} & MenuItemProps;
 
 export type DropdownChildrenRenderProps = {
   open: boolean;
@@ -48,15 +49,16 @@ export function Dropdown({
         open={!!anchorEl}
         onClose={() => setAnchorEl(null)}
       >
-        {menus.map((item) => (
+        {menus.map(({ value, label, onClick, ...item }) => (
           <MenuItem
-            key={item.value}
+            {...item}
+            key={value}
             onClick={() => {
-              item.onClick?.();
+              onClick?.();
               setAnchorEl(null);
             }}
           >
-            {item.label}
+            {label}
           </MenuItem>
         ))}
       </Menu>
