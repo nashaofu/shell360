@@ -14,7 +14,6 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { getDesc } from 'shared';
 
 import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 
@@ -60,7 +59,7 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
           key={item.uuid}
           disablePadding
           onClick={() => onListItemClick(item)}
-          title={getDesc(item.host)}
+          title={item.name}
         >
           <ListItemButton
             sx={{

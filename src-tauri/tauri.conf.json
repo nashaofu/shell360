@@ -58,6 +58,9 @@
     ],
     "iOS": {
       "developmentTeam": "2A5UB5KQ66"
+    },
+    "macOS": {
+      "signingIdentity": "Developer ID Application: diao cheng (2A5UB5KQ66)"
     }
   }
 }

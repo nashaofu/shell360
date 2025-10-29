@@ -55,7 +55,6 @@ pub struct Model {
   pub password: Option<Vec<u8>>,
   pub key_id: Option<i64>,
   pub startup_command: Option<String>,
-  pub remark: Option<String>,
   pub jump_host_ids: Option<JumpHostIds>,
   pub terminal_settings: Option<TerminalSettings>,
 }

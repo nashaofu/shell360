@@ -10,10 +10,9 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { deleteHost, type Host } from 'tauri-plugin-data';
-import { getHostName, useHosts, Dropdown, getDesc } from 'shared';
+import { getHostName, useHosts , Dropdown } from 'shared';
 import { get } from 'lodash-es';
 
-import { copy } from '@/utils/clipboard';
 import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 import Empty from '@/components/Empty';
 import ItemCard from '@/components/ItemCard';
@@ -47,7 +46,7 @@ export default function Hosts() {
     return hosts.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
-        `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
+        `${item.hostname}:${item.port}`.toLowerCase().includes(kw)
     );
   }, [hosts, keyword]);
 
@@ -56,7 +55,7 @@ export default function Hosts() {
       const [item] = terminalsAtomWithApi.add(host);
       navigate(`/terminal/${item.uuid}`, { replace: true });
     },
-    [navigate, terminalsAtomWithApi],
+    [navigate, terminalsAtomWithApi]
   );
 
   const onAddHostClose = useCallback(() => {
@@ -128,7 +127,7 @@ export default function Hosts() {
         },
       },
     ],
-    [modal, refreshHosts, message, selectedHostRef],
+    [modal, refreshHosts, message, selectedHostRef]
   );
 
   return (
@@ -177,10 +176,9 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            remark={item.remark}
             icon={<Icon className="icon-host" />}
             title={getHostName(item)}
-            desc={getDesc(item)}
+            desc={item.username}
             extra={
               <Dropdown
                 menus={menus}
@@ -206,7 +204,6 @@ export default function Hosts() {
               </Dropdown>
             }
             onDoubleClick={() => onOpenChannel(item)}
-            onClick={() => copy(item.hostname)}
           />
         ))}
       </AutoRepeatGrid>
