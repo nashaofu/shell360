@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { Box, Radio } from '@mui/material';
+import { v4 as uuidV4 } from 'uuid';
 
 import { useHosts } from '@/hooks/useHosts';
 
@@ -21,8 +22,10 @@ export type HostTagsSelectProps = {
   children: (props: HostTagsSelectChildProps) => ReactNode;
 };
 
+const ALL_TAG_VALUE = 'ALL_TAG_VALUE:' + uuidV4();
+
 export function HostTagsSelect({
-  value,
+  value = ALL_TAG_VALUE,
   onChange,
   children,
 }: HostTagsSelectProps) {
@@ -45,7 +48,7 @@ export function HostTagsSelect({
       [
         {
           label: 'All',
-          value: undefined,
+          value: ALL_TAG_VALUE,
         },
       ]
     );
@@ -55,7 +58,7 @@ export function HostTagsSelect({
     return tags.reduce((map, tag) => {
       map.set(tag.value, tag.label);
       return map;
-    }, new Map<string | undefined, string>());
+    }, new Map<string, string>());
   }, [tags]);
 
   const tagsMenus = useMemo(() => {
@@ -68,9 +71,15 @@ export function HostTagsSelect({
           </Box>
         </Box>
       ),
-      value: item.value,
+      value: String(item.value),
       selected: value === item.value,
-      onClick: () => onChange(item.value),
+      onClick: () => {
+        if (item.value === ALL_TAG_VALUE) {
+          onChange(undefined);
+        } else {
+          onChange(item.value);
+        }
+      },
     }));
   }, [value, onChange, tags]);
 

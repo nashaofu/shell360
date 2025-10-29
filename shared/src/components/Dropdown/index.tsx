@@ -11,7 +11,7 @@ import {
 
 export type DropdownMenu = {
   label: ReactNode;
-  value?: string | number;
+  value: string | number;
   onClick?: () => unknown;
 } & MenuItemProps;
 
