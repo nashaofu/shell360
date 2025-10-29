@@ -20,6 +20,7 @@ pub struct HostBase {
   hostname: String,
   port: i32,
   username: String,
+  remark: Option<String>,
   authentication_method: entities::hosts::AuthenticationMethod,
   password: Option<String>,
   #[serde_as(as = "Option<DisplayFromStr>")]
@@ -49,6 +50,7 @@ impl ModelConvert for HostBase {
 
     Ok(HostBase {
       name: model.name,
+      remark: model.remark,
       hostname: String::from_utf8(hostname)?,
       port: model.port,
       username: String::from_utf8(username)?,
@@ -76,6 +78,7 @@ impl ModelConvert for HostBase {
     let active_model = Self::ActiveModel {
       name: ActiveValue::Set(self.name.clone()),
       hostname: ActiveValue::Set(hostname),
+      remark: ActiveValue::Set(self.remark.clone()),
       port: ActiveValue::Set(self.port),
       username: ActiveValue::Set(username),
       authentication_method: ActiveValue::Set(self.authentication_method.clone()),

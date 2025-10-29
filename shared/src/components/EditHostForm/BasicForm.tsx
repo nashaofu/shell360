@@ -320,6 +320,33 @@ export default function BasicForm({
           />
         )}
       />
+
+      <Controller
+        name="remark"
+        control={formApi.control}
+        rules={{
+          maxLength: {
+            value: 500,
+            message: 'Please enter no more than 500 characters',
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            sx={{
+              mt: 3,
+            }}
+            fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
+            label="Remark"
+            placeholder="Remark for the host (optional)"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+          />
+        )}
+      />
     </Box>
   );
 }
