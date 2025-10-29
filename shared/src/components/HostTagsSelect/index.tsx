@@ -5,6 +5,11 @@ import { useHosts } from '@/hooks/useHosts';
 
 import { Dropdown } from '../Dropdown';
 
+interface Tag {
+  label: string;
+  value?: string;
+}
+
 export type HostTagsSelectChildProps = {
   onChangeOpen: (target: HTMLElement | null) => void;
   label: string;
@@ -29,7 +34,7 @@ export function HostTagsSelect({
       return set;
     }, new Set<string>());
 
-    return Array.from(tagsSet).reduce(
+    return Array.from(tagsSet).reduce<Tag[]>(
       (acc, tag) => {
         acc.push({
           label: tag,
@@ -48,9 +53,9 @@ export function HostTagsSelect({
 
   const tagsMap = useMemo(() => {
     return tags.reduce((map, tag) => {
-      map[tag.value] = tag.label;
+      map.set(tag.value, tag.label);
       return map;
-    }, {} as Record<string, string>);
+    }, new Map<string | undefined, string>());
   }, [tags]);
 
   const tagsMenus = useMemo(() => {
@@ -72,7 +77,7 @@ export function HostTagsSelect({
   return (
     <Dropdown menus={tagsMenus}>
       {({ onChangeOpen }) =>
-        children({ onChangeOpen, label: tagsMap[value] || 'All' })
+        children({ onChangeOpen, label: tagsMap.get(value) || 'All' })
       }
     </Dropdown>
   );

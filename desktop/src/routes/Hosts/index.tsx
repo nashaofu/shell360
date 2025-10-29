@@ -40,7 +40,7 @@ export default function Hosts() {
 
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
-  const [selectedTag, setSelectedTag] = useState(undefined);
+  const [selectedTag, setSelectedTag] = useState<string>();
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 

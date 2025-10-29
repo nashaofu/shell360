@@ -155,7 +155,7 @@ export default function Keys() {
         },
       },
     ],
-    [message, modal, refreshKeys]
+    [message, modal, refreshKeys, selectedKeyRef]
   );
 
   return (

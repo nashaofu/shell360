@@ -42,7 +42,7 @@ export default function Hosts() {
   const isSubscription = useIsSubscription();
   const [, setOpen] = useIsShowPaywallAtom();
 
-  const [selectedTag, setSelectedTag] = useState(undefined);
+  const [selectedTag, setSelectedTag] = useState<string>();
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
@@ -148,7 +148,7 @@ export default function Hosts() {
         },
       },
     ],
-    [message, modal, refreshHosts]
+    [message, modal, refreshHosts, selectedHostRef]
   );
 
   return (

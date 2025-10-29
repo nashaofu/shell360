@@ -38,7 +38,7 @@ export default function BasicForm({
   const { data: hosts } = useHosts();
 
   const tags = useMemo(() => {
-    return hosts.reduce((acc, cur) => {
+    return hosts.reduce<string[]>((acc, cur) => {
       if (Array.isArray(cur.tags)) {
         acc.push(...cur.tags);
       }
@@ -88,7 +88,7 @@ export default function BasicForm({
               sx={{
                 mb: 3,
               }}
-              onChange={(event, newValue) => field.onChange([...newValue])}
+              onChange={(_, newValue) => field.onChange([...newValue])}
               multiple
               freeSolo
               fullWidth
