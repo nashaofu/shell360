@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Tooltip } from '@mui/material';
 
 type ItemCardProps = {
+  remark?: ReactNode;
   icon: ReactNode;
   title: ReactNode;
   desc?: ReactNode;
@@ -9,6 +10,7 @@ type ItemCardProps = {
   variant?: 'outlined' | 'elevation';
   elevation?: number;
   onDoubleClick?: () => unknown;
+  onClick?: () => unknown;
 };
 
 export default function ItemCard({
@@ -19,6 +21,8 @@ export default function ItemCard({
   variant = 'outlined',
   elevation,
   onDoubleClick,
+  onClick,
+  remark,
 }: ItemCardProps) {
   return (
     <Paper
@@ -33,6 +37,7 @@ export default function ItemCard({
       variant={variant}
       elevation={elevation}
       onDoubleClick={onDoubleClick}
+      onClick={onClick}
     >
       <Box
         sx={{
@@ -61,32 +66,34 @@ export default function ItemCard({
           mr: 1.5,
         }}
       >
-        <Box
-          sx={{
-            fontSize: 14,
-            fontWeight: 600,
-            wordBreak: 'break-all',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {title}
-        </Box>
-        {desc && (
+        <Tooltip title={remark || ''}>
           <Box
             sx={{
-              fontSize: 12,
-              color: (theme) => theme.palette.grey[600],
+              fontSize: 14,
+              fontWeight: 600,
               wordBreak: 'break-all',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}
           >
-            {desc}
+            {title}
           </Box>
-        )}
+        </Tooltip>
+          {desc && (
+            <Box
+              sx={{
+                fontSize: 12,
+                color: (theme) => theme.palette.grey[600],
+                wordBreak: 'break-all',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {desc}
+            </Box>
+          )}
       </Box>
       {extra && (
         <Box
