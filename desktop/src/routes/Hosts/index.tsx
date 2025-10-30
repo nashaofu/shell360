@@ -13,10 +13,16 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { deleteHost, type Host } from 'tauri-plugin-data';
-import { getHostName, useHosts, Dropdown, HostTagsSelect , getHostDesc } from 'shared';
+import {
+  getHostName,
+  useHosts,
+  Dropdown,
+  HostTagsSelect,
+  getHostDesc,
+} from 'shared';
 import { get } from 'lodash-es';
 
-import { copy } from '@/utils/clipboard';
+// import { copy } from '@/utils/clipboard';
 import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 import Empty from '@/components/Empty';
 import ItemCard from '@/components/ItemCard';
@@ -49,7 +55,7 @@ export default function Hosts() {
 
     if (selectedTag) {
       filterHosts = filterHosts.filter((item) =>
-        item.tags?.includes(selectedTag)
+        item.tags?.includes(selectedTag),
       );
     }
 
@@ -59,7 +65,7 @@ export default function Hosts() {
     return filterHosts.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
-        `${item.hostname}:${item.port}`.toLowerCase().includes(kw)
+        `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
     );
   }, [hosts, keyword, selectedTag]);
 
@@ -68,7 +74,7 @@ export default function Hosts() {
       const [item] = terminalsAtomWithApi.add(host);
       navigate(`/terminal/${item.uuid}`, { replace: true });
     },
-    [navigate, terminalsAtomWithApi]
+    [navigate, terminalsAtomWithApi],
   );
 
   const onAddHostClose = useCallback(() => {
@@ -137,7 +143,7 @@ export default function Hosts() {
         },
       },
     ],
-    [modal, refreshHosts, message, selectedHostRef]
+    [modal, refreshHosts, message, selectedHostRef],
   );
 
   return (
@@ -209,10 +215,11 @@ export default function Hosts() {
       >
         {items.map((item) => (
           <ItemCard
+            remark={item.remark}
             key={item.id}
             icon={<Icon className="icon-host" />}
             title={getHostName(item)}
-            desc={item.username}
+            desc={getHostDesc(item)}
             extra={
               <Dropdown
                 menus={menus}

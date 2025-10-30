@@ -1,5 +1,5 @@
 import { Box, type SxProps, type Theme } from '@mui/material';
-import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession, getDesc } from 'shared';
+import { useShell, XTerminal, TERMINAL_THEMES_MAP, useSession, getHostDesc } from 'shared';
 import { type Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
@@ -116,7 +116,7 @@ export default function SSHTerminal({
             copy(host.hostname);
           }}
         >
-          {getDesc(host)}
+          {getHostDesc(host)}
         </Box>
         <XTerminal
           fontFamily={host.terminalSettings?.fontFamily}
