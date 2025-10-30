@@ -38,12 +38,12 @@ export default function BasicForm({
   const { data: hosts } = useHosts();
 
   const tags = useMemo(() => {
-    return hosts.reduce<string[]>((acc, cur) => {
+    return  Array.from(new Set(hosts.reduce<string[]>((acc, cur) => {
       if (Array.isArray(cur.tags)) {
         acc.push(...cur.tags);
       }
       return acc;
-    }, []);
+    }, [])));
   }, [hosts]);
 
   return (
