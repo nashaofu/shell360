@@ -85,7 +85,7 @@ jobs:
             build: zsh ./scripts/macos.sh
 
           # - name: linux
-          #   host: ubuntu-latest
+          #   host: ubuntu-22.04
           #   build: bash ./scripts/linux.sh
 
           - name: ios
@@ -93,7 +93,7 @@ jobs:
             build: zsh ./scripts/ios.sh
 
           # - name: android
-          #   host: ubuntu-latest
+          #   host: ubuntu-22.04
           #   build: bash ./scripts/android.sh
 
     name: Build ${{ matrix.name }}
