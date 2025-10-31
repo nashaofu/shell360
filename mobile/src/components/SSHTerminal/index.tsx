@@ -1,4 +1,4 @@
-import { Box, type SxProps, type Theme } from '@mui/material';
+import { alpha, Box, type SxProps, type Theme } from '@mui/material';
 import {
   useShell,
   XTerminal,
@@ -8,7 +8,7 @@ import {
 } from 'shared';
 import { type Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 
 import openUrl from '@/utils/openUrl';
@@ -83,7 +83,7 @@ export default function SSHTerminal({
       return undefined;
     }
 
-    return alpha(foreground, 0.5);
+    return alpha(foreground, 0.1);
   }, [host.terminalSettings?.theme]);
 
   useLayoutEffect(() => {

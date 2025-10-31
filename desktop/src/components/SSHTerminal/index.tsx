@@ -83,7 +83,7 @@ export default function SSHTerminal({
       return undefined;
     }
 
-    return alpha(foreground, 0.5);
+    return alpha(foreground, 0.1);
   }, [host.terminalSettings?.theme]);
 
   useLayoutEffect(() => {

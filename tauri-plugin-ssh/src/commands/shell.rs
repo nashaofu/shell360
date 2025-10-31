@@ -81,7 +81,7 @@ pub struct ShellSize {
 
 fn get_envs() -> HashMap<String, String> {
   let mut envs = env::vars()
-    .filter(|(key, _)| key.starts_with("LC_"))
+    .filter(|(key, _)| key.starts_with("LC_") || key.starts_with("LANG_"))
     .collect::<HashMap<String, String>>();
 
   let lang = env::var("LANG").unwrap_or("C.UTF-8".to_string());
