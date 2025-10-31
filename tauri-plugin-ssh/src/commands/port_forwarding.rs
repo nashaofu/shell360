@@ -24,6 +24,7 @@ use crate::{SSHError, SSHResult, commands::session::SSHSessionId, ssh_manager::S
 pub struct SSHPortForwardingId(Uuid);
 
 pub enum SSHPortForwarding {
+  #[allow(unused)]
   Local {
     ssh_port_forwarding_id: SSHPortForwardingId,
     ssh_session_id: SSHSessionId,
@@ -33,6 +34,7 @@ pub enum SSHPortForwarding {
     remote_address: String,
     remote_port: u16,
   },
+  #[allow(unused)]
   Remote {
     ssh_port_forwarding_id: SSHPortForwardingId,
     ssh_session_id: SSHSessionId,
@@ -41,6 +43,7 @@ pub enum SSHPortForwarding {
     remote_address: String,
     remote_port: u16,
   },
+  #[allow(unused)]
   Dynamic {
     ssh_port_forwarding_id: SSHPortForwardingId,
     ssh_session_id: SSHSessionId,

@@ -20,6 +20,7 @@ export type SSHShellSize = {
 export type SSHShellOpenOpts = {
   term?: string;
   envs?: Record<string, string>;
+  x11?: boolean;
   size: SSHShellSize;
 };
 
@@ -41,12 +42,13 @@ export class SSHShell {
     this.opts = opts;
   }
 
-  open({ term, envs, size }: SSHShellOpenOpts): Promise<string> {
+  open({ term, envs, size, x11 = false }: SSHShellOpenOpts): Promise<string> {
     return invoke<string>('plugin:ssh|shell_open', {
       sshSessionId: this.session.sshSessionId,
       sshShellId: this.sshShellId,
       term,
       envs,
+      x11,
       size,
       ipcChannel: new Channel<SSHShellIpcChannelEvent>((data) => {
         if (data instanceof ArrayBuffer) {

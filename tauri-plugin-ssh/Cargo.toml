@@ -26,6 +26,7 @@ rusocks = "0.0.7"
 percent-encoding = "2.3.2"
 tauri-plugin-fs.workspace = true
 log = "0.4.28"
+hex = "0.4.3"
 
 [build-dependencies]
 tauri-plugin = { workspace = true, features = ["build"] }

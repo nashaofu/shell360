@@ -42,6 +42,7 @@ pub struct SSHSftpId(Uuid);
 
 pub struct SSHSftp {
   pub ssh_session_id: SSHSessionId,
+  #[allow(unused)]
   pub ssh_sftp_id: SSHSftpId,
   pub sftp_channel_id: ChannelId,
   pub sftp_session: SftpSession,

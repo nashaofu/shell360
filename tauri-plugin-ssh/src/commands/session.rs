@@ -7,7 +7,7 @@ use std::{
 use russh::{
   Disconnect, Error as RusshError,
   client::{self, Handle},
-  keys::{Certificate, HashAlg, decode_secret_key, key::PrivateKeyWithHashAlg},
+  keys::{Certificate, decode_secret_key, key::PrivateKeyWithHashAlg},
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Runtime, State, ipc::Channel};
@@ -35,6 +35,7 @@ pub enum SessionIpcChannelData {
 }
 
 pub struct SSHSession<R: Runtime> {
+  #[allow(unused)]
   pub ssh_session_id: SSHSessionId,
   pub ipc_channel: Channel<SessionIpcChannelData>,
   pub handle_ssh_client: Handle<SSHClient<R>>,
@@ -243,10 +244,12 @@ pub async fn session_authenticate<R: Runtime>(
         key_pair.algorithm()
       );
 
+      let hash_alg = session.best_supported_rsa_hash().await?.unwrap_or_default();
+
       let auth_res = session
         .authenticate_publickey(
           username,
-          PrivateKeyWithHashAlg::new(Arc::new(key_pair), Some(HashAlg::Sha512)),
+          PrivateKeyWithHashAlg::new(Arc::new(key_pair), hash_alg),
         )
         .await?;
 
