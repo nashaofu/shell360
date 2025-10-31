@@ -21,6 +21,7 @@ import { useHosts } from '@/hooks/useHosts';
 import { TextFieldPassword } from '../TextFieldPassword';
 
 import type { EditHostFormApi } from './types';
+import { TERMINAL_TYPES } from './terminalTypes';
 
 type BasicFormProps = {
   formApi: EditHostFormApi;
@@ -353,6 +354,9 @@ export default function BasicForm({
         render={({ field, fieldState }) => (
           <TextField
             {...field}
+            sx={{
+              mb: 3,
+            }}
             fullWidth
             label="Startup Command"
             placeholder="Command to execute after connection (optional)"
@@ -362,12 +366,82 @@ export default function BasicForm({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Icon className="icon-terminal" />
+                    <Icon className="icon-code" />
                   </InputAdornment>
                 ),
               },
             }}
           />
+        )}
+      />
+
+      <Controller
+        name="terminalType"
+        control={formApi.control}
+        rules={{
+          required: {
+            value: true,
+            message: 'Please select terminal type',
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            sx={{
+              mb: 3,
+            }}
+            select
+            fullWidth
+            required
+            label="Terminal type"
+            placeholder="Terminal type"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+          >
+            {TERMINAL_TYPES.map((item) => (
+              <MenuItem key={item} value={item}>
+                {item}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+      />
+      <Controller
+        name="envs"
+        control={formApi.control}
+        rules={{
+          validate: (value) => {
+            if (!value) {
+              return true;
+            }
+            const envs = value.split(',');
+            for (const env of envs) {
+              const [key, value] = env.split('=');
+              if (!key || !value) {
+                return 'Invalid environment variable format';
+              }
+            }
+            return true;
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            fullWidth
+            label="Environment variables"
+            placeholder="e.g. KEY1=VALUE1,KEY2=VALUE2"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon className="icon-variable" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          ></TextField>
         )}
       />
     </Box>

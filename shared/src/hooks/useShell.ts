@@ -38,10 +38,20 @@ export function useShell({ session, host, onClose }: UseShellOpts) {
       shellRef.current = shell;
 
       await shell.open({
-        col: terminal.cols,
-        row: terminal.rows,
-        width: terminal.element?.clientWidth ?? 0,
-        height: terminal.element?.clientHeight ?? 0,
+        term: host?.terminalType,
+        envs: host?.envs
+          ?.split(',')
+          .reduce<Record<string, string>>((prev, cur) => {
+            const [key, value] = cur.split('=');
+            prev[key.trim()] = value?.trim();
+            return prev;
+          }, {}),
+        size: {
+          col: terminal.cols,
+          row: terminal.rows,
+          width: terminal.element?.clientWidth ?? 0,
+          height: terminal.element?.clientHeight ?? 0,
+        },
       });
 
       if (host?.startupCommand) {

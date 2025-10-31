@@ -8,6 +8,7 @@ import {
   DEFAULT_TERMINAL_THEME,
   useHosts,
   EditHostForm,
+  DEFAULT_TERMINAL_TYPE,
   type EditHostFormFields,
 } from 'shared';
 import {
@@ -46,6 +47,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       password: '',
       keyId: '',
       startupCommand: '',
+      terminalType: DEFAULT_TERMINAL_TYPE,
+      envs: '',
       jumpHostEnabled: false,
       jumpHostIds: [],
       terminalSettings: {
@@ -66,6 +69,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       password: data?.password ?? '',
       keyId: data?.keyId ?? '',
       startupCommand: data?.startupCommand ?? '',
+      terminalType: data?.terminalType ?? DEFAULT_TERMINAL_TYPE,
+      envs: data?.envs ?? '',
       jumpHostEnabled: !!data?.jumpHostIds?.length,
       jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
@@ -101,6 +106,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             ? values.keyId
             : undefined,
         startupCommand: values.startupCommand || undefined,
+        terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
+        envs: values.envs || undefined,
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
           ? {

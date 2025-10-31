@@ -22,9 +22,11 @@ export interface Host {
   authenticationMethod: AuthenticationMethod;
   password?: string;
   keyId?: string;
-  terminalSettings?: HostTerminalSettings;
-  jumpHostIds?: string[];
   startupCommand?: string;
+  terminalType?: string;
+  envs?: string;
+  jumpHostIds?: string[];
+  terminalSettings?: HostTerminalSettings;
 }
 
 export async function getHosts(): Promise<Host[]> {

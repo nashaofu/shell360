@@ -79,13 +79,15 @@ pub struct ShellSize {
   pub height: u32,
 }
 
-fn get_envs() -> HashMap<String, String> {
+fn prepare_envs(custom_envs: HashMap<String, String>) -> HashMap<String, String> {
   let mut envs = env::vars()
     .filter(|(key, _)| key.starts_with("LC_") || key.starts_with("LANG_"))
     .collect::<HashMap<String, String>>();
 
   let lang = env::var("LANG").unwrap_or("C.UTF-8".to_string());
   envs.insert("LANG".to_string(), lang);
+
+  envs.extend(custom_envs);
 
   envs
 }
@@ -97,6 +99,8 @@ pub async fn shell_open<R: Runtime>(
   ssh_session_id: SSHSessionId,
   ssh_shell_id: SSHShellId,
   ipc_channel: Channel<SHHShellIpcChannelData>,
+  term: Option<String>,
+  envs: Option<HashMap<String, String>>,
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
   log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
@@ -110,7 +114,8 @@ pub async fn shell_open<R: Runtime>(
     SSHShell::new(ssh_session_id, ssh_shell_id, ipc_channel, shell_channel)
   };
 
-  let envs = get_envs();
+  let envs = prepare_envs(envs.unwrap_or_default());
+
   log::info!(
     "shell open {:?} {:?} set env {:?}",
     ssh_session_id,
@@ -121,16 +126,18 @@ pub async fn shell_open<R: Runtime>(
     shell.set_env(true, key.as_str(), value.as_str()).await?;
   }
 
+  let term = term.unwrap_or("xterm-256color".to_string());
   log::info!(
-    "shell open {:?} {:?} request pty {:?}",
+    "shell open {:?} {:?} request pty {} {:?}",
     ssh_session_id,
     ssh_shell_id,
+    term,
     size
   );
   shell
     .request_pty(
       true,
-      "xterm-256color",
+      &term,
       size.col,
       size.row,
       size.width,

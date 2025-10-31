@@ -3,14 +3,12 @@ import { Box } from '@mui/material';
 import BasicForm from './BasicForm';
 import JumpHostsForm from './JumpHostsForm';
 import TerminalSettingsForm from './TerminalSettingsForm';
-import type { EditHostFormFields, EditHostFormApi } from './types';
+import type { EditHostFormApi } from './types';
 
 export type EditHostFormProps = {
   formApi: EditHostFormApi;
   onOpenAddKey: () => void;
 };
-
-export type { EditHostFormApi, EditHostFormFields };
 
 export function EditHostForm({ formApi, onOpenAddKey }: EditHostFormProps) {
   return (
