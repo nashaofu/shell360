@@ -28,7 +28,7 @@ impl MigrationTrait for Migration {
       .alter_table(
         Table::alter()
           .table(Hosts::Table)
-          .add_column(string_null(Hosts::Envs))
+          .add_column(json_null(Hosts::Envs))
           .to_owned(),
       )
       .await

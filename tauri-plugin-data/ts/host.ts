@@ -12,6 +12,11 @@ export enum AuthenticationMethod {
   Certificate = 'Certificate',
 }
 
+export interface Env {
+  key: string;
+  value: string;
+}
+
 export interface Host {
   id: string;
   name?: string;
@@ -24,7 +29,7 @@ export interface Host {
   keyId?: string;
   startupCommand?: string;
   terminalType?: string;
-  envs?: string;
+  envs?: Env[];
   jumpHostIds?: string[];
   terminalSettings?: HostTerminalSettings;
 }

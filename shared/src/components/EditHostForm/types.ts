@@ -6,6 +6,9 @@ export type JumpHostsFormFields = {
   jumpHostIds?: string[];
 };
 
-export type EditHostFormFields = Partial<Host> & JumpHostsFormFields;
+export type EditHostFormFields = Omit<Partial<Host>, 'envs' | 'jumpHostIds'> &
+  JumpHostsFormFields & {
+    envs?: string;
+  };
 
 export type EditHostFormApi = UseFormReturn<EditHostFormFields>;

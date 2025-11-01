@@ -27,7 +27,7 @@ pub struct HostBase {
   key_id: Option<i64>,
   startup_command: Option<String>,
   terminal_type: Option<String>,
-  envs: Option<String>,
+  envs: Option<Vec<entities::hosts::Env>>,
   #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
   jump_host_ids: Option<Vec<i64>>,
   terminal_settings: Option<entities::hosts::TerminalSettings>,
@@ -61,7 +61,7 @@ impl ModelConvert for HostBase {
       key_id: model.key_id,
       startup_command: model.startup_command,
       terminal_type: model.terminal_type,
-      envs: model.envs,
+      envs: model.envs.map(|v| v.into()),
       jump_host_ids: model.jump_host_ids.map(|v| v.into()),
       terminal_settings: model.terminal_settings,
     })
@@ -90,7 +90,7 @@ impl ModelConvert for HostBase {
       key_id: ActiveValue::Set(self.key_id),
       startup_command: ActiveValue::Set(self.startup_command.clone()),
       terminal_type: ActiveValue::Set(self.terminal_type.clone()),
-      envs: ActiveValue::Set(self.envs.clone()),
+      envs: ActiveValue::Set(self.envs.clone().map(|v| v.into())),
       jump_host_ids: ActiveValue::Set(self.jump_host_ids.clone().map(|v| v.into())),
       terminal_settings: ActiveValue::Set(self.terminal_settings.clone()),
       ..Default::default()

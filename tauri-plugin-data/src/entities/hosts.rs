@@ -40,6 +40,36 @@ pub enum AuthenticationMethod {
   Certificate,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Env {
+  pub key: String,
+  pub value: String,
+}
+
+#[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Envs(Vec<Env>);
+
+impl From<Vec<Env>> for Envs {
+  fn from(value: Vec<Env>) -> Self {
+    Self(value)
+  }
+}
+
+impl From<Envs> for Vec<Env> {
+  fn from(val: Envs) -> Self {
+    val.0
+  }
+}
+
+impl Deref for Envs {
+  type Target = Vec<Env>;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
 #[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JumpHostIds(Vec<i64>);
@@ -89,7 +119,7 @@ pub struct Model {
   pub key_id: Option<i64>,
   pub startup_command: Option<String>,
   pub terminal_type: Option<String>,
-  pub envs: Option<String>,
+  pub envs: Option<Envs>,
   pub jump_host_ids: Option<JumpHostIds>,
   pub terminal_settings: Option<TerminalSettings>,
 }

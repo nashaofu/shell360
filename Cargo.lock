@@ -6517,7 +6517,6 @@ name = "tauri-plugin-ssh"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "hex",
  "log",
  "percent-encoding",
  "rusocks",
