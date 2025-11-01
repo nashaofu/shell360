@@ -200,17 +200,6 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
     }
   }
 
-  fn server_channel_open_x11(
-    &mut self,
-    _channel: Channel<client::Msg>,
-    _originator_address: &str,
-    _originator_port: u32,
-    _session: &mut client::Session,
-  ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-    // TODO: implement
-    async { Ok(()) }
-  }
-
   fn disconnected(
     &mut self,
     reason: client::DisconnectReason<Self::Error>,

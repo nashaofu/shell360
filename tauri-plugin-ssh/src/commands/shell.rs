@@ -102,7 +102,6 @@ pub async fn shell_open<R: Runtime>(
   ipc_channel: Channel<SHHShellIpcChannelData>,
   term: Option<String>,
   envs: Option<HashMap<String, String>>,
-  x11: bool,
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
   log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
@@ -154,29 +153,6 @@ pub async fn shell_open<R: Runtime>(
     ssh_shell_id
   );
   shell.request_shell(true).await?;
-
-  if x11 {
-    log::info!(
-      "shell open {:?} {:?} request x11",
-      ssh_session_id,
-      ssh_shell_id
-    );
-    shell
-      .request_x11(
-        true,
-        true,
-        "MIT-MAGIC-COOKIE-1",
-        hex::encode(Uuid::new_v4().as_bytes()),
-        0,
-      )
-      .await?;
-
-    log::info!(
-      "shell open {:?} {:?} request x11 success",
-      ssh_session_id,
-      ssh_shell_id,
-    );
-  }
 
   {
     let mut shells = ssh_manager.shells.lock().await;

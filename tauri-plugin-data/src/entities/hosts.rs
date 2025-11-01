@@ -16,9 +16,9 @@ impl From<Vec<String>> for Tags {
   }
 }
 
-impl Into<Vec<String>> for Tags {
-  fn into(self) -> Vec<String> {
-    self.0
+impl From<Tags> for Vec<String> {
+  fn from(val: Tags) -> Self {
+    val.0
   }
 }
 
@@ -50,9 +50,9 @@ impl From<Vec<i64>> for JumpHostIds {
   }
 }
 
-impl Into<Vec<i64>> for JumpHostIds {
-  fn into(self) -> Vec<i64> {
-    self.0
+impl From<JumpHostIds> for Vec<i64> {
+  fn from(val: JumpHostIds) -> Self {
+    val.0
   }
 }
 
