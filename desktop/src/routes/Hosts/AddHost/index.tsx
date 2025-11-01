@@ -107,13 +107,16 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             : undefined,
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
-        envs: values.envs?.split(',').map((env) => {
+        envs: values.envs?.split(',').reduce((envs, env) => {
           const [key, value] = env.split('=');
-          return {
-            key: key.trim(),
-            value: value.trim(),
-          };
-        }),
+          if (value !== undefined) {
+            envs.push({
+              key: key.trim(),
+              value: value.trim(),
+            });
+          }
+          return envs;
+        }, []),
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
           ? {
