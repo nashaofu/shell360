@@ -13,6 +13,9 @@ export default defineConfig({
   },
   html: {
     template: './index.html',
+    templateParameters: {
+      TAURI_PLATFORM: process.env.TAURI_ENV_PLATFORM,
+    },
   },
   server: {
     host: '127.0.0.1',
