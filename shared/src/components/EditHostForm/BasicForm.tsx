@@ -416,8 +416,11 @@ export default function BasicForm({
             }
             const envs = value.split(',');
             for (const env of envs) {
-              const [key, value] = env.split('=');
-              if (!key || !value) {
+              let [key, value] = env.split('=');
+              key = key.trim();
+              value = value?.trim();
+
+              if (!key || value === undefined) {
                 return 'Invalid environment variable format';
               }
             }

@@ -13,6 +13,7 @@ import {
 } from 'shared';
 import {
   AuthenticationMethod,
+  type Env,
   type Host,
   addHost,
   updateHost,
@@ -107,15 +108,18 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             : undefined,
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
-        envs: values.envs?.split(',').reduce((envs, env) => {
-          const [key, value] = env.split('=');
-          if (value !== undefined) {
-            envs.push({
-              key: key.trim(),
-              value: value.trim(),
-            });
+        envs: values.envs?.split(',').reduce<Env[]>((envs, env) => {
+          let [key, value] = env.split('=');
+          key = key.trim();
+          value = value?.trim();
+
+          if (!key) {
+            return envs;
           }
-          return envs;
+          if (value === undefined) {
+            return envs;
+          }
+          return [...envs, { key, value }];
         }, []),
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings

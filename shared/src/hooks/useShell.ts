@@ -40,7 +40,12 @@ export function useShell({ session, host, onClose }: UseShellOpts) {
       await shell.open({
         term: host?.terminalType,
         envs: host?.envs?.reduce<Record<string, string>>((prev, cur) => {
-          prev[cur.key] = cur.value;
+          const key = cur.key.trim();
+          const value = cur.value.trim();
+          if (!key || value === undefined) {
+            return prev;
+          }
+          prev[key] = value;
           return prev;
         }, {}),
         size: {
