@@ -11,6 +11,19 @@
 无论是远程开发、服务器管理，还是安全文件传输，Shell360 都能为你提供一致、流畅且安全的使用体验。
 </p>
 
+## 快速安装
+
+- macOS
+
+  ```
+  brew install --cask shell360
+  ```
+
+- Windows
+  ```
+  winget install nashaofu.shell360
+  ```
+
 ## 下载
 
 下载适用于您平台的最新版本 Shell360：
