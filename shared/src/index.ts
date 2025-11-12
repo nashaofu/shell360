@@ -10,6 +10,7 @@ export * from './components/EditKeyForm';
 export * from './components/GenerateKeyForm';
 export * from './components/PortForwardingForm';
 export * from './components/HostTagsSelect';
+export * from './components/SSHLoading';
 
 // hooks
 export * from './hooks/useHosts';

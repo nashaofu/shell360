@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -12,11 +12,15 @@ import {
   useTheme,
   darken,
 } from '@mui/material';
-import { TERMINAL_THEMES_MAP , Dropdown } from 'shared';
+import { TERMINAL_THEMES_MAP, Dropdown } from 'shared';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import {
+  type TerminalAtom,
+  useTerminalsAtomWithApi,
+} from '@/atom/terminalsAtom';
 import { useGlobalStateAtomWithApi } from '@/atom/globalState';
+import AddKey from '@/components/AddKey';
 
 export default function Terminals() {
   const match = useMatch('/terminal/:uuid');
@@ -24,6 +28,7 @@ export default function Terminals() {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
   const globalTheme = useTheme();
+  const [addKeyOpen, setAddKeyOpen] = useState(false);
 
   const activeTerminal = useMemo(
     () =>
@@ -180,9 +185,15 @@ export default function Terminals() {
             host={item.host}
             onLoadingChange={(loading) => onLoadingChange(item, loading)}
             onClose={() => onClose(item)}
+            onOpenAddKey={() => setAddKeyOpen(true)}
           />
         );
       })}
+      <AddKey
+        open={addKeyOpen}
+        onCancel={() => setAddKeyOpen(false)}
+        onOk={() => setAddKeyOpen(false)}
+      />
     </Box>
   );
 }

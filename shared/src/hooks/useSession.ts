@@ -1,10 +1,18 @@
-import { useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { SSHSessionCheckServerKey, SSHSession } from 'tauri-plugin-ssh';
-import { useMemoizedFn, useRequest, useUnmount } from 'ahooks';
+import { useGetState, useMemoizedFn, useRequest, useUnmount } from 'ahooks';
 import { AuthenticationMethod, type Host, type Key } from 'tauri-plugin-data';
 
 import { useKeys } from './useKeys';
 import { useHosts } from './useHosts';
+
+export interface HostSession {
+  host: Host;
+  session: SSHSession;
+  status: 'connecting' | 'connected' | 'authenticated';
+  checkServerKey?: SSHSessionCheckServerKey;
+  error?: unknown;
+}
 
 export interface UseSessionOpts {
   host: Host;
@@ -15,8 +23,33 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
   const { data: keys } = useKeys();
   const { data: hosts } = useHosts();
 
-  const jumpHostsRef = useRef<SSHSession[]>([]);
+  const [hostSessionsMap, setHostSessionsMap, getHostSessionsMap] = useGetState<
+    Map<string, HostSession>
+  >(new Map());
   const memoizedOnDisconnect = useMemoizedFn(() => onDisconnect?.());
+
+  const jumpHostIds = useMemo(
+    () => [...(host.jumpHostIds || []), host.id],
+    [host]
+  );
+
+  const setHostSession = useCallback(
+    (jumpHostId: string, hostSession: HostSession) => {
+      const newHostSessionsMap = getHostSessionsMap();
+      newHostSessionsMap.set(jumpHostId, hostSession);
+      setHostSessionsMap(new Map(newHostSessionsMap));
+    },
+    [getHostSessionsMap, setHostSessionsMap]
+  );
+
+  const currentHostSession = useMemo(() => {
+    const currentJumpHostId = jumpHostIds.find((jumpHostId) => {
+      return hostSessionsMap.get(jumpHostId)?.status !== 'authenticated';
+    });
+    return currentJumpHostId
+      ? hostSessionsMap.get(currentJumpHostId)
+      : undefined;
+  }, [hostSessionsMap, jumpHostIds]);
 
   const {
     data: session,
@@ -27,16 +60,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     refresh,
     refreshAsync,
   } = useRequest(
-    async (checkServerKey?: SSHSessionCheckServerKey) => {
-      const jumpHosts = [...jumpHostsRef.current].reverse();
-      for (const item of jumpHosts) {
-        await item.disconnect();
-      }
-      jumpHostsRef.current = [];
-
-      const jumpHostIds = [...(host.jumpHostIds || [])];
-      jumpHostIds.push(host.id);
-
+    async () => {
       const hostsMap = hosts.reduce((acc, host) => {
         acc.set(host.id, host);
         return acc;
@@ -48,51 +72,79 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
       }, new Map<string, Key>());
 
       let prevJumpHost: SSHSession | undefined = undefined;
+      const newHostSessionsMap = getHostSessionsMap();
 
       for (const jumpHostId of jumpHostIds) {
         const jumpHost = hostsMap.get(jumpHostId);
         if (!jumpHost) {
-          throw new Error(`Jump host ${jumpHostId} not found`);
+          throw new Error(`Host ${jumpHostId} not found`);
         }
 
-        const jumpSession: SSHSession = new SSHSession({
-          jumpHost: prevJumpHost,
-          onDisconnect: memoizedOnDisconnect,
-        });
-        jumpHostsRef.current.push(jumpSession);
-        await jumpSession.connect(
-          {
-            hostname: jumpHost.hostname,
-            port: jumpHost.port,
-          },
-          checkServerKey
-        );
+        let hostSession = newHostSessionsMap.get(jumpHostId);
 
-        const key = keysMap.get(jumpHost.keyId as string);
-
-        if (jumpHost.authenticationMethod === AuthenticationMethod.Password) {
-          await jumpSession.authenticate_password({
-            username: jumpHost.username,
-            password: jumpHost.password || '',
-          });
-        } else if (
-          jumpHost.authenticationMethod === AuthenticationMethod.PublicKey
-        ) {
-          await jumpSession.authenticate_public_key({
-            username: jumpHost.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
-          });
-        } else {
-          await jumpSession.authenticate_certificate({
-            username: jumpHost.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
-            certificate: key?.certificate || '',
-          });
+        if (!hostSession) {
+          hostSession = {
+            host: jumpHost,
+            session: new SSHSession({
+              jumpHost: prevJumpHost,
+              onDisconnect: memoizedOnDisconnect,
+            }),
+            status: 'connecting',
+          };
+          setHostSession(jumpHostId, hostSession);
         }
 
-        prevJumpHost = jumpSession;
+        try {
+          if (hostSession.status === 'connecting') {
+            await hostSession.session.connect(
+              {
+                hostname: hostSession.host.hostname,
+                port: hostSession.host.port,
+              },
+              hostSession.checkServerKey
+            );
+            hostSession.status = 'connected';
+            setHostSession(jumpHostId, hostSession);
+          }
+
+          if (hostSession.status === 'connected') {
+            const key = keysMap.get(hostSession.host.keyId as string);
+
+            if (
+              hostSession.host.authenticationMethod === AuthenticationMethod.Password
+            ) {
+              await hostSession.session.authenticate_password({
+                username: hostSession.host.username,
+                password: hostSession.host.password || '',
+              });
+            } else if (
+              hostSession.host.authenticationMethod === AuthenticationMethod.PublicKey
+            ) {
+              await hostSession.session.authenticate_public_key({
+                username: hostSession.host.username,
+                privateKey: key?.privateKey || '',
+                passphrase: key?.passphrase || '',
+              });
+            } else {
+              await hostSession.session.authenticate_certificate({
+                username: hostSession.host.username,
+                privateKey: key?.privateKey || '',
+                passphrase: key?.passphrase || '',
+                certificate: key?.certificate || '',
+              });
+            }
+
+            hostSession.status = 'authenticated';
+            setHostSession(jumpHostId, hostSession);
+          }
+
+          prevJumpHost = hostSession.session;
+        } catch (error) {
+          hostSession.error = error;
+          setHostSession(jumpHostId, hostSession);
+
+          throw error;
+        }
       }
 
       return prevJumpHost;
@@ -103,9 +155,10 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
   );
 
   useUnmount(() => {
-    const jumpHosts = [...jumpHostsRef.current];
-    jumpHosts.reverse().forEach((item) => item.disconnect());
-    jumpHostsRef.current = [];
+    [...jumpHostIds].reverse().forEach((jumpHostId) => {
+      const hostSession = hostSessionsMap.get(jumpHostId);
+      hostSession?.session.disconnect();
+    });
   });
 
   return {
@@ -116,5 +169,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
     runAsync,
     refresh,
     refreshAsync,
+    currentHostSession,
+    setHostSession,
   };
 }

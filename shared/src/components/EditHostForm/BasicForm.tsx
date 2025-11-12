@@ -5,20 +5,16 @@ import {
   InputAdornment,
   MenuItem,
   TextField,
-  ListItemIcon,
-  ListItemText,
   type SxProps,
   type Theme,
   Autocomplete,
   Chip,
 } from '@mui/material';
-import { AuthenticationMethod } from 'tauri-plugin-data';
 import { useMemo } from 'react';
 
-import { useKeys } from '@/hooks/useKeys';
 import { useHosts } from '@/hooks/useHosts';
 
-import { TextFieldPassword } from '../TextFieldPassword';
+import { AuthenticationForm } from '../AuthenticationForm';
 
 import type { EditHostFormApi } from './types';
 import { TERMINAL_TYPES } from './terminalTypes';
@@ -34,8 +30,6 @@ export default function BasicForm({
   sx,
   onOpenAddKey,
 }: BasicFormProps) {
-  const authenticationMethod = formApi.watch('authenticationMethod');
-  const { data: keys } = useKeys();
   const { data: hosts } = useHosts();
 
   const tags = useMemo(() => {
@@ -201,146 +195,7 @@ export default function BasicForm({
         )}
       />
 
-      <Controller
-        name="username"
-        control={formApi.control}
-        rules={{
-          required: {
-            value: true,
-            message: 'Please enter username',
-          },
-          minLength: {
-            value: 1,
-            message: 'Please enter at least 1 characters',
-          },
-          maxLength: {
-            value: 60,
-            message: 'Please enter no more than 60 characters',
-          },
-        }}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Username"
-            placeholder="Username"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon className="icon-user" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        )}
-      />
-
-      <Controller
-        name="authenticationMethod"
-        control={formApi.control}
-        rules={{
-          required: {
-            value: true,
-            message: 'Please select authentication method',
-          },
-        }}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            required
-            fullWidth
-            label="Authentication method"
-            placeholder="Authentication method"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            <MenuItem value={AuthenticationMethod.Password}>Password</MenuItem>
-            <MenuItem value={AuthenticationMethod.PublicKey}>
-              PublicKey
-            </MenuItem>
-            <MenuItem value={AuthenticationMethod.Certificate}>
-              Certificate
-            </MenuItem>
-          </TextField>
-        )}
-      />
-
-      {authenticationMethod === AuthenticationMethod.Password && (
-        <Controller
-          name="password"
-          control={formApi.control}
-          rules={{
-            maxLength: {
-              value: 100,
-              message: 'Please enter no more than 100 characters',
-            },
-          }}
-          render={({ field, fieldState }) => (
-            <TextFieldPassword
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              fullWidth
-              label="Password"
-              placeholder="Password"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-      )}
-
-      {(authenticationMethod === AuthenticationMethod.PublicKey ||
-        authenticationMethod === AuthenticationMethod.Certificate) && (
-        <Controller
-          name="keyId"
-          control={formApi.control}
-          rules={{
-            required: {
-              value: true,
-              message: 'Please select key',
-            },
-          }}
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              select
-              fullWidth
-              required
-              label="Key"
-              placeholder="Key"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            >
-              <MenuItem value="" onClick={onOpenAddKey}>
-                <ListItemIcon>
-                  <Icon className="icon-add" />
-                </ListItemIcon>
-                <ListItemText>Add key</ListItemText>
-              </MenuItem>
-              {keys.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      )}
+      <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
 
       <Controller
         name="startupCommand"

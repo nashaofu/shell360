@@ -31,6 +31,7 @@
     "ahooks": "^3.9.6",
     "clsx": "^2.1.1",
     "jotai": "^2.15.0",
+    "lodash-es": "^4.17.21",
     "react": "^19.2.0",
     "react-hook-form": "^7.65.0",
     "tauri-plugin-data": "workspace:*",
@@ -41,6 +42,7 @@
     "@rsbuild/plugin-less": "^1.5.0",
     "@rsbuild/plugin-react": "^1.4.1",
     "@rslib/core": "^0.16.1",
+    "@types/lodash-es": "^4.17.12",
     "@types/react": "^19.2.2",
     "typescript": "^5.9.3"
   }

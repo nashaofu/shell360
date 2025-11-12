@@ -3,16 +3,32 @@ import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 import { get } from 'lodash-es';
 import { Dropdown } from 'shared';
 
-type SSHError = {
-  type: string;
-  message: string;
-  [key: string]: unknown;
+export type ErrorTextProps = {
+  error?: unknown;
 };
 
-type StatusInfoProps = {
-  error?: Error;
-  onRefresh: () => unknown;
-  onRun: (checkServerKey: SSHSessionCheckServerKey) => unknown;
+function ErrorText({ error }: ErrorTextProps) {
+  return (
+    <Box
+      sx={{
+        fontSize: '14px',
+        mx: 'auto',
+        mt: 3,
+        mb: 5,
+        wordBreak: 'break-all',
+        userSelect: 'text',
+      }}
+    >
+      {get(error, 'message', String(error))}
+    </Box>
+  );
+}
+
+export type StatusInfoProps = {
+  error?: unknown;
+  onReConnect: (checkServerKey: SSHSessionCheckServerKey) => unknown;
+  onReAuth: () => unknown;
+  onRetry: () => unknown;
   onClose?: () => unknown;
 };
 
@@ -23,21 +39,10 @@ const StatusButton = styled(Button, {
 }));
 
 const STATUS_BUTTONS = {
-  ConnectFailed: ({ error, onRefresh, onClose }: StatusInfoProps) => {
+  ConnectFailed: ({ error, onReConnect, onClose }: StatusInfoProps) => {
     return (
       <>
-        <Box
-          sx={{
-            fontSize: '14px',
-            mx: 'auto',
-            mt: 3,
-            mb: 5,
-            wordBreak: 'break-all',
-            userSelect: 'text',
-          }}
-        >
-          {error?.message || String(error)}
-        </Box>
+        <ErrorText error={error} />
         <Box
           sx={{
             display: 'flex',
@@ -49,28 +54,17 @@ const STATUS_BUTTONS = {
           <StatusButton variant="outlined" onClick={onClose}>
             Close
           </StatusButton>
-          <StatusButton variant="contained" onClick={onRefresh}>
+          <StatusButton variant="contained" onClick={onReConnect}>
             Retry
           </StatusButton>
         </Box>
       </>
     );
   },
-  UnknownKey: ({ error, onRun, onClose }: StatusInfoProps) => {
+  UnknownKey: ({ error, onReConnect, onClose }: StatusInfoProps) => {
     return (
       <>
-        <Box
-          sx={{
-            fontSize: '14px',
-            mx: 'auto',
-            mt: 3,
-            mb: 5,
-            wordBreak: 'break-all',
-            userSelect: 'text',
-          }}
-        >
-          {error?.message || String(error)}
-        </Box>
+        <ErrorText error={error} />
         <Box
           sx={{
             display: 'flex',
@@ -87,7 +81,8 @@ const STATUS_BUTTONS = {
               {
                 label: 'Add and continue',
                 value: 'Add and continue',
-                onClick: () => onRun(SSHSessionCheckServerKey.AddAndContinue),
+                onClick: () =>
+                  onReConnect(SSHSessionCheckServerKey.AddAndContinue),
               },
             ]}
             anchorOrigin={{
@@ -109,7 +104,7 @@ const STATUS_BUTTONS = {
               >
                 <Button
                   fullWidth
-                  onClick={() => onRun(SSHSessionCheckServerKey.Continue)}
+                  onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
                 >
                   Continue
                 </Button>
@@ -126,21 +121,10 @@ const STATUS_BUTTONS = {
       </>
     );
   },
-  AuthFailed: ({ error, onRefresh, onClose }: StatusInfoProps) => {
+  AuthFailed: ({ error, onReAuth, onClose }: StatusInfoProps) => {
     return (
       <>
-        <Box
-          sx={{
-            fontSize: '14px',
-            mx: 'auto',
-            mt: 3,
-            mb: 5,
-            wordBreak: 'break-all',
-            userSelect: 'text',
-          }}
-        >
-          {error?.message || String(error)}
-        </Box>
+        <ErrorText error={error} />
         <Box
           sx={{
             display: 'flex',
@@ -152,28 +136,17 @@ const STATUS_BUTTONS = {
           <StatusButton variant="outlined" onClick={onClose}>
             Close
           </StatusButton>
-          <StatusButton variant="contained" onClick={onRefresh}>
+          <StatusButton variant="contained" onClick={onReAuth}>
             Retry
           </StatusButton>
         </Box>
       </>
     );
   },
-  default: ({ error, onRefresh, onClose }: StatusInfoProps) => {
+  default: ({ error, onRetry, onClose }: StatusInfoProps) => {
     return (
       <>
-        <Box
-          sx={{
-            fontSize: '14px',
-            mx: 'auto',
-            mt: 3,
-            mb: 5,
-            wordBreak: 'break-all',
-            userSelect: 'text',
-          }}
-        >
-          {error?.message || String(error)}
-        </Box>
+        <ErrorText error={error} />
         <Box
           sx={{
             display: 'flex',
@@ -185,7 +158,7 @@ const STATUS_BUTTONS = {
           <StatusButton variant="outlined" onClick={onClose}>
             Close
           </StatusButton>
-          <StatusButton variant="contained" onClick={onRefresh}>
+          <StatusButton variant="contained" onClick={onRetry}>
             Retry
           </StatusButton>
         </Box>
@@ -195,7 +168,7 @@ const STATUS_BUTTONS = {
 };
 
 export default function StatusInfo(props: StatusInfoProps) {
-  const errorType = get(props.error as Error | SSHError, 'type');
+  const errorType = get(props.error, 'type');
   const render =
     STATUS_BUTTONS[errorType as keyof typeof STATUS_BUTTONS] ||
     STATUS_BUTTONS.default;

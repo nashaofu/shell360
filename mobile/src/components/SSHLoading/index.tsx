@@ -1,26 +1,29 @@
-import { Box, Icon, LinearProgress, type SxProps, type Theme } from '@mui/material';
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { type Host } from 'tauri-plugin-data';
+import {
+  Box,
+  Icon,
+  LinearProgress,
+  type SxProps,
+  type Theme,
+} from '@mui/material';
+import { getHostName } from 'shared';
+import type { Host } from 'tauri-plugin-data';
 
-import ErrorInfo from './ErrorInfo';
+import StatusInfo, { type StatusInfoProps } from './StatusInfo';
 
 type SSHLoadingProps = {
   host: Host;
   loading?: boolean;
-  error?: Error;
   sx?: SxProps<Theme>;
-  onRefresh: () => unknown;
-  onRun: (checkServerKey?: SSHSessionCheckServerKey) => unknown;
-  onClose?: () => unknown;
-};
+} & StatusInfoProps;
 
 export default function SSHLoading({
   host,
   loading,
   error,
   sx,
-  onRefresh,
-  onRun,
+  onReConnect,
+  onReAuth,
+  onRetry,
   onClose,
 }: SSHLoadingProps) {
   return (
@@ -85,7 +88,7 @@ export default function SSHLoading({
                 textOverflow: 'ellipsis',
               }}
             >
-              {host.name || `${host.hostname}:${host.port}`}
+              {getHostName(host)}
             </Box>
             <Box
               sx={{
@@ -113,10 +116,11 @@ export default function SSHLoading({
               py: 1,
             }}
           >
-            <ErrorInfo
+            <StatusInfo
               error={error}
-              onRefresh={onRefresh}
-              onRun={onRun}
+              onReConnect={onReConnect}
+              onReAuth={onReAuth}
+              onRetry={onRetry}
               onClose={onClose}
             />
           </Box>

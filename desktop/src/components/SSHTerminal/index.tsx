@@ -1,19 +1,17 @@
-import { Box, alpha, type SxProps, type Theme } from '@mui/material';
+import { Box, type SxProps, type Theme } from '@mui/material';
 import {
+  SSHLoading,
   useShell,
   XTerminal,
   TERMINAL_THEMES_MAP,
   useSession,
-  getHostDesc,
 } from 'shared';
 import { type Host } from 'tauri-plugin-data';
 import { useMemoizedFn } from 'ahooks';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { useLayoutEffect, useMemo } from 'react';
+import { useLayoutEffect } from 'react';
 
 import openUrl from '@/utils/openUrl';
-
-import SSHLoading from '../SSHLoading';
 
 import Sftp from './Sftp';
 
@@ -21,8 +19,8 @@ type SSHTerminalProps = {
   host: Host;
   sx: SxProps<Theme>;
   onLoadingChange: (loading: boolean) => unknown;
-  onReady?: () => unknown;
   onClose?: () => unknown;
+  onOpenAddKey?: () => unknown;
 };
 
 export type TauriSourceError = {
@@ -35,13 +33,16 @@ export default function SSHTerminal({
   sx,
   onClose,
   onLoadingChange,
+  onOpenAddKey,
 }: SSHTerminalProps) {
   const {
     session,
     loading: sessionLoading,
     error: sessionError,
+    run: sessionRun,
     runAsync: sessionRunAsync,
-    refreshAsync: sessionRefreshAsync,
+    currentHostSession,
+    setHostSession,
   } = useSession({ host, onDisconnect: onClose });
 
   const {
@@ -50,41 +51,44 @@ export default function SSHTerminal({
     onTerminalBinaryData,
     onTerminalResize,
     terminal,
-    loading: sshLoading,
-    error: sshError,
-    runAsync: sshRunAsync,
-    refreshAsync: sshRefreshAsync,
+    loading: shellLoading,
+    error: shellError,
+    runAsync: shellRunAsync,
   } = useShell({ session, host, onClose });
 
-  const run = useMemoizedFn(
+  const onReConnect = useMemoizedFn(
     async (checkServerKey?: SSHSessionCheckServerKey) => {
-      await sessionRunAsync(checkServerKey);
-      await sshRunAsync();
+      if (currentHostSession) {
+        setHostSession(currentHostSession.host.id, {
+          ...currentHostSession,
+          checkServerKey,
+        });
+      }
+      sessionRun();
     }
   );
 
-  const refresh = useMemoizedFn(async () => {
-    await sessionRefreshAsync();
-    await sshRefreshAsync();
+  const onReAuth = useMemoizedFn(async (hostData) => {
+    if (currentHostSession) {
+      setHostSession(currentHostSession.host.id, {
+        ...currentHostSession,
+        host: hostData,
+      });
+    }
+    sessionRun();
   });
 
-  const error = sessionError || sshError;
-  const loading = sessionLoading || sshLoading;
+  const onRetry = useMemoizedFn(async () => {
+    await sessionRunAsync();
+    await shellRunAsync();
+  });
+
+  const error = sessionError || shellError;
+  const loading = sessionLoading || shellLoading;
 
   const memoizedOnLoadingChange = useMemoizedFn((isLoading: boolean) => {
     onLoadingChange(isLoading);
   });
-
-  const color = useMemo(() => {
-    const foreground = TERMINAL_THEMES_MAP.get(host.terminalSettings?.theme)
-      ?.theme.foreground;
-
-    if (!foreground) {
-      return undefined;
-    }
-
-    return alpha(foreground, 0.1);
-  }, [host.terminalSettings?.theme]);
 
   useLayoutEffect(() => {
     memoizedOnLoadingChange(loading || !!error);
@@ -135,24 +139,13 @@ export default function SSHTerminal({
           onResize={onTerminalResize}
           onOpenUrl={openUrl}
         />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            color: color,
-            padding: '4px 8px',
-            pointerEvents: 'none',
-            fontSize: 24,
-            fontWeight: 500,
-          }}
-        >
-          {getHostDesc(host)}
-        </Box>
       </Box>
-      {(loading || error || !terminal) && (
+      {(!terminal ||
+        ((sessionLoading || sessionError) && !!currentHostSession) ||
+        shellLoading ||
+        shellError) && (
         <SSHLoading
-          host={host}
+          host={currentHostSession?.host || host}
           loading={loading}
           error={error}
           sx={{
@@ -165,9 +158,11 @@ export default function SSHTerminal({
             left: '0',
             zIndex: 10,
           }}
-          onRefresh={refresh}
-          onRun={run}
+          onReConnect={onReConnect}
+          onReAuth={onReAuth}
+          onRetry={onRetry}
           onClose={onClose}
+          onOpenAddKey={onOpenAddKey}
         />
       )}
       {!sessionLoading && !sessionError && session && (

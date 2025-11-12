@@ -1,13 +1,18 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import {
+  type TerminalAtom,
+  useTerminalsAtomWithApi,
+} from '@/atom/terminalsAtom';
+import AddKey from '@/components/AddKey';
 
 export default function Terminals() {
   const match = useMatch('/terminal/:uuid');
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
+  const [addKeyOpen, setAddKeyOpen] = useState(false);
 
   const onLoadingChange = useCallback(
     (item: TerminalAtom, loading: boolean) => {
@@ -55,9 +60,15 @@ export default function Terminals() {
             host={item.host}
             onLoadingChange={(loading) => onLoadingChange(item, loading)}
             onClose={() => onClose(item)}
+            onOpenAddKey={() => setAddKeyOpen(true)}
           />
         );
       })}
+      <AddKey
+        open={addKeyOpen}
+        onCancel={() => setAddKeyOpen(false)}
+        onOk={() => setAddKeyOpen(false)}
+      />
     </>
   );
 }
