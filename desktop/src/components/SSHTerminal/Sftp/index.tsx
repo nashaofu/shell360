@@ -241,6 +241,15 @@ export default function Sftp({ session }: SftpProps) {
           position: 'absolute',
           right: 10,
           bottom: 10,
+          zIndex: 10,
+          pointerEvents: 'auto',
+          '& .MuiFab-root': {
+            opacity: 0.1,
+            transition: 'opacity 0.3s ease',
+          },
+          '&:hover .MuiFab-root': {
+            opacity: 1,
+          },
         }}
       >
         <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
