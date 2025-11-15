@@ -86,7 +86,6 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
           hostSession = {
             host: jumpHost,
             session: new SSHSession({
-              jumpHost: prevJumpHost,
               onDisconnect: memoizedOnDisconnect,
             }),
             status: 'connecting',
@@ -100,6 +99,7 @@ export function useSession({ host, onDisconnect }: UseSessionOpts) {
               {
                 hostname: hostSession.host.hostname,
                 port: hostSession.host.port,
+                jumpHostSshSessionId: prevJumpHost?.sshSessionId,
               },
               hostSession.checkServerKey
             );

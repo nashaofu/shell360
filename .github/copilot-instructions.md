@@ -1,98 +1,116 @@
 # Shell360 AI 代理指南
 
-本文档旨在帮助 AI 代理快速理解和参与 Shell360 项目开发。
+快速参考指南，帮助 AI 代理在 Shell360 项目中快速提高生产力。
 
-## 项目概述
+## 架构概览
 
-Shell360 是一个使用 Tauri + React + Rust 构建的跨平台 SSH & SFTP 客户端，支持 Windows、macOS、Linux、Android 和 iOS。
+Shell360 采用 **Tauri + monorepo** 架构，跨平台支持 Windows、macOS、Linux、Android 和 iOS。
 
-### 核心组件
+```
+Frontend (React+TS)     Backend (Rust+Tauri)
+┌─────────────────┐     ┌──────────────────┐
+│ desktop/        │     │ src-tauri/       │
+│ mobile/         │────▶│ - command.rs     │
+│ shared/         │     │ - lib.rs         │
+└─────────────────┘     └──────────────────┘
+                               │
+                        Tauri Plugins
+                        ├─ tauri-plugin-ssh
+                        ├─ tauri-plugin-data
+                        └─ tauri-plugin-mobile
+```
 
-- `desktop/`: 桌面应用前端代码 (React + TypeScript)
-- `mobile/`: 移动应用前端代码 (React + TypeScript)
-- `shared/`: 共享组件和工具库
-- `src-tauri/`: Rust 后端代码，包含主要业务逻辑
-- `tauri-plugin-*/`: 自定义 Tauri 插件
-  - `tauri-plugin-ssh/`: SSH 连接核心功能
-  - `tauri-plugin-data/`: 数据管理和加密存储
-  - `tauri-plugin-mobile/`: 移动端特定功能
+## 关键通信模式
 
-### 技术架构要点
+**前后端通信**：通过 Tauri `invoke` 命令调用 Rust 函数
+- 前端：`invoke('command_name', args)`
+- 后端：`#[tauri::command]` 标记的异步函数
+- 特例：IPC 通道用于长连接（SSH shell、SFTP）
 
-1. **前端架构**
-   - 使用 React + TypeScript 构建 UI
-   - 共享代码位于 `shared/` 目录
-   - 遵循移动优先的响应式设计原则
+**插件初始化链**（`src-tauri/src/lib.rs`）：
+1. `tauri::Builder` 加载所有插件
+2. 插件 `init()` 返回 `TauriPlugin<R>`
+3. `setup()` 中通过 `app.manage()` 注册 Manager 实例
+4. 前端通过 `invoke()` 调用插件命令
 
-2. **后端架构**
-   - 核心功能通过自定义 Tauri 插件实现
-   - SSH/SFTP 功能由 Rust 实现以保证性能
-   - 使用加密存储保护敏感数据
+## 项目结构详解
 
-3. **构建系统**
-   - 使用 pnpm 管理依赖和工作区
-   - 支持跨平台构建
-   - 提供平台特定的签名和分发脚本
+| 目录 | 用途 | 关键文件 |
+|------|------|---------|
+| `desktop/` | 桌面 UI (React+Rsbuild) | `src/App.tsx`、`atom/*.ts` |
+| `mobile/` | 移动 UI (React+Rsbuild) | 同桌面，平台优化 |
+| `shared/` | 共享组件/库 (rslib) | `src/components/`、`src/utils/` |
+| `src-tauri/src/` | Tauri 主程序 | `lib.rs`、`command.rs`、`error.rs` |
+| `tauri-plugin-ssh/src/` | SSH 核心 | `ssh_manager.rs`、`commands/*` |
+| `tauri-plugin-data/src/` | 加密存储 + 数据库 | `data_manager.rs`、`crypto_manager.rs` |
+
+## 核心技术栈选型原因
+
+- **Jotai（原子状态）** 而非 Redux：轻量级、粒度细、支持异步
+- **Rsbuild** 而非 Vite：更好的 Tauri 集成、更快构建
+- **Sea ORM + SQLite**：跨平台一致性、类型安全的数据库操作
+- **ssh-key crate**：支持 Ed25519、RSA、ECDSA 密钥生成和加密
 
 ## 开发工作流
 
-### 常用命令
-
+### 启动开发环境
 ```bash
-# 安装依赖
-pnpm install
-
-# 开发模式
-pnpm tauri dev            # 桌面端
-pnpm tauri android dev    # Android
-pnpm tauri ios dev       # iOS
-
-# 构建
-pnpm tauri build         # 桌面端
-pnpm tauri android build # Android
-pnpm tauri ios build    # iOS
+pnpm install                # 首次安装，会自动构建 shared
+pnpm tauri dev             # 桌面开发（带热更新）
 ```
 
-### 关键文件和路径
+### 调试技巧
+- **Rust 后端错误**：`src-tauri/src/error.rs` 的 `Shell360Error` 会自动序列化为 JSON 返回前端
+- **前端日志**：桌面开发时自动打开 DevTools（`src-tauri/src/lib.rs` 第 35-38 行）
+- **IPC 通道数据**：查看 `tauri-plugin-ssh/ts/session.ts` 了解如何处理长连接
 
-- `package.json`: 项目配置和脚本
-- `src-tauri/tauri.*.conf.json`: 平台特定配置
-- `src-tauri/capabilities/`: 权限配置
-- `scripts/`: 构建和部署脚本
+### 编码规范
 
-## 编码约定
+**TypeScript**：
+- 导入顺序：`builtin` → `external` → `internal` → `parent` → `sibling`（`eslint.config.js`）
+- 不使用 `any`，优先类型推导
+- 前端状态管理用 Jotai atoms（参考 `desktop/src/atom/`）
 
-1. **类型安全**
-   - 前端代码必须使用 TypeScript
-   - 尽可能使用类型推导而不是 any
+**Rust**：
+- 使用 `Shell360Result<T>` 而非裸 `Result`（统一错误处理）
+- 异步函数使用 `#[tauri::command]`
+- 插件数据结构用 `Mutex<HashMap<Id, Data>>`（参考 `SSHManager`）
 
-2. **插件开发**
-   - 遵循 Tauri 插件结构
-   - 在插件中实现平台特定功能
+**共享代码**：
+- `shared/` 编译为 ESM，被 `desktop`/`mobile` 导入
+- 不依赖 Tauri API（在 `shared/` 中导入会导致编译失败）
+- 将 Tauri 相关逻辑放在 `desktop/src/`
 
-3. **状态管理**
-   - 使用 React Hooks 管理状态
-   - 复杂状态考虑使用状态管理库
+## 敏感数据处理
 
-4. **错误处理**
-   - Rust 代码使用 Result 类型处理错误
-   - 前端统一错误处理和展示
+- **SSH 密钥**：生成时（`src-tauri/src/command.rs`）支持可选密码加密
+- **应用数据**：存储在 `tauri-plugin-data` 中，自动加密（`crypto_manager.rs`）
+- **密码**：不直接存储，使用生物识别或密钥派生
 
-## 测试和部署
+## 常见开发场景
 
-1. **测试要求**
-   - 确保跨平台兼容性
-   - 测试网络异常情况
-   - 验证数据加密功能
+**添加新的 SSH 命令**：
+1. Rust: 在 `tauri-plugin-ssh/src/commands/*.rs` 添加函数
+2. 注册：在 `tauri-plugin-ssh/src/lib.rs` 的 `invoke_handler!` 宏中添加
+3. TypeScript: 在 `tauri-plugin-ssh/ts/*.ts` 导出函数包装
 
-2. **发布流程**
-   - 遵循语义化版本
-   - 使用平台特定签名
-   - 遵循应用商店发布规范
+**新增数据存储字段**：
+1. `tauri-plugin-data/src/entities/` 定义 Sea ORM 实体
+2. `tauri-plugin-data/src/migration/` 新增迁移脚本
+3. `tauri-plugin-data/src/commands/` 实现 CRUD 操作
 
-## 注意事项
+**跨平台差异处理**：
+- 条件编译：`#[cfg(desktop)]`、`#[cfg(mobile)]`（Rust）
+- 运行时检查：`import.meta.env.TAURI_PLATFORM`（TypeScript）
 
-- 确保敏感数据（如 SSH 密钥）始终加密存储
-- 考虑不同平台的差异性
-- 保持代码模块化和可重用性
-- 遵循 GPLv3 许可证要求
+## 构建与部署
+
+- **开发**：`pnpm tauri dev`
+- **本地构建**：`pnpm tauri build`
+- **发布构建**：使用 `.env` 文件配置签名密钥，运行 `scripts/{platform}.{sh,ps1}`
+- **App 更新**：配置在 `src-tauri/tauri.conf.json` 的 `updater.endpoints`
+
+## 许可证 & 约束
+
+- GPLv3：修改需开源
+- 避免闭源依赖或专有算法
