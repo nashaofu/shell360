@@ -308,7 +308,12 @@ export default function PortForwardingItem({
         }
         onDoubleClick={() => onOpenOrClosePortForwarding()}
       />
-      <Dialog open={isLoading}>
+      <Dialog
+        open={isLoading}
+        sx={{
+          zIndex: 100,
+        }}
+      >
         {currentJumpHostChainItem ? (
           <SSHLoading
             host={currentJumpHostChainItem.host}

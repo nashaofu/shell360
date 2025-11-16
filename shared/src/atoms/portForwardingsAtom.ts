@@ -32,9 +32,10 @@ export function usePortForwardingsAtomWithApi() {
     (
       portForwardingId: string
     ): [PortForwardingsAtom | undefined, Map<string, PortForwardingsAtom>] => {
-      const item = stateRef.current.get(portForwardingId);
-
       const newState = new Map(stateRef.current);
+
+      const item = newState.get(portForwardingId);
+
       newState.delete(portForwardingId);
 
       setState(newState);
@@ -58,6 +59,8 @@ export function usePortForwardingsAtomWithApi() {
     (
       portForwarding: PortForwarding
     ): [PortForwardingsAtom, Map<string, PortForwardingsAtom>] => {
+      const newState = new Map(stateRef.current);
+
       const host = hostsMap.get(portForwarding.hostId);
       if (!host) {
         throw new Error(`Host ${portForwarding.hostId} not found`);
@@ -79,11 +82,8 @@ export function usePortForwardingsAtomWithApi() {
         status: 'pending',
         error: undefined,
       };
-      console.log(item, new Map(stateRef.current));
 
-      const newState = new Map(stateRef.current);
-      stateRef.current.set(portForwarding.id, item);
-      console.log('add', newState);
+      newState.set(portForwarding.id, item);
 
       setState(newState);
       return [item, newState];
