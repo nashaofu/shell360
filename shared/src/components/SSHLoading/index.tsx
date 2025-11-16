@@ -22,13 +22,11 @@ const STATUS_BUTTONS = {
 };
 
 type SSHLoadingProps = {
-  loading?: boolean;
   sx?: SxProps<Theme>;
 } & ErrorProps;
 
 export function SSHLoading({
   host,
-  loading,
   error,
   sx,
   onReConnect,
@@ -123,7 +121,7 @@ export function SSHLoading({
         >
           <LinearProgress color={error ? 'error' : 'primary'} />
         </Box>
-        {!loading && !!error && (
+        {!!error && (
           <Box
             sx={{
               px: 1.5,
@@ -132,7 +130,15 @@ export function SSHLoading({
               my: 2,
             }}
           >
-            {render({ host, error, onReConnect, onReAuth, onRetry, onClose, onOpenAddKey })}
+            {render({
+              host,
+              error,
+              onReConnect,
+              onReAuth,
+              onRetry,
+              onClose,
+              onOpenAddKey,
+            })}
           </Box>
         )}
       </Box>
