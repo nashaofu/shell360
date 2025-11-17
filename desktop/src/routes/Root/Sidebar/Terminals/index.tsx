@@ -14,8 +14,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-
-import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
 
 type TerminalsProps = {
   expand?: boolean;

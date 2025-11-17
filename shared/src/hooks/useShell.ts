@@ -10,9 +10,19 @@ export interface UseShellOpts {
   session?: SSHSession;
   host?: Host;
   onClose?: () => void;
+  onBefore?: () => void;
+  onSuccess?: () => void;
+  onError?: () => void;
 }
 
-export function useShell({ session, host, onClose }: UseShellOpts) {
+export function useShell({
+  session,
+  host,
+  onClose,
+  onBefore,
+  onSuccess,
+  onError,
+}: UseShellOpts) {
   const [terminal, setTerminal] = useState<Terminal>();
 
   const shellRef = useRef<SSHShell>(null);
@@ -63,6 +73,9 @@ export function useShell({ session, host, onClose }: UseShellOpts) {
     },
     {
       ready: !!terminal && !!session,
+      onBefore,
+      onSuccess,
+      onError,
     }
   );
 

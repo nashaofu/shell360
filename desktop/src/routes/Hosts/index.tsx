@@ -13,10 +13,11 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import { deleteHost, type Host } from 'tauri-plugin-data';
-import { getHostName, useHosts, Dropdown, HostTagsSelect , getHostDesc } from 'shared';
+import { getHostName, useHosts, Dropdown, HostTagsSelect , getHostDesc , useTerminalsAtomWithApi } from 'shared';
 import { get } from 'lodash-es';
 
-import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+
+
 import Empty from '@/components/Empty';
 import ItemCard from '@/components/ItemCard';
 import Page from '@/components/Page';

@@ -65,6 +65,7 @@ export async function establishJumpHostChainConnections(
           item.checkServerKey
         );
         item.status = 'connected';
+        item.error = undefined;
         onJumpHostChainItemUpdate?.(item);
       }
 
@@ -94,6 +95,7 @@ export async function establishJumpHostChainConnections(
         }
 
         item.status = 'authenticated';
+        item.error = undefined;
         onJumpHostChainItemUpdate?.(item);
       }
 
@@ -116,3 +118,19 @@ export async function tearDownJumpHostChainConnections(
     await session.disconnect();
   }
 }
+
+// export async function startPortForwarding(
+//   jumpHostChain: JumpHostChainItem[],
+//   portForwarding: PortForwarding
+// ) {
+//   // const lastJumpHostSession = jumpHostChain[jumpHostChain.length - 1].session;
+//   // await lastJumpHostSession.startPortForwarding(portForwarding);
+// }
+
+// export async function stopPortForwarding(
+//   jumpHostChain: JumpHostChainItem[],
+//   portForwarding: PortForwarding
+// ) {
+//   // const lastJumpHostSession = jumpHostChain[jumpHostChain.length - 1].session;
+//   // await lastJumpHostSession.stopPortForwarding(portForwarding);
+// }

@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import {
-  type TerminalAtom,
-  useTerminalsAtomWithApi,
-} from '@/atom/terminalsAtom';
 import AddKey from '@/components/AddKey';
 
 export default function Terminals() {
@@ -14,20 +11,11 @@ export default function Terminals() {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
 
-  const onLoadingChange = useCallback(
-    (item: TerminalAtom, loading: boolean) => {
-      terminalsAtomWithApi.update({
-        ...item,
-        loading,
-      });
-    },
-    [terminalsAtomWithApi]
-  );
-
   const onClose = useCallback(
     (item: TerminalAtom) => {
-      const [, items] = terminalsAtomWithApi.delete(item.uuid);
+      terminalsAtomWithApi.delete(item.uuid);
       if (match?.params.uuid === item.uuid) {
+        const items = terminalsAtomWithApi.getState();
         const first = items[0];
         if (first) {
           navigate(`/terminal/${first.uuid}`, { replace: true });
@@ -43,7 +31,7 @@ export default function Terminals() {
     if (!terminalsAtomWithApi.state.length) {
       navigate('/', { replace: true });
     }
-  }, [terminalsAtomWithApi, navigate]);
+  }, [terminalsAtomWithApi.state.length, navigate]);
 
   return (
     <>
@@ -57,8 +45,7 @@ export default function Terminals() {
               flexGrow: 1,
               flexShrink: 0,
             }}
-            host={item.host}
-            onLoadingChange={(loading) => onLoadingChange(item, loading)}
+            item={item}
             onClose={() => onClose(item)}
             onOpenAddKey={() => setAddKeyOpen(true)}
           />

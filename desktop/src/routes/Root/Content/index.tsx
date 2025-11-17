@@ -8,9 +8,9 @@ import {
   useHosts,
   useKeys,
   usePortForwardings,
+  useTerminalsAtomValue,
 } from 'shared';
 
-import { useTerminalsAtom } from '@/atom/terminalsAtom';
 import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
 import { useColorsAtomWithApi } from '@/atom/colorsAtom';
 import { themeAtom } from '@/atom/themeAtom';
@@ -21,7 +21,7 @@ import Terminals from '../Terminals';
 export default function Content() {
   const match = useMatch('/terminal/:uuid');
   const isShowTerminal = !!match?.params.uuid;
-  const [terminals] = useTerminalsAtom();
+  const terminals = useTerminalsAtomValue();
   const colorsAtomWithApi = useColorsAtomWithApi();
 
   const themeValue = useAtomValue(themeAtom);
@@ -42,7 +42,7 @@ export default function Content() {
         activeTerminal?.host.terminalSettings?.theme as string
       ) ?? TERMINAL_THEMES[0];
     const bgColor =
-      activeTerminal?.loading === false
+      activeTerminal?.status === 'success'
         ? theme.theme.background ?? defaultBackground
         : defaultBackground;
 
