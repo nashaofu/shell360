@@ -13,12 +13,9 @@ import {
   darken,
 } from '@mui/material';
 import { TERMINAL_THEMES_MAP, Dropdown } from 'shared';
+import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
 
 import SSHTerminal from '@/components/SSHTerminal';
-import {
-  type TerminalAtom,
-  useTerminalsAtomWithApi,
-} from '@/atom/terminalsAtom';
 import { useGlobalStateAtomWithApi } from '@/atom/globalState';
 import AddKey from '@/components/AddKey';
 
@@ -38,20 +35,11 @@ export default function Terminals() {
     [match?.params.uuid, terminalsAtomWithApi.state]
   );
 
-  const onLoadingChange = useCallback(
-    (item: TerminalAtom, loading: boolean) => {
-      terminalsAtomWithApi.update({
-        ...item,
-        loading,
-      });
-    },
-    [terminalsAtomWithApi]
-  );
-
   const onClose = useCallback(
     (item: TerminalAtom) => {
-      const [, items] = terminalsAtomWithApi.delete(item.uuid);
+      terminalsAtomWithApi.delete(item.uuid);
       if (match?.params.uuid === item.uuid) {
+        const items = terminalsAtomWithApi.getState();
         const first = items[0];
         if (first) {
           navigate(`/terminal/${first.uuid}`, {
@@ -87,7 +75,12 @@ export default function Terminals() {
       return globalTheme;
     }
 
-    if (activeTerminal.loading) {
+    if (
+      activeTerminal.jumpHostChain.some(
+        (it) => it.status !== 'authenticated'
+      ) ||
+      activeTerminal.status !== 'success'
+    ) {
       return globalTheme;
     }
 
@@ -113,10 +106,10 @@ export default function Terminals() {
   }, [activeTerminal, globalTheme]);
 
   useEffect(() => {
-    if (!terminalsAtomWithApi.state.length) {
+    if (!terminalsAtomWithApi.state.length && match) {
       navigate('/', { replace: true });
     }
-  }, [terminalsAtomWithApi, navigate]);
+  }, [terminalsAtomWithApi.state.length, match, navigate]);
 
   return (
     <Box
@@ -182,8 +175,7 @@ export default function Terminals() {
               flexGrow: 1,
               flexShrink: 0,
             }}
-            host={item.host}
-            onLoadingChange={(loading) => onLoadingChange(item, loading)}
+            item={item}
             onClose={() => onClose(item)}
             onOpenAddKey={() => setAddKeyOpen(true)}
           />

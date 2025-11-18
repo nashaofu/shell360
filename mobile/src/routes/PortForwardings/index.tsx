@@ -1,295 +1,43 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  Icon,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  OutlinedInput,
-} from '@mui/material';
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { useRequest } from 'ahooks';
-import { useHosts, useKeys, usePortForwardings, Dropdown } from 'shared';
-import {
-  AuthenticationMethod,
-  deletePortForwarding,
-  type Host,
-  type Key,
-  type PortForwarding,
-  PortForwardingType,
-} from 'tauri-plugin-data';
+import { useCallback, useMemo, useState } from 'react';
+import { Box, Button, Icon, OutlinedInput } from '@mui/material';
+import { useHosts, usePortForwardings } from 'shared';
+import { type PortForwarding } from 'tauri-plugin-data';
 
 import Empty from '@/components/Empty';
 import Page from '@/components/Page';
-import ItemCard from '@/components/ItemCard';
 import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import useModal from '@/hooks/useModal';
-import {
-  type OpenedForwarding,
-  OpenedForwardingStatus,
-  useOpenedForwardingAtomWithApi,
-} from '@/atom/openedForwarding';
-import SSHLoading from '@/components/SSHLoading';
+import AddKey from '@/components/AddKey';
 
 import AddPortForwarding from './AddPortForwarding';
-
-function getDesc(
-  item: PortForwarding,
-  hostsMap: Map<string | undefined, Host>
-) {
-  const host = hostsMap.get(item.hostId);
-  if (item.portForwardingType === PortForwardingType.Local) {
-    return `Local ${item.localAddress}:${item.localPort} => ${host?.hostname}:${host?.port} => remote ${item.remoteAddress}:${item.remotePort}`;
-  }
-
-  if (item.portForwardingType === PortForwardingType.Remote) {
-    return `Remote ${item.remoteAddress}:${item.remotePort} => ${host?.hostname}:${host?.port}  => local ${item.localAddress}:${item.localPort}`;
-  }
-
-  if (item.portForwardingType === PortForwardingType.Dynamic) {
-    return `Local proxy ${item.localAddress}:${item.localPort} => ${host?.hostname}:${host?.port}  => any address`;
-  }
-}
-
-const OPENED_FORWARDING_STATUS = {
-  [OpenedForwardingStatus.Pending]: '(Loading)',
-  [OpenedForwardingStatus.Fail]: '(Fail)',
-  [OpenedForwardingStatus.Success]: '(Activated)',
-};
+import PortForwardingItem from './PortForwardingItem';
 
 export default function PortForwardings() {
   const { data: hosts } = useHosts();
-  const { data: keys } = useKeys();
-  const { data: portForwardings, refresh: refreshPortForwardings } =
-    usePortForwardings();
+  const { data: portForwardings } = usePortForwardings();
 
   const [keyword, setKeyword] = useState('');
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
-  const selectedPortForwardingRef = useRef<PortForwarding>(null);
   const [editItem, setEditItem] = useState<PortForwarding>();
-  const modal = useModal();
-  const openedForwardingWithApi = useOpenedForwardingAtomWithApi();
-  const openedForwardingMap = useMemo(() => {
-    return openedForwardingWithApi.state.reduce((map, item) => {
-      map.set(item.portForwarding.id, item);
-      return map;
-    }, new Map<string, OpenedForwarding>());
-  }, [openedForwardingWithApi.state]);
+  const [addKeyOpen, setAddKeyOpen] = useState(false);
 
-  const hostsMap = useMemo(() => {
-    return hosts.reduce((map, item) => {
-      map.set(item.id, item);
-      return map;
-    }, new Map<string | undefined, Host>());
-  }, [hosts]);
-
-  const currentConnectingForwarding = useMemo(() => {
-    return openedForwardingWithApi.state.find(
-      (item) => item.status !== OpenedForwardingStatus.Success
-    );
-  }, [openedForwardingWithApi.state]);
+  const hostsMap = useMemo(
+    () => new Map(hosts.map((item) => [item.id, item])),
+    [hosts]
+  );
 
   const onAddPortForwardingClose = useCallback(() => {
     setIsOpenAddPortForwarding(false);
     setEditItem(undefined);
   }, []);
 
-  const currentConnectingForwardingHost = useMemo(() => {
-    return hostsMap.get(currentConnectingForwarding?.portForwarding?.hostId);
-  }, [currentConnectingForwarding, hostsMap]);
-
-  const menus = useMemo(
-    () => [
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
-          </>
-        ),
-        value: 'Edit',
-        onClick: () => {
-          setIsOpenAddPortForwarding(true);
-          setEditItem(selectedPortForwardingRef.current || undefined);
-          selectedPortForwardingRef.current = null;
-        },
-      },
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
-          </>
-        ),
-        value: 'Delete',
-        onClick: () => {
-          const selected = selectedPortForwardingRef.current;
-          selectedPortForwardingRef.current = null;
-
-          if (!selected) {
-            return;
-          }
-          const deleteItemName = selected.name;
-
-          modal.confirm({
-            title: 'Delete Confirmation',
-            content: `Are you sure to delete the port forwarding: ${deleteItemName}?`,
-            OkButtonProps: {
-              color: 'warning',
-            },
-            onOk: async () => {
-              await deletePortForwarding(selected);
-              refreshPortForwardings();
-            },
-          });
-        },
-      },
-    ],
-    [modal, refreshPortForwardings, selectedPortForwardingRef]
-  );
-
-  const closePortForwarding = useCallback(
-    async (openedForwarding: OpenedForwarding) => {
-      const item = openedForwarding.portForwarding;
-      const sshPortForwarding = openedForwarding.sshPortForwarding;
-      if (item.portForwardingType === PortForwardingType.Local) {
-        await sshPortForwarding.closeLocalPortForwarding();
-      } else if (item.portForwardingType === PortForwardingType.Remote) {
-        await sshPortForwarding.closeRemotePortForwarding();
-      } else if (item.portForwardingType === PortForwardingType.Dynamic) {
-        await sshPortForwarding.closeDynamicPortForwarding();
-      }
-      const sshSessions = [...openedForwarding.sshSessions].reverse();
-      for (const { session } of sshSessions) {
-        await session.disconnect();
-      }
+  const onEdit = useCallback(
+    (item: PortForwarding) => {
+      setEditItem(item);
+      setIsOpenAddPortForwarding(true);
+      setIsOpenAddPortForwarding(true);
     },
-    []
+    [setEditItem, setIsOpenAddPortForwarding]
   );
-
-  const { run: connect, refresh } = useRequest(
-    async (
-      opened: OpenedForwarding,
-      checkServerKey?: SSHSessionCheckServerKey
-    ) => {
-      const keysMap = keys.reduce((acc, key) => {
-        acc.set(key.id, key);
-        return acc;
-      }, new Map<string, Key>());
-
-      for (const sshSession of opened.sshSessions) {
-        const { session, host } = sshSession;
-        await session.connect(
-          {
-            hostname: host.hostname,
-            port: host.port,
-          },
-          checkServerKey
-        );
-
-        const key = keysMap.get(host.keyId as string);
-
-        if (host.authenticationMethod === AuthenticationMethod.Password) {
-          await session.authenticate_password({
-            username: host.username,
-            password: host.password || '',
-          });
-        } else if (
-          host.authenticationMethod === AuthenticationMethod.PublicKey
-        ) {
-          await session.authenticate_public_key({
-            username: host.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
-          });
-        } else {
-          await session.authenticate_certificate({
-            username: host.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
-            certificate: key?.certificate || '',
-          });
-        }
-      }
-
-      const portForwarding = opened.portForwarding;
-      const sshPortForwarding = opened.sshPortForwarding;
-      if (portForwarding.portForwardingType === PortForwardingType.Local) {
-        await sshPortForwarding.openLocalPortForwarding({
-          localAddress: portForwarding.localAddress,
-          localPort: portForwarding.localPort,
-          remoteAddress: portForwarding.remoteAddress as string,
-          remotePort: portForwarding.remotePort as number,
-        });
-      } else if (
-        portForwarding.portForwardingType === PortForwardingType.Remote
-      ) {
-        await sshPortForwarding.openRemotePortForwarding({
-          localAddress: portForwarding.localAddress,
-          localPort: portForwarding.localPort,
-          remoteAddress: portForwarding.remoteAddress as string,
-          remotePort: portForwarding.remotePort as number,
-        });
-      } else if (
-        portForwarding.portForwardingType === PortForwardingType.Dynamic
-      ) {
-        await sshPortForwarding.openDynamicPortForwarding({
-          localAddress: portForwarding.localAddress,
-          localPort: portForwarding.localPort,
-        });
-      }
-    },
-    {
-      manual: true,
-      onSuccess: (_, [opened]) => {
-        openedForwardingWithApi.update({
-          ...opened,
-          status: OpenedForwardingStatus.Success,
-        });
-      },
-      onError: (error, [opened]) => {
-        openedForwardingWithApi.update({
-          ...opened,
-          status: OpenedForwardingStatus.Fail,
-          error,
-        });
-        closePortForwarding(opened);
-      },
-    }
-  );
-
-  const onOpenPortForwarding = useCallback(
-    async (item: PortForwarding) => {
-      const opened = openedForwardingMap.get(item.id);
-      if (opened) {
-        openedForwardingWithApi.delete(opened.uuid);
-        await closePortForwarding(opened);
-        return;
-      }
-
-      const [added] = openedForwardingWithApi.add(item);
-      connect(added);
-    },
-    [closePortForwarding, connect, openedForwardingMap, openedForwardingWithApi]
-  );
-
-  const onClose = useCallback(() => {
-    if (!currentConnectingForwarding) {
-      return;
-    }
-    openedForwardingWithApi.delete(currentConnectingForwarding.uuid);
-    closePortForwarding(currentConnectingForwarding);
-  }, [
-    closePortForwarding,
-    currentConnectingForwarding,
-    openedForwardingWithApi,
-  ]);
 
   return (
     <Page title="Port forwardings">
@@ -336,44 +84,12 @@ export default function PortForwardings() {
         itemWidth={360}
       >
         {portForwardings.map((item) => (
-          <ItemCard
+          <PortForwardingItem
             key={item.id}
-            icon={item.portForwardingType[0].toUpperCase()}
-            title={
-              item.name +
-              (OPENED_FORWARDING_STATUS[
-                openedForwardingMap.get(item.id)
-                  ?.status as OpenedForwardingStatus
-              ] || '')
-            }
-            desc={getDesc(item, hostsMap)}
-            extra={
-              <Box onClick={(event) => event.stopPropagation()}>
-                <Dropdown
-                  menus={menus}
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                  }}
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                >
-                  {({ onChangeOpen }) => (
-                    <IconButton
-                      onClick={(event) => {
-                        selectedPortForwardingRef.current = item;
-                        onChangeOpen(event.currentTarget);
-                      }}
-                    >
-                      <Icon className="icon-more" />
-                    </IconButton>
-                  )}
-                </Dropdown>
-              </Box>
-            }
-            onClick={() => onOpenPortForwarding(item)}
+            item={item}
+            hostsMap={hostsMap}
+            onEdit={() => onEdit(item)}
+            onOpenAddKey={() => setAddKeyOpen(true)}
           />
         ))}
       </AutoRepeatGrid>
@@ -393,32 +109,13 @@ export default function PortForwardings() {
         data={editItem}
         onOk={onAddPortForwardingClose}
         onCancel={onAddPortForwardingClose}
-      ></AddPortForwarding>
+      />
 
-      <Dialog
-        open={!!currentConnectingForwarding}
-        sx={{
-          '.MuiDialog-container': {
-            paddingTop: 'env(safe-area-inset-top)',
-          },
-        }}
-      >
-        {currentConnectingForwarding && currentConnectingForwardingHost && (
-          <SSHLoading
-            host={currentConnectingForwardingHost}
-            loading={
-              currentConnectingForwarding?.status ===
-              OpenedForwardingStatus.Pending
-            }
-            error={currentConnectingForwarding?.error as Error}
-            onRefresh={refresh}
-            onRun={(checkServerKey?: SSHSessionCheckServerKey) =>
-              connect(currentConnectingForwarding, checkServerKey)
-            }
-            onClose={onClose}
-          ></SSHLoading>
-        )}
-      </Dialog>
+      <AddKey
+        open={addKeyOpen}
+        onCancel={() => setAddKeyOpen(false)}
+        onOk={() => setAddKeyOpen(false)}
+      />
     </Page>
   );
 }

@@ -8,8 +8,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-
-import { type TerminalAtom, useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
+import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
 
 type TerminalsProps = {
   onClick?: () => unknown;
@@ -25,7 +24,7 @@ export default function Terminals({ onClick }: TerminalsProps) {
       navigate(`/terminal/${item.uuid}`);
       onClick?.();
     },
-    [navigate, onClick],
+    [navigate, onClick]
   );
 
   return (
@@ -43,7 +42,7 @@ export default function Terminals({ onClick }: TerminalsProps) {
                   path: `/terminal/${item.uuid}`,
                   end: true,
                 },
-                pathname,
+                pathname
               )
             }
           >

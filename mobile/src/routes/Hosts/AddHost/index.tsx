@@ -18,9 +18,8 @@ import {
   addHost,
   updateHost,
 } from 'tauri-plugin-data';
-import { Dropdown } from 'shared';
+import { Dropdown, useTerminalsAtomWithApi } from 'shared';
 
-import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 import PageDrawer from '@/components/PageDrawer';
 import AddKey from '@/components/AddKey';
 

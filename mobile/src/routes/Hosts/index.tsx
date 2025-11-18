@@ -12,11 +12,17 @@ import {
   ListItemText,
   OutlinedInput,
 } from '@mui/material';
-import { useHosts, Dropdown, HostTagsSelect, getHostName, getHostDesc } from 'shared';
+import {
+  useHosts,
+  Dropdown,
+  HostTagsSelect,
+  getHostName,
+  getHostDesc,
+  useTerminalsAtomWithApi,
+} from 'shared';
 import { deleteHost, type Host } from 'tauri-plugin-data';
 import { get } from 'lodash-es';
 
-import { useTerminalsAtomWithApi } from '@/atom/terminalsAtom';
 import Empty from '@/components/Empty';
 import ItemCard from '@/components/ItemCard';
 import Page from '@/components/Page';

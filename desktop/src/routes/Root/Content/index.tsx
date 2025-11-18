@@ -41,8 +41,11 @@ export default function Content() {
       TERMINAL_THEMES_MAP.get(
         activeTerminal?.host.terminalSettings?.theme as string
       ) ?? TERMINAL_THEMES[0];
+
     const bgColor =
-      activeTerminal?.status === 'success'
+      activeTerminal?.jumpHostChain.every(
+        (it) => it.status === 'authenticated'
+      ) && activeTerminal?.status === 'success'
         ? theme.theme.background ?? defaultBackground
         : defaultBackground;
 

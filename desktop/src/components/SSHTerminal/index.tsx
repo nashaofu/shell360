@@ -26,11 +26,6 @@ type SSHTerminalProps = {
   onOpenAddKey?: () => unknown;
 };
 
-export type TauriSourceError = {
-  type: string;
-  message: string;
-};
-
 export default function SSHTerminal({
   item,
   sx,
@@ -46,8 +41,8 @@ export default function SSHTerminal({
     });
   }, [item.jumpHostChain]);
 
-  const sessionRunAsync = useMemoizedFn(async (jumpHostChain) => {
-    return await establishJumpHostChainConnections(jumpHostChain, {
+  const sessionRunAsync = useMemoizedFn((jumpHostChain) => {
+    return establishJumpHostChainConnections(jumpHostChain, {
       keysMap: new Map(keys.map((key) => [key.id, key])),
       onJumpHostChainItemUpdate: (jumpHostChainItem) => {
         const items = terminalsAtomWithApi.getState();
@@ -264,7 +259,7 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && <Sftp session={session}></Sftp>}
+      {!loading && !error && session && <Sftp session={session} />}
     </Box>
   );
 }

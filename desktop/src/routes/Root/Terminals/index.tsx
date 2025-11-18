@@ -29,6 +29,7 @@ export default function Terminals() {
 
   useEffect(() => {
     if (!terminalsAtomWithApi.state.length) {
+      console.log('terminalsAtomWithApi.state.length', terminalsAtomWithApi.state.length, match);
       navigate('/', { replace: true });
     }
   }, [terminalsAtomWithApi.state.length, navigate]);
