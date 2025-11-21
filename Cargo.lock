@@ -5554,6 +5554,7 @@ dependencies = [
 name = "shell360"
 version = "0.0.0"
 dependencies = [
+ "log",
  "rand 0.8.5",
  "serde",
  "serde_json",

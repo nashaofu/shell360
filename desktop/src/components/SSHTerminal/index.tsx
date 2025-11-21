@@ -1,19 +1,11 @@
 import { Box, type SxProps, type Theme } from '@mui/material';
 import {
   SSHLoading,
-  useShell,
   XTerminal,
   TERMINAL_THEMES_MAP,
   type TerminalAtom,
-  useTerminalsAtomWithApi,
-  tearDownJumpHostChainConnections,
-  useKeys,
-  establishJumpHostChainConnections,
 } from 'shared';
-import { useMemoizedFn, useMount, useUnmount } from 'ahooks';
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { useMemo } from 'react';
-import { last } from 'lodash-es';
+import { useTerminal } from 'shared';
 
 import openUrl from '@/utils/openUrl';
 
@@ -22,8 +14,8 @@ import Sftp from './Sftp';
 type SSHTerminalProps = {
   item: TerminalAtom;
   sx: SxProps<Theme>;
-  onClose?: () => unknown;
-  onOpenAddKey?: () => unknown;
+  onClose: () => unknown;
+  onOpenAddKey: () => unknown;
 };
 
 export default function SSHTerminal({
@@ -32,159 +24,20 @@ export default function SSHTerminal({
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
-  const { data: keys } = useKeys();
-  const terminalsAtomWithApi = useTerminalsAtomWithApi();
-
-  const currentJumpHostChainItem = useMemo(() => {
-    return item.jumpHostChain.find((item) => {
-      return item.status !== 'authenticated';
-    });
-  }, [item.jumpHostChain]);
-
-  const sessionRunAsync = useMemoizedFn((jumpHostChain) => {
-    return establishJumpHostChainConnections(jumpHostChain, {
-      keysMap: new Map(keys.map((key) => [key.id, key])),
-      onJumpHostChainItemUpdate: (jumpHostChainItem) => {
-        const items = terminalsAtomWithApi.getState();
-        const currentItem = items.find((it) => it.uuid === item.uuid);
-        if (!currentItem) {
-          return;
-        }
-
-        terminalsAtomWithApi.update({
-          ...currentItem,
-          jumpHostChain: currentItem.jumpHostChain.map((it) => {
-            return it.host.id === jumpHostChainItem.host.id
-              ? jumpHostChainItem
-              : it;
-          }),
-        });
-      },
-    });
-  });
-
-  const session = useMemo(() => {
-    const lastJumpHostChainItem = last(item.jumpHostChain);
-    if (lastJumpHostChainItem?.status !== 'authenticated') {
-      return undefined;
-    }
-    return lastJumpHostChainItem.session;
-  }, [item.jumpHostChain]);
-
   const {
+    loading,
+    error,
+    session,
+    currentJumpHostChainItem,
+    onReConnect,
+    onReAuth,
+    onRetry,
+    terminal,
     onTerminalReady,
     onTerminalData,
     onTerminalBinaryData,
     onTerminalResize,
-    terminal,
-    loading: shellLoading,
-    error: shellError,
-    runAsync: shellRunAsync,
-  } = useShell({
-    session,
-    host: item.host,
-    onClose,
-    onBefore: () => {
-      terminalsAtomWithApi.update({
-        ...item,
-        status: 'pending',
-        error: undefined,
-      });
-    },
-    onSuccess: () => {
-      terminalsAtomWithApi.update({
-        ...item,
-        status: 'success',
-      });
-    },
-    onError: (error) => {
-      terminalsAtomWithApi.update({
-        ...item,
-        status: 'failed',
-        error,
-      });
-    },
-  });
-
-  const onReConnect = useMemoizedFn(
-    async (checkServerKey?: SSHSessionCheckServerKey) => {
-      if (currentJumpHostChainItem) {
-        const items = terminalsAtomWithApi.getState();
-        let currentItem = items.find((it) => it.uuid === item.uuid);
-        if (!currentItem) {
-          return;
-        }
-
-        currentItem = {
-          ...currentItem,
-          jumpHostChain: currentItem.jumpHostChain.map((it) => {
-            return it.host.id === currentJumpHostChainItem.host.id
-              ? { ...it, checkServerKey }
-              : it;
-          }),
-        };
-
-        terminalsAtomWithApi.update(currentItem);
-
-        sessionRunAsync(currentItem.jumpHostChain);
-      }
-    }
-  );
-
-  const onReAuth = useMemoizedFn(async (hostData) => {
-    if (currentJumpHostChainItem) {
-      const items = terminalsAtomWithApi.getState();
-      let currentItem = items.find((it) => it.uuid === item.uuid);
-      if (!currentItem) {
-        return;
-      }
-
-      currentItem = {
-        ...currentItem,
-        jumpHostChain: currentItem.jumpHostChain.map((it) => {
-          return it.host.id === currentJumpHostChainItem.host.id
-            ? { ...it, host: hostData }
-            : it;
-        }),
-      };
-
-      terminalsAtomWithApi.update(currentItem);
-
-      sessionRunAsync(currentItem.jumpHostChain);
-    }
-  });
-
-  const onRetry = useMemoizedFn(async () => {
-    const items = terminalsAtomWithApi.getState();
-    const currentItem = items.find((it) => it.uuid === item.uuid);
-    if (!currentItem) {
-      return;
-    }
-    await sessionRunAsync(currentItem.jumpHostChain);
-    await shellRunAsync();
-  });
-
-  const error = useMemo(() => {
-    return (
-      item.jumpHostChain.find((it) => it.status !== 'authenticated' && it.error)
-        ?.error || shellError
-    );
-  }, [item.jumpHostChain, shellError]);
-
-  const loading = useMemo(() => {
-    return (
-      item.jumpHostChain.some((it) => it.status !== 'authenticated') ||
-      shellError
-    );
-  }, [item.jumpHostChain, shellError]);
-
-  useMount(() => {
-    sessionRunAsync(item.jumpHostChain);
-  });
-
-  useUnmount(() => {
-    tearDownJumpHostChainConnections(item.jumpHostChain);
-  });
+  } = useTerminal({ item, onClose });
 
   return (
     <Box
@@ -234,13 +87,9 @@ export default function SSHTerminal({
           onOpenUrl={openUrl}
         />
       </Box>
-      {(!terminal ||
-        ((loading || error) && !!currentJumpHostChainItem) ||
-        shellLoading ||
-        shellError) && (
+      {(!terminal || loading || error) && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
-          loading={loading}
           error={error}
           sx={{
             width: '100%',

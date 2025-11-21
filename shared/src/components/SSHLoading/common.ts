@@ -7,10 +7,10 @@ export type ErrorProps = {
   host: Host;
   error?: unknown;
   onReConnect: (checkServerKey?: SSHSessionCheckServerKey) => unknown;
-  onReAuth: (host: Host) => void;
-  onRetry: () => void;
-  onClose: () => void;
-  onOpenAddKey: () => void;
+  onReAuth: (host: Host) => unknown;
+  onRetry: () => unknown;
+  onClose: () => unknown;
+  onOpenAddKey: () => unknown;
 };
 
 export const StatusButton: ComponentType<ButtonProps> = styled(Button, {

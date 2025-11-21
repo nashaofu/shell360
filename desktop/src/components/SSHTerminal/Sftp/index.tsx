@@ -13,8 +13,12 @@ import {
   TableContainer,
 } from '@mui/material';
 import { useRequest } from 'ahooks';
-import { SSHSession, type SSHSftpFile, SSHSftpFileType } from 'tauri-plugin-ssh';
-import { Loading, useSftp , Dropdown } from 'shared';
+import {
+  SSHSession,
+  type SSHSftpFile,
+  SSHSftpFileType,
+} from 'tauri-plugin-ssh';
+import { Loading, useSftp, Dropdown } from 'shared';
 
 import useModal from '@/hooks/useModal';
 import useMessage from '@/hooks/useMessage';
@@ -44,7 +48,11 @@ export default function Sftp({ session }: SftpProps) {
   const [keyword, setKeyword] = useState('');
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
 
-  const { sftpRef, loading: initLoading } = useSftp({
+  const {
+    sftpRef,
+    loading: initLoading,
+    error: initError,
+  } = useSftp({
     session,
     onSuccess: async (sftp) => {
       const dirname = await sftp.sftpCanonicalize('.');
@@ -236,17 +244,19 @@ export default function Sftp({ session }: SftpProps) {
 
   return (
     <>
-      <Box
-        sx={{
-          position: 'absolute',
-          right: 10,
-          bottom: 10,
-        }}
-      >
-        <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
-          <Icon className="icon-folder" />
-        </Fab>
-      </Box>
+      {!initLoading && !initError && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 10,
+            bottom: 10,
+          }}
+        >
+          <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
+            <Icon className="icon-folder" />
+          </Fab>
+        </Box>
+      )}
       <Dialog
         open={isOpen}
         fullWidth

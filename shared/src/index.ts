@@ -25,6 +25,7 @@ export * from './hooks/useSWR';
 export * from './hooks/useImportAppData';
 export * from './hooks/useShell';
 export * from './hooks/useSftp';
+export * from './hooks/useTerminal';
 
 // utils
 export * from './utils/sleep';

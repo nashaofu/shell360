@@ -29,7 +29,7 @@ export default function Terminals({ onClick }: TerminalsProps) {
 
   return (
     <List>
-      {terminalsAtomWithApi.state.map((item) => (
+      {[...terminalsAtomWithApi.state.values()].map((item) => (
         <ListItem
           key={item.uuid}
           disablePadding

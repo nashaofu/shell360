@@ -31,7 +31,7 @@ export default function Content() {
   usePortForwardings();
 
   const activeTerminal = useMemo(
-    () => terminals.find((item) => item.uuid === match?.params.uuid),
+    () => terminals.get(match?.params.uuid as string),
     [terminals, match?.params.uuid]
   );
 

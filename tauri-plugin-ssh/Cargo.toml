@@ -9,6 +9,7 @@ links = "tauri-plugin-ssh"
 
 [dependencies]
 tauri = { workspace = true, features = [] }
+log.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 russh = { version = "0.54.6", default-features = false, features = [
@@ -25,7 +26,6 @@ russh-sftp = "2.1.1"
 rusocks = "0.0.7"
 percent-encoding = "2.3.2"
 tauri-plugin-fs.workspace = true
-log = "0.4.28"
 
 [build-dependencies]
 tauri-plugin = { workspace = true, features = ["build"] }

@@ -12,7 +12,7 @@ export interface UseShellOpts {
   onClose?: () => void;
   onBefore?: () => void;
   onSuccess?: () => void;
-  onError?: () => void;
+  onError?: (error: unknown) => void;
 }
 
 export function useShell({
@@ -37,7 +37,12 @@ export function useShell({
         throw new Error('session is undefined');
       }
 
-      shellRef.current?.close();
+      try {
+        await shellRef.current?.close();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      }
       const shell = new SSHShell({
         session,
         onData: (data: Uint8Array) => {

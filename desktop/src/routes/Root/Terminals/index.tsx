@@ -13,10 +13,9 @@ export default function Terminals() {
 
   const onClose = useCallback(
     (item: TerminalAtom) => {
-      terminalsAtomWithApi.delete(item.uuid);
+      const [, map] = terminalsAtomWithApi.delete(item.uuid);
       if (match?.params.uuid === item.uuid) {
-        const items = terminalsAtomWithApi.getState();
-        const first = items[0];
+        const first = map.values().next().value;
         if (first) {
           navigate(`/terminal/${first.uuid}`, { replace: true });
         } else {
@@ -28,15 +27,14 @@ export default function Terminals() {
   );
 
   useEffect(() => {
-    if (!terminalsAtomWithApi.state.length) {
-      console.log('terminalsAtomWithApi.state.length', terminalsAtomWithApi.state.length, match);
+    if (!terminalsAtomWithApi.state.size && match) {
       navigate('/', { replace: true });
     }
-  }, [terminalsAtomWithApi.state.length, navigate]);
+  }, [terminalsAtomWithApi.state.size, navigate, match]);
 
   return (
     <>
-      {terminalsAtomWithApi.state.map((item) => {
+      {[...terminalsAtomWithApi.state.values()].map((item) => {
         const visible = match?.params.uuid === item.uuid;
         return (
           <SSHTerminal

@@ -5,8 +5,15 @@ import { type Host } from 'tauri-plugin-data';
 import { useLatest, useMemoizedFn } from 'ahooks';
 
 import { useHosts } from '@/hooks/useHosts';
+import { useKeys } from '@/hooks/useKeys';
+import { sleep } from '@/utils/sleep';
 
-import { resolveJumpHostChain, type JumpHostChainItem } from '../utils/ssh';
+import {
+  establishJumpHostChainConnections,
+  resolveJumpHostChain,
+  tearDownJumpHostChainConnections,
+  type JumpHostChainItem,
+} from '../utils/ssh';
 
 export type TerminalAtom = {
   uuid: string;
@@ -17,7 +24,7 @@ export type TerminalAtom = {
   error?: unknown;
 };
 
-const terminalsAtom = atom<TerminalAtom[]>([]);
+const terminalsAtom = atom<Map<string, TerminalAtom>>(new Map());
 
 export function useTerminalsAtomValue() {
   return useAtomValue(terminalsAtom);
@@ -26,6 +33,7 @@ export function useTerminalsAtomValue() {
 export function useTerminalsAtomWithApi() {
   const [state, setState] = useAtom(terminalsAtom);
   const { data: hosts } = useHosts();
+  const { data: keys } = useKeys();
 
   const stateRef = useLatest(state);
 
@@ -36,28 +44,73 @@ export function useTerminalsAtomWithApi() {
 
   const getState = useMemoizedFn(() => stateRef.current);
 
-  const deleteTerminal = useMemoizedFn(
-    (uuid: string): [TerminalAtom | undefined, TerminalAtom[]] => {
-      const items = [...stateRef.current];
-      const index = items.findIndex((item) => item.uuid === uuid);
-      if (index === -1) {
-        return [undefined, items];
+  const updateTerminal = useMemoizedFn(
+    (
+      terminalAtom: TerminalAtom
+    ): [TerminalAtom | undefined, Map<string, TerminalAtom>] => {
+      const map = new Map(stateRef.current);
+
+      if (!map.has(terminalAtom.uuid)) {
+        return [undefined, map];
       }
 
-      const item = items[index];
-      items.splice(index, 1);
+      map.set(terminalAtom.uuid, terminalAtom);
 
-      setState(items);
-      return [item, items];
+      setState(map);
+      stateRef.current = map;
+      return [terminalAtom, map];
+    }
+  );
+
+  const establishTerminal = useMemoizedFn((terminalAtom: TerminalAtom) => {
+    return establishJumpHostChainConnections(terminalAtom.jumpHostChain, {
+      keysMap: new Map(keys.map((key) => [key.id, key])),
+      onJumpHostChainItemUpdate: (jumpHostChainItem) => {
+        const currentItem = stateRef.current.get(terminalAtom.uuid);
+        if (!currentItem) {
+          return;
+        }
+
+        updateTerminal({
+          ...currentItem,
+          jumpHostChain: currentItem.jumpHostChain.map((it) => {
+            return it.host.id === jumpHostChainItem.host.id
+              ? jumpHostChainItem
+              : it;
+          }),
+        });
+      },
+    });
+  });
+
+  const tearDownTerminal = useMemoizedFn(async (terminalAtom: TerminalAtom) => {
+    await sleep(0);
+    return tearDownJumpHostChainConnections(terminalAtom.jumpHostChain);
+  });
+
+  const deleteTerminal = useMemoizedFn(
+    (uuid: string): [TerminalAtom | undefined, Map<string, TerminalAtom>] => {
+      const map = new Map(stateRef.current);
+      const item = map.get(uuid);
+      if (!item) {
+        return [undefined, map];
+      }
+
+      tearDownTerminal(item);
+      map.delete(uuid);
+
+      setState(map);
+      stateRef.current = map;
+      return [item, map];
     }
   );
 
   const addTerminal = useMemoizedFn(
-    (host: Host): [TerminalAtom, TerminalAtom[]] => {
+    (host: Host): [TerminalAtom, Map<string, TerminalAtom>] => {
       const uuid = uuidV4();
-      const items = [...stateRef.current];
+      const map = new Map(stateRef.current);
 
-      const count = items.reduce((prev, item) => {
+      const count = [...map.values()].reduce((prev, item) => {
         if (item.host.id === host.id) {
           return prev + 1;
         }
@@ -65,10 +118,12 @@ export function useTerminalsAtomWithApi() {
       }, 0);
 
       const name = host.name || `${host.hostname}:${host.port}`;
+
       const jumpHostChain = resolveJumpHostChain(host, {
         hostsMap,
         onDisconnect: () => deleteTerminal(uuid),
       });
+
       const item: TerminalAtom = {
         uuid,
         host,
@@ -77,28 +132,13 @@ export function useTerminalsAtomWithApi() {
         status: 'pending',
       };
 
-      items.push(item);
+      establishTerminal(item);
 
-      setState(items);
-      return [item, items];
-    }
-  );
+      map.set(uuid, item);
 
-  const updateTerminal = useMemoizedFn(
-    (
-      terminalAtom: TerminalAtom
-    ): [TerminalAtom | undefined, TerminalAtom[]] => {
-      const items = [...stateRef.current];
-
-      const index = items.findIndex((item) => item.uuid === terminalAtom.uuid);
-      if (index === -1) {
-        return [undefined, items];
-      }
-
-      items[index] = terminalAtom;
-
-      setState(items);
-      return [terminalAtom, items];
+      setState(map);
+      stateRef.current = map;
+      return [item, map];
     }
   );
 
@@ -108,5 +148,7 @@ export function useTerminalsAtomWithApi() {
     add: addTerminal,
     update: updateTerminal,
     delete: deleteTerminal,
+    establish: establishTerminal,
+    tearDown: tearDownTerminal,
   };
 }

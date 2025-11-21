@@ -1,6 +1,7 @@
 mod command;
 mod error;
 
+use log::LevelFilter;
 #[cfg(debug_assertions)]
 use tauri::Manager;
 
@@ -14,7 +15,11 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_store::Builder::default().build())
     .plugin(tauri_plugin_clipboard_manager::init())
-    .plugin(tauri_plugin_log::Builder::default().build())
+    .plugin(
+      tauri_plugin_log::Builder::default()
+        .level(LevelFilter::Info)
+        .build(),
+    )
     .plugin(tauri_plugin_data::init())
     .plugin(tauri_plugin_ssh::init())
     .invoke_handler(tauri::generate_handler![generate_key, open_url])

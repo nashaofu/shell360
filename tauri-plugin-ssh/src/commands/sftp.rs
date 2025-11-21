@@ -83,6 +83,7 @@ pub async fn sftp_open<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   ipc_channel: Channel<SSHSftpIpcChannelData>,
 ) -> SSHResult<SSHSftpId> {
+  log::info!("sftp open {:?} {:?}", ssh_session_id, ssh_sftp_id);
   let sftp_channel = {
     let sessions = ssh_manager.sessions.lock().await;
     let session = sessions
@@ -94,8 +95,22 @@ pub async fn sftp_open<R: Runtime>(
 
   let sftp_channel_id = sftp_channel.id();
 
+  log::info!(
+    "sftp open channel open session success {:?} {:?} {}",
+    ssh_session_id,
+    ssh_sftp_id,
+    sftp_channel_id
+  );
+
   sftp_channel.request_subsystem(true, "sftp").await?;
   let sftp_session = SftpSession::new_opts(sftp_channel.into_stream(), Some(30)).await?;
+
+  log::info!(
+    "sftp open channel request subsystem success {:?} {:?} {}",
+    ssh_session_id,
+    ssh_sftp_id,
+    sftp_channel_id
+  );
 
   let sftp = SSHSftp::new(
     ssh_session_id,

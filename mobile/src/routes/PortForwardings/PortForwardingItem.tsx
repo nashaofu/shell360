@@ -33,13 +33,13 @@ import ItemCard from '@/components/ItemCard';
 
 const PORT_FORWARDING_STATUS = {
   pending: '(Loading)',
-  fail: '(Fail)',
+  failed: '(Failed)',
   success: '(Activated)',
 };
 
 type PortForwardingItemProps = {
   item: PortForwarding;
-  hostsMap: Map<string | undefined, Host>;
+  hostsMap: Map<string, Host>;
   onEdit: () => void;
   onOpenAddKey: () => void;
 };
@@ -157,7 +157,7 @@ export default function PortForwardingItem({
       } catch (error) {
         portForwardingsAtomWithApi.update({
           ...portForwardingsAtom,
-          status: 'fail',
+          status: 'failed',
           error,
         });
         await closePortForwarding(portForwardingsAtom);
@@ -266,6 +266,9 @@ export default function PortForwardingItem({
 
   const onRetry = useMemoizedFn(() => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!portForwardingsAtom) {
+      return;
+    }
     establishPortForwarding(portForwardingsAtom);
   });
 
@@ -320,7 +323,6 @@ export default function PortForwardingItem({
         {currentJumpHostChainItem ? (
           <SSHLoading
             host={currentJumpHostChainItem.host}
-            loading={!!currentJumpHostChainItem}
             error={currentJumpHostChainItem?.error}
             onReConnect={onReConnect}
             onReAuth={onReAuth}
