@@ -71,12 +71,12 @@ export default function Terminals() {
       return globalTheme;
     }
 
-    if (
-      activeTerminal.jumpHostChain.some(
-        (it) => it.status !== 'authenticated'
-      ) ||
-      activeTerminal.status !== 'success'
-    ) {
+    const isLoading =
+      activeTerminal?.jumpHostChain.some(
+        (it) => it.status !== 'authenticated' || it.loading || it.error
+      ) || activeTerminal?.status !== 'success';
+
+    if (isLoading) {
       return globalTheme;
     }
 

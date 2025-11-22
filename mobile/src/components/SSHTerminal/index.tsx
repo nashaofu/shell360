@@ -90,6 +90,7 @@ export default function SSHTerminal({
       {(!terminal || loading || error) && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
+          loading={currentJumpHostChainItem?.loading}
           error={error}
           sx={{
             width: '100%',
