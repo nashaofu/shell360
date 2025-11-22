@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, get } from 'lodash-es';
 import { AuthenticationMethod, type Host, type Key } from 'tauri-plugin-data';
 import {
   SSHSession,
@@ -9,6 +9,7 @@ import {
 export interface JumpHostChainItem {
   host: Host;
   session: SSHSession;
+  loading: boolean;
   status: 'connecting' | 'connected' | 'authenticated';
   checkServerKey?: SSHSessionCheckServerKey;
   error?: unknown;
@@ -37,6 +38,7 @@ export function resolveJumpHostChain(
     return {
       host: cloneDeep(jumpHost),
       session: jumpHostSession,
+      loading: false,
       status: 'connecting',
     };
   });
@@ -55,6 +57,10 @@ export async function establishJumpHostChainConnections(
 
   for (const item of jumpHostChain) {
     try {
+      item.loading = true;
+      item.error = undefined;
+      onJumpHostChainItemUpdate?.(item);
+
       if (item.status === 'connecting') {
         await item.session.connect(
           {
@@ -65,7 +71,6 @@ export async function establishJumpHostChainConnections(
           item.checkServerKey
         );
         item.status = 'connected';
-        item.error = undefined;
         onJumpHostChainItemUpdate?.(item);
       }
 
@@ -95,16 +100,21 @@ export async function establishJumpHostChainConnections(
         }
 
         item.status = 'authenticated';
-        item.error = undefined;
         onJumpHostChainItemUpdate?.(item);
       }
 
       prevJumpHostSession = item.session;
     } catch (error) {
       item.error = error;
-      onJumpHostChainItemUpdate?.(item);
+      const errorType = get(error, 'type');
+      if (errorType === 'NotFoundSession' || errorType === 'Timeout') {
+        item.status = 'connecting';
+      }
 
       throw error;
+    } finally {
+      item.loading = false;
+      onJumpHostChainItemUpdate?.(item);
     }
   }
 

@@ -42,12 +42,14 @@ export default function Content() {
         activeTerminal?.host.terminalSettings?.theme as string
       ) ?? TERMINAL_THEMES[0];
 
-    const bgColor =
-      activeTerminal?.jumpHostChain.every(
-        (it) => it.status === 'authenticated'
-      ) && activeTerminal?.status === 'success'
-        ? theme.theme.background ?? defaultBackground
-        : defaultBackground;
+    const isLoading =
+      activeTerminal?.jumpHostChain.some(
+        (it) => it.status !== 'authenticated' || it.loading || it.error
+      ) || activeTerminal?.status !== 'success';
+
+    const bgColor = isLoading
+      ? defaultBackground
+      : theme.theme.background ?? defaultBackground;
 
     colorsAtomWithApi.setColors({
       bgColor,

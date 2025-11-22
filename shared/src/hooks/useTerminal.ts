@@ -126,12 +126,15 @@ export function useTerminal({ item, onClose }: UseTerminalOpts) {
   });
 
   const loading = useMemo(() => {
-    return (
-      item.jumpHostChain.some((it) => it.status !== 'authenticated') ||
-      shellLoading ||
-      !!shellError
-    );
-  }, [item.jumpHostChain, shellError, shellLoading]);
+    if (
+      item.jumpHostChain.some(
+        (it) => it.status !== 'authenticated' || it.loading || it.error
+      )
+    ) {
+      return true;
+    }
+    return item.status !== 'success' || shellLoading || !!shellError;
+  }, [item.jumpHostChain, item.status, shellError, shellLoading]);
 
   const error = useMemo(() => {
     const firstErrorItem = item.jumpHostChain.find(

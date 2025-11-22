@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, ops::Deref};
+use std::{collections::HashMap, env, ops::Deref, time::Duration};
 
 use russh::{Channel as RusshChannel, client};
 use serde::{Deserialize, Serialize};
@@ -8,6 +8,7 @@ use tauri::{
   AppHandle, Runtime, State,
   ipc::{Channel, InvokeResponseBody, IpcResponse},
 };
+use tokio::time::timeout;
 use uuid::Uuid;
 
 use crate::{
@@ -104,62 +105,65 @@ pub async fn shell_open<R: Runtime>(
   envs: Option<HashMap<String, String>>,
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
-  log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
-  let shell = {
-    let sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
-    let shell_channel = session.channel_open_session().await?;
+  timeout(Duration::from_secs(5), async {
+    log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
+    let shell = {
+      let sessions = ssh_manager.sessions.lock().await;
+      let session = sessions
+        .get(&ssh_session_id)
+        .ok_or(SSHError::NotFoundSession)?;
+      let shell_channel = session.channel_open_session().await?;
 
-    SSHShell::new(ssh_session_id, ssh_shell_id, ipc_channel, shell_channel)
-  };
+      SSHShell::new(ssh_session_id, ssh_shell_id, ipc_channel, shell_channel)
+    };
 
-  let envs = prepare_envs(envs.unwrap_or_default());
+    let envs = prepare_envs(envs.unwrap_or_default());
 
-  log::info!(
-    "shell open {:?} {:?} set env {:?}",
-    ssh_session_id,
-    ssh_shell_id,
-    envs
-  );
-  for (key, value) in envs {
-    shell.set_env(true, key.as_str(), value.as_str()).await?;
-  }
+    log::info!(
+      "shell open {:?} {:?} set env {:?}",
+      ssh_session_id,
+      ssh_shell_id,
+      envs
+    );
+    for (key, value) in envs {
+      shell.set_env(true, key.as_str(), value.as_str()).await?;
+    }
 
-  let term = term.unwrap_or("xterm-256color".to_string());
-  log::info!(
-    "shell open {:?} {:?} request pty {} {:?}",
-    ssh_session_id,
-    ssh_shell_id,
-    term,
-    size
-  );
-  shell
-    .request_pty(
-      true,
-      &term,
-      size.col,
-      size.row,
-      size.width,
-      size.height,
-      &[],
-    )
-    .await?;
+    let term = term.unwrap_or("xterm-256color".to_string());
+    log::info!(
+      "shell open {:?} {:?} request pty {} {:?}",
+      ssh_session_id,
+      ssh_shell_id,
+      term,
+      size
+    );
+    shell
+      .request_pty(
+        true,
+        &term,
+        size.col,
+        size.row,
+        size.width,
+        size.height,
+        &[],
+      )
+      .await?;
 
-  log::info!(
-    "shell open {:?} {:?} request shell",
-    ssh_session_id,
-    ssh_shell_id
-  );
-  shell.request_shell(true).await?;
+    log::info!(
+      "shell open {:?} {:?} request shell",
+      ssh_session_id,
+      ssh_shell_id
+    );
+    shell.request_shell(true).await?;
 
-  {
-    let mut shells = ssh_manager.shells.lock().await;
-    shells.insert(ssh_shell_id, shell);
-  }
+    {
+      let mut shells = ssh_manager.shells.lock().await;
+      shells.insert(ssh_shell_id, shell);
+    }
 
-  Ok(ssh_shell_id)
+    Ok(ssh_shell_id)
+  })
+  .await?
 }
 
 #[tauri::command]
@@ -168,12 +172,15 @@ pub async fn shell_close<R: Runtime>(
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_shell_id: SSHShellId,
 ) -> SSHResult<SSHShellId> {
-  let shell_channels = ssh_manager.shells.lock().await;
-  if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
-    shell_channel.close().await?;
-  }
+  timeout(Duration::from_secs(5), async {
+    let shell_channels = ssh_manager.shells.lock().await;
+    if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
+      shell_channel.close().await?;
+    }
 
-  Ok(ssh_shell_id)
+    Ok(ssh_shell_id)
+  })
+  .await?
 }
 
 #[tauri::command]
@@ -183,15 +190,18 @@ pub async fn shell_resize<R: Runtime>(
   ssh_shell_id: SSHShellId,
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
-  let shells = ssh_manager.shells.lock().await;
+  timeout(Duration::from_secs(5), async {
+    let shells = ssh_manager.shells.lock().await;
 
-  if let Some(shell) = shells.get(&ssh_shell_id) {
-    shell
-      .window_change(size.col, size.row, size.width, size.height)
-      .await?;
-  }
+    if let Some(shell) = shells.get(&ssh_shell_id) {
+      shell
+        .window_change(size.col, size.row, size.width, size.height)
+        .await?;
+    }
 
-  Ok(ssh_shell_id)
+    Ok(ssh_shell_id)
+  })
+  .await?
 }
 
 #[tauri::command]
@@ -201,10 +211,13 @@ pub async fn shell_send<R: Runtime>(
   ssh_shell_id: SSHShellId,
   data: String,
 ) -> SSHResult<SSHShellId> {
-  let shell_channels = ssh_manager.shells.lock().await;
-  if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
-    shell_channel.data(data.as_bytes()).await?;
-  }
+  timeout(Duration::from_secs(5), async {
+    let shell_channels = ssh_manager.shells.lock().await;
+    if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
+      shell_channel.data(data.as_bytes()).await?;
+    }
 
-  Ok(ssh_shell_id)
+    Ok(ssh_shell_id)
+  })
+  .await?
 }

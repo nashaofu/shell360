@@ -320,7 +320,8 @@ export default function PortForwardingItem({
         {currentJumpHostChainItem ? (
           <SSHLoading
             host={currentJumpHostChainItem.host}
-            error={currentJumpHostChainItem?.error}
+            loading={currentJumpHostChainItem.loading}
+            error={currentJumpHostChainItem.error}
             onReConnect={onReConnect}
             onReAuth={onReAuth}
             onRetry={onRetry}

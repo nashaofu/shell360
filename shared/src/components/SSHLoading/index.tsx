@@ -9,6 +9,8 @@ import { get } from 'lodash-es';
 
 import { getHostName } from '@/utils/host';
 
+import { Loading } from '../Loading';
+
 import DefaultError from './DefaultError';
 import UnknownKey from './UnknownKey';
 import AuthenticationError from './AuthenticationError';
@@ -27,6 +29,7 @@ type SSHLoadingProps = {
 
 export function SSHLoading({
   host,
+  loading,
   error,
   sx,
   onReConnect,
@@ -130,15 +133,18 @@ export function SSHLoading({
               my: 2,
             }}
           >
-            {render({
-              host,
-              error,
-              onReConnect,
-              onReAuth,
-              onRetry,
-              onClose,
-              onOpenAddKey,
-            })}
+            <Loading loading={loading}>
+              {render({
+                host,
+                loading,
+                error,
+                onReConnect,
+                onReAuth,
+                onRetry,
+                onClose,
+                onOpenAddKey,
+              })}
+            </Loading>
           </Box>
         )}
       </Box>

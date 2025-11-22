@@ -44,23 +44,19 @@ export function useTerminalsAtomWithApi() {
 
   const getState = useMemoizedFn(() => stateRef.current);
 
-  const updateTerminal = useMemoizedFn(
-    (
-      terminalAtom: TerminalAtom
-    ): [TerminalAtom | undefined, Map<string, TerminalAtom>] => {
-      const map = new Map(stateRef.current);
-
+  const updateTerminal = useMemoizedFn((terminalAtom: TerminalAtom) => {
+    setState((prev) => {
+      const map = new Map(prev);
       if (!map.has(terminalAtom.uuid)) {
-        return [undefined, map];
+        stateRef.current = prev;
+        return prev;
       }
 
       map.set(terminalAtom.uuid, terminalAtom);
-
-      setState(map);
       stateRef.current = map;
-      return [terminalAtom, map];
-    }
-  );
+      return map;
+    });
+  });
 
   const establishTerminal = useMemoizedFn((terminalAtom: TerminalAtom) => {
     return establishJumpHostChainConnections(terminalAtom.jumpHostChain, {

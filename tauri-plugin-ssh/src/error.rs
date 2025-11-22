@@ -14,6 +14,14 @@ pub enum AuthenticationMethodError {
   PublicKey,
   #[error("The username or certificate is incorrect")]
   Certificate,
+  #[error("{0}")]
+  Error(String),
+}
+
+impl AuthenticationMethodError {
+  pub fn new<T: Into<String>>(message: T) -> Self {
+    Self::Error(message.into())
+  }
 }
 
 #[derive(Debug, Error, AsRefStr)]
@@ -45,6 +53,9 @@ pub enum SSHError {
   #[error(transparent)]
   TokioSyncMpscErrorSendErrorAddr(#[from] tokio::sync::mpsc::error::SendError<(String, u16)>),
 
+  #[error(transparent)]
+  Timeout(#[from] tokio::time::error::Elapsed),
+
   #[error("StdSyncPoisonError {0}")]
   StdSyncPoisonError(String),
 
@@ -56,6 +67,9 @@ pub enum SSHError {
 
   #[error("Jump host connect failed")]
   JumpHostConnectFailed,
+
+  #[error("Session closed")]
+  SessionClosed,
 
   #[error("{} key fingerprint is {}", algorithm, fingerprint)]
   UnknownKey {

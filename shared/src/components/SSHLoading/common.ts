@@ -5,6 +5,7 @@ import type { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
 
 export type ErrorProps = {
   host: Host;
+  loading?: boolean;
   error?: unknown;
   onReConnect: (checkServerKey?: SSHSessionCheckServerKey) => unknown;
   onReAuth: (host: Host) => unknown;

@@ -30,7 +30,8 @@ export default function Terminals() {
     if (!terminalsAtomWithApi.state.size && match) {
       navigate('/', { replace: true });
     }
-  }, [terminalsAtomWithApi.state.size, navigate, match]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terminalsAtomWithApi.state.size, navigate]);
 
   return (
     <>

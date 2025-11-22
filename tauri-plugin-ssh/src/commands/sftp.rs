@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, time::Duration};
 
 use russh::ChannelId;
 use russh_sftp::{client::SftpSession, protocol::FileType as RusshSftpFileType};
@@ -13,6 +13,7 @@ use tauri_plugin_fs::{FsExt, OpenOptions, SafeFilePath};
 use tokio::{
   fs,
   io::{AsyncReadExt, AsyncWriteExt, BufWriter},
+  time::timeout,
 };
 use uuid::Uuid;
 
@@ -83,49 +84,52 @@ pub async fn sftp_open<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   ipc_channel: Channel<SSHSftpIpcChannelData>,
 ) -> SSHResult<SSHSftpId> {
-  log::info!("sftp open {:?} {:?}", ssh_session_id, ssh_sftp_id);
-  let sftp_channel = {
-    let sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
+  timeout(Duration::from_secs(5), async {
+    log::info!("sftp open {:?} {:?}", ssh_session_id, ssh_sftp_id);
+    let sftp_channel = {
+      let sessions = ssh_manager.sessions.lock().await;
+      let session = sessions
+        .get(&ssh_session_id)
+        .ok_or(SSHError::NotFoundSession)?;
 
-    session.channel_open_session().await?
-  };
+      session.channel_open_session().await?
+    };
 
-  let sftp_channel_id = sftp_channel.id();
+    let sftp_channel_id = sftp_channel.id();
 
-  log::info!(
-    "sftp open channel open session success {:?} {:?} {}",
-    ssh_session_id,
-    ssh_sftp_id,
-    sftp_channel_id
-  );
+    log::info!(
+      "sftp open channel open session success {:?} {:?} {}",
+      ssh_session_id,
+      ssh_sftp_id,
+      sftp_channel_id
+    );
 
-  sftp_channel.request_subsystem(true, "sftp").await?;
-  let sftp_session = SftpSession::new_opts(sftp_channel.into_stream(), Some(30)).await?;
+    sftp_channel.request_subsystem(true, "sftp").await?;
+    let sftp_session = SftpSession::new_opts(sftp_channel.into_stream(), Some(30)).await?;
 
-  log::info!(
-    "sftp open channel request subsystem success {:?} {:?} {}",
-    ssh_session_id,
-    ssh_sftp_id,
-    sftp_channel_id
-  );
+    log::info!(
+      "sftp open channel request subsystem success {:?} {:?} {}",
+      ssh_session_id,
+      ssh_sftp_id,
+      sftp_channel_id
+    );
 
-  let sftp = SSHSftp::new(
-    ssh_session_id,
-    ssh_sftp_id,
-    sftp_channel_id,
-    sftp_session,
-    ipc_channel,
-  );
+    let sftp = SSHSftp::new(
+      ssh_session_id,
+      ssh_sftp_id,
+      sftp_channel_id,
+      sftp_session,
+      ipc_channel,
+    );
 
-  {
-    let mut sftps = ssh_manager.sftps.lock().await;
-    sftps.insert(ssh_sftp_id, sftp);
-  }
+    {
+      let mut sftps = ssh_manager.sftps.lock().await;
+      sftps.insert(ssh_sftp_id, sftp);
+    }
 
-  Ok(ssh_sftp_id)
+    Ok(ssh_sftp_id)
+  })
+  .await?
 }
 
 #[tauri::command]
@@ -134,12 +138,15 @@ pub async fn sftp_close<R: Runtime>(
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_sftp_id: SSHSftpId,
 ) -> SSHResult<SSHSftpId> {
-  let mut sftps = ssh_manager.sftps.lock().await;
-  if let Some(sftp) = sftps.remove(&ssh_sftp_id) {
-    sftp.close().await?;
-  }
+  timeout(Duration::from_secs(5), async {
+    let mut sftps = ssh_manager.sftps.lock().await;
+    if let Some(sftp) = sftps.remove(&ssh_sftp_id) {
+      sftp.close().await?;
+    }
 
-  Ok(ssh_sftp_id)
+    Ok(ssh_sftp_id)
+  })
+  .await?
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
