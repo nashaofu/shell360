@@ -195,6 +195,46 @@ export default function BasicForm({
         )}
       />
 
+      <Controller
+        name="username"
+        control={formApi.control}
+        rules={{
+          required: {
+            value: true,
+            message: 'Please enter username',
+          },
+          minLength: {
+            value: 1,
+            message: 'Please enter at least 1 characters',
+          },
+          maxLength: {
+            value: 60,
+            message: 'Please enter no more than 60 characters',
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            sx={{
+              mb: 3,
+            }}
+            required
+            fullWidth
+            label="Username"
+            placeholder="Username"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Icon className="icon-user" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
+      />
+
       <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
 
       <Controller
