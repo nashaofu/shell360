@@ -24,19 +24,25 @@ export function resolveJumpHostChain(
   host: Host,
   { hostsMap, onDisconnect }: ResolveJumpHostChainOpts
 ): JumpHostChainItem[] {
-  const jumpHostIds = [...(host.jumpHostIds || []), host.id];
+  const jumpHostIds = host.jumpHostIds || [];
 
-  return jumpHostIds.map((item) => {
+  const hosts = jumpHostIds.map((item) => {
     const jumpHost = hostsMap.get(item);
     if (!jumpHost) {
       throw new Error(`Jump host ${item} not found`);
     }
+    return jumpHost;
+  });
+
+  // save and connect 的时候，可能会存在 host 信息还没有刷新问题
+  hosts.push(host);
+  return hosts.map((item) => {
     const jumpHostSession = new SSHSession({
       onDisconnect,
     });
 
     return {
-      host: cloneDeep(jumpHost),
+      host: cloneDeep(item),
       session: jumpHostSession,
       loading: false,
       status: 'connecting',
