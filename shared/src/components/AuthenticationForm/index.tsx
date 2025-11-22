@@ -1,7 +1,6 @@
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import {
   Icon,
-  InputAdornment,
   MenuItem,
   TextField,
   ListItemIcon,
