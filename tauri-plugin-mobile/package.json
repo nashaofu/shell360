@@ -21,7 +21,7 @@
     "@tauri-apps/api": "^2.9.0"
   },
   "devDependencies": {
-    "@rslib/core": "^0.17.2",
+    "@rslib/core": "^0.18.0",
     "typescript": "^5.9.3"
   }
 }

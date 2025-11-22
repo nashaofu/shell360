@@ -22,7 +22,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@rslib/core": "^0.17.2",
+    "@rslib/core": "^0.18.0",
     "typescript": "^5.9.3"
   }
 }
