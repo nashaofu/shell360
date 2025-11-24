@@ -113,7 +113,7 @@ export function SSHLoading({
                 textOverflow: 'ellipsis',
               }}
             >
-              {`ssh ${host.username}@${host.hostname} --port ${host.port}`}
+              {`ssh ${host.username}@${host.hostname} -p ${host.port}`}
             </Box>
           </Box>
         </Box>
