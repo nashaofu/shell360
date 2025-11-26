@@ -112,8 +112,8 @@ export async function establishJumpHostChainConnections(
       prevJumpHostSession = item.session;
     } catch (error) {
       item.error = error;
-      const errorType = get(error, 'type');
-      if (errorType === 'NotFoundSession' || errorType === 'Timeout') {
+      const errorKind = get(error, 'kind');
+      if (errorKind === 'NotFoundSession' || errorKind === 'Timeout') {
         item.status = 'connecting';
       }
 

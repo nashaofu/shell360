@@ -1,7 +1,8 @@
 import { Box, Button, ButtonGroup, Icon } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { AuthenticationMethod, updateHost } from 'tauri-plugin-data';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { get } from 'lodash-es';
 
 import {
   AuthenticationForm,
@@ -65,9 +66,34 @@ export default function AuthenticationError({
     [host, onReAuth, refreshHosts]
   );
 
+  const errorInfo = useMemo(() => {
+    const kind = get(error, 'kind');
+    const message = get(error, 'message');
+    if (kind === 'Password' || kind === 'PublicKey' || kind === 'Certificate') {
+      const methodSet = get(error, 'methodSet');
+
+      return {
+        title: message,
+        message: methodSet.includes(kind) ? (
+          ''
+        ) : (
+          <>
+            The <b>{kind}</b> authentication method is not supported. The server
+            only supports the <b>{methodSet.join(', ')}</b> authentication
+            method.
+          </>
+        ),
+      };
+    }
+    return {
+      title: 'Authentication failed',
+      message: message,
+    };
+  }, [error]);
+
   return (
     <Box component="form" noValidate autoComplete="off">
-      <ErrorText error={error} />
+      <ErrorText title={errorInfo.title} message={errorInfo.message} />
       <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
       <Box
         sx={{

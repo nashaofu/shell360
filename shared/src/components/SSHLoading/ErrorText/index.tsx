@@ -1,23 +1,18 @@
-import { Box } from '@mui/material';
-import { get } from 'lodash-es';
+import { Alert, Box } from '@mui/material';
+import type { ReactNode } from 'react';
 
 export type ErrorTextProps = {
-  error?: unknown;
+  title?: ReactNode;
+  message?: ReactNode;
 };
 
-export default function ErrorText({ error }: ErrorTextProps) {
+export default function ErrorText({ title, message }: ErrorTextProps) {
   return (
-    <Box
-      sx={{
-        fontSize: '14px',
-        mx: 'auto',
-        mt: 3,
-        mb: 5,
-        wordBreak: 'break-all',
-        userSelect: 'text',
-      }}
-    >
-      {get(error, 'message', String(error))}
+    <Box sx={{ mb: 5 }}>
+      <Box sx={{ fontWeight: 500, fontSize: 14, mb: 1 }}>{title}</Box>
+      <Alert severity="error" icon={false}>
+        {message}
+      </Alert>
     </Box>
   );
 }

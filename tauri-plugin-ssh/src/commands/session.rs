@@ -6,7 +6,7 @@ use std::{
 
 use russh::{
   Disconnect, Error as RusshError,
-  client::{self, Handle},
+  client::{self, AuthResult, Handle},
   keys::{Certificate, decode_secret_key, key::PrivateKeyWithHashAlg},
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use tokio::time::timeout;
 use uuid::Uuid;
 
 use crate::{
-  error::{AuthenticationMethodError, SSHError, SSHResult},
+  error::{AuthenticationError, SSHError, SSHResult},
   ssh_client::{DisconnectReason, SSHClient},
   ssh_manager::SSHManager,
 };
@@ -192,16 +192,16 @@ pub async fn session_authenticate<R: Runtime>(
   ssh_session_id: SSHSessionId,
   username: &str,
   authentication_data: AuthenticationData,
-) -> SSHResult<SSHSessionId> {
+) -> Result<SSHSessionId, AuthenticationError> {
   timeout(Duration::from_secs(5), async {
     log::info!("authenticate session {:?}", ssh_session_id);
     let mut sessions = ssh_manager.sessions.lock().await;
     let session = sessions
       .get_mut(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
+      .ok_or(AuthenticationError::NotFoundSession)?;
 
     if session.is_closed() {
-      return Err(SSHError::SessionClosed);
+      return Err(AuthenticationError::SessionClosed);
     }
 
     match authentication_data {
@@ -213,11 +213,11 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!(
           "authenticate session {:?} by password result {:?}",
           ssh_session_id,
-          auth_res.success()
+          auth_res
         );
 
-        if !auth_res.success() {
-          return Err(AuthenticationMethodError::Password.into());
+        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
+          return Err(AuthenticationError::Password(remaining_methods, partial_success));
         }
       }
       AuthenticationData::PublicKey {
@@ -227,7 +227,7 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by public key", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationMethodError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty").into());
         }
 
         let password = passphrase.and_then(|passphrase| {
@@ -257,7 +257,7 @@ pub async fn session_authenticate<R: Runtime>(
           .best_supported_rsa_hash()
           .await
           .map_err(|err| {
-            AuthenticationMethodError::new(format!(
+            AuthenticationError::new(format!(
               "Failed to get best supported rsa hash: {}",
               err
             ))
@@ -274,11 +274,11 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!(
           "authenticate session {:?} by public key result {:?}",
           ssh_session_id,
-          auth_res.success()
+          auth_res
         );
 
-        if !auth_res.success() {
-          return Err(AuthenticationMethodError::PublicKey.into());
+        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
+          return Err(AuthenticationError::PublicKey(remaining_methods, partial_success));
         }
       }
       AuthenticationData::Certificate {
@@ -289,10 +289,10 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by certificate", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationMethodError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty").into());
         }
         if certificate.is_empty() {
-          return Err(AuthenticationMethodError::new("Certificate is empty").into());
+          return Err(AuthenticationError::new("Certificate is empty").into());
         }
 
         let password = passphrase.and_then(|passphrase| {
@@ -311,9 +311,7 @@ pub async fn session_authenticate<R: Runtime>(
           }
         });
 
-        let key_pair = decode_secret_key(&private_key, password.as_deref()).map_err(|err| {
-          AuthenticationMethodError::new(format!("Failed to parse private key: {}", err))
-        })?;
+        let key_pair = decode_secret_key(&private_key, password.as_deref())?;
         log::info!(
           "authenticate session {:?} by certificate with private key {:?}",
           ssh_session_id,
@@ -321,7 +319,7 @@ pub async fn session_authenticate<R: Runtime>(
         );
 
         let cert = Certificate::from_openssh(&certificate).map_err(|err| {
-          AuthenticationMethodError::new(format!("Failed to parse certificate: {}", err))
+          AuthenticationError::new(format!("Failed to parse certificate: {}", err))
         })?;
         log::info!(
           "authenticate session {:?} by certificate with certificate {:?}",
@@ -336,11 +334,11 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!(
           "authenticate session {:?} by certificate result {:?}",
           ssh_session_id,
-          auth_res.success()
+          auth_res
         );
 
-        if !auth_res.success() {
-          return Err(AuthenticationMethodError::Certificate.into());
+        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
+          return Err(AuthenticationError::Certificate(remaining_methods, partial_success));
         }
       }
     }

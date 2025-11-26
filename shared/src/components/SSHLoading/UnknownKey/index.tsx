@@ -1,5 +1,6 @@
 import { Box, Button, ButtonGroup, Icon } from '@mui/material';
 import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
+import { get } from 'lodash-es';
 
 import { Dropdown } from '@/components/Dropdown';
 
@@ -13,7 +14,11 @@ export default function UnknownKey({
 }: ErrorProps) {
   return (
     <>
-      <ErrorText error={error} />
+      <ErrorText
+        title="Are you sure you want to continue?"
+        message={get(error, 'message', String(error))}
+      />
+
       <Box
         sx={{
           display: 'flex',

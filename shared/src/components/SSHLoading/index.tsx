@@ -130,7 +130,6 @@ export function SSHLoading({
               px: 1.5,
               py: 1,
               mx: 'auto',
-              my: 2,
             }}
           >
             <Loading loading={loading}>
