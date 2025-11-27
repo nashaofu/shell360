@@ -5,8 +5,8 @@ use std::{
 };
 
 use russh::{
-  Disconnect, Error as RusshError,
-  client::{self, AuthResult, Handle},
+  Disconnect, Error as RusshError, MethodKind,
+  client::{self, AuthResult, Handle, KeyboardInteractiveAuthResponse},
   keys::{Certificate, decode_secret_key, key::PrivateKeyWithHashAlg},
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use tokio::time::timeout;
 use uuid::Uuid;
 
 use crate::{
-  error::{AuthenticationError, SSHError, SSHResult},
+  error::{AuthenticationError, KeyboardInteractiveData, SSHError, SSHResult},
   ssh_client::{DisconnectReason, SSHClient},
   ssh_manager::SSHManager,
 };
@@ -168,6 +168,80 @@ pub async fn session_connect<R: Runtime>(
   .await?
 }
 
+async fn authenticate_with_keyboard_interactive<R: Runtime>(
+  session: &mut SSHSession<R>,
+  username: &str,
+  password: Option<String>,
+  prompts: Option<Vec<String>>,
+) -> Result<(), AuthenticationError> {
+  let ssh_session_id = session.ssh_session_id;
+  log::info!(
+    "authenticate session {:?} by keyboard interactive",
+    ssh_session_id
+  );
+
+  let mut auth_res = if let Some(prompts) = prompts {
+    session
+      .authenticate_keyboard_interactive_respond(prompts)
+      .await?
+  } else {
+    session
+      .authenticate_keyboard_interactive_start(username, None)
+      .await?
+  };
+
+  log::info!(
+    "authenticate session {:?} by keyboard interactive result {:?}",
+    ssh_session_id,
+    auth_res
+  );
+
+  loop {
+    match auth_res {
+      KeyboardInteractiveAuthResponse::Success => {
+        return Ok(());
+      }
+      KeyboardInteractiveAuthResponse::Failure {
+        remaining_methods,
+        partial_success,
+      } => {
+        return Err(AuthenticationError::KeyboardInteractive(
+          remaining_methods,
+          partial_success,
+        ));
+      }
+      KeyboardInteractiveAuthResponse::InfoRequest {
+        name,
+        instructions,
+        prompts,
+      } => {
+        if prompts.is_empty() {
+          auth_res = session
+            .authenticate_keyboard_interactive_respond(vec![])
+            .await?;
+          continue;
+        }
+        if let Some(password) = password.clone()
+          && prompts.len() == 1
+          && prompts.first().is_some_and(|p| !p.echo)
+        {
+          auth_res = session
+            .authenticate_keyboard_interactive_respond(vec![password])
+            .await?;
+          continue;
+        }
+        return Err(AuthenticationError::KeyboardInteractiveInfoRequest(
+          KeyboardInteractiveData {
+            name,
+            instructions,
+            prompts: prompts.into_iter().map(Into::into).collect(),
+          },
+        ));
+      }
+    }
+  }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(tag = "authenticationMethod", rename_all_fields = "camelCase")]
 pub enum AuthenticationData {
@@ -183,6 +257,20 @@ pub enum AuthenticationData {
     passphrase: Option<String>,
     certificate: String,
   },
+  KeyboardInteractive {
+    prompts: Option<Vec<String>>,
+  },
+}
+
+impl Into<MethodKind> for AuthenticationData {
+  fn into(self) -> MethodKind {
+    match self {
+      AuthenticationData::Password { .. } => MethodKind::Password,
+      AuthenticationData::PublicKey { .. } => MethodKind::PublicKey,
+      AuthenticationData::Certificate { .. } => MethodKind::HostBased,
+      AuthenticationData::KeyboardInteractive { .. } => MethodKind::KeyboardInteractive,
+    }
+  }
 }
 
 #[tauri::command]
@@ -193,22 +281,24 @@ pub async fn session_authenticate<R: Runtime>(
   username: &str,
   authentication_data: AuthenticationData,
 ) -> Result<SSHSessionId, AuthenticationError> {
-  timeout(Duration::from_secs(5), async {
-    log::info!("authenticate session {:?}", ssh_session_id);
-    let mut sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get_mut(&ssh_session_id)
-      .ok_or(AuthenticationError::NotFoundSession)?;
+  log::info!("authenticate session {:?}", ssh_session_id);
+  let mut sessions = ssh_manager.sessions.lock().await;
+  let session = sessions
+    .get_mut(&ssh_session_id)
+    .ok_or(AuthenticationError::NotFoundSession)?;
 
-    if session.is_closed() {
-      return Err(AuthenticationError::SessionClosed);
-    }
+  if session.is_closed() {
+    return Err(AuthenticationError::SessionClosed);
+  }
 
-    match authentication_data {
-      AuthenticationData::Password { password } => {
+  match authentication_data {
+    AuthenticationData::Password { password } => {
+      timeout(Duration::from_secs(5), async {
         log::info!("authenticate session {:?} by password", ssh_session_id);
 
-        let auth_res = session.authenticate_password(username, password).await?;
+        let auth_res = session
+          .authenticate_password(username, password.clone())
+          .await?;
 
         log::info!(
           "authenticate session {:?} by password result {:?}",
@@ -216,14 +306,31 @@ pub async fn session_authenticate<R: Runtime>(
           auth_res
         );
 
-        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
-          return Err(AuthenticationError::Password(remaining_methods, partial_success));
+        if let AuthResult::Failure {
+          remaining_methods,
+          partial_success,
+        } = auth_res
+        {
+          if remaining_methods.contains(&MethodKind::KeyboardInteractive) {
+            authenticate_with_keyboard_interactive(session, username, Some(password.clone()), None)
+              .await?;
+          } else {
+            return Err(AuthenticationError::Password(
+              remaining_methods,
+              partial_success,
+            ));
+          }
         }
-      }
-      AuthenticationData::PublicKey {
-        private_key,
-        passphrase,
-      } => {
+
+        Ok(ssh_session_id)
+      })
+      .await?
+    }
+    AuthenticationData::PublicKey {
+      private_key,
+      passphrase,
+    } => {
+      timeout(Duration::from_secs(5), async {
         log::info!("authenticate session {:?} by public key", ssh_session_id);
 
         if private_key.is_empty() {
@@ -257,10 +364,7 @@ pub async fn session_authenticate<R: Runtime>(
           .best_supported_rsa_hash()
           .await
           .map_err(|err| {
-            AuthenticationError::new(format!(
-              "Failed to get best supported rsa hash: {}",
-              err
-            ))
+            AuthenticationError::new(format!("Failed to get best supported rsa hash: {}", err))
           })?
           .unwrap_or_default();
 
@@ -277,15 +381,27 @@ pub async fn session_authenticate<R: Runtime>(
           auth_res
         );
 
-        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
-          return Err(AuthenticationError::PublicKey(remaining_methods, partial_success));
+        if let AuthResult::Failure {
+          remaining_methods,
+          partial_success,
+        } = auth_res
+        {
+          return Err(AuthenticationError::PublicKey(
+            remaining_methods,
+            partial_success,
+          ));
         }
-      }
-      AuthenticationData::Certificate {
-        private_key,
-        passphrase,
-        certificate,
-      } => {
+
+        Ok(ssh_session_id)
+      })
+      .await?
+    }
+    AuthenticationData::Certificate {
+      private_key,
+      passphrase,
+      certificate,
+    } => {
+      timeout(Duration::from_secs(5), async {
         log::info!("authenticate session {:?} by certificate", ssh_session_id);
 
         if private_key.is_empty() {
@@ -337,14 +453,26 @@ pub async fn session_authenticate<R: Runtime>(
           auth_res
         );
 
-        if let AuthResult::Failure { remaining_methods, partial_success } = auth_res {
-          return Err(AuthenticationError::Certificate(remaining_methods, partial_success));
+        if let AuthResult::Failure {
+          remaining_methods,
+          partial_success,
+        } = auth_res
+        {
+          return Err(AuthenticationError::Certificate(
+            remaining_methods,
+            partial_success,
+          ));
         }
-      }
+
+        Ok(ssh_session_id)
+      })
+      .await?
     }
-    Ok(ssh_session_id)
-  })
-  .await?
+    AuthenticationData::KeyboardInteractive { prompts } => {
+      authenticate_with_keyboard_interactive(session, username, None, prompts.clone()).await?;
+      Ok(ssh_session_id)
+    }
+  }
 }
 
 #[tauri::command]

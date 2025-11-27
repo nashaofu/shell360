@@ -1,10 +1,32 @@
 use std::sync::{PoisonError, TryLockError};
 
-use russh::{MethodKind, MethodSet, keys::ssh_key::Fingerprint};
+use russh::{MethodKind, MethodSet, client::Prompt, keys::ssh_key::Fingerprint};
 use serde::{Serialize, Serializer};
 use serde_json::json;
 use strum::AsRefStr;
 use thiserror::Error;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KeyboardInteractiveData {
+  pub name: String,
+  pub instructions: String,
+  pub prompts: Vec<KeyboardInteractivePrompt>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KeyboardInteractivePrompt {
+  pub prompt: String,
+  pub echo: bool,
+}
+
+impl From<Prompt> for KeyboardInteractivePrompt {
+  fn from(value: Prompt) -> Self {
+    Self {
+      prompt: value.prompt,
+      echo: value.echo,
+    }
+  }
+}
 
 #[derive(Debug, Error, AsRefStr)]
 pub enum AuthenticationError {
@@ -24,6 +46,10 @@ pub enum AuthenticationError {
   PublicKey(MethodSet, bool),
   #[error("Authentication failed with certificate")]
   Certificate(MethodSet, bool),
+  #[error("Authentication failed with keyboard interactive")]
+  KeyboardInteractive(MethodSet, bool),
+  #[error("Keyboard interactive need response")]
+  KeyboardInteractiveInfoRequest(KeyboardInteractiveData),
   #[error("{0}")]
   Error(String),
 }
@@ -42,7 +68,8 @@ impl Serialize for AuthenticationError {
     let json_value = match self {
       AuthenticationError::Password(method_set, partial_success)
       | AuthenticationError::PublicKey(method_set, partial_success)
-      | AuthenticationError::Certificate(method_set, partial_success) => json!({
+      | AuthenticationError::Certificate(method_set, partial_success)
+      | AuthenticationError::KeyboardInteractive(method_set, partial_success) => json!({
         "type": "AuthenticationError",
         "message": self.to_string(),
         "kind": self.as_ref(),
@@ -54,6 +81,12 @@ impl Serialize for AuthenticationError {
             MethodKind::KeyboardInteractive => "KeyboardInteractive"
         }).collect::<Vec<&str>>(),
         "partialSuccess": partial_success,
+      }),
+      AuthenticationError::KeyboardInteractiveInfoRequest(keyboard_interactive_data) => json!({
+        "type": "AuthenticationError",
+        "message": self.to_string(),
+        "kind": self.as_ref(),
+        "keyboardInteractiveData": keyboard_interactive_data,
       }),
       _ => json!({
         "type": "AuthenticationError",

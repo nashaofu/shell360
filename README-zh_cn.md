@@ -117,3 +117,7 @@ Shell360 采用现代技术构建：
 有关详细信息，请参阅 [LICENSE](./LICENSE) 文件。
 
 SPDX-License-Identifier: GPL-3.0-or-later
+
+## 关注数据
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nashaofu/shell360&type=date&legend=top-left)](https://www.star-history.com/#nashaofu/shell360&type=date&legend=top-left)

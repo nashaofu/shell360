@@ -16,10 +16,12 @@ export enum SSHSessionCheckServerKey {
   AddAndContinue = 'AddAndContinue',
 }
 
-export type SSHSessionDisconnectEvent = {
+export type SSHSessionDisconnectEventDisconnect = {
   type: 'disconnect';
   data: string;
 };
+
+export type SSHSessionDisconnectEvent = SSHSessionDisconnectEventDisconnect;
 
 export type SSHSessionIpcChannelEvent = SSHSessionDisconnectEvent;
 
@@ -27,6 +29,7 @@ export enum AuthenticationMethod {
   Password = 'Password',
   PublicKey = 'PublicKey',
   Certificate = 'Certificate',
+  KeyboardInteractive = 'KeyboardInteractive',
 }
 
 export type SSHSessionAuthenticatePasswordOpts = {
@@ -43,6 +46,10 @@ export type SSHSessionAuthenticateCertificateOpts = {
   privateKey: string;
   passphrase?: string;
   certificate: string;
+};
+
+export type SSHSessionAuthenticateKeyboardInteractiveOpts = {
+  prompts?: string[];
 };
 
 export class SSHSession {
@@ -64,7 +71,9 @@ export class SSHSession {
       sshSessionId: this.sshSessionId,
       checkServerKey,
       ipcChannel: new Channel<SSHSessionIpcChannelEvent>((data) => {
-        this.opts.onDisconnect?.(data);
+        if (data.type === 'disconnect') {
+          this.opts.onDisconnect?.(data);
+        }
       }),
     });
   }
@@ -106,6 +115,19 @@ export class SSHSession {
         privateKey: opts.privateKey,
         passphrase: opts.passphrase,
         certificate: opts.certificate,
+      },
+      sshSessionId: this.sshSessionId,
+    });
+  }
+
+  authenticate_keyboard_interactive(
+    opts: SSHSessionAuthenticateKeyboardInteractiveOpts
+  ): Promise<string> {
+    return invoke<string>('plugin:ssh|session_authenticate', {
+      username: opts.username,
+      authenticationData: {
+        authenticationMethod: AuthenticationMethod.KeyboardInteractive,
+        prompts: opts.prompts,
       },
       sshSessionId: this.sshSessionId,
     });

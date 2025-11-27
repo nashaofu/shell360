@@ -123,3 +123,8 @@ This project is licensed under the terms of the GNU General Public License v3.0 
 See the [LICENSE](./LICENSE) file for details.
 
 SPDX-License-Identifier: GPL-3.0-or-later
+
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nashaofu/shell360&type=date&legend=top-left)](https://www.star-history.com/#nashaofu/shell360&type=date&legend=top-left)

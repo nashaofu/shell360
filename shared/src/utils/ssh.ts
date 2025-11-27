@@ -3,7 +3,7 @@ import { AuthenticationMethod, type Host, type Key } from 'tauri-plugin-data';
 import {
   SSHSession,
   SSHSessionCheckServerKey,
-  type SSHSessionDisconnectEvent,
+  type SSHSessionDisconnectEventDisconnect,
 } from 'tauri-plugin-ssh';
 
 export interface JumpHostChainItem {
@@ -17,7 +17,7 @@ export interface JumpHostChainItem {
 
 export interface ResolveJumpHostChainOpts {
   hostsMap: Map<string, Host>;
-  onDisconnect?: (data: SSHSessionDisconnectEvent) => unknown;
+  onDisconnect?: (data: SSHSessionDisconnectEventDisconnect) => unknown;
 }
 
 export function resolveJumpHostChain(
@@ -96,12 +96,19 @@ export async function establishJumpHostChainConnections(
             privateKey: key?.privateKey || '',
             passphrase: key?.passphrase || '',
           });
-        } else {
+        } else if (
+          item.host.authenticationMethod === AuthenticationMethod.Certificate
+        ) {
           await item.session.authenticate_certificate({
             username: item.host.username,
             privateKey: key?.privateKey || '',
             passphrase: key?.passphrase || '',
             certificate: key?.certificate || '',
+          });
+        } else {
+          await item.session.authenticate_keyboard_interactive({
+            username: item.host.username,
+            prompts: item.host.keyboardInteractivePrompts || [],
           });
         }
 
