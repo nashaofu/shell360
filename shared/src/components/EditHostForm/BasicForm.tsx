@@ -11,10 +11,19 @@ import {
   Chip,
 } from '@mui/material';
 import { useMemo } from 'react';
+import {
+  Icon,
+  MenuItem,
+  TextField,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import { AuthenticationMethod } from 'tauri-plugin-data';
 
 import { useHosts } from '@/hooks/useHosts';
+import { useKeys } from '@/hooks/useKeys';
 
-import { AuthenticationForm } from '../AuthenticationForm';
+import { TextFieldPassword } from '../TextFieldPassword';
 
 import type { EditHostFormApi } from './types';
 import { TERMINAL_TYPES } from './terminalTypes';
@@ -31,6 +40,8 @@ export default function BasicForm({
   onOpenAddKey,
 }: BasicFormProps) {
   const { data: hosts } = useHosts();
+  const { data: keys } = useKeys();
+  const authenticationMethod = formApi.watch('authenticationMethod');
 
   const tags = useMemo(() => {
     return hosts.reduce<string[]>((acc, cur) => {
@@ -235,7 +246,106 @@ export default function BasicForm({
         )}
       />
 
-      <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
+      <Controller
+        name="authenticationMethod"
+        control={formApi.control}
+        rules={{
+          required: {
+            value: true,
+            message: 'Please select authentication method',
+          },
+        }}
+        render={({ field, fieldState }) => (
+          <TextField
+            {...field}
+            sx={{
+              mb: 3,
+            }}
+            select
+            required
+            fullWidth
+            label="Authentication method"
+            placeholder="Authentication method"
+            error={fieldState.invalid}
+            helperText={fieldState.error?.message}
+          >
+            <MenuItem value={AuthenticationMethod.Password}>Password</MenuItem>
+            <MenuItem value={AuthenticationMethod.PublicKey}>
+              PublicKey
+            </MenuItem>
+            <MenuItem value={AuthenticationMethod.Certificate}>
+              Certificate
+            </MenuItem>
+          </TextField>
+        )}
+      />
+
+      {authenticationMethod === AuthenticationMethod.Password && (
+        <Controller
+          name="password"
+          control={formApi.control}
+          rules={{
+            maxLength: {
+              value: 100,
+              message: 'Please enter no more than 100 characters',
+            },
+          }}
+          render={({ field, fieldState }) => (
+            <TextFieldPassword
+              {...field}
+              sx={{
+                mb: 3,
+              }}
+              fullWidth
+              label="Password"
+              placeholder="Password"
+              error={fieldState.invalid}
+              helperText={fieldState.error?.message}
+            />
+          )}
+        />
+      )}
+
+      {(authenticationMethod === AuthenticationMethod.PublicKey ||
+        authenticationMethod === AuthenticationMethod.Certificate) && (
+        <Controller
+          name="keyId"
+          control={formApi.control}
+          rules={{
+            required: {
+              value: true,
+              message: 'Please select key',
+            },
+          }}
+          render={({ field, fieldState }) => (
+            <TextField
+              {...field}
+              sx={{
+                mb: 3,
+              }}
+              select
+              fullWidth
+              required
+              label="Key"
+              placeholder="Key"
+              error={fieldState.invalid}
+              helperText={fieldState.error?.message}
+            >
+              <MenuItem value="" onClick={onOpenAddKey}>
+                <ListItemIcon>
+                  <Icon className="icon-add" />
+                </ListItemIcon>
+                <ListItemText>Add key</ListItemText>
+              </MenuItem>
+              {keys.map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+      )}
 
       <Controller
         name="startupCommand"

@@ -8,9 +8,9 @@ import {
 } from '@mui/material';
 import { AuthenticationMethod } from 'tauri-plugin-data';
 
+import { TextFieldPassword } from '@/components/TextFieldPassword';
 import { useKeys } from '@/hooks/useKeys';
 
-import { TextFieldPassword } from '../TextFieldPassword';
 
 export type AuthenticationFormFields = {
   username?: string;

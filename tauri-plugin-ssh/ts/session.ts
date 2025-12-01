@@ -49,6 +49,7 @@ export type SSHSessionAuthenticateCertificateOpts = {
 };
 
 export type SSHSessionAuthenticateKeyboardInteractiveOpts = {
+  username: string;
   prompts?: string[];
 };
 

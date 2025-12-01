@@ -313,7 +313,14 @@ pub async fn session_authenticate<R: Runtime>(
         {
           if remaining_methods.contains(&MethodKind::KeyboardInteractive) {
             authenticate_with_keyboard_interactive(session, username, Some(password.clone()), None)
-              .await?;
+              .await
+              .map_err(|err| {
+                if let AuthenticationError::KeyboardInteractiveInfoRequest(_) = err {
+                  err
+                } else {
+                  AuthenticationError::Password(remaining_methods, partial_success)
+                }
+              })?;
           } else {
             return Err(AuthenticationError::Password(
               remaining_methods,
