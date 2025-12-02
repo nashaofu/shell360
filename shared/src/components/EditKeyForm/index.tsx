@@ -37,6 +37,36 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
     formApi.setValue('privateKey', text);
   }, [formApi]);
 
+  const importPublicKey = useCallback(async () => {
+    const file = await open({
+      multiple: false,
+      directory: false,
+    });
+
+    if (!file) {
+      return;
+    }
+
+    const text = await readTextFile(file);
+
+    formApi.setValue('publicKey', text);
+  }, [formApi]);
+
+  const importCertificate = useCallback(async () => {
+    const file = await open({
+      multiple: false,
+      directory: false,
+    });
+
+    if (!file) {
+      return;
+    }
+
+    const text = await readTextFile(file);
+
+    formApi.setValue('certificate', text);
+  }, [formApi]);
+
   return (
     <Box
       sx={{
@@ -131,6 +161,15 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
             maxRows={8}
             error={fieldState.invalid}
             helperText={fieldState.error?.message}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={importPublicKey}>
+                    <Icon className="icon-file-upload" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         )}
       />
@@ -164,6 +203,15 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
             maxRows={8}
             error={fieldState.invalid}
             helperText={fieldState.error?.message}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={importCertificate}>
+                    <Icon className="icon-file-upload" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         )}
       />
