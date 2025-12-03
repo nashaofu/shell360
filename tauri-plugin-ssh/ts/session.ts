@@ -1,6 +1,11 @@
 import { Channel, invoke } from '@tauri-apps/api/core';
 import { v4 as uuidV4 } from 'uuid';
 
+export type SSHSessionDisconnectEvent = {
+  type: 'disconnect';
+  data: string;
+};
+
 export type SSHSessionOpts = {
   onDisconnect?: (data: SSHSessionDisconnectEvent) => unknown;
 };
@@ -15,13 +20,6 @@ export enum SSHSessionCheckServerKey {
   Continue = 'Continue',
   AddAndContinue = 'AddAndContinue',
 }
-
-export type SSHSessionDisconnectEventDisconnect = {
-  type: 'disconnect';
-  data: string;
-};
-
-export type SSHSessionDisconnectEvent = SSHSessionDisconnectEventDisconnect;
 
 export type SSHSessionIpcChannelEvent = SSHSessionDisconnectEvent;
 

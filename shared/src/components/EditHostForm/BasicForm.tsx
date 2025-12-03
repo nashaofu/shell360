@@ -4,20 +4,15 @@ import {
   Icon,
   InputAdornment,
   MenuItem,
-  TextField,
   type SxProps,
   type Theme,
   Autocomplete,
   Chip,
-} from '@mui/material';
-import { useMemo } from 'react';
-import {
-  Icon,
-  MenuItem,
   TextField,
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
+import { useMemo } from 'react';
 import { AuthenticationMethod } from 'tauri-plugin-data';
 
 import { useHosts } from '@/hooks/useHosts';

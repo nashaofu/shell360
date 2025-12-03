@@ -8,6 +8,7 @@ import {
 import { useTerminal } from 'shared';
 
 import openUrl from '@/utils/openUrl';
+import { copy } from '@/utils/clipboard';
 
 import Sftp from './Sftp';
 
@@ -37,7 +38,7 @@ export default function SSHTerminal({
     onTerminalData,
     onTerminalBinaryData,
     onTerminalResize,
-  } = useTerminal({ item, onClose });
+  } = useTerminal({ item, onClose, onCopy: copy });
 
   return (
     <Box

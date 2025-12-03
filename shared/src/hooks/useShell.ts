@@ -1,8 +1,11 @@
+import { Buffer } from 'buffer';
+
 import { useRef, useState } from 'react';
 import { SSHSession, SSHShell } from 'tauri-plugin-ssh';
 import { useRequest, useMemoizedFn, useUnmount } from 'ahooks';
 import type { Host } from 'tauri-plugin-data';
 
+import { oscParse } from '@/utils/osc';
 import { Terminal, type TerminalSize } from '@/components/XTerminal';
 import { sleep } from '@/utils/sleep';
 
@@ -13,6 +16,7 @@ export interface UseShellOpts {
   onBefore?: () => void;
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
+  onCopy?: (content: string) => void;
 }
 
 export function useShell({
@@ -22,6 +26,7 @@ export function useShell({
   onBefore,
   onSuccess,
   onError,
+  onCopy,
 }: UseShellOpts) {
   const [terminal, setTerminal] = useState<Terminal>();
 
@@ -46,6 +51,7 @@ export function useShell({
       const shell = new SSHShell({
         session,
         onData: (data: Uint8Array) => {
+          oscParse(Buffer.from(data), { onCopy });
           terminal.write(data);
         },
         onClose,

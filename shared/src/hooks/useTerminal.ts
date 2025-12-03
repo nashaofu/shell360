@@ -13,9 +13,10 @@ import { useShell } from './useShell';
 export interface UseTerminalOpts {
   item: TerminalAtom;
   onClose?: () => unknown;
+  onCopy?: (content: string) => unknown;
 }
 
-export function useTerminal({ item, onClose }: UseTerminalOpts) {
+export function useTerminal({ item, onClose, onCopy }: UseTerminalOpts) {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
   const currentJumpHostChainItem = useMemo(() => {
@@ -45,6 +46,7 @@ export function useTerminal({ item, onClose }: UseTerminalOpts) {
     session,
     host: item.host,
     onClose,
+    onCopy,
     onBefore: () => {
       terminalsAtomWithApi.update({
         ...item,

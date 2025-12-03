@@ -53,7 +53,7 @@ export default function AuthenticationError({
     const kind = get(error, 'kind');
     const message = get(error, 'message');
     if (kind === 'Password' || kind === 'PublicKey' || kind === 'Certificate') {
-      const methodSet = get(error, 'methodSet');
+      const methodSet = get(error, 'methodSet', []) as string[];
 
       return {
         title: message,
