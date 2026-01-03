@@ -19,6 +19,7 @@ type UseCellsOpts = {
   removeDir: (item: SSHSftpFile) => unknown;
   removeFile: (item: SSHSftpFile) => unknown;
   onSelectDir: (item: SSHSftpFile) => unknown;
+  onEditFile: (item: SSHSftpFile) => unknown;
   modal: ReturnType<typeof useModal>;
 };
 
@@ -38,6 +39,7 @@ export default function useCells({
   removeFile,
   removeDir,
   onSelectDir,
+  onEditFile,
   modal,
 }: UseCellsOpts): SftpTableCell<SSHSftpFile>[] {
   const onDoubleClickName = useCallback(
@@ -45,9 +47,13 @@ export default function useCells({
       if (selectedFile?.path === row.path) {
         return;
       }
-      onSelectDir(row);
+      if (row.fileType === SSHSftpFileType.Dir) {
+        onSelectDir(row);
+      } else if (row.fileType === SSHSftpFileType.File) {
+        onEditFile(row);
+      }
     },
-    [onSelectDir, selectedFile]
+    [onSelectDir, onEditFile, selectedFile]
   );
 
   const onDelete = useCallback(

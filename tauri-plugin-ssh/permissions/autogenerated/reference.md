@@ -29,6 +29,8 @@ Default permissions for the plugin
 - `allow-sftp-rename`
 - `allow-sftp-exists`
 - `allow-sftp-canonicalize`
+- `allow-sftp-read-text-file`
+- `allow-sftp-write-text-file`
 
 ## Permission Table
 
@@ -666,6 +668,32 @@ Denies the sftp_read_dir command without any pre-configured scope.
 <tr>
 <td>
 
+`ssh:allow-sftp-read-text-file`
+
+</td>
+<td>
+
+Enables the sftp_read_text_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-read-text-file`
+
+</td>
+<td>
+
+Denies the sftp_read_text_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `ssh:allow-sftp-remove-dir`
 
 </td>
@@ -763,6 +791,32 @@ Enables the sftp_upload_file command without any pre-configured scope.
 <td>
 
 Denies the sftp_upload_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-sftp-write-text-file`
+
+</td>
+<td>
+
+Enables the sftp_write_text_file command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-write-text-file`
+
+</td>
+<td>
+
+Denies the sftp_write_text_file command without any pre-configured scope.
 
 </td>
 </tr>

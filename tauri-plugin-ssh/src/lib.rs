@@ -41,6 +41,8 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
       commands::sftp::sftp_rename,
       commands::sftp::sftp_exists,
       commands::sftp::sftp_canonicalize,
+      commands::sftp::sftp_read_text_file,
+      commands::sftp::sftp_write_text_file,
     ])
     .setup(|app, _api| {
       app.manage(SSHManager::<R>::init());

@@ -583,6 +583,18 @@
           "markdownDescription": "Denies the sftp_read_dir command without any pre-configured scope."
         },
         {
+          "description": "Enables the sftp_read_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-read-text-file",
+          "markdownDescription": "Enables the sftp_read_text_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_read_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-read-text-file",
+          "markdownDescription": "Denies the sftp_read_text_file command without any pre-configured scope."
+        },
+        {
           "description": "Enables the sftp_remove_dir command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sftp-remove-dir",
@@ -629,6 +641,18 @@
           "type": "string",
           "const": "deny-sftp-upload-file",
           "markdownDescription": "Denies the sftp_upload_file command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the sftp_write_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-write-text-file",
+          "markdownDescription": "Enables the sftp_write_text_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_write_text_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-write-text-file",
+          "markdownDescription": "Denies the sftp_write_text_file command without any pre-configured scope."
         },
         {
           "description": "Enables the shell_close command without any pre-configured scope.",
@@ -715,10 +739,10 @@
           "markdownDescription": "Denies the ssh_shell command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`"
         }
       ]
     }

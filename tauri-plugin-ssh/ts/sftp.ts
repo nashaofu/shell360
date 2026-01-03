@@ -179,4 +179,19 @@ export class SSHSftp {
       path,
     });
   }
+
+  sftpReadTextFile(filename: string) {
+    return invoke<string>('plugin:ssh|sftp_read_text_file', {
+      sshSftpId: this.sshSftpId,
+      filename,
+    });
+  }
+
+  sftpWriteTextFile(filename: string, content: string) {
+    return invoke<string>('plugin:ssh|sftp_write_text_file', {
+      sshSftpId: this.sshSftpId,
+      filename,
+      content,
+    });
+  }
 }
