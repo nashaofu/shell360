@@ -22,6 +22,8 @@ Whether it's remote development, server management, or secure file transfer, She
 - Windows
   ```
   winget install nashaofu.shell360
+  # or
+  scoop install shell360
   ```
 
 ## Download

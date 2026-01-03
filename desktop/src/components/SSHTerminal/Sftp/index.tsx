@@ -32,6 +32,7 @@ import SftpFileSearch from './SftpFileSearch';
 import useSftpActions from './useSftpActions';
 import useRename from './useRename';
 import useCreate, { CreateType } from './useCreate';
+import FileEditorModal from './FileEditorModal';
 
 type SftpProps = {
   session: SSHSession;
@@ -47,6 +48,8 @@ export default function Sftp({ session }: SftpProps) {
   const message = useMessage();
   const [keyword, setKeyword] = useState('');
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
 
   const {
     sftpRef,
@@ -120,6 +123,36 @@ export default function Sftp({ session }: SftpProps) {
     }
   }, []);
 
+  const onEditFile = useCallback((item: SSHSftpFile) => {
+    if (item.fileType === SSHSftpFileType.File) {
+      setEditingFile(item);
+      setIsEditorOpen(true);
+    }
+  }, []);
+
+  const handleLoadFileContent = useCallback(async () => {
+    if (!editingFile || !sftpRef.current) {
+      throw new Error('No file selected or SFTP not initialized');
+    }
+    return await sftpRef.current.sftpReadTextFile(editingFile.path);
+  }, [editingFile, sftpRef]);
+
+  const handleSaveFileContent = useCallback(
+    async (content: string) => {
+      if (!editingFile || !sftpRef.current) {
+        throw new Error('No file selected or SFTP not initialized');
+      }
+      await sftpRef.current.sftpWriteTextFile(editingFile.path, content);
+      refreshDir();
+    },
+    [editingFile, sftpRef, refreshDir]
+  );
+
+  const handleCloseEditor = useCallback(() => {
+    setIsEditorOpen(false);
+    setEditingFile(null);
+  }, []);
+
   const {
     renameLoading,
     selectedFile,
@@ -142,6 +175,7 @@ export default function Sftp({ session }: SftpProps) {
     removeDir,
     modal,
     onSelectDir,
+    onEditFile,
   });
 
   const data = useMemo(() => {
@@ -182,6 +216,36 @@ export default function Sftp({ session }: SftpProps) {
       setDirname(dir);
     },
     [dirname, refreshDir]
+  );
+
+  const onNavigatePath = useCallback(
+    async (path: string): Promise<boolean> => {
+      if (!sftpRef.current) {
+        return false;
+      }
+
+      try {
+        // Try to check if path exists
+        const exists = await sftpRef.current.sftpExists(path);
+        if (!exists) {
+          message.error({
+            message: `Path does not exist: ${path}`,
+          });
+          return false;
+        }
+
+        // Try to read the directory to confirm it's accessible
+        await sftpRef.current.sftpReadDir(path);
+        setDirname(path);
+        return true;
+      } catch (err) {
+        message.error({
+          message: `Cannot navigate to ${path}: ${(err as Error).message ?? 'Unknown error'}`,
+        });
+        return false;
+      }
+    },
+    [sftpRef, message]
   );
 
   const onParentClick = useCallback(() => {
@@ -322,6 +386,7 @@ export default function Sftp({ session }: SftpProps) {
               <SftpBreadcrumbs
                 dirname={dirname}
                 onClick={onSftpBreadcrumbsClick}
+                onNavigate={onNavigatePath}
               ></SftpBreadcrumbs>
               <Box
                 sx={{
@@ -392,6 +457,13 @@ export default function Sftp({ session }: SftpProps) {
           </Loading>
         </DialogContent>
       </Dialog>
+      <FileEditorModal
+        open={isEditorOpen}
+        file={editingFile}
+        onClose={handleCloseEditor}
+        onSave={handleSaveFileContent}
+        onLoadContent={handleLoadFileContent}
+      />
     </>
   );
 }

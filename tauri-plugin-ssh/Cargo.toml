@@ -12,7 +12,7 @@ tauri = { workspace = true, features = [] }
 log.workspace = true
 serde.workspace = true
 thiserror.workspace = true
-russh = { version = "0.54.6", default-features = false, features = [
+russh = { version = "0.56.0", default-features = false, features = [
   "flate2",
   "ring",
   "rsa",

@@ -1,0 +1,14 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-write-text-file"
+description = "Enables the sftp_write_text_file command without any pre-configured scope."
+commands.allow = ["sftp_write_text_file"]
+
+[[permission]]
+identifier = "deny-sftp-write-text-file"
+description = "Denies the sftp_write_text_file command without any pre-configured scope."
+commands.deny = ["sftp_write_text_file"]
+

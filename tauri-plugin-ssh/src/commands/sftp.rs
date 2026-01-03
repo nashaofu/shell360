@@ -435,3 +435,64 @@ pub async fn sftp_canonicalize<R: Runtime>(
 
   Ok(absolute_path)
 }
+
+#[tauri::command]
+pub async fn sftp_read_text_file<R: Runtime>(
+  _app_handle: AppHandle<R>,
+  ssh_manager: State<'_, SSHManager<R>>,
+  ssh_sftp_id: SSHSftpId,
+  filename: String,
+) -> SSHResult<String> {
+  log::info!("sftp_read_text_file: Reading file {:?}", filename);
+  
+  let mut remote_file = {
+    let sftps = ssh_manager.sftps.lock().await;
+    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
+    sftp.open(&filename).await.map_err(|e| {
+      log::error!("sftp_read_text_file: Failed to open file {:?}: {:?}", filename, e);
+      e
+    })?
+  };
+
+  let mut content = String::new();
+  remote_file.read_to_string(&mut content).await.map_err(|e| {
+    log::error!("sftp_read_text_file: Failed to read file {:?}: {:?}", filename, e);
+    e
+  })?;
+
+  log::info!("sftp_read_text_file: Successfully read {} bytes from {:?}", content.len(), filename);
+  Ok(content)
+}
+
+#[tauri::command]
+pub async fn sftp_write_text_file<R: Runtime>(
+  _app_handle: AppHandle<R>,
+  ssh_manager: State<'_, SSHManager<R>>,
+  ssh_sftp_id: SSHSftpId,
+  filename: String,
+  content: String,
+) -> SSHResult<SSHSftpId> {
+  log::info!("sftp_write_text_file: Writing {} bytes to {:?}", content.len(), filename);
+  
+  let remote_file = {
+    let sftps = ssh_manager.sftps.lock().await;
+    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
+    sftp.create(&filename).await.map_err(|e| {
+      log::error!("sftp_write_text_file: Failed to create file {:?}: {:?}", filename, e);
+      e
+    })?
+  };
+
+  let mut writer = BufWriter::new(remote_file);
+  writer.write_all(content.as_bytes()).await.map_err(|e| {
+    log::error!("sftp_write_text_file: Failed to write to file {:?}: {:?}", filename, e);
+    e
+  })?;
+  writer.flush().await.map_err(|e| {
+    log::error!("sftp_write_text_file: Failed to flush file {:?}: {:?}", filename, e);
+    e
+  })?;
+
+  log::info!("sftp_write_text_file: Successfully wrote to {:?}", filename);
+  Ok(ssh_sftp_id)
+}
