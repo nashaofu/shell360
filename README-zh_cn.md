@@ -22,6 +22,8 @@
 - Windows
   ```
   winget install nashaofu.shell360
+  # or
+  scoop install shell360
   ```
 
 ## 下载
