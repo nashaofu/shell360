@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { SSHPortForwarding } from 'tauri-plugin-ssh';
 import { type PortForwarding } from 'tauri-plugin-data';
 import {
@@ -42,6 +42,11 @@ export function usePortForwardingsAtomWithApi() {
 
   const getState = useMemoizedFn(() => stateRef.current);
 
+  // 使用 ref 来存储重连函数，避免在函数内部引用自身的问题
+  const handlePortForwardingReconnectRef = useRef<
+    ((portForwardingId: string) => Promise<void>) | undefined
+  >(undefined);
+
   const deletePortForwarding = useMemoizedFn(
     (
       portForwardingId: string
@@ -79,12 +84,14 @@ export function usePortForwardingsAtomWithApi() {
 
       // 如果正在重连，避免重复触发
       if (currentItem.isReconnecting) {
+        // eslint-disable-next-line no-console
         console.log('端口转发正在重连中，跳过重复重连请求');
         return;
       }
 
       // 如果状态不是 success，说明可能正在连接或已经失败，不需要重连
       if (currentItem.status !== 'success') {
+        // eslint-disable-next-line no-console
         console.log('端口转发状态不是 success，跳过重连');
         return;
       }
@@ -102,6 +109,7 @@ export function usePortForwardingsAtomWithApi() {
         await closePortForwarding(currentItem);
       } catch (error) {
         // 忽略关闭时的错误，继续重连
+        // eslint-disable-next-line no-console
         console.error('关闭端口转发失败:', error);
       }
 
@@ -111,6 +119,7 @@ export function usePortForwardingsAtomWithApi() {
       // 重新检查状态，可能在延迟期间被删除或状态改变
       const checkItem = stateRef.current.get(portForwardingId);
       if (!checkItem || checkItem.status !== 'pending' || !checkItem.isReconnecting) {
+        // eslint-disable-next-line no-console
         console.log('端口转发状态已改变，取消重连');
         return;
       }
@@ -126,8 +135,8 @@ export function usePortForwardingsAtomWithApi() {
       const newJumpHostChain = resolveJumpHostChain(newHost, {
         hostsMap,
         onDisconnect: () => {
-          // 递归调用重连处理函数
-          handlePortForwardingReconnect(portForwardingId);
+          // 使用 ref 来递归调用重连处理函数
+          handlePortForwardingReconnectRef.current?.(portForwardingId);
         },
       });
 
@@ -161,6 +170,7 @@ export function usePortForwardingsAtomWithApi() {
           });
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('自动重连失败:', error);
         const failedItem = stateRef.current.get(portForwardingId);
         if (failedItem) {
@@ -174,6 +184,11 @@ export function usePortForwardingsAtomWithApi() {
       }
     }
   );
+
+  // 使用 useEffect 来更新 ref，避免在 render 期间更新
+  useEffect(() => {
+    handlePortForwardingReconnectRef.current = handlePortForwardingReconnect;
+  }, [handlePortForwardingReconnect]);
 
   const addPortForwarding = useMemoizedFn(
     (
@@ -190,7 +205,7 @@ export function usePortForwardingsAtomWithApi() {
         hostsMap,
         onDisconnect: () => {
           // 当连接断开时，自动释放端口并重连
-          handlePortForwardingReconnect(portForwarding.id);
+          handlePortForwardingReconnectRef.current?.(portForwarding.id);
         },
       });
 

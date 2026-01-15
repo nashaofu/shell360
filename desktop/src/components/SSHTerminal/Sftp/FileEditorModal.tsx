@@ -43,6 +43,7 @@ export default function FileEditorModal({
           setContent(fileContent);
         })
         .catch((err) => {
+          // eslint-disable-next-line no-console
           console.error('Failed to load file:', err);
           message.error({
             message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? 'Unknown error'}`,

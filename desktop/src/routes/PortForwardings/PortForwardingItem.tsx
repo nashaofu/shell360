@@ -17,7 +17,6 @@ import {
   deletePortForwarding,
   type Host,
   type PortForwarding,
-  PortForwardingType,
 } from 'tauri-plugin-data';
 import { useCallback, useMemo } from 'react';
 import {
