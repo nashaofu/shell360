@@ -4,19 +4,19 @@ import {
   usePortForwardings,
   Dropdown,
   SSHLoading,
-  establishJumpHostChainConnections,
   usePortForwardingsAtomWithApi,
   type PortForwardingsAtom,
   useKeys,
   getPortForwardingDesc,
   tearDownJumpHostChainConnections,
   PortForwardingLoading,
+  closePortForwarding as closePortForwardingUtil,
+  establishPortForwarding as establishPortForwardingUtil,
 } from 'shared';
 import {
   deletePortForwarding,
   type Host,
   type PortForwarding,
-  PortForwardingType,
 } from 'tauri-plugin-data';
 import { useCallback, useMemo } from 'react';
 import {
@@ -83,86 +83,22 @@ export default function PortForwardingItem({
 
   const closePortForwarding = useCallback(
     async (portForwardingsAtom: PortForwardingsAtom) => {
-      const portForwarding = portForwardingsAtom.portForwarding;
-      const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
-      if (portForwarding.portForwardingType === PortForwardingType.Local) {
-        await sshPortForwarding.closeLocalPortForwarding();
-      } else if (
-        portForwarding.portForwardingType === PortForwardingType.Remote
-      ) {
-        await sshPortForwarding.closeRemotePortForwarding();
-      } else if (
-        portForwarding.portForwardingType === PortForwardingType.Dynamic
-      ) {
-        await sshPortForwarding.closeDynamicPortForwarding();
-      }
+      await closePortForwardingUtil(portForwardingsAtom);
     },
     []
   );
 
   const establishPortForwarding = useCallback(
     async (portForwardingsAtom: PortForwardingsAtom) => {
-      portForwardingsAtomWithApi.update({
-        ...portForwardingsAtom,
-        status: 'pending',
-      });
-      await establishJumpHostChainConnections(
-        portForwardingsAtom.jumpHostChain,
-        {
-          keysMap: new Map(keys.map((key) => [key.id, key])),
-          onJumpHostChainItemUpdate: (jumpHostChainItem) => {
-            portForwardingsAtomWithApi.update({
-              ...portForwardingsAtom,
-              jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) =>
-                item.host.id === jumpHostChainItem.host.id
-                  ? jumpHostChainItem
-                  : item
-              ),
-            });
-          },
+      await establishPortForwardingUtil(
+        portForwardingsAtom,
+        new Map(keys.map((key) => [key.id, key])),
+        (updated) => {
+          portForwardingsAtomWithApi.update(updated);
         }
       );
-      try {
-        const portForwarding = portForwardingsAtom.portForwarding;
-        const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
-        if (portForwarding.portForwardingType === PortForwardingType.Local) {
-          await sshPortForwarding.openLocalPortForwarding({
-            localAddress: portForwarding.localAddress,
-            localPort: portForwarding.localPort,
-            remoteAddress: portForwarding.remoteAddress as string,
-            remotePort: portForwarding.remotePort as number,
-          });
-        } else if (
-          portForwarding.portForwardingType === PortForwardingType.Remote
-        ) {
-          await sshPortForwarding.openRemotePortForwarding({
-            localAddress: portForwarding.localAddress,
-            localPort: portForwarding.localPort,
-            remoteAddress: portForwarding.remoteAddress as string,
-            remotePort: portForwarding.remotePort as number,
-          });
-        } else if (
-          portForwarding.portForwardingType === PortForwardingType.Dynamic
-        ) {
-          await sshPortForwarding.openDynamicPortForwarding({
-            localAddress: portForwarding.localAddress,
-            localPort: portForwarding.localPort,
-          });
-        }
-        portForwardingsAtomWithApi.update({
-          ...portForwardingsAtom,
-          status: 'success',
-        });
-      } catch (error) {
-        portForwardingsAtomWithApi.update({
-          ...portForwardingsAtom,
-          status: 'failed',
-          error,
-        });
-        await closePortForwarding(portForwardingsAtom);
-      }
     },
-    [closePortForwarding, keys, portForwardingsAtomWithApi]
+    [keys, portForwardingsAtomWithApi]
   );
 
   const menus = useMemo(

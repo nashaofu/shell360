@@ -1,10 +1,17 @@
 import { cloneDeep, get } from 'lodash-es';
-import { AuthenticationMethod, type Host, type Key } from 'tauri-plugin-data';
+import {
+  AuthenticationMethod,
+  type Host,
+  type Key,
+  PortForwardingType,
+} from 'tauri-plugin-data';
 import {
   SSHSession,
   SSHSessionCheckServerKey,
   type SSHSessionDisconnectEvent,
 } from 'tauri-plugin-ssh';
+
+import type { PortForwardingsAtom } from '../atoms/portForwardingsAtom';
 
 export interface JumpHostChainItem {
   host: Host;
@@ -142,18 +149,103 @@ export async function tearDownJumpHostChainConnections(
   }
 }
 
-// export async function startPortForwarding(
-//   jumpHostChain: JumpHostChainItem[],
-//   portForwarding: PortForwarding
-// ) {
-//   // const lastJumpHostSession = jumpHostChain[jumpHostChain.length - 1].session;
-//   // await lastJumpHostSession.startPortForwarding(portForwarding);
-// }
 
-// export async function stopPortForwarding(
-//   jumpHostChain: JumpHostChainItem[],
-//   portForwarding: PortForwarding
-// ) {
-//   // const lastJumpHostSession = jumpHostChain[jumpHostChain.length - 1].session;
-//   // await lastJumpHostSession.stopPortForwarding(portForwarding);
-// }
+/**
+ * 关闭端口转发
+ */
+export async function closePortForwarding(
+  portForwardingsAtom: PortForwardingsAtom
+): Promise<void> {
+  const portForwarding = portForwardingsAtom.portForwarding;
+  const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
+  if (portForwarding.portForwardingType === PortForwardingType.Local) {
+    await sshPortForwarding.closeLocalPortForwarding();
+  } else if (
+    portForwarding.portForwardingType === PortForwardingType.Remote
+  ) {
+    await sshPortForwarding.closeRemotePortForwarding();
+  } else if (
+    portForwarding.portForwardingType === PortForwardingType.Dynamic
+  ) {
+    await sshPortForwarding.closeDynamicPortForwarding();
+  }
+}
+
+/**
+ * 建立端口转发连接
+ */
+export async function establishPortForwarding(
+  portForwardingsAtom: PortForwardingsAtom,
+  keysMap: Map<string, Key>,
+  onUpdate?: (portForwardingsAtom: PortForwardingsAtom) => void
+): Promise<void> {
+  if (onUpdate) {
+    onUpdate({
+      ...portForwardingsAtom,
+      status: 'pending',
+    });
+  }
+
+  await establishJumpHostChainConnections(portForwardingsAtom.jumpHostChain, {
+    keysMap,
+    onJumpHostChainItemUpdate: (jumpHostChainItem) => {
+      if (onUpdate) {
+        onUpdate({
+          ...portForwardingsAtom,
+          jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) =>
+            item.host.id === jumpHostChainItem.host.id
+              ? jumpHostChainItem
+              : item
+          ),
+        });
+      }
+    },
+  });
+
+  try {
+    const portForwarding = portForwardingsAtom.portForwarding;
+    const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
+    if (portForwarding.portForwardingType === PortForwardingType.Local) {
+      await sshPortForwarding.openLocalPortForwarding({
+        localAddress: portForwarding.localAddress,
+        localPort: portForwarding.localPort,
+        remoteAddress: portForwarding.remoteAddress as string,
+        remotePort: portForwarding.remotePort as number,
+      });
+    } else if (
+      portForwarding.portForwardingType === PortForwardingType.Remote
+    ) {
+      await sshPortForwarding.openRemotePortForwarding({
+        localAddress: portForwarding.localAddress,
+        localPort: portForwarding.localPort,
+        remoteAddress: portForwarding.remoteAddress as string,
+        remotePort: portForwarding.remotePort as number,
+      });
+    } else if (
+      portForwarding.portForwardingType === PortForwardingType.Dynamic
+    ) {
+      await sshPortForwarding.openDynamicPortForwarding({
+        localAddress: portForwarding.localAddress,
+        localPort: portForwarding.localPort,
+      });
+    }
+    if (onUpdate) {
+      onUpdate({
+        ...portForwardingsAtom,
+        status: 'success',
+        isReconnecting: false, // 清除重连标志
+      });
+    }
+  } catch (error) {
+    if (onUpdate) {
+      onUpdate({
+        ...portForwardingsAtom,
+        status: 'failed',
+        error,
+        isReconnecting: false, // 清除重连标志
+      });
+    }
+    await closePortForwarding(portForwardingsAtom);
+    throw error;
+  }
+}
