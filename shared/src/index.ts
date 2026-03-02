@@ -16,6 +16,7 @@ export * from './components/PortForwardingForm';
 export * from './components/HostTagsSelect';
 export * from './components/SSHLoading';
 export * from './components/PortForwardingLoading';
+export * from './components/VirtualKeyboard';
 
 // hooks
 export * from './hooks/useHosts';
