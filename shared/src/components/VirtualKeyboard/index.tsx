@@ -12,8 +12,8 @@ export type VirtualKeyboardProps = {
   modifiers?: VirtualKeyboardModifiers;
   /** called whenever ctrl/alt/shift state changes */
   onModifiersChange?: (modifiers: VirtualKeyboardModifiers) => void;
-  /** called when user clicks a key on the virtual keyboard; sends the key's value (e.g. "\x1b" for Esc) */
-  onInput: (data: string) => void;
+  /** called when user clicks a key on the virtual keyboard; sends KeyboardEvent.key value */
+  onInput: (key: string) => void;
 };
 
 /**
@@ -24,7 +24,7 @@ export type VirtualKeyboardProps = {
  * gives the user a way to send control/arrow keys, escape, tab, etc.
  */
 export function VirtualKeyboard({
-  modifiers,
+  modifiers = { ctrl: false, alt: false, shift: false },
   onModifiersChange,
   onInput,
 }: VirtualKeyboardProps) {
@@ -34,30 +34,6 @@ export function VirtualKeyboard({
       onModifiersChange?.(updated);
     },
     [modifiers, onModifiersChange],
-  );
-
-  const send = useCallback(
-    (value: string) => {
-      let data = value;
-
-      // apply modifiers; ctrl converts letters to control codes,
-      // alt prefixes with escape and shift simply uppercases the character
-      if (modifiers.ctrl && value.length === 1) {
-        const code = value.charCodeAt(0);
-        // ctrl-A .. ctrl-_  -> 0x01 .. 0x1f
-        if (code >= 0x40 && code <= 0x5f) {
-          data = String.fromCharCode(code & 0x1f);
-        }
-      }
-      if (modifiers.alt) {
-        data = '\x1b' + data;
-      }
-      if (modifiers.shift && value.length === 1) {
-        data = value.toUpperCase();
-      }
-      onInput(data);
-    },
-    [onInput, modifiers],
   );
 
   return (
@@ -101,28 +77,46 @@ export function VirtualKeyboard({
         >
           Shift
         </Button>
-        <Button size="small" onClick={() => send('\x1b')}>
+        <Button size="small" onClick={() => onInput('Escape')}>
           Esc
         </Button>
-        <Button size="small" onClick={() => send('\t')}>
+        <Button size="small" onClick={() => onInput('Tab')}>
           Tab
         </Button>
-        <Button size="small" onClick={() => send('\r')}>
+        <Button size="small" onClick={() => onInput('Enter')}>
           Enter
         </Button>
-        <Button size="small" onClick={() => send('\x7f')}>
+        <Button size="small" onClick={() => onInput('Backspace')}>
           Backspace
         </Button>
-        <Button size="small" onClick={() => send('\x1b[A')}>
+        <Button size="small" onClick={() => onInput('Insert')}>
+          Insert
+        </Button>
+        <Button size="small" onClick={() => onInput('Delete')}>
+          Delete
+        </Button>
+        <Button size="small" onClick={() => onInput('Home')}>
+          Home
+        </Button>
+        <Button size="small" onClick={() => onInput('End')}>
+          End
+        </Button>
+        <Button size="small" onClick={() => onInput('PageUp')}>
+          PageUp
+        </Button>
+        <Button size="small" onClick={() => onInput('PageDown')}>
+          PageDown
+        </Button>
+        <Button size="small" onClick={() => onInput('ArrowUp')}>
           ↑
         </Button>
-        <Button size="small" onClick={() => send('\x1b[B')}>
+        <Button size="small" onClick={() => onInput('ArrowDown')}>
           ↓
         </Button>
-        <Button size="small" onClick={() => send('\x1b[C')}>
+        <Button size="small" onClick={() => onInput('ArrowRight')}>
           →
         </Button>
-        <Button size="small" onClick={() => send('\x1b[D')}>
+        <Button size="small" onClick={() => onInput('ArrowLeft')}>
           ←
         </Button>
       </Box>

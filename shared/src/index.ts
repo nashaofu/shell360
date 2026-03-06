@@ -27,6 +27,7 @@ export * from './hooks/useImportAppData';
 export * from './hooks/useShell';
 export * from './hooks/useSftp';
 export * from './hooks/useTerminal';
+export * from './hooks/useVirtualKeyboard';
 
 // utils
 export * from './utils/sleep';

@@ -5,7 +5,11 @@ import {
   TERMINAL_THEMES_MAP,
   type TerminalAtom,
   useTerminal,
+  useVirtualKeyboard,
+  VirtualKeyboard,
 } from 'shared';
+import { useEffect, useRef } from 'react';
+import { useSize } from 'ahooks';
 
 import openUrl from '@/utils/openUrl';
 
@@ -39,6 +43,27 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose });
 
+  const footerRef = useRef<HTMLElement>(null);
+
+  const size = useSize(footerRef);
+
+  const {
+    modifiers,
+    setModifiers,
+    onVirtualKeyboardInput,
+    onTerminalKeyboardEvent,
+  } = useVirtualKeyboard({
+    onSyntheticData: onTerminalData,
+  });
+
+  useEffect(() => {
+    if (!terminal) {
+      return;
+    }
+
+    terminal.attachCustomKeyEventHandler(onTerminalKeyboardEvent);
+  }, [terminal, onTerminalKeyboardEvent]);
+
   return (
     <Box
       sx={[
@@ -54,7 +79,7 @@ export default function SSHTerminal({
           position: 'absolute',
           top: 0,
           right: 0,
-          bottom: 0,
+          bottom: size?.height || 0,
           left: 0,
           overflow: 'hidden',
           pointerEvents: loading || error ? 'none' : 'unset',
@@ -109,7 +134,26 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && <Sftp session={session} />}
+
+      {!loading && !error && session && (
+        <Box
+          ref={footerRef}
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <Sftp session={session} />
+
+          <VirtualKeyboard
+            modifiers={modifiers}
+            onInput={onVirtualKeyboardInput}
+            onModifiersChange={setModifiers}
+          />
+        </Box>
+      )}
     </Box>
   );
 }

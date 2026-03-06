@@ -70,7 +70,7 @@ export default function Sftp({ session }: SftpProps) {
       setOrderBy(orderBy);
       setOrder(order);
     },
-    []
+    [],
   );
 
   const {
@@ -98,7 +98,7 @@ export default function Sftp({ session }: SftpProps) {
         message.error({
           message: err.message ?? 'read dir failed',
         }),
-    }
+    },
   );
 
   const {
@@ -147,7 +147,7 @@ export default function Sftp({ session }: SftpProps) {
       await sftpRef.current.sftpWriteTextFile(editingFile.path, content);
       refreshDir();
     },
-    [editingFile, sftpRef, refreshDir]
+    [editingFile, sftpRef, refreshDir],
   );
 
   const handleCloseEditor = useCallback(() => {
@@ -190,7 +190,7 @@ export default function Sftp({ session }: SftpProps) {
         }
       })
       .filter((item) =>
-        item.name.toLowerCase().includes(keyword.toLowerCase())
+        item.name.toLowerCase().includes(keyword.toLowerCase()),
       );
 
     const sortCell = cells.find((item) => item.key === orderBy);
@@ -217,7 +217,7 @@ export default function Sftp({ session }: SftpProps) {
       }
       setDirname(dir);
     },
-    [dirname, refreshDir]
+    [dirname, refreshDir],
   );
 
   const onNavigatePath = useCallback(
@@ -247,7 +247,7 @@ export default function Sftp({ session }: SftpProps) {
         return false;
       }
     },
-    [sftpRef, message]
+    [sftpRef, message],
   );
 
   const onParentClick = useCallback(() => {
@@ -315,7 +315,8 @@ export default function Sftp({ session }: SftpProps) {
           sx={{
             position: 'absolute',
             right: 10,
-            bottom: 10,
+            top: 0,
+            transform: 'translateY(-100%)',
           }}
         >
           <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
