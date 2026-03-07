@@ -26,7 +26,11 @@ else
   rm -rf "$CMDLINE_TOOLS_DIR" /tmp/cmdline-tools-extract
   mkdir -p /tmp/cmdline-tools-extract "$ANDROID_HOME/cmdline-tools"
 
-  wget -c -O /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+  CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip"
+  CMDLINE_TOOLS_SHA256="04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7"
+
+  wget -c -O /tmp/cmdline-tools.zip "$CMDLINE_TOOLS_URL"
+  echo "${CMDLINE_TOOLS_SHA256}  /tmp/cmdline-tools.zip" | sha256sum -c - || { echo "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"; exit 1; }
   unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
 
   mv /tmp/cmdline-tools-extract/cmdline-tools "$CMDLINE_TOOLS_DIR"
