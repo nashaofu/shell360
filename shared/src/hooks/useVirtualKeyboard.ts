@@ -72,7 +72,51 @@ function translateKeyToSyntheticData(
     Delete: "\x1b[3~",
   };
   if (specials[key]) {
+    // Base sequence for the special key
     let seq = specials[key];
+
+    // Handle Escape separately: Alt+Escape should send a distinct sequence.
+    if (key === "Escape") {
+      if (mods.alt) {
+        // Alt as Meta: prefix an extra ESC
+        return "\x1b\x1b";
+      }
+      return seq;
+    }
+
+    // For function/navigation keys that are normally CSI sequences, use
+    // standard CSI modifier forms when any modifier is active.
+    const hasAnyModifier = mods.ctrl || mods.alt || mods.shift;
+    if (hasAnyModifier) {
+      const m =
+        1 + (mods.shift ? 1 : 0) + (mods.alt ? 2 : 0) + (mods.ctrl ? 4 : 0);
+
+      switch (key) {
+        case "Home":
+          // Home: CSI 1;<m>H
+          return `\x1b[1;${m}H`;
+        case "End":
+          // End: CSI 1;<m>F
+          return `\x1b[1;${m}F`;
+        case "PageUp":
+          // PageUp: CSI 5;<m>~
+          return `\x1b[5;${m}~`;
+        case "PageDown":
+          // PageDown: CSI 6;<m>~
+          return `\x1b[6;${m}~`;
+        case "Insert":
+          // Insert: CSI 2;<m>~
+          return `\x1b[2;${m}~`;
+        case "Delete":
+          // Delete: CSI 3;<m>~
+          return `\x1b[3;${m}~`;
+        default:
+          break;
+      }
+    }
+
+    // For non-CSI specials (Enter, Backspace, Tab), treat Alt as Meta by
+    // prefixing an ESC, matching the behaviour for printable characters.
     if (mods.alt && seq[0] !== "\x1b") {
       seq = "\x1b" + seq;
     }
