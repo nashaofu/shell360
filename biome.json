@@ -7,11 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": [
-      "**",
-      "!shared/src/styles/shell360font/*",
-      "!**/permissions/**"
-    ]
+    "includes": ["**", "!shared/src/styles/shell360font/*", "!**/permissions"]
   },
   "formatter": {
     "enabled": true,

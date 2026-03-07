@@ -40,7 +40,7 @@ function translateKeyToSyntheticData(
       ch = ch.toUpperCase();
     }
     if (mods.alt) {
-      ch = "\x1b" + ch;
+      ch = `\x1b${ch}`;
     }
     return ch;
   }
@@ -118,7 +118,7 @@ function translateKeyToSyntheticData(
     // For non-CSI specials (Enter, Backspace, Tab), treat Alt as Meta by
     // prefixing an ESC, matching the behaviour for printable characters.
     if (mods.alt && seq[0] !== "\x1b") {
-      seq = "\x1b" + seq;
+      seq = `\x1b${seq}`;
     }
     return seq;
   }
