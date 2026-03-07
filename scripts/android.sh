@@ -31,10 +31,10 @@ else
 
   wget -c -O "$ZIP_PATH" https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
 
-  CMDLINE_TOOLS_SHA256=48833c34b761c10cb20bcd16582129395d121b27
-  ACTUAL_SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
-  if [ "${ACTUAL_SHA256:0:${#CMDLINE_TOOLS_SHA256}}" != "$CMDLINE_TOOLS_SHA256" ]; then
-    echo "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"
+  CMDLINE_TOOLS_SHA1=48833c34b761c10cb20bcd16582129395d121b27
+  ACTUAL_SHA1=$(sha1sum "$ZIP_PATH" | awk '{print $1}')
+  if [ "$ACTUAL_SHA1" != "$CMDLINE_TOOLS_SHA1" ]; then
+    echo "[ERROR] SHA-1 checksum verification failed for cmdline-tools.zip"
     exit 1
   fi
 
