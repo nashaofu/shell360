@@ -35,12 +35,14 @@ if (Test-Path -Path $sdkManager -PathType Leaf) {
   New-Item -Path (Join-Path $env:ANDROID_HOME "cmdline-tools") -ItemType Directory -Force | Out-Null
 
   Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-14742923_latest.zip" -OutFile $zipPath
+
   $cmdlineToolsSha256 = "16b3f45ddb3d85ea6bbe6a1c0b47146daf0db450"
   $actualSha256 = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
   if ($actualSha256 -ne $cmdlineToolsSha256) {
     Write-Error "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"
     exit 1
   }
+
   Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 
   Move-Item -Path (Join-Path $extractDir "cmdline-tools") -Destination $cmdlineToolsDir -Force
