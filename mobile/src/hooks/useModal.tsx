@@ -1,22 +1,21 @@
-import {
-  useEffect, useMemo, useRef, useState,
-} from 'react';
-import { Icon } from '@mui/material';
-import { v4 as uuidV4 } from 'uuid';
+import { Icon } from "@mui/material";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { v4 as uuidV4 } from "uuid";
+import { useModalsAtomWithApi } from "@/atom/modalsAtom";
+import HookModal, { type HookModalProps } from "@/components/HookModal";
 
-import HookModal, { type HookModalProps } from '@/components/HookModal';
-import { useModalsAtomWithApi } from '@/atom/modalsAtom';
-
-type HookConfig = Omit<HookModalProps, 'open' | 'hideCancel' | 'hideOk'>;
+type HookConfig = Omit<HookModalProps, "open" | "hideCancel" | "hideOk">;
 type HookConfigWithoutCancel = Omit<
-HookConfig,
-'cancelText' | 'CancelButtonProps'
+  HookConfig,
+  "cancelText" | "CancelButtonProps"
 >;
 
 export default function useModal() {
   const [open, setOpen] = useState(false);
   const [uuid] = useState(() => uuidV4());
-  const [modelProps, setModalProps] = useState<Omit<HookModalProps, 'open'>>({});
+  const [modelProps, setModalProps] = useState<Omit<HookModalProps, "open">>(
+    {},
+  );
   const modalsAtomWithApi = useModalsAtomWithApi();
 
   const modalsAtomWithApiRef = useRef(modalsAtomWithApi);
@@ -114,6 +113,7 @@ export default function useModal() {
     [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在组件挂载和卸载时执行
   useEffect(() => {
     modalsAtomWithApi.add(
       uuid,
@@ -123,7 +123,6 @@ export default function useModal() {
     return () => {
       modalsAtomWithApi.delete(uuid);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

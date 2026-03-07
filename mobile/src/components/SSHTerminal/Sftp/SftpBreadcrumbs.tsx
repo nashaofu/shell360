@@ -5,8 +5,8 @@ import {
   IconButton,
   TextField,
   Typography,
-} from '@mui/material';
-import { useCallback, useMemo, useState } from 'react';
+} from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
 
 type SftpBreadcrumbsProps = {
   dirname?: string;
@@ -15,7 +15,7 @@ type SftpBreadcrumbsProps = {
 };
 
 export default function SftpBreadcrumbs({
-  dirname = '/',
+  dirname = "/",
   onClick,
   onNavigate,
 }: SftpBreadcrumbsProps) {
@@ -23,7 +23,7 @@ export default function SftpBreadcrumbs({
   const [editPath, setEditPath] = useState(dirname);
 
   const dirs = useMemo(() => {
-    return dirname.split('/').filter((item) => !!item.length);
+    return dirname.split("/").filter((item) => !!item.length);
   }, [dirname]);
 
   const handleStartEdit = useCallback(() => {
@@ -45,8 +45,8 @@ export default function SftpBreadcrumbs({
 
     // Normalize path
     let normalizedPath = editPath.trim();
-    if (!normalizedPath.startsWith('/')) {
-      normalizedPath = '/' + normalizedPath;
+    if (!normalizedPath.startsWith("/")) {
+      normalizedPath = `/${normalizedPath}`;
     }
 
     const success = await onNavigate(normalizedPath);
@@ -57,24 +57,25 @@ export default function SftpBreadcrumbs({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         handleConfirmEdit();
-      } else if (e.key === 'Escape') {
+      } else if (e.key === "Escape") {
         handleCancelEdit();
       }
     },
-    [handleConfirmEdit, handleCancelEdit]
+    [handleConfirmEdit, handleCancelEdit],
   );
 
   const items = dirs.map((item, index) => {
-    const path = `/${dirs.slice(0, index + 1).join('/')}`;
+    const path = `/${dirs.slice(0, index + 1).join("/")}`;
     if (index < dirs.length - 1) {
       return (
         <Typography
+          // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一的
           key={item + index}
           sx={{
-            cursor: 'pointer',
-            color: 'text.primary',
+            cursor: "pointer",
+            color: "text.primary",
           }}
           onClick={() => onClick(path)}
         >
@@ -84,10 +85,11 @@ export default function SftpBreadcrumbs({
     } else {
       return (
         <Typography
+          // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一的
           key={item + index}
           sx={{
-            color: 'text.primary',
-            cursor: 'pointer',
+            color: "text.primary",
+            cursor: "pointer",
           }}
           onClick={() => onClick(path)}
         >
@@ -101,8 +103,8 @@ export default function SftpBreadcrumbs({
     return (
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           pr: 1,
           flex: 1,
         }}
@@ -116,9 +118,9 @@ export default function SftpBreadcrumbs({
           placeholder="Enter path..."
           sx={{
             flex: 1,
-            '& .MuiInputBase-root': {
-              fontFamily: 'monospace',
-              fontSize: '14px',
+            "& .MuiInputBase-root": {
+              fontFamily: "monospace",
+              fontSize: "14px",
             },
           }}
         />
@@ -135,8 +137,8 @@ export default function SftpBreadcrumbs({
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         pr: 1,
       }}
     >
@@ -144,17 +146,17 @@ export default function SftpBreadcrumbs({
         sx={{
           pl: 1,
           pr: 1,
-          color: 'text.primary',
-          cursor: 'pointer',
+          color: "text.primary",
+          cursor: "pointer",
         }}
-        onClick={() => onClick('/')}
+        onClick={() => onClick("/")}
       >
         /
       </Typography>
       <Box
         onDoubleClick={handleStartEdit}
         sx={{
-          cursor: 'text',
+          cursor: "text",
         }}
       >
         <Breadcrumbs>{items}</Breadcrumbs>

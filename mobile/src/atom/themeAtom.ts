@@ -1,38 +1,38 @@
-import { atomWithStorage } from 'jotai/utils';
-import { atom } from 'jotai';
-import { createTheme } from '@mui/material';
+import { createTheme } from "@mui/material";
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 
 export enum ThemeMode {
-  Auto = 'auto',
-  Light = 'light',
-  Dark = 'dark',
+  Auto = "auto",
+  Light = "light",
+  Dark = "dark",
 }
 
 export const themeModeAtom = atomWithStorage<ThemeMode>(
-  'themeMode',
+  "themeMode",
   ThemeMode.Auto,
   undefined,
   {
     getOnInit: true,
-  }
+  },
 );
 
 export const prefersDarkModeAtom = atom<boolean>(
-  window.matchMedia('(prefers-color-scheme: dark)').matches
+  window.matchMedia("(prefers-color-scheme: dark)").matches,
 );
 
 prefersDarkModeAtom.onMount = (setAtom) => {
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
   const onPrefersDarkChange = (mediaQuery: MediaQueryListEvent) => {
     setAtom(mediaQuery.matches);
   };
 
   // Listen for changes to the media queries
-  prefersDark.addEventListener('change', onPrefersDarkChange);
+  prefersDark.addEventListener("change", onPrefersDarkChange);
 
   return () => {
-    prefersDark.removeEventListener('change', onPrefersDarkChange);
+    prefersDark.removeEventListener("change", onPrefersDarkChange);
   };
 };
 
@@ -50,7 +50,7 @@ export const modeAtom = atom(
     }
 
     set(themeModeAtom, val);
-  }
+  },
 );
 
 export const themeAtom = atom((get) => {

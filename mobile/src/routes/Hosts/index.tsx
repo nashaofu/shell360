@@ -1,5 +1,3 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -11,30 +9,31 @@ import {
   ListItemIcon,
   ListItemText,
   OutlinedInput,
-} from '@mui/material';
+} from "@mui/material";
+import { get } from "lodash-es";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  useHosts,
   Dropdown,
-  HostTagsSelect,
-  getHostName,
   getHostDesc,
+  getHostName,
+  HostTagsSelect,
+  useHosts,
   useTerminalsAtomWithApi,
-} from 'shared';
-import { deleteHost, type Host } from 'tauri-plugin-data';
-import { get } from 'lodash-es';
+} from "shared";
+import { deleteHost, type Host } from "tauri-plugin-data";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import AutoRepeatGrid from "@/components/AutoRepeatGrid";
+import Empty from "@/components/Empty";
+import ItemCard from "@/components/ItemCard";
+import Page from "@/components/Page";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
 
-import Empty from '@/components/Empty';
-import ItemCard from '@/components/ItemCard';
-import Page from '@/components/Page';
-import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import useModal from '@/hooks/useModal';
-import { useIsShowPaywallAtom, useIsSubscription } from '@/atom/iap';
-import useMessage from '@/hooks/useMessage';
-
-import AddHost from './AddHost';
+import AddHost from "./AddHost";
 
 export default function Hosts() {
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const selectedHostRef = useRef<Host>(null);
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
@@ -56,7 +55,7 @@ export default function Hosts() {
 
     if (selectedTag) {
       filterHosts = filterHosts.filter((item) =>
-        item.tags?.includes(selectedTag)
+        item.tags?.includes(selectedTag),
       );
     }
 
@@ -66,7 +65,7 @@ export default function Hosts() {
     return filterHosts.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
-        `${item.hostname}:${item.port}`.toLowerCase().includes(kw)
+        `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
     );
   }, [hosts, keyword, selectedTag]);
 
@@ -75,7 +74,7 @@ export default function Hosts() {
       const [item] = terminalsAtomWithApi.add(host);
       navigate(`/terminal/${item.uuid}`);
     },
-    [navigate, terminalsAtomWithApi]
+    [navigate, terminalsAtomWithApi],
   );
 
   const onAddHostButtonClick = useCallback(() => {
@@ -104,7 +103,7 @@ export default function Hosts() {
             <ListItemText>Edit</ListItemText>
           </>
         ),
-        value: 'Edit',
+        value: "Edit",
         onClick: () => {
           setIsOpenAddHost(true);
           setEditHost(selectedHostRef.current || undefined);
@@ -120,7 +119,7 @@ export default function Hosts() {
             <ListItemText>Delete</ListItemText>
           </>
         ),
-        value: 'Delete',
+        value: "Delete",
         onClick: () => {
           const selectedHost = selectedHostRef.current;
           selectedHostRef.current = null;
@@ -134,17 +133,17 @@ export default function Hosts() {
             `${selectedHost.hostname}:${selectedHost.port}`;
 
           modal.confirm({
-            title: 'Delete Confirmation',
+            title: "Delete Confirmation",
             content: `Are you sure to delete the host: ${hostname}?`,
             OkButtonProps: {
-              color: 'warning',
+              color: "warning",
             },
             onOk: async () => {
               try {
                 await deleteHost(selectedHost);
               } catch (err) {
                 message.error({
-                  message: get(err, 'message') || 'Deletion failed',
+                  message: get(err, "message") || "Deletion failed",
                 });
                 throw err;
               }
@@ -154,7 +153,7 @@ export default function Hosts() {
         },
       },
     ],
-    [message, modal, refreshHosts, selectedHostRef]
+    [message, modal, refreshHosts],
   );
 
   return (
@@ -167,9 +166,9 @@ export default function Hosts() {
               return (
                 <IconButton
                   sx={(theme) => ({
-                    color: 'inherit',
-                    [theme.breakpoints.up('sm')]: {
-                      display: 'none',
+                    color: "inherit",
+                    [theme.breakpoints.up("sm")]: {
+                      display: "none",
                     },
                   })}
                   edge="end"
@@ -183,9 +182,9 @@ export default function Hosts() {
           </HostTagsSelect>
           <IconButton
             sx={(theme) => ({
-              color: 'inherit',
-              [theme.breakpoints.up('sm')]: {
-                display: 'none',
+              color: "inherit",
+              [theme.breakpoints.up("sm")]: {
+                display: "none",
               },
             })}
             edge="end"
@@ -199,9 +198,9 @@ export default function Hosts() {
     >
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           my: 2,
         }}
       >
@@ -223,12 +222,12 @@ export default function Hosts() {
         <Box
           sx={(theme) => ({
             ml: 2,
-            [theme.breakpoints.down('sm')]: {
-              display: 'none',
+            [theme.breakpoints.down("sm")]: {
+              display: "none",
             },
           })}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
               {({ onChangeOpen, label }) => (
                 <List component="nav" dense>
@@ -238,7 +237,7 @@ export default function Hosts() {
                     >
                       <ListItemText
                         primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
                             <Icon className="icon-label" />
                             <Box component="span" sx={{ paddingLeft: 0.5 }}>
                               {label}
@@ -278,12 +277,12 @@ export default function Hosts() {
                 <Dropdown
                   menus={menus}
                   anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
+                    vertical: "bottom",
+                    horizontal: "right",
                   }}
                   transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
+                    vertical: "top",
+                    horizontal: "right",
                   }}
                 >
                   {({ onChangeOpen }) => (

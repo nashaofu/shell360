@@ -1,5 +1,5 @@
-import { Box, Icon, Typography } from '@mui/material';
-import { type ReactNode } from 'react';
+import { Box, Icon, Typography } from "@mui/material";
+import type { ReactNode } from "react";
 
 type EmptyProps = {
   desc?: ReactNode;
@@ -11,7 +11,7 @@ export default function Empty({ desc, children }: EmptyProps) {
     <Box
       sx={{
         p: 3,
-        textAlign: 'center',
+        textAlign: "center",
       }}
     >
       <Icon

@@ -1,8 +1,8 @@
-import { useRequest } from 'ahooks';
-import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
-import { SSHSftp, type SSHSftpFile } from 'tauri-plugin-ssh';
+import { useRequest } from "ahooks";
+import { type MutableRefObject, useCallback, useEffect, useState } from "react";
+import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
-import useMessage from '@/hooks/useMessage';
+import type useMessage from "@/hooks/useMessage";
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
@@ -40,23 +40,23 @@ export default function useRename({
       manual: true,
       onSuccess: () => {
         message.success({
-          message: 'rename success',
+          message: "rename success",
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'rename failed',
+          message: err.message ?? "rename failed",
         }),
-    }
+    },
   );
 
   const onEditingFilenameChange = useCallback((val: string) => {
-    setEditingFilename(val.replace('/', ''));
+    setEditingFilename(val.replace("/", ""));
   }, []);
 
   const onRename = useCallback((item: SSHSftpFile) => {
-    const filename = item.path.split('/').pop();
+    const filename = item.path.split("/").pop();
     setEditingFilename(filename);
     setSelectedFile(item);
   }, []);
@@ -70,14 +70,14 @@ export default function useRename({
     if (!selectedFile || !editingFilename) {
       return;
     }
-    const parent = selectedFile.path.split('/').slice(0, -1).join('/');
+    const parent = selectedFile.path.split("/").slice(0, -1).join("/");
     await rename(selectedFile.path, `${parent}/${editingFilename}`);
     onRenameCancel();
   }, [editingFilename, onRenameCancel, rename, selectedFile]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: files 变化时重置编辑状态
   useEffect(() => {
     onRenameCancel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
   return {

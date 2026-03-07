@@ -1,30 +1,30 @@
 import {
+  Avatar,
   Box,
   Button,
-  Typography,
+  Checkbox,
+  Link,
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
   ListItemIcon,
-  Checkbox,
-  Avatar,
-  Link,
-} from '@mui/material';
-import { useCallback, useMemo, useState } from 'react';
+  ListItemText,
+  Typography,
+} from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
 import {
   type IapOffering,
   IapPackageType,
+  IapSubscriptionPeriodUnit,
   iapPurchasePackage,
   iapRestore,
-  IapSubscriptionPeriodUnit,
-} from 'tauri-plugin-mobile';
+} from "tauri-plugin-mobile";
 
-import { useRefreshCustomerInfoAtom } from '@/atom/iap';
-import useMessage from '@/hooks/useMessage';
-import openUrl from '@/utils/openUrl';
+import { useRefreshCustomerInfoAtom } from "@/atom/iap";
+import useMessage from "@/hooks/useMessage";
+import openUrl from "@/utils/openUrl";
 
-import logo from './logo.svg';
+import logo from "./logo.svg";
 
 type BuyProps = {
   offerings: IapOffering[];
@@ -32,19 +32,19 @@ type BuyProps = {
 };
 
 const subscriptionPeriodUnit = {
-  [IapSubscriptionPeriodUnit.Day]: 'day',
-  [IapSubscriptionPeriodUnit.Month]: 'month',
-  [IapSubscriptionPeriodUnit.Week]: 'week',
-  [IapSubscriptionPeriodUnit.Year]: 'year',
+  [IapSubscriptionPeriodUnit.Day]: "day",
+  [IapSubscriptionPeriodUnit.Month]: "month",
+  [IapSubscriptionPeriodUnit.Week]: "week",
+  [IapSubscriptionPeriodUnit.Year]: "year",
 };
 
 const packageType: Record<number, string> = {
-  [IapPackageType.Annual]: 'Annual',
-  [IapPackageType.SixMonth]: 'Six Month',
-  [IapPackageType.ThreeMonth]: 'Three Month',
-  [IapPackageType.TwoMonth]: 'Two Month',
-  [IapPackageType.Monthly]: 'Monthly',
-  [IapPackageType.Weekly]: 'Weekly',
+  [IapPackageType.Annual]: "Annual",
+  [IapPackageType.SixMonth]: "Six Month",
+  [IapPackageType.ThreeMonth]: "Three Month",
+  [IapPackageType.TwoMonth]: "Two Month",
+  [IapPackageType.Monthly]: "Monthly",
+  [IapPackageType.Weekly]: "Weekly",
 };
 
 export default function Buy({ offerings, onLoadingChange }: BuyProps) {
@@ -59,22 +59,22 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
         map.set(item.identifier, item);
         return map;
       }, new Map<string, IapOffering>()),
-    [offerings]
+    [offerings],
   );
 
   const defaultOfferingAvailablePackages = useMemo(
-    () => offeringsMap.get('default')?.availablePackages ?? [],
-    [offeringsMap]
+    () => offeringsMap.get("default")?.availablePackages ?? [],
+    [offeringsMap],
   );
 
   const onBuyPackage = useCallback(async () => {
     const selectedPackage = defaultOfferingAvailablePackages.find(
-      (item) => item.identifier === selectedPackageIdentifier
+      (item) => item.identifier === selectedPackageIdentifier,
     );
 
     if (!selectedPackage) {
       message.info({
-        message: 'Please select the subscription period.',
+        message: "Please select the subscription period.",
       });
       return;
     }
@@ -87,7 +87,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
       });
     } catch (err) {
       message.error({
-        message: 'Subscription Failed, Please Try Again',
+        message: "Subscription Failed, Please Try Again",
       });
       if (err instanceof Error) {
         throw err;
@@ -120,7 +120,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
     <>
       <Box
         sx={{
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         <Avatar
@@ -129,16 +129,16 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
           sx={{
             width: 128,
             height: 128,
-            mr: 'auto',
+            mr: "auto",
             mb: 1.5,
-            ml: 'auto',
+            ml: "auto",
           }}
         />
         <Typography variant="h5">Shell360</Typography>
         <Box
           sx={{
-            textAlign: 'center',
-            gap: '0 4px',
+            textAlign: "center",
+            gap: "0 4px",
           }}
         >
           <Link
@@ -147,7 +147,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
             }}
             onClick={() =>
               openUrl(
-                'https://nashaofu.github.io/shell360/docs/Privacy-Policy.html'
+                "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
               )
             }
           >
@@ -158,7 +158,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
               marginLeft: 0.5,
             }}
             onClick={() =>
-              openUrl('http://www.apple.com/legal/itunes/appstore/dev/stdeula')
+              openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
           >
             Terms of Use
@@ -167,7 +167,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
         <Typography
           variant="subtitle1"
           sx={{
-            textAlign: 'left',
+            textAlign: "left",
             mt: 2,
           }}
         >
@@ -176,7 +176,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
         <Box
           component="ol"
           sx={{
-            textAlign: 'left',
+            textAlign: "left",
             pt: 0,
             pr: 0,
             pb: 0,
@@ -230,7 +230,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
             subscriptionPeriodUnit[
               storeProduct.subscriptionPeriod?.unit as IapSubscriptionPeriodUnit
             ];
-          const periodUnitText = periodUnit ? `/${periodUnit}` : '';
+          const periodUnitText = periodUnit ? `/${periodUnit}` : "";
           let desc = `Full features for just ${price}${periodUnitText}`;
 
           const subscriptionPeriod =
@@ -251,7 +251,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: 'unset',
+                    minWidth: "unset",
                   }}
                 >
                   <Checkbox

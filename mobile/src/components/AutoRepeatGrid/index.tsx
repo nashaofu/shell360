@@ -1,7 +1,7 @@
-import { type ReactNode } from 'react';
-import { Box, type SxProps, type Theme } from '@mui/material';
+import { Box, type SxProps, type Theme } from "@mui/material";
+import type { ReactNode } from "react";
 
-import useAutoRepeatGridTemplateColumns from './useAutoRepeatGridTemplateColumns';
+import useAutoRepeatGridTemplateColumns from "./useAutoRepeatGridTemplateColumns";
 
 type AutoRepeatGridProps = {
   itemWidth: number;
@@ -22,7 +22,7 @@ export default function AutoRepeatGrid({
       ref={gridElRef}
       sx={[
         {
-          display: 'grid',
+          display: "grid",
           gridTemplateColumns,
         },
         ...(Array.isArray(sx) ? sx : [sx]),

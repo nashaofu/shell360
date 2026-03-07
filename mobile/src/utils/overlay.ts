@@ -7,7 +7,7 @@ export default {
     OVERLAY_CLOSE_FNS.push(fn);
   },
   delete: (fn: OverlayCloseFn) => {
-    const index = OVERLAY_CLOSE_FNS.findIndex((item) => item === fn);
+    const index = OVERLAY_CLOSE_FNS.indexOf(fn);
     if (index !== -1) {
       OVERLAY_CLOSE_FNS.splice(index, 1);
     }

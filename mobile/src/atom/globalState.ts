@@ -1,5 +1,5 @@
-import { atom, useAtom } from 'jotai';
-import { useMemo } from 'react';
+import { atom, useAtom } from "jotai";
+import { useMemo } from "react";
 
 export type GlobalState = {
   isOpenSidebar: boolean;

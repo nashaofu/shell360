@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeTextFile } from '@tauri-apps/plugin-fs';
-import { useHosts, useKeys, usePortForwardings } from 'shared';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { useCallback } from "react";
+import { useHosts, useKeys, usePortForwardings } from "shared";
 
 export default function useExportData() {
   const { data: hosts } = useHosts();
@@ -17,10 +17,10 @@ export default function useExportData() {
     });
 
     const path = await save({
-      defaultPath: 'shell360.json',
+      defaultPath: "shell360.json",
     });
 
-    invoke('plugin:dialog|destroy_path', { path: path });
+    invoke("plugin:dialog|destroy_path", { path: path });
 
     if (!path) {
       return false;

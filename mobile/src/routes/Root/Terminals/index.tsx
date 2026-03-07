@@ -1,26 +1,29 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMatch, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Box,
   createTheme,
+  darken,
   Icon,
   IconButton,
   ThemeProvider,
   Toolbar,
   Typography,
   useTheme,
-  darken,
-} from '@mui/material';
-import { TERMINAL_THEMES_MAP, Dropdown } from 'shared';
-import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
-
-import SSHTerminal from '@/components/SSHTerminal';
-import { useGlobalStateAtomWithApi } from '@/atom/globalState';
-import AddKey from '@/components/AddKey';
+} from "@mui/material";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMatch, useNavigate } from "react-router-dom";
+import {
+  Dropdown,
+  TERMINAL_THEMES_MAP,
+  type TerminalAtom,
+  useTerminalsAtomWithApi,
+} from "shared";
+import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import AddKey from "@/components/AddKey";
+import SSHTerminal from "@/components/SSHTerminal";
 
 export default function Terminals() {
-  const match = useMatch('/terminal/:uuid');
+  const match = useMatch("/terminal/:uuid");
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
@@ -29,7 +32,7 @@ export default function Terminals() {
 
   const activeTerminal = useMemo(
     () => terminalsAtomWithApi.state.get(match?.params.uuid as string),
-    [match?.params.uuid, terminalsAtomWithApi.state]
+    [match?.params.uuid, terminalsAtomWithApi.state],
   );
 
   const onClose = useCallback(
@@ -42,20 +45,20 @@ export default function Terminals() {
             replace: true,
           });
         } else {
-          navigate('/', {
+          navigate("/", {
             replace: true,
           });
         }
       }
     },
-    [match?.params.uuid, navigate, terminalsAtomWithApi]
+    [match?.params.uuid, navigate, terminalsAtomWithApi],
   );
 
   const headerRightMenus = useMemo(
     () => [
       {
-        label: 'Close',
-        value: 'Close',
+        label: "Close",
+        value: "Close",
         onClick: () => {
           if (activeTerminal) {
             onClose(activeTerminal);
@@ -63,7 +66,7 @@ export default function Terminals() {
         },
       },
     ],
-    [activeTerminal, onClose]
+    [activeTerminal, onClose],
   );
 
   const appBarTheme = useMemo(() => {
@@ -73,8 +76,8 @@ export default function Terminals() {
 
     const isLoading =
       activeTerminal?.jumpHostChain.some(
-        (it) => it.status !== 'authenticated' || it.loading || it.error
-      ) || activeTerminal?.status !== 'success';
+        (it) => it.status !== "authenticated" || it.loading || it.error,
+      ) || activeTerminal?.status !== "success";
 
     if (isLoading) {
       return globalTheme;
@@ -82,7 +85,7 @@ export default function Terminals() {
 
     const defaultBackground = globalTheme.palette.background.default;
     const theme = TERMINAL_THEMES_MAP.get(
-      activeTerminal.host.terminalSettings?.theme
+      activeTerminal.host.terminalSettings?.theme,
     );
 
     const bgColor = darken(theme?.theme.background ?? defaultBackground, 0.52);
@@ -101,11 +104,11 @@ export default function Terminals() {
     });
   }, [activeTerminal, globalTheme]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在terminalsAtomWithApi.state.size变化时执行
   useEffect(() => {
     if (!terminalsAtomWithApi.state.size && match) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [terminalsAtomWithApi.state.size, navigate]);
 
   return (
@@ -113,15 +116,15 @@ export default function Terminals() {
       sx={{
         flexGrow: 1,
         flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <ThemeProvider theme={appBarTheme}>
         <AppBar
           position="static"
           sx={{
-            paddingTop: 'env(safe-area-inset-top)',
+            paddingTop: "env(safe-area-inset-top)",
           }}
         >
           <Toolbar>
@@ -129,7 +132,7 @@ export default function Terminals() {
               size="large"
               edge="start"
               sx={{
-                color: 'inherit',
+                color: "inherit",
                 mr: 2,
               }}
               onClick={globalStateAtomWithApi.openSidebar}
@@ -142,14 +145,14 @@ export default function Terminals() {
               }}
               variant="h6"
             >
-              {activeTerminal?.name || 'Shell360'}
+              {activeTerminal?.name || "Shell360"}
             </Typography>
             <Dropdown menus={headerRightMenus}>
               {({ onChangeOpen }) => (
                 <IconButton
                   sx={{
                     ml: 2,
-                    color: 'inherit',
+                    color: "inherit",
                   }}
                   edge="end"
                   size="small"
@@ -168,7 +171,7 @@ export default function Terminals() {
           <SSHTerminal
             key={item.uuid}
             sx={{
-              display: visible ? 'flex' : 'none',
+              display: visible ? "flex" : "none",
               flexGrow: 1,
               flexShrink: 0,
             }}
