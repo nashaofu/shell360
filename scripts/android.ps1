@@ -7,10 +7,14 @@ $ErrorActionPreference = "Stop"
 Write-Host "[INFO] Adding Rust targets for Android..."
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
-$env:ANDROID_HOME = Join-Path $HOME "AppData/Local/Android/Sdk"
-if (-not (Test-Path -Path $env:ANDROID_HOME -PathType Container)) {
-  Write-Host "[INFO] Creating Android SDK directory at $env:ANDROID_HOME..."
-  New-Item -Path $env:ANDROID_HOME -ItemType Directory -Force | Out-Null
+if (-not $env:ANDROID_HOME) {
+  $env:ANDROID_HOME = Join-Path $HOME "AppData/Local/Android/Sdk"
+  if (-not (Test-Path -Path $env:ANDROID_HOME -PathType Container)) {
+    Write-Host "[INFO] Creating Android SDK directory at $env:ANDROID_HOME..."
+    New-Item -Path $env:ANDROID_HOME -ItemType Directory -Force | Out-Null
+  }
+} else {
+  Write-Host "[INFO] Using existing ANDROID_HOME: $env:ANDROID_HOME"
 }
 
 $cmdlineToolsDir = Join-Path $env:ANDROID_HOME "cmdline-tools/latest"
