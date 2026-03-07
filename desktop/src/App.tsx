@@ -1,53 +1,52 @@
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { CssBaseline, ThemeProvider } from '@mui/material';
-import { ErrorBoundary } from 'react-error-boundary';
-import { lazy } from 'react';
-import { useAtomValue } from 'jotai';
-import { SnackbarProvider } from 'notistack';
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { useAtomValue } from "jotai";
+import { SnackbarProvider } from "notistack";
+import { lazy } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import { useModalsAtomValue } from '@/atom/modalsAtom';
-import ErrorBoundaryFallback from '@/components/ErrorBoundaryFallback';
-import RouterErrorBoundary from '@/components/RouterErrorBoundary';
-
-import Contextmenu from './components/Contextmenu';
-import UpdateDialog from './components/UpdateDialog';
-import { useAutoCheckUpdate } from './atom/updateAtom';
-import Root from './routes/Root';
-import { themeAtom } from './atom/themeAtom';
+import { useModalsAtomValue } from "@/atom/modalsAtom";
+import ErrorBoundaryFallback from "@/components/ErrorBoundaryFallback";
+import RouterErrorBoundary from "@/components/RouterErrorBoundary";
+import { themeAtom } from "./atom/themeAtom";
+import { useAutoCheckUpdate } from "./atom/updateAtom";
+import Contextmenu from "./components/Contextmenu";
+import UpdateDialog from "./components/UpdateDialog";
+import Root from "./routes/Root";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     Component: Root,
     ErrorBoundary: RouterErrorBoundary,
     children: [
       {
-        path: '/',
-        Component: lazy(() => import('./routes/Hosts')),
+        path: "/",
+        Component: lazy(() => import("./routes/Hosts")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
-        path: '/port-forwardings',
-        Component: lazy(() => import('./routes/PortForwardings')),
+        path: "/port-forwardings",
+        Component: lazy(() => import("./routes/PortForwardings")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
-        path: '/keys',
-        Component: lazy(() => import('./routes/Keys')),
+        path: "/keys",
+        Component: lazy(() => import("./routes/Keys")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
-        path: '/known-hosts',
-        Component: lazy(() => import('./routes/KnownHosts')),
+        path: "/known-hosts",
+        Component: lazy(() => import("./routes/KnownHosts")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
-        path: '/settings',
-        Component: lazy(() => import('./routes/Settings')),
+        path: "/settings",
+        Component: lazy(() => import("./routes/Settings")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
-        path: '*',
+        path: "*",
         element: null,
         ErrorBoundary: RouterErrorBoundary,
       },

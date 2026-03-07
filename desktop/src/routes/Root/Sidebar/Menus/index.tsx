@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 import {
   Icon,
   List,
@@ -7,28 +5,30 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
+} from "@mui/material";
+import { useCallback } from "react";
+import { matchPath, useLocation, useNavigate } from "react-router-dom";
 
 const MENU_ITEMS = [
   {
-    icon: 'icon-host',
-    text: 'Hosts',
-    to: '/',
+    icon: "icon-host",
+    text: "Hosts",
+    to: "/",
   },
   {
-    icon: 'icon-site-map',
-    text: 'Port forwardings',
-    to: '/port-forwardings',
+    icon: "icon-site-map",
+    text: "Port forwardings",
+    to: "/port-forwardings",
   },
   {
-    icon: 'icon-key',
-    text: 'Keys',
-    to: '/keys',
+    icon: "icon-key",
+    text: "Keys",
+    to: "/keys",
   },
   {
-    icon: 'icon-fingerprint',
-    text: 'Known hosts',
-    to: '/known-hosts',
+    icon: "icon-fingerprint",
+    text: "Known hosts",
+    to: "/known-hosts",
   },
 ];
 
@@ -60,7 +60,7 @@ export default function Menus({ expand, onClick }: MenusProps) {
         >
           <ListItemButton
             sx={{
-              justifyContent: expand ? 'initial' : 'center',
+              justifyContent: expand ? "initial" : "center",
             }}
             selected={
               !!matchPath(
@@ -74,9 +74,9 @@ export default function Menus({ expand, onClick }: MenusProps) {
           >
             <ListItemIcon
               sx={{
-                minWidth: 'unset',
+                minWidth: "unset",
                 mr: expand ? 2 : 0,
-                justifyContent: expand ? 'initial' : 'center',
+                justifyContent: expand ? "initial" : "center",
               }}
             >
               <Icon className={item.icon} />

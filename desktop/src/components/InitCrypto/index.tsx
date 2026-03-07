@@ -2,17 +2,17 @@ import {
   Box,
   Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  DialogActions,
-} from '@mui/material';
-import { useRequest } from 'ahooks';
-import { Controller, useForm } from 'react-hook-form';
-import { changeCryptoEnable } from 'tauri-plugin-data';
-import { Loading , TextFieldPassword } from 'shared';
+} from "@mui/material";
+import { useRequest } from "ahooks";
+import { Controller, useForm } from "react-hook-form";
+import { Loading, TextFieldPassword } from "shared";
+import { changeCryptoEnable } from "tauri-plugin-data";
 
-import useMessage from '@/hooks/useMessage';
+import useMessage from "@/hooks/useMessage";
 
 interface IniCryptoProps {
   open: boolean;
@@ -24,8 +24,8 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
   const message = useMessage();
   const formApi = useForm({
     defaultValues: {
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -43,16 +43,16 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
         manual: true,
         onSuccess: () => {
           message.success({
-            message: 'Initialization of crypto success',
+            message: "Initialization of crypto success",
           });
           onOk();
         },
         onError: () => {
           message.error({
-            message: 'Initialization of crypto failed',
+            message: "Initialization of crypto failed",
           });
         },
-      }
+      },
     );
 
   const loading = initCryptoPasswordLoading;
@@ -72,15 +72,15 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
               rules={{
                 required: {
                   value: true,
-                  message: 'Please enter password',
+                  message: "Please enter password",
                 },
                 minLength: {
                   value: 8,
-                  message: 'Please enter at least 8 characters',
+                  message: "Please enter at least 8 characters",
                 },
                 maxLength: {
                   value: 128,
-                  message: 'Please enter no more than 128 characters',
+                  message: "Please enter no more than 128 characters",
                 },
               }}
               render={({ field, fieldState }) => (
@@ -103,19 +103,19 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
               rules={{
                 required: {
                   value: true,
-                  message: 'Please enter confirm password',
+                  message: "Please enter confirm password",
                 },
                 minLength: {
                   value: 8,
-                  message: 'Please enter at least 8 characters',
+                  message: "Please enter at least 8 characters",
                 },
                 maxLength: {
                   value: 128,
-                  message: 'Please enter no more than 128 characters',
+                  message: "Please enter no more than 128 characters",
                 },
                 validate: (value, formValues) => {
                   if (value !== formValues.password) {
-                    return 'The password confirmation does not match the password';
+                    return "The password confirmation does not match the password";
                   }
                   return true;
                 },

@@ -1,4 +1,3 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Dialog,
@@ -11,28 +10,27 @@ import {
   Paper,
   Table,
   TableContainer,
-} from '@mui/material';
-import { useRequest } from 'ahooks';
+} from "@mui/material";
+import { useRequest } from "ahooks";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Dropdown, Loading, useSftp } from "shared";
 import {
-  SSHSession,
+  type SSHSession,
   type SSHSftpFile,
   SSHSftpFileType,
-} from 'tauri-plugin-ssh';
-import { Loading, useSftp, Dropdown } from 'shared';
-
-import useModal from '@/hooks/useModal';
-import useMessage from '@/hooks/useMessage';
-
-import useCells from './useCells';
-import { SftpTableHead } from './SftpTableHead';
-import { SftpTableOrder } from './types';
-import { SftpTableBody } from './SftpTableBody';
-import SftpBreadcrumbs from './SftpBreadcrumbs';
-import SftpFileSearch from './SftpFileSearch';
-import useSftpActions from './useSftpActions';
-import useRename from './useRename';
-import useCreate, { CreateType } from './useCreate';
-import FileEditorModal from './FileEditorModal';
+} from "tauri-plugin-ssh";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
+import FileEditorModal from "./FileEditorModal";
+import SftpBreadcrumbs from "./SftpBreadcrumbs";
+import SftpFileSearch from "./SftpFileSearch";
+import { SftpTableBody } from "./SftpTableBody";
+import { SftpTableHead } from "./SftpTableHead";
+import { SftpTableOrder } from "./types";
+import useCells from "./useCells";
+import useCreate, { CreateType } from "./useCreate";
+import useRename from "./useRename";
+import useSftpActions from "./useSftpActions";
 
 type SftpProps = {
   session: SSHSession;
@@ -42,11 +40,11 @@ export default function Sftp({ session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
-  const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>('name');
+  const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
   const [order, setOrder] = useState<SftpTableOrder>(SftpTableOrder.Asc);
   const modal = useModal();
   const message = useMessage();
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
@@ -58,7 +56,7 @@ export default function Sftp({ session }: SftpProps) {
   } = useSftp({
     session,
     onSuccess: async (sftp) => {
-      const dirname = await sftp.sftpCanonicalize('.');
+      const dirname = await sftp.sftpCanonicalize(".");
       setDirname(dirname);
     },
   });
@@ -68,7 +66,7 @@ export default function Sftp({ session }: SftpProps) {
       setOrderBy(orderBy);
       setOrder(order);
     },
-    []
+    [],
   );
 
   const {
@@ -89,14 +87,14 @@ export default function Sftp({ session }: SftpProps) {
         tableContainerRef.current?.scrollTo({
           top: 0,
           left: 0,
-          behavior: 'smooth',
+          behavior: "smooth",
         });
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'read dir failed',
+          message: err.message ?? "read dir failed",
         }),
-    }
+    },
   );
 
   const {
@@ -132,7 +130,7 @@ export default function Sftp({ session }: SftpProps) {
 
   const handleLoadFileContent = useCallback(async () => {
     if (!editingFile || !sftpRef.current) {
-      throw new Error('No file selected or SFTP not initialized');
+      throw new Error("No file selected or SFTP not initialized");
     }
     return await sftpRef.current.sftpReadTextFile(editingFile.path);
   }, [editingFile, sftpRef]);
@@ -140,12 +138,12 @@ export default function Sftp({ session }: SftpProps) {
   const handleSaveFileContent = useCallback(
     async (content: string) => {
       if (!editingFile || !sftpRef.current) {
-        throw new Error('No file selected or SFTP not initialized');
+        throw new Error("No file selected or SFTP not initialized");
       }
       await sftpRef.current.sftpWriteTextFile(editingFile.path, content);
       refreshDir();
     },
-    [editingFile, sftpRef, refreshDir]
+    [editingFile, sftpRef, refreshDir],
   );
 
   const handleCloseEditor = useCallback(() => {
@@ -184,11 +182,11 @@ export default function Sftp({ session }: SftpProps) {
         if (isShowHiddenFiles) {
           return true;
         } else {
-          return !item.name.startsWith('.');
+          return !item.name.startsWith(".");
         }
       })
       .filter((item) =>
-        item.name.toLowerCase().includes(keyword.toLowerCase())
+        item.name.toLowerCase().includes(keyword.toLowerCase()),
       );
 
     const sortCell = cells.find((item) => item.key === orderBy);
@@ -206,7 +204,7 @@ export default function Sftp({ session }: SftpProps) {
     }
   }, [cells, files, order, orderBy, keyword, isShowHiddenFiles]);
 
-  const isRoot = dirname === '/';
+  const isRoot = dirname === "/";
 
   const onSftpBreadcrumbsClick = useCallback(
     (dir: string) => {
@@ -215,7 +213,7 @@ export default function Sftp({ session }: SftpProps) {
       }
       setDirname(dir);
     },
-    [dirname, refreshDir]
+    [dirname, refreshDir],
   );
 
   const onNavigatePath = useCallback(
@@ -240,17 +238,17 @@ export default function Sftp({ session }: SftpProps) {
         return true;
       } catch (err) {
         message.error({
-          message: `Cannot navigate to ${path}: ${(err as Error).message ?? 'Unknown error'}`,
+          message: `Cannot navigate to ${path}: ${(err as Error).message ?? "Unknown error"}`,
         });
         return false;
       }
     },
-    [sftpRef, message]
+    [sftpRef, message],
   );
 
   const onParentClick = useCallback(() => {
     if (dirname && !isRoot) {
-      setDirname(dirname.split('/').slice(0, -1).join('/') || '/');
+      setDirname(dirname.split("/").slice(0, -1).join("/") || "/");
     }
   }, [dirname, isRoot]);
 
@@ -274,23 +272,23 @@ export default function Sftp({ session }: SftpProps) {
   const actions = useMemo(() => {
     return [
       {
-        label: 'New File',
-        value: 'New File',
-        onClick: () => onCreate(CreateType.File, 'New File'),
+        label: "New File",
+        value: "New File",
+        onClick: () => onCreate(CreateType.File, "New File"),
       },
       {
-        label: 'New Folder',
-        value: 'New Folder',
-        onClick: () => onCreate(CreateType.Dir, 'New Folder'),
+        label: "New Folder",
+        value: "New Folder",
+        onClick: () => onCreate(CreateType.Dir, "New Folder"),
       },
       {
-        label: 'Refresh',
-        value: 'Refresh',
+        label: "Refresh",
+        value: "Refresh",
         onClick: () => refreshDir(),
       },
       {
-        label: isShowHiddenFiles ? 'Hide Hidden Files' : 'Show Hidden Files',
-        value: 'Toggle Hidden Files',
+        label: isShowHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files",
+        value: "Toggle Hidden Files",
         onClick: () => setIsShowHiddenFiles(!isShowHiddenFiles),
       },
     ];
@@ -311,7 +309,7 @@ export default function Sftp({ session }: SftpProps) {
       {!initLoading && !initError && (
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             right: 10,
             bottom: 10,
           }}
@@ -325,15 +323,15 @@ export default function Sftp({ session }: SftpProps) {
         open={isOpen}
         fullWidth
         sx={{
-          '.MuiDialog-paper': {
+          ".MuiDialog-paper": {
             maxWidth: 960,
           },
         }}
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
           }}
         >
           <Box
@@ -347,7 +345,7 @@ export default function Sftp({ session }: SftpProps) {
             size="small"
             edge="end"
             sx={{
-              color: 'inherit',
+              color: "inherit",
               ml: 2,
             }}
             disabled={isLoading}
@@ -360,16 +358,16 @@ export default function Sftp({ session }: SftpProps) {
           dividers
           sx={{
             p: 0,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <Loading
             sx={{
               flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
             }}
             loading={isLoading}
             size={48}
@@ -377,9 +375,9 @@ export default function Sftp({ session }: SftpProps) {
           >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 p: 1,
               }}
             >
@@ -390,8 +388,8 @@ export default function Sftp({ session }: SftpProps) {
               ></SftpBreadcrumbs>
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <SftpFileSearch
@@ -404,12 +402,12 @@ export default function Sftp({ session }: SftpProps) {
                 <Dropdown
                   menus={actions}
                   anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
+                    vertical: "bottom",
+                    horizontal: "right",
                   }}
                   transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
+                    vertical: "top",
+                    horizontal: "right",
                   }}
                 >
                   {({ onChangeOpen }) => (
@@ -426,9 +424,9 @@ export default function Sftp({ session }: SftpProps) {
             <Paper
               sx={{
                 flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
               }}
             >
               <TableContainer ref={tableContainerRef} sx={{ flex: 1 }}>

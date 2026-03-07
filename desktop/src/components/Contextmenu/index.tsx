@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
-import { Menu, MenuItem } from '@mui/material';
+import { Menu, MenuItem } from "@mui/material";
+import { useCallback, useState } from "react";
 
-import useContextmenu, { type ContextmenuState } from './useContextmenu';
+import useContextmenu, { type ContextmenuState } from "./useContextmenu";
 
 export default function Contextmenu() {
   const [contextmenuState, setContextmenuState] = useState<ContextmenuState>({
@@ -31,19 +31,19 @@ export default function Contextmenu() {
       anchorReference="anchorPosition"
       onClose={onCloseContextmenu}
       anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
+        vertical: "bottom",
+        horizontal: "left",
       }}
       transformOrigin={{
-        vertical: 'top',
-        horizontal: 'left',
+        vertical: "top",
+        horizontal: "left",
       }}
       anchorPosition={{
         left: contextmenuState.x,
         top: contextmenuState.y,
       }}
       sx={{
-        '& .MuiPaper-root': {
+        "& .MuiPaper-root": {
           minWidth: 200,
         },
       }}

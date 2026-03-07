@@ -1,28 +1,27 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Box, Button, Icon, OutlinedInput } from '@mui/material';
-import { useHosts, usePortForwardings } from 'shared';
-import { type PortForwarding } from 'tauri-plugin-data';
+import { Box, Button, Icon, OutlinedInput } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
+import { useHosts, usePortForwardings } from "shared";
+import type { PortForwarding } from "tauri-plugin-data";
+import AddKey from "@/components/AddKey";
+import AutoRepeatGrid from "@/components/AutoRepeatGrid";
+import Empty from "@/components/Empty";
+import Page from "@/components/Page";
 
-import Empty from '@/components/Empty';
-import Page from '@/components/Page';
-import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import AddKey from '@/components/AddKey';
-
-import AddPortForwarding from './AddPortForwarding';
-import PortForwardingItem from './PortForwardingItem';
+import AddPortForwarding from "./AddPortForwarding";
+import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
   const { data: hosts } = useHosts();
   const { data: portForwardings } = usePortForwardings();
 
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
   const [editItem, setEditItem] = useState<PortForwarding>();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
 
   const hostsMap = useMemo(
     () => new Map(hosts.map((item) => [item.id, item])),
-    [hosts]
+    [hosts],
   );
 
   const onAddPortForwardingClose = useCallback(() => {
@@ -30,22 +29,18 @@ export default function PortForwardings() {
     setEditItem(undefined);
   }, []);
 
-  const onEdit = useCallback(
-    (item: PortForwarding) => {
-      setEditItem(item);
-      setIsOpenAddPortForwarding(true);
-      setIsOpenAddPortForwarding(true);
-    },
-    [setEditItem, setIsOpenAddPortForwarding]
-  );
+  const onEdit = useCallback((item: PortForwarding) => {
+    setEditItem(item);
+    setIsOpenAddPortForwarding(true);
+  }, []);
 
   return (
     <Page title="Port forwardings">
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           my: 2,
         }}
       >

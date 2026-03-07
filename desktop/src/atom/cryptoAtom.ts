@@ -1,17 +1,17 @@
-import { atom, useSetAtom } from 'jotai';
-import { LazyStore } from '@tauri-apps/plugin-store';
-import { checkIsInitCrypto } from 'tauri-plugin-data';
-import { useCallback } from 'react';
+import { LazyStore } from "@tauri-apps/plugin-store";
+import { atom, useSetAtom } from "jotai";
+import { useCallback } from "react";
+import { checkIsInitCrypto } from "tauri-plugin-data";
 
-const store = new LazyStore('config.json');
+const store = new LazyStore("config.json");
 
 export const cryptoIsEnableAtom = atom<boolean>();
 
 cryptoIsEnableAtom.onMount = (setAtom) => {
-  store.get<boolean>('crypto_enable').then((val) => {
+  store.get<boolean>("crypto_enable").then((val) => {
     setAtom(val || false);
   });
-  const unListen = store.onKeyChange<boolean>('crypto_enable', (val) => {
+  const unListen = store.onKeyChange<boolean>("crypto_enable", (val) => {
     setAtom(val || false);
   });
 

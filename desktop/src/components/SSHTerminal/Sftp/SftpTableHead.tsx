@@ -1,6 +1,6 @@
-import { TableCell, TableHead, TableRow, TableSortLabel } from '@mui/material';
+import { TableCell, TableHead, TableRow, TableSortLabel } from "@mui/material";
 
-import { type SftpTableCell, SftpTableOrder } from './types';
+import { type SftpTableCell, SftpTableOrder } from "./types";
 
 export type SftpTableHeadProps<T extends Record<string, unknown>> = {
   cells: SftpTableCell<T>[];
@@ -34,7 +34,7 @@ export function SftpTableHead<T extends Record<string, unknown>>({
       <TableHead>
         <TableRow>
           {cells.map((item) => {
-            const isSortable = typeof item.compare === 'function';
+            const isSortable = typeof item.compare === "function";
             const isActive = orderBy === item.id;
             const isAsc = isActive && order === SftpTableOrder.Asc;
             const sx = item.sx?.(true);
@@ -59,7 +59,7 @@ export function SftpTableHead<T extends Record<string, unknown>>({
                     onClick={() =>
                       onSort(
                         item.key,
-                        isAsc ? SftpTableOrder.Desc : SftpTableOrder.Asc
+                        isAsc ? SftpTableOrder.Desc : SftpTableOrder.Asc,
                       )
                     }
                   >

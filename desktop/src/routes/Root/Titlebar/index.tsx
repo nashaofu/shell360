@@ -1,21 +1,16 @@
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import {
-  Box, type Theme, alpha, styled,
-} from '@mui/material';
-
-import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
-import { useColorsAtomValue } from '@/atom/colorsAtom';
+import { alpha, Box, styled, type Theme } from "@mui/material";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useColorsAtomValue } from "@/atom/colorsAtom";
+import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
 
 const TitleBarButton = styled(Box)(() => ({
   width: 36,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   fontSize: 14,
-  cursor: 'pointer',
+  cursor: "pointer",
 }));
 
 export default function TitleBar() {
@@ -36,11 +31,12 @@ export default function TitleBar() {
 
   const buttonSx = useMemo(() => {
     const { bgColor } = colorsAtomValue;
-    const backgroundColor = ({ palette }: Theme) => alpha(palette.getContrastText(bgColor), 0.07);
+    const backgroundColor = ({ palette }: Theme) =>
+      alpha(palette.getContrastText(bgColor), 0.07);
 
     return {
       height: TITLE_BAR_HEIGHT,
-      '&:hover': {
+      "&:hover": {
         backgroundColor,
       },
     };
@@ -62,18 +58,18 @@ export default function TitleBar() {
     <Box
       sx={{
         height: TITLE_BAR_HEIGHT,
-        bgcolor: 'transparent',
+        bgcolor: "transparent",
         color: colorsAtomValue.titleBarColor,
         flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        position: 'relative',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        position: "relative",
       }}
     >
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           right: 0,
           bottom: 0,
@@ -81,15 +77,15 @@ export default function TitleBar() {
         }}
         data-tauri-drag-region="true"
       />
-      {import.meta.env.TAURI_PLATFORM !== 'darwin' && (
+      {import.meta.env.TAURI_PLATFORM !== "darwin" && (
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            position: 'relative',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            position: "relative",
             zIndex: 10,
-            appRegion: 'no-drag',
+            appRegion: "no-drag",
           }}
         >
           <TitleBarButton sx={buttonSx} onClick={onClickMinimize}>

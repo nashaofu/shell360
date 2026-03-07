@@ -22,7 +22,6 @@
   background: #7f7f7f;
 }
 
-
 html,
 body,
 #root {
@@ -30,7 +29,6 @@ body,
   overflow: hidden;
   user-select: none;
 }
-
 
 input {
   &::-ms-clear,

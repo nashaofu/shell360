@@ -1,39 +1,38 @@
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { useMemoizedFn } from 'ahooks';
-import {
-  usePortForwardings,
-  Dropdown,
-  SSHLoading,
-  usePortForwardingsAtomWithApi,
-  type PortForwardingsAtom,
-  useKeys,
-  getPortForwardingDesc,
-  tearDownJumpHostChainConnections,
-  PortForwardingLoading,
-  closePortForwarding as closePortForwardingUtil,
-  establishPortForwarding as establishPortForwardingUtil,
-} from 'shared';
-import {
-  deletePortForwarding,
-  type Host,
-  type PortForwarding,
-} from 'tauri-plugin-data';
-import { useCallback, useMemo } from 'react';
 import {
   Dialog,
   Icon,
   IconButton,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
-
-import useModal from '@/hooks/useModal';
-import ItemCard from '@/components/ItemCard';
+} from "@mui/material";
+import { useMemoizedFn } from "ahooks";
+import { useCallback, useMemo } from "react";
+import {
+  closePortForwarding as closePortForwardingUtil,
+  Dropdown,
+  establishPortForwarding as establishPortForwardingUtil,
+  getPortForwardingDesc,
+  PortForwardingLoading,
+  type PortForwardingsAtom,
+  SSHLoading,
+  tearDownJumpHostChainConnections,
+  useKeys,
+  usePortForwardings,
+  usePortForwardingsAtomWithApi,
+} from "shared";
+import {
+  deletePortForwarding,
+  type Host,
+  type PortForwarding,
+} from "tauri-plugin-data";
+import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+import ItemCard from "@/components/ItemCard";
+import useModal from "@/hooks/useModal";
 
 const PORT_FORWARDING_STATUS = {
-  pending: '(Loading)',
-  failed: '(Failed)',
-  success: '(Activated)',
+  pending: "(Loading)",
+  failed: "(Failed)",
+  success: "(Activated)",
 };
 
 type PortForwardingItemProps = {
@@ -69,15 +68,15 @@ export default function PortForwardingItem({
     }
     return (
       portForwardingAtom.jumpHostChain.some(
-        (item) => item.status !== 'authenticated'
-      ) || portForwardingAtom.status !== 'success'
+        (item) => item.status !== "authenticated",
+      ) || portForwardingAtom.status !== "success"
     );
   }, [portForwardingsAtomWithApi, item.id]);
 
   const currentJumpHostChainItem = useMemo(() => {
     const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
     return portForwardingAtom?.jumpHostChain?.find(
-      (item) => item.status !== 'authenticated'
+      (item) => item.status !== "authenticated",
     );
   }, [portForwardingsAtomWithApi, item.id]);
 
@@ -85,7 +84,7 @@ export default function PortForwardingItem({
     async (portForwardingsAtom: PortForwardingsAtom) => {
       await closePortForwardingUtil(portForwardingsAtom);
     },
-    []
+    [],
   );
 
   const establishPortForwarding = useCallback(
@@ -95,10 +94,10 @@ export default function PortForwardingItem({
         new Map(keys.map((key) => [key.id, key])),
         (updated) => {
           portForwardingsAtomWithApi.update(updated);
-        }
+        },
       );
     },
-    [keys, portForwardingsAtomWithApi]
+    [keys, portForwardingsAtomWithApi],
   );
 
   const menus = useMemo(
@@ -112,7 +111,7 @@ export default function PortForwardingItem({
             <ListItemText>Edit</ListItemText>
           </>
         ),
-        value: 'Edit',
+        value: "Edit",
         onClick: () => onEdit(),
       },
       {
@@ -124,13 +123,13 @@ export default function PortForwardingItem({
             <ListItemText>Delete</ListItemText>
           </>
         ),
-        value: 'Delete',
+        value: "Delete",
         onClick: () => {
           modal.confirm({
-            title: 'Delete Confirmation',
+            title: "Delete Confirmation",
             content: `Are you sure to delete the port forwarding: ${item.name}?`,
             OkButtonProps: {
-              color: 'warning',
+              color: "warning",
             },
             onOk: async () => {
               await deletePortForwarding(item);
@@ -140,7 +139,7 @@ export default function PortForwardingItem({
         },
       },
     ],
-    [item, modal, onEdit, refreshPortForwardings]
+    [item, modal, onEdit, refreshPortForwardings],
   );
 
   const onOpenOrClosePortForwarding = useCallback(async () => {
@@ -178,7 +177,7 @@ export default function PortForwardingItem({
       portForwardingsAtomWithApi.update(portForwardingsAtom);
 
       establishPortForwarding(portForwardingsAtom);
-    }
+    },
   );
 
   const onReAuth = useMemoizedFn((hostData) => {
@@ -228,12 +227,12 @@ export default function PortForwardingItem({
           <Dropdown
             menus={menus}
             anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
+              vertical: "bottom",
+              horizontal: "right",
             }}
             transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
+              vertical: "top",
+              horizontal: "right",
             }}
           >
             {({ onChangeOpen }) => (

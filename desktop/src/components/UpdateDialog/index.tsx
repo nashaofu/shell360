@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   Box,
   Button,
@@ -8,9 +7,10 @@ import {
   DialogContentText,
   DialogTitle,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
+import { useMemo } from "react";
 
-import { useUpdateAtom } from '@/atom/updateAtom';
+import { useUpdateAtom } from "@/atom/updateAtom";
 
 export default function UpdateDialog() {
   const {
@@ -37,7 +37,7 @@ export default function UpdateDialog() {
   return (
     <Dialog open={openUpdateDialog}>
       <DialogTitle>
-        {isDownloadSuccess ? '🎉 Update Ready' : '🚀 New Version Available'}
+        {isDownloadSuccess ? "🎉 Update Ready" : "🚀 New Version Available"}
       </DialogTitle>
       <DialogContent>
         {isDownloadSuccess ? (

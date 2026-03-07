@@ -1,7 +1,7 @@
-import { useAtom, useAtomValue } from 'jotai';
-import { atomWithDefault } from 'jotai/utils';
+import { useAtom, useAtomValue } from "jotai";
+import { atomWithDefault } from "jotai/utils";
 
-import { themeAtom } from './themeAtom';
+import { themeAtom } from "./themeAtom";
 
 export type ColorsAtom = {
   bgColor: string;

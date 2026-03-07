@@ -1,41 +1,39 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { get } from 'lodash-es';
-import {
-  Box, Button, Typography, styled,
-} from '@mui/material';
-import { useCallback } from 'react';
-import { ask } from '@tauri-apps/plugin-dialog';
+import { Box, Button, styled, Typography } from "@mui/material";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { ask } from "@tauri-apps/plugin-dialog";
+import { get } from "lodash-es";
+import { useCallback } from "react";
 
 const Eye = styled(Box)(({ theme }) => ({
   width: 70,
   height: 100,
   borderWidth: 1,
-  borderStyle: 'solid',
+  borderStyle: "solid",
   borderColor: theme.palette.grey[800],
-  borderRadius: '50%',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+  borderRadius: "50%",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
 }));
 
 const Eyeball = styled(Box)(({ theme }) => ({
-  width: '50%',
-  height: '50%',
-  borderRadius: '50%',
+  width: "50%",
+  height: "50%",
+  borderRadius: "50%",
   backgroundColor: theme.palette.grey[800],
-  animation: 'eye-move 1.6s infinite alternate',
-  '@keyframes eye-move': {
-    '0%': {
-      transform: 'translate(50%)',
+  animation: "eye-move 1.6s infinite alternate",
+  "@keyframes eye-move": {
+    "0%": {
+      transform: "translate(50%)",
     },
-    '10%': {
-      transform: 'translate(50%)',
+    "10%": {
+      transform: "translate(50%)",
     },
-    '90%': {
-      transform: 'translate(-50%)',
+    "90%": {
+      transform: "translate(-50%)",
     },
-    '100%': {
-      transform: 'translate(-50%)',
+    "100%": {
+      transform: "translate(-50%)",
     },
   },
 }));
@@ -51,10 +49,10 @@ export default function ErrorBoundaryFallback({
 }: AbnormalProps) {
   const onReset = useCallback(async () => {
     const answer = await ask(
-      'This operation will clear all app configurations, are you sure you want to continue?',
+      "This operation will clear all app configurations, are you sure you want to continue?",
       {
-        title: 'Warning',
-        kind: 'warning',
+        title: "Warning",
+        kind: "warning",
       },
     );
 
@@ -68,20 +66,20 @@ export default function ErrorBoundaryFallback({
     <Box
       sx={{
         p: 3,
-        textAlign: 'center',
+        textAlign: "center",
       }}
     >
       <Box
         sx={{
           width: 150,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
           <Eye>
@@ -103,23 +101,23 @@ export default function ErrorBoundaryFallback({
         sx={{
           maxHeight: 160,
           my: 3,
-          whiteSpace: 'wrap',
-          wordBreak: 'break-all',
-          overflow: 'auto',
+          whiteSpace: "wrap",
+          wordBreak: "break-all",
+          overflow: "auto",
         }}
       >
         <Typography variant="body1">
-          {get(error, 'message', String(error))}
+          {get(error, "message", String(error))}
         </Typography>
       </Box>
       <Box
         sx={{
           maxWidth: 300,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 3,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <Button

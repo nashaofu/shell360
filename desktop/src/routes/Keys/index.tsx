@@ -1,30 +1,29 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Box,
+  Button,
   ButtonGroup,
   Icon,
-  OutlinedInput,
-  Button,
   IconButton,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
-import { useKeys, Dropdown } from 'shared';
-import { deleteKey, type Key } from 'tauri-plugin-data';
-import { get } from 'lodash-es';
+  OutlinedInput,
+} from "@mui/material";
+import { get } from "lodash-es";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Dropdown, useKeys } from "shared";
+import { deleteKey, type Key } from "tauri-plugin-data";
+import AddKey from "@/components/AddKey";
+import AutoRepeatGrid from "@/components/AutoRepeatGrid";
+import Empty from "@/components/Empty";
+import ItemCard from "@/components/ItemCard";
+import Page from "@/components/Page";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
 
-import Empty from '@/components/Empty';
-import AddKey from '@/components/AddKey';
-import ItemCard from '@/components/ItemCard';
-import Page from '@/components/Page';
-import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import useModal from '@/hooks/useModal';
-import useMessage from '@/hooks/useMessage';
-
-import GenerateKey from './GenerateKey';
+import GenerateKey from "./GenerateKey";
 
 export default function Keys() {
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const selectedKeyRef = useRef<Key>(null);
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
@@ -55,12 +54,12 @@ export default function Keys() {
   const menus = useMemo(
     () => [
       {
-        label: 'Generate key',
-        value: 'Generate key',
+        label: "Generate key",
+        value: "Generate key",
         onClick: () => setIsOpenGenerateKey(true),
       },
     ],
-    []
+    [],
   );
 
   const itemMenus = useMemo(
@@ -74,7 +73,7 @@ export default function Keys() {
             <ListItemText>Edit</ListItemText>
           </>
         ),
-        value: 'Edit',
+        value: "Edit",
         onClick: () => {
           setIsOpenAddKey(true);
           setEditKey(selectedKeyRef.current || undefined);
@@ -90,7 +89,7 @@ export default function Keys() {
             <ListItemText>Delete</ListItemText>
           </>
         ),
-        value: 'Delete',
+        value: "Delete",
         onClick: () => {
           const selectedKey = selectedKeyRef.current;
           selectedKeyRef.current = null;
@@ -101,17 +100,17 @@ export default function Keys() {
           const deleteKeyName = selectedKey.name;
 
           modal.confirm({
-            title: 'Delete Confirmation',
+            title: "Delete Confirmation",
             content: `Are you sure to delete the key: ${deleteKeyName}?`,
             OkButtonProps: {
-              color: 'warning',
+              color: "warning",
             },
             onOk: async () => {
               try {
                 await deleteKey(selectedKey);
               } catch (err) {
                 message.error({
-                  message: get(err, 'message') || 'Deletion failed',
+                  message: get(err, "message") || "Deletion failed",
                 });
                 throw err;
               }
@@ -122,16 +121,16 @@ export default function Keys() {
         },
       },
     ],
-    [modal, refreshKeys, message, selectedKeyRef]
+    [modal, refreshKeys, message],
   );
 
   return (
     <Page title="Keys">
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           my: 2,
         }}
       >
@@ -190,12 +189,12 @@ export default function Keys() {
               <Dropdown
                 menus={itemMenus}
                 anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
+                  vertical: "bottom",
+                  horizontal: "right",
                 }}
                 transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
+                  vertical: "top",
+                  horizontal: "right",
                 }}
               >
                 {({ onChangeOpen }) => (

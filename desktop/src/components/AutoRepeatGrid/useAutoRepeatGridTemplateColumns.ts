@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 export default function useAutoRepeatGridTemplateColumns(width: number) {
   const gridElRef = useRef<HTMLElement>(null);
@@ -30,7 +30,7 @@ export default function useAutoRepeatGridTemplateColumns(width: number) {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [gridElRef, width]);
+  }, [width]);
 
   return {
     gridElRef,

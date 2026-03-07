@@ -1,8 +1,8 @@
-import { Update, check } from '@tauri-apps/plugin-updater';
-import { atom, useAtom } from 'jotai';
-import { useCallback, useEffect } from 'react';
-import { useLatest } from 'ahooks';
-import { relaunch } from '@tauri-apps/plugin-process';
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { useLatest } from "ahooks";
+import { atom, useAtom } from "jotai";
+import { useCallback, useEffect } from "react";
 
 export type UpdateAtom = {
   openUpdateDialog: boolean;
@@ -105,7 +105,7 @@ export function useUpdateAtom() {
       };
       setState(stateRef.current);
     },
-    [setState, stateRef]
+    [setState, stateRef],
   );
 
   const download = useCallback(async () => {
@@ -125,21 +125,21 @@ export function useUpdateAtom() {
       setState(stateRef.current);
 
       await update.download((event) => {
-        if (event.event === 'Started') {
+        if (event.event === "Started") {
           stateRef.current = {
             ...stateRef.current,
             total: event.data.contentLength,
             downloaded: 0,
           };
           setState(stateRef.current);
-        } else if (event.event === 'Progress') {
+        } else if (event.event === "Progress") {
           stateRef.current = {
             ...stateRef.current,
             downloaded:
               event.data.chunkLength + (stateRef.current.downloaded || 0),
           };
           setState(stateRef.current);
-        } else if (event.event === 'Finished') {
+        } else if (event.event === "Finished") {
           stateRef.current = {
             ...stateRef.current,
             downloaded: stateRef.current.total,
@@ -166,7 +166,7 @@ export function useUpdateAtom() {
 
   const install = useCallback(() => {
     update?.install().finally(() => {
-      if (import.meta.env.TAURI_PLATFORM === 'darwin') {
+      if (import.meta.env.TAURI_PLATFORM === "darwin") {
         relaunch();
       }
     });

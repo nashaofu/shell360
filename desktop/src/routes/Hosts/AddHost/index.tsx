@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { Box, Button, ButtonGroup, Icon } from '@mui/material';
+import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import {
   DEFAULT_TERMINAL_FONT_FAMILY,
   DEFAULT_TERMINAL_FONT_SIZE,
   DEFAULT_TERMINAL_THEME,
-  useHosts,
+  DEFAULT_TERMINAL_TYPE,
+  Dropdown,
   EditHostForm,
   type EditHostFormFields,
-  DEFAULT_TERMINAL_TYPE,
-} from 'shared';
+  useHosts,
+  useTerminalsAtomWithApi,
+} from "shared";
 import {
   AuthenticationMethod,
+  addHost,
   type Env,
   type Host,
-  addHost,
   updateHost,
-} from 'tauri-plugin-data';
-import { Dropdown , useTerminalsAtomWithApi } from 'shared';
-
-import PageDrawer from '@/components/PageDrawer';
-import AddKey from '@/components/AddKey';
+} from "tauri-plugin-data";
+import AddKey from "@/components/AddKey";
+import PageDrawer from "@/components/PageDrawer";
 
 type AddHostProps = {
   open?: boolean;
@@ -38,17 +38,17 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   const formApi = useForm<EditHostFormFields>({
     defaultValues: {
       id: undefined,
-      name: '',
+      name: "",
       tags: [],
-      hostname: '',
+      hostname: "",
       port: 22,
-      username: '',
+      username: "",
       authenticationMethod: AuthenticationMethod.Password,
-      password: '',
-      keyId: '',
-      startupCommand: '',
+      password: "",
+      keyId: "",
+      startupCommand: "",
       terminalType: DEFAULT_TERMINAL_TYPE,
-      envs: '',
+      envs: "",
       jumpHostEnabled: false,
       jumpHostIds: [],
       terminalSettings: {
@@ -59,18 +59,18 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
     },
     values: {
       id: data?.id || undefined,
-      name: data?.name ?? '',
+      name: data?.name ?? "",
       tags: data?.tags ?? [],
-      hostname: data?.hostname ?? '',
+      hostname: data?.hostname ?? "",
       port: data?.port ?? 22,
-      username: data?.username ?? '',
+      username: data?.username ?? "",
       authenticationMethod:
         data?.authenticationMethod ?? AuthenticationMethod.Password,
-      password: data?.password ?? '',
-      keyId: data?.keyId ?? '',
-      startupCommand: data?.startupCommand ?? '',
+      password: data?.password ?? "",
+      keyId: data?.keyId ?? "",
+      startupCommand: data?.startupCommand ?? "",
       terminalType: data?.terminalType ?? DEFAULT_TERMINAL_TYPE,
-      envs: data?.envs?.map((env) => `${env.key}=${env.value}`).join(',') ?? '',
+      envs: data?.envs?.map((env) => `${env.key}=${env.value}`).join(",") ?? "",
       jumpHostEnabled: !!data?.jumpHostIds?.length,
       jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
@@ -90,25 +90,25 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       const authenticationMethod =
         values.authenticationMethod || AuthenticationMethod.Password;
       const hostData = {
-        name: values.name || '',
+        name: values.name || "",
         tags: values.tags || [],
-        hostname: values.hostname || '',
+        hostname: values.hostname || "",
         port: Number(values.port || 22),
-        username: values.username || '',
+        username: values.username || "",
         authenticationMethod: authenticationMethod,
         password:
           authenticationMethod === AuthenticationMethod.Password
-            ? values.password || ''
+            ? values.password || ""
             : undefined,
         keyId:
           authenticationMethod === AuthenticationMethod.PublicKey ||
           authenticationMethod === AuthenticationMethod.Certificate
-            ? values.keyId || ''
+            ? values.keyId || ""
             : undefined,
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
-        envs: values.envs?.split(',').reduce<Env[]>((envs, env) => {
-          let [key, value] = env.split('=');
+        envs: values.envs?.split(",").reduce<Env[]>((envs, env) => {
+          let [key, value] = env.split("=");
           key = key.trim();
           value = value?.trim();
 
@@ -118,7 +118,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
           if (value === undefined) {
             return envs;
           }
-          return [...envs, { key, value }];
+          envs.push({ key, value });
+          return envs;
         }, []),
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
@@ -139,7 +140,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
 
       return addHost(hostData);
     },
-    [data]
+    [data],
   );
 
   const onSaveAndConnect = useCallback(
@@ -151,7 +152,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       const [item] = terminalsAtomWithApi.add(savedHost);
       navigate(`/terminal/${item.uuid}`, { replace: true });
     },
-    [navigate, onOk, save, refreshHosts, terminalsAtomWithApi]
+    [navigate, onOk, save, refreshHosts, terminalsAtomWithApi],
   );
 
   const onSave = useCallback(
@@ -160,18 +161,18 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       await refreshHosts();
       onOk();
     },
-    [onOk, refreshHosts, save]
+    [onOk, refreshHosts, save],
   );
 
   const menus = useMemo(
     () => [
       {
-        value: 'Save & Connect',
-        label: 'Save & Connect',
+        value: "Save & Connect",
+        label: "Save & Connect",
         onClick: formApi.handleSubmit(onSaveAndConnect),
       },
     ],
-    [formApi, onSaveAndConnect]
+    [formApi, onSaveAndConnect],
   );
 
   useEffect(() => {
@@ -186,19 +187,19 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
     <>
       <PageDrawer
         open={open}
-        title={data ? 'Edit host' : 'Add host'}
+        title={data ? "Edit host" : "Add host"}
         onCancel={onCancel}
         footer={
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
             <Button
               sx={{
-                width: '48%',
+                width: "48%",
               }}
               variant="outlined"
               onClick={onCancel}
@@ -208,7 +209,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
 
             <Dropdown
               sx={{
-                width: '48%',
+                width: "48%",
               }}
               menus={menus}
             >

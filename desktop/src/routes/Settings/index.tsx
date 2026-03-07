@@ -8,21 +8,20 @@ import {
   Paper,
   ToggleButton,
   ToggleButtonGroup,
-} from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
-import { getVersion } from '@tauri-apps/api/app';
-import { useAtom } from 'jotai';
+} from "@mui/material";
+import { getVersion } from "@tauri-apps/api/app";
+import { useAtom } from "jotai";
+import { useCallback, useEffect, useState } from "react";
+import { modeAtom, ThemeMode } from "@/atom/themeAtom";
+import { useUpdateAtom } from "@/atom/updateAtom";
+import Page from "@/components/Page";
+import useExportData from "@/hooks/useExportData";
+import useImportData from "@/hooks/useImportData";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
+import openUrl from "@/utils/openUrl";
 
-import Page from '@/components/Page';
-import { ThemeMode, modeAtom } from '@/atom/themeAtom';
-import { useUpdateAtom } from '@/atom/updateAtom';
-import useExportData from '@/hooks/useExportData';
-import useImportData from '@/hooks/useImportData';
-import useModal from '@/hooks/useModal';
-import openUrl from '@/utils/openUrl';
-import useMessage from '@/hooks/useMessage';
-
-import CryptoSettings from './CryptoSettings';
+import CryptoSettings from "./CryptoSettings";
 
 export default function Settings() {
   const [themeMode, setThemeMode] = useAtom(modeAtom);
@@ -48,14 +47,14 @@ export default function Settings() {
         return;
       }
       message.success({
-        message: 'Export file successful',
+        message: "Export file successful",
       });
     } catch (err) {
       message.error({
         message: (
           <Box
             sx={{
-              wordBreak: 'break-all',
+              wordBreak: "break-all",
             }}
           >
             Export failed:
@@ -69,7 +68,7 @@ export default function Settings() {
   const onImportData = useCallback(async () => {
     await new Promise<void>((resolve) => {
       modal.confirm({
-        title: 'Warning',
+        title: "Warning",
         icon: (
           <Icon
             color="warning"
@@ -78,7 +77,7 @@ export default function Settings() {
           />
         ),
         content:
-          'The import file will cover the same configuration, which may cause data loss, please do it carefully',
+          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
         onOk: () => resolve(),
       });
     });
@@ -89,14 +88,14 @@ export default function Settings() {
         return;
       }
       message.success({
-        message: 'Import file successful',
+        message: "Import file successful",
       });
     } catch (err) {
       message.error({
         message: (
           <Box
             sx={{
-              wordBreak: 'break-all',
+              wordBreak: "break-all",
             }}
           >
             Import failed:
@@ -119,7 +118,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <List>
@@ -166,7 +165,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <CryptoSettings />
@@ -176,7 +175,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <List>
@@ -191,7 +190,7 @@ export default function Settings() {
             <IconButton
               onClick={() =>
                 openUrl(
-                  'https://nashaofu.github.io/shell360/docs/Privacy-Policy.html'
+                  "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
                 )
               }
             >
@@ -201,7 +200,7 @@ export default function Settings() {
           <ListItem>
             <ListItemText primary="About" />
             <IconButton
-              onClick={() => openUrl('https://nashaofu.github.io/shell360/')}
+              onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
             >
               <Icon className="icon-arrow-right" />
             </IconButton>
