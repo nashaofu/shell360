@@ -38,7 +38,7 @@ yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
 
 # Install NDK if not already installed
 echo "[INFO] Checking and configuring Android NDK..."
-NDK_VERSION="29.0.14033849"
+NDK_VERSION="29.0.14206865"
 if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
   echo "[INFO] Installing NDK $NDK_VERSION..."
   sdkmanager --install "ndk;$NDK_VERSION"
