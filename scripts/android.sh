@@ -9,13 +9,41 @@ set -e
 echo "[INFO] Adding Rust targets for Android..."
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
+export ANDROID_HOME="$HOME/Android/Sdk"
+if [ ! -d "$ANDROID_HOME" ]; then
+  echo "[INFO] Creating Android SDK directory at $ANDROID_HOME..."
+  mkdir -p "$ANDROID_HOME"
+fi
+
+CMDLINE_TOOLS_DIR="$ANDROID_HOME/cmdline-tools/latest"
+
+# Install Android command line tools only when sdkmanager is unavailable.
+if [ -x "$CMDLINE_TOOLS_DIR/bin/sdkmanager" ]; then
+  echo "[INFO] Found sdkmanager in $CMDLINE_TOOLS_DIR"
+else
+  echo "[INFO] sdkmanager not found, installing Android command line tools..."
+
+  rm -rf "$CMDLINE_TOOLS_DIR" /tmp/cmdline-tools-extract
+  mkdir -p /tmp/cmdline-tools-extract "$ANDROID_HOME/cmdline-tools"
+
+  wget -c -O /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+  unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
+
+  mv /tmp/cmdline-tools-extract/cmdline-tools "$CMDLINE_TOOLS_DIR"
+fi
+
+export PATH="$CMDLINE_TOOLS_DIR/bin:$PATH"
+
+yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
+
 # Install NDK if not already installed
 echo "[INFO] Checking and configuring Android NDK..."
-if [ ! -d "$ANDROID_HOME/ndk/29.0.14033849" ]; then
-  echo "[INFO] Installing NDK 29.0.14033849..."
-  sdkmanager --install "ndk;29.0.14033849"
+NDK_VERSION="29.0.14033849"
+if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
+  echo "[INFO] Installing NDK $NDK_VERSION..."
+  sdkmanager --install "ndk;$NDK_VERSION"
 fi
-export NDK_HOME="$ANDROID_HOME/ndk/29.0.14033849"
+export NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
 export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
 
 # Configure signing keys
