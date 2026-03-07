@@ -72,7 +72,7 @@ pnpm tauri dev             # 桌面开发（带热更新）
 
 **TypeScript**：
 
-- 导入顺序：`builtin` → `external` → `internal` → `parent` → `sibling`（`biome.json`）
+- 导入顺序（建议）：`builtin` → `external` → `internal` → `parent` → `sibling`。当前 Biome 仅启用 `organizeImports` 自动排序，不会强制该分组，请在提交前手动调整为上述顺序。
 - 不使用 `any`，优先类型推导
 - 前端状态管理用 Jotai atoms（参考 `desktop/src/atom/`）
 
