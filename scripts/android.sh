@@ -28,7 +28,8 @@ else
 
 
   wget -c -O /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
-  echo "48833c34b761c10cb20bcd16582129395d121b27 /tmp/cmdline-tools.zip" | sha256sum -c - || { echo "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"; exit 1; }
+  CMDLINE_TOOLS_SHA256=48833c34b761c10cb20bcd16582129395d121b27
+  echo "$CMDLINE_TOOLS_SHA256 /tmp/cmdline-tools.zip" | sha256sum -c - || { echo "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"; exit 1; }
   unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
 
   mv /tmp/cmdline-tools-extract/cmdline-tools "$CMDLINE_TOOLS_DIR"
