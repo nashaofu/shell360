@@ -1,13 +1,11 @@
-import { Buffer } from 'buffer';
-
-import { useRef, useState } from 'react';
-import { SSHSession, SSHShell } from 'tauri-plugin-ssh';
-import { useRequest, useMemoizedFn, useUnmount } from 'ahooks';
-import type { Host } from 'tauri-plugin-data';
-
-import { oscParse } from '@/utils/osc';
-import { Terminal, type TerminalSize } from '@/components/XTerminal';
-import { sleep } from '@/utils/sleep';
+import { useMemoizedFn, useRequest, useUnmount } from "ahooks";
+import { Buffer } from "buffer";
+import { useRef, useState } from "react";
+import type { Host } from "tauri-plugin-data";
+import { type SSHSession, SSHShell } from "tauri-plugin-ssh";
+import type { Terminal, TerminalSize } from "@/components/XTerminal";
+import { oscParse } from "@/utils/osc";
+import { sleep } from "@/utils/sleep";
 
 export interface UseShellOpts {
   session?: SSHSession;
@@ -35,11 +33,11 @@ export function useShell({
   const { loading, error, run, runAsync, refresh, refreshAsync } = useRequest(
     async () => {
       if (!terminal) {
-        throw new Error('terminal is undefined');
+        throw new Error("terminal is undefined");
       }
 
       if (!session) {
-        throw new Error('session is undefined');
+        throw new Error("session is undefined");
       }
 
       try {
@@ -79,7 +77,7 @@ export function useShell({
 
       if (host?.startupCommand) {
         await sleep(200);
-        await shell.send(host.startupCommand + '\n');
+        await shell.send(`${host.startupCommand}\n`);
       }
     },
     {
@@ -87,7 +85,7 @@ export function useShell({
       onBefore,
       onSuccess,
       onError,
-    }
+    },
   );
 
   const onTerminalReady = useMemoizedFn((terminal: Terminal) => {

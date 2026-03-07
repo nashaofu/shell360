@@ -1,7 +1,7 @@
-import { atom, useAtom } from 'jotai';
-import { atomFamily } from 'jotai/utils';
-import { useEffect, useRef } from 'react';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn } from "ahooks";
+import { atom, useAtom } from "jotai";
+import { atomFamily } from "jotai/utils";
+import { useEffect, useRef } from "react";
 
 export interface SWRAtom<T> {
   loading: boolean;
@@ -9,10 +9,10 @@ export interface SWRAtom<T> {
   error?: unknown;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: 可以接受任意类型的 SWRAtom
 const swrFamily = atomFamily(() => atom<SWRAtom<any> | undefined>(undefined));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: 可以接受任意类型的 SWRAtom
 const SWR_PROMISE_CACHE = new Map<string, Promise<any>>();
 
 export function useSWR<T>(key: string, fn: () => Promise<T>) {
@@ -55,12 +55,12 @@ export function useSWR<T>(key: string, fn: () => Promise<T>) {
 
   useEffect(() => {
     const onFocus = () => refresh();
-    window.addEventListener('focus', onFocus);
+    window.addEventListener("focus", onFocus);
 
     return () => {
-      window.removeEventListener('focus', onFocus);
+      window.removeEventListener("focus", onFocus);
     };
-  }, [key, refresh]);
+  }, [refresh]);
 
   useEffect(() => {
     if (!stateRef.current) {

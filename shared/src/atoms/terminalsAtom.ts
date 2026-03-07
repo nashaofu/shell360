@@ -1,26 +1,26 @@
-import { v4 as uuidV4 } from 'uuid';
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { useMemo } from 'react';
-import { type Host } from 'tauri-plugin-data';
-import { useLatest, useMemoizedFn } from 'ahooks';
+import { useLatest, useMemoizedFn } from "ahooks";
+import { atom, useAtom, useAtomValue } from "jotai";
+import { useMemo } from "react";
+import type { Host } from "tauri-plugin-data";
+import { v4 as uuidV4 } from "uuid";
 
-import { useHosts } from '@/hooks/useHosts';
-import { useKeys } from '@/hooks/useKeys';
-import { sleep } from '@/utils/sleep';
+import { useHosts } from "@/hooks/useHosts";
+import { useKeys } from "@/hooks/useKeys";
+import { sleep } from "@/utils/sleep";
 
 import {
   establishJumpHostChainConnections,
+  type JumpHostChainItem,
   resolveJumpHostChain,
   tearDownJumpHostChainConnections,
-  type JumpHostChainItem,
-} from '../utils/ssh';
+} from "../utils/ssh";
 
 export type TerminalAtom = {
   uuid: string;
   host: Host;
   name: string;
   jumpHostChain: JumpHostChainItem[];
-  status: 'pending' | 'success' | 'failed';
+  status: "pending" | "success" | "failed";
   error?: unknown;
 };
 
@@ -39,7 +39,7 @@ export function useTerminalsAtomWithApi() {
 
   const hostsMap = useMemo(
     () => new Map(hosts.map((item) => [item.id, item])),
-    [hosts]
+    [hosts],
   );
 
   const getState = useMemoizedFn(() => stateRef.current);
@@ -98,7 +98,7 @@ export function useTerminalsAtomWithApi() {
       setState(map);
       stateRef.current = map;
       return [item, map];
-    }
+    },
   );
 
   const addTerminal = useMemoizedFn(
@@ -125,7 +125,7 @@ export function useTerminalsAtomWithApi() {
         host,
         name: count === 0 ? name : `${name} (${count})`,
         jumpHostChain,
-        status: 'pending',
+        status: "pending",
       };
 
       establishTerminal(item);
@@ -135,7 +135,7 @@ export function useTerminalsAtomWithApi() {
       setState(map);
       stateRef.current = map;
       return [item, map];
-    }
+    },
   );
 
   return {

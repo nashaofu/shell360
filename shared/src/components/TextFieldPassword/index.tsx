@@ -4,7 +4,7 @@ import {
   InputAdornment,
   TextField,
   type TextFieldProps,
-} from '@mui/material';
+} from "@mui/material";
 import {
   type ForwardedRef,
   forwardRef,
@@ -12,16 +12,16 @@ import {
   useImperativeHandle,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
 type PasswordInputProps = Omit<
   TextFieldProps,
-  'inputRef' | 'type' | 'InputProps'
+  "inputRef" | "type" | "InputProps"
 >;
 
 export const TextFieldPassword = forwardRef(function TextFieldPassword(
   props: PasswordInputProps,
-  ref: ForwardedRef<HTMLInputElement>
+  ref: ForwardedRef<HTMLInputElement>,
 ) {
   const [isVisible, setIsVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,21 +37,21 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
       inputRef?.current?.setSelectionRange(
         selectionStart,
         selectionEnd,
-        selectionDirection
+        selectionDirection,
       );
     });
   }, []);
 
   useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(
     ref,
-    () => inputRef.current
+    () => inputRef.current,
   );
 
   return (
     <TextField
       {...props}
       inputRef={inputRef}
-      type={isVisible ? 'text' : 'password'}
+      type={isVisible ? "text" : "password"}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">

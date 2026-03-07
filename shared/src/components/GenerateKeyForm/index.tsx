@@ -1,60 +1,60 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
-import { Box, MenuItem, TextField } from '@mui/material';
+import { Box, MenuItem, TextField } from "@mui/material";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
-import { TextFieldPassword } from '../TextFieldPassword';
+import { TextFieldPassword } from "../TextFieldPassword";
 
 enum Algorithm {
-  Ed25519 = 'Ed25519',
-  Rsa = 'Rsa',
-  Ecdsa = 'Ecdsa',
+  Ed25519 = "Ed25519",
+  Rsa = "Rsa",
+  Ecdsa = "Ecdsa",
 }
 
 const ALGORITHM_MENUS = [
   {
-    label: 'ed25519',
+    label: "ed25519",
     value: Algorithm.Ed25519,
   },
   {
-    label: 'rsa',
+    label: "rsa",
     value: Algorithm.Rsa,
   },
   {
-    label: 'ecdsa',
+    label: "ecdsa",
     value: Algorithm.Ecdsa,
   },
 ];
 
 const RSA_BIT_SIZE = [
   {
-    label: '2048',
+    label: "2048",
     value: 2048,
   },
   {
-    label: '4096',
+    label: "4096",
     value: 4096,
   },
 ];
 
 const ECDSA_CURVE = [
   {
-    label: 'NIST P-256',
-    value: 'NistP256',
+    label: "NIST P-256",
+    value: "NistP256",
   },
   {
-    label: 'NIST P-384',
-    value: 'NistP384',
+    label: "NIST P-384",
+    value: "NistP384",
   },
   {
-    label: 'NIST P-521',
-    value: 'NistP521',
+    label: "NIST P-521",
+    value: "NistP521",
   },
 ];
 
 export type GenerateKeyFormFields = {
   name: string;
-  algorithm: Algorithm | '';
-  bitSize?: 2048 | 4096 | '';
-  curve?: 'NistP256' | 'NistP384' | 'NistP521' | '';
+  algorithm: Algorithm | "";
+  bitSize?: 2048 | 4096 | "";
+  curve?: "NistP256" | "NistP384" | "NistP521" | "";
   passphrase?: string;
 };
 
@@ -63,13 +63,13 @@ export type GenerateKeyFormProps = {
 };
 
 export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
-  const algorithm = formApi.watch('algorithm');
+  const algorithm = formApi.watch("algorithm");
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
       }}
       component="form"
       noValidate
@@ -81,15 +81,15 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter name',
+            message: "Please enter name",
           },
           minLength: {
             value: 1,
-            message: 'Please enter at least 1 characters',
+            message: "Please enter at least 1 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         defaultValue=""
@@ -114,7 +114,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please select algorithm',
+            message: "Please select algorithm",
           },
         }}
         render={({ field, fieldState }) => (
@@ -146,7 +146,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
           rules={{
             required: {
               value: true,
-              message: 'Please select bit size',
+              message: "Please select bit size",
             },
           }}
           render={({ field, fieldState }) => (
@@ -179,7 +179,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
           rules={{
             required: {
               value: true,
-              message: 'Please select curve',
+              message: "Please select curve",
             },
           }}
           render={({ field, fieldState }) => (

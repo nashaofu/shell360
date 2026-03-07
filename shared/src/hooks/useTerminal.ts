@@ -1,14 +1,14 @@
-import { useMemoizedFn } from 'ahooks';
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { useMemo } from 'react';
-import { last } from 'lodash-es';
+import { useMemoizedFn } from "ahooks";
+import { last } from "lodash-es";
+import { useMemo } from "react";
+import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 import {
-  useTerminalsAtomWithApi,
   type TerminalAtom,
-} from '@/atoms/terminalsAtom';
+  useTerminalsAtomWithApi,
+} from "@/atoms/terminalsAtom";
 
-import { useShell } from './useShell';
+import { useShell } from "./useShell";
 
 export interface UseTerminalOpts {
   item: TerminalAtom;
@@ -21,13 +21,13 @@ export function useTerminal({ item, onClose, onCopy }: UseTerminalOpts) {
 
   const currentJumpHostChainItem = useMemo(() => {
     return item.jumpHostChain.find((item) => {
-      return item.status !== 'authenticated';
+      return item.status !== "authenticated";
     });
   }, [item.jumpHostChain]);
 
   const session = useMemo(() => {
     const lastJumpHostChainItem = last(item.jumpHostChain);
-    if (lastJumpHostChainItem?.status !== 'authenticated') {
+    if (lastJumpHostChainItem?.status !== "authenticated") {
       return undefined;
     }
     return lastJumpHostChainItem.session;
@@ -50,20 +50,20 @@ export function useTerminal({ item, onClose, onCopy }: UseTerminalOpts) {
     onBefore: () => {
       terminalsAtomWithApi.update({
         ...item,
-        status: 'pending',
+        status: "pending",
         error: undefined,
       });
     },
     onSuccess: () => {
       terminalsAtomWithApi.update({
         ...item,
-        status: 'success',
+        status: "success",
       });
     },
     onError: (error) => {
       terminalsAtomWithApi.update({
         ...item,
-        status: 'failed',
+        status: "failed",
         error,
       });
     },
@@ -91,7 +91,7 @@ export function useTerminal({ item, onClose, onCopy }: UseTerminalOpts) {
 
         terminalsAtomWithApi.establish(currentItem);
       }
-    }
+    },
   );
 
   const onReAuth = useMemoizedFn(async (hostData) => {
@@ -130,17 +130,17 @@ export function useTerminal({ item, onClose, onCopy }: UseTerminalOpts) {
   const loading = useMemo(() => {
     if (
       item.jumpHostChain.some(
-        (it) => it.status !== 'authenticated' || it.loading || it.error
+        (it) => it.status !== "authenticated" || it.loading || it.error,
       )
     ) {
       return true;
     }
-    return item.status !== 'success' || shellLoading || !!shellError;
+    return item.status !== "success" || shellLoading || !!shellError;
   }, [item.jumpHostChain, item.status, shellError, shellLoading]);
 
   const error = useMemo(() => {
     const firstErrorItem = item.jumpHostChain.find(
-      (it) => it.status !== 'authenticated' && it.error
+      (it) => it.status !== "authenticated" && it.error,
     );
 
     return firstErrorItem?.error || shellError;

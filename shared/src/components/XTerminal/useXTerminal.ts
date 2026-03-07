@@ -1,18 +1,18 @@
-import '@xterm/xterm/css/xterm.css';
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { type ITheme, Terminal } from '@xterm/xterm';
-import { WebLinksAddon } from '@xterm/addon-web-links';
-import { Unicode11Addon } from '@xterm/addon-unicode11';
-import { CanvasAddon } from '@xterm/addon-canvas';
-import { WebglAddon } from '@xterm/addon-webgl';
-import { FitAddon } from '@xterm/addon-fit';
-import { useMemoizedFn, useSize } from 'ahooks';
+import "@xterm/xterm/css/xterm.css";
+import { CanvasAddon } from "@xterm/addon-canvas";
+import { FitAddon } from "@xterm/addon-fit";
+import { Unicode11Addon } from "@xterm/addon-unicode11";
+import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
+import { type ITheme, Terminal } from "@xterm/xterm";
+import { useMemoizedFn, useSize } from "ahooks";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import {
   DEFAULT_TERMINAL_FONT_FAMILY,
   DEFAULT_TERMINAL_FONT_SIZE,
   DEFAULT_TERMINAL_THEME,
-} from './constants';
+} from "./constants";
 
 export type TerminalSize = {
   col: number;
@@ -70,6 +70,7 @@ export function useXTerminal({
   });
   const onOpenUrlFn = useMemoizedFn((data: string) => onOpenUrl?.(data));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 依赖更新通过后面的 useEffect 来控制，这里只做初始化
   useLayoutEffect(() => {
     const terminal = new Terminal({
       allowProposedApi: true,
@@ -111,7 +112,6 @@ export function useXTerminal({
       terminalRef.current = null;
       fitAddonRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export function useXTerminal({
     fitAddonRef.current?.fit();
   }, [size]);
 
-  // 更新主题
+  // 更新字体主题等配置
   useEffect(() => {
     const terminal = terminalRef.current;
     if (!terminal) {

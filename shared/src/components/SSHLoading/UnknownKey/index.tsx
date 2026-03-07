@@ -1,11 +1,10 @@
-import { Box, Button, ButtonGroup, Icon } from '@mui/material';
-import { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
-import { get } from 'lodash-es';
+import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { get } from "lodash-es";
+import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
-import { Dropdown } from '@/components/Dropdown';
-
-import ErrorText from '../ErrorText';
-import { StatusButton, type ErrorProps } from '../common';
+import { Dropdown } from "@/components/Dropdown";
+import { type ErrorProps, StatusButton } from "../common";
+import ErrorText from "../ErrorText";
 
 export default function UnknownKey({
   error,
@@ -16,14 +15,14 @@ export default function UnknownKey({
     <>
       <ErrorText
         title="Are you sure you want to continue?"
-        message={get(error, 'message', String(error))}
+        message={get(error, "message", String(error))}
       />
 
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 2,
         }}
       >
@@ -33,19 +32,19 @@ export default function UnknownKey({
         <Dropdown
           menus={[
             {
-              label: 'Add and continue',
-              value: 'Add and continue',
+              label: "Add and continue",
+              value: "Add and continue",
               onClick: () =>
                 onReConnect(SSHSessionCheckServerKey.AddAndContinue),
             },
           ]}
           anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
+            vertical: "bottom",
+            horizontal: "right",
           }}
           transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
+            vertical: "top",
+            horizontal: "right",
           }}
         >
           {({ onChangeOpen }) => (

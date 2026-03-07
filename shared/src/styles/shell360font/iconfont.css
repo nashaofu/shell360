@@ -1,8 +1,11 @@
+/** biome-ignore-all lint */
+
 @font-face {
   font-family: "Shell360Icons"; /* Project id 4490042 */
-  src: url('iconfont.woff2?t=1761875557515') format('woff2'),
-       url('iconfont.woff?t=1761875557515') format('woff'),
-       url('iconfont.ttf?t=1761875557515') format('truetype');
+  src:
+    url("iconfont.woff2?t=1761875557515") format("woff2"),
+    url("iconfont.woff?t=1761875557515") format("woff"),
+    url("iconfont.ttf?t=1761875557515") format("truetype");
 }
 
 .Shell360Icons {
@@ -216,4 +219,3 @@
 .icon-close:before {
   content: "\e7cf";
 }
-

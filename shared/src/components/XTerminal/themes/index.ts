@@ -1,11 +1,11 @@
-import { type ITheme } from '@xterm/xterm';
+import type { ITheme } from "@xterm/xterm";
 
-import NordDark from './NordDark';
-import NordLight from './NordLight';
-import SolarizedDark from './SolarizedDark';
-import SolarizedLight from './SolarizedLight';
-import TangoDark from './TangoDark';
-import TangoLight from './TangoLight';
+import NordDark from "./NordDark";
+import NordLight from "./NordLight";
+import SolarizedDark from "./SolarizedDark";
+import SolarizedLight from "./SolarizedLight";
+import TangoDark from "./TangoDark";
+import TangoLight from "./TangoLight";
 
 export type TerminalTheme = {
   name: string;

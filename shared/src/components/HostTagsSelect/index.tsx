@@ -1,10 +1,10 @@
-import { useMemo, type ReactNode } from 'react';
-import { Box, Radio } from '@mui/material';
-import { v4 as uuidV4 } from 'uuid';
+import { Box, Radio } from "@mui/material";
+import { type ReactNode, useMemo } from "react";
+import { v4 as uuidV4 } from "uuid";
 
-import { useHosts } from '@/hooks/useHosts';
+import { useHosts } from "@/hooks/useHosts";
 
-import { Dropdown } from '../Dropdown';
+import { Dropdown } from "../Dropdown";
 
 interface Tag {
   label: string;
@@ -22,7 +22,7 @@ export type HostTagsSelectProps = {
   children: (props: HostTagsSelectChildProps) => ReactNode;
 };
 
-const ALL_TAG_VALUE = 'ALL_TAG_VALUE:' + uuidV4();
+const ALL_TAG_VALUE = `ALL_TAG_VALUE:${uuidV4()}`;
 
 export function HostTagsSelect({
   value = ALL_TAG_VALUE,
@@ -33,7 +33,9 @@ export function HostTagsSelect({
 
   const tags = useMemo(() => {
     const tagsSet = hosts.reduce((set, item) => {
-      item.tags?.forEach((tag) => set.add(tag));
+      item.tags?.forEach((tag) => {
+        set.add(tag);
+      });
       return set;
     }, new Set<string>());
 
@@ -47,10 +49,10 @@ export function HostTagsSelect({
       },
       [
         {
-          label: 'All',
+          label: "All",
           value: ALL_TAG_VALUE,
         },
-      ]
+      ],
     );
   }, [hosts]);
 
@@ -86,7 +88,7 @@ export function HostTagsSelect({
   return (
     <Dropdown menus={tagsMenus}>
       {({ onChangeOpen }) =>
-        children({ onChangeOpen, label: tagsMap.get(value) || 'All' })
+        children({ onChangeOpen, label: tagsMap.get(value) || "All" })
       }
     </Dropdown>
   );

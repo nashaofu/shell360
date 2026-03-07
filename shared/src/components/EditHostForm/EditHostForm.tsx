@@ -1,9 +1,9 @@
-import { Box } from '@mui/material';
+import { Box } from "@mui/material";
 
-import BasicForm from './BasicForm';
-import JumpHostsForm from './JumpHostsForm';
-import TerminalSettingsForm from './TerminalSettingsForm';
-import type { EditHostFormApi } from './types';
+import BasicForm from "./BasicForm";
+import JumpHostsForm from "./JumpHostsForm";
+import TerminalSettingsForm from "./TerminalSettingsForm";
+import type { EditHostFormApi } from "./types";
 
 export type EditHostFormProps = {
   formApi: EditHostFormApi;
@@ -14,8 +14,8 @@ export function EditHostForm({ formApi, onOpenAddKey }: EditHostFormProps) {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
       }}
       component="form"
       noValidate

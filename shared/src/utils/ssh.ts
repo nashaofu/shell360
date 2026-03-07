@@ -1,23 +1,23 @@
-import { cloneDeep, get } from 'lodash-es';
+import { cloneDeep, get } from "lodash-es";
 import {
   AuthenticationMethod,
   type Host,
   type Key,
   PortForwardingType,
-} from 'tauri-plugin-data';
+} from "tauri-plugin-data";
 import {
   SSHSession,
-  SSHSessionCheckServerKey,
+  type SSHSessionCheckServerKey,
   type SSHSessionDisconnectEvent,
-} from 'tauri-plugin-ssh';
+} from "tauri-plugin-ssh";
 
-import type { PortForwardingsAtom } from '../atoms/portForwardingsAtom';
+import type { PortForwardingsAtom } from "../atoms/portForwardingsAtom";
 
 export interface JumpHostChainItem {
   host: Host;
   session: SSHSession;
   loading: boolean;
-  status: 'connecting' | 'connected' | 'authenticated';
+  status: "connecting" | "connected" | "authenticated";
   checkServerKey?: SSHSessionCheckServerKey;
   error?: unknown;
 }
@@ -29,7 +29,7 @@ export interface ResolveJumpHostChainOpts {
 
 export function resolveJumpHostChain(
   host: Host,
-  { hostsMap, onDisconnect }: ResolveJumpHostChainOpts
+  { hostsMap, onDisconnect }: ResolveJumpHostChainOpts,
 ): JumpHostChainItem[] {
   const jumpHostIds = host.jumpHostIds || [];
 
@@ -52,7 +52,7 @@ export function resolveJumpHostChain(
       host: cloneDeep(item),
       session: jumpHostSession,
       loading: false,
-      status: 'connecting',
+      status: "connecting",
     };
   });
 }
@@ -64,9 +64,9 @@ interface EstablishJumpHostChainConnectionsOpts {
 
 export async function establishJumpHostChainConnections(
   jumpHostChain: JumpHostChainItem[],
-  { keysMap, onJumpHostChainItemUpdate }: EstablishJumpHostChainConnectionsOpts
+  { keysMap, onJumpHostChainItemUpdate }: EstablishJumpHostChainConnectionsOpts,
 ) {
-  let prevJumpHostSession: SSHSession | undefined = undefined;
+  let prevJumpHostSession: SSHSession | undefined;
 
   for (const item of jumpHostChain) {
     try {
@@ -74,43 +74,43 @@ export async function establishJumpHostChainConnections(
       item.error = undefined;
       onJumpHostChainItemUpdate?.(item);
 
-      if (item.status === 'connecting') {
+      if (item.status === "connecting") {
         await item.session.connect(
           {
             hostname: item.host.hostname,
             port: item.host.port,
             jumpHostSshSessionId: prevJumpHostSession?.sshSessionId,
           },
-          item.checkServerKey
+          item.checkServerKey,
         );
-        item.status = 'connected';
+        item.status = "connected";
         onJumpHostChainItemUpdate?.(item);
       }
 
-      if (item.status === 'connected') {
+      if (item.status === "connected") {
         const key = keysMap.get(item.host.keyId as string);
 
         if (item.host.authenticationMethod === AuthenticationMethod.Password) {
           await item.session.authenticate_password({
             username: item.host.username,
-            password: item.host.password || '',
+            password: item.host.password || "",
           });
         } else if (
           item.host.authenticationMethod === AuthenticationMethod.PublicKey
         ) {
           await item.session.authenticate_public_key({
             username: item.host.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
+            privateKey: key?.privateKey || "",
+            passphrase: key?.passphrase || "",
           });
         } else if (
           item.host.authenticationMethod === AuthenticationMethod.Certificate
         ) {
           await item.session.authenticate_certificate({
             username: item.host.username,
-            privateKey: key?.privateKey || '',
-            passphrase: key?.passphrase || '',
-            certificate: key?.certificate || '',
+            privateKey: key?.privateKey || "",
+            passphrase: key?.passphrase || "",
+            certificate: key?.certificate || "",
           });
         } else {
           await item.session.authenticate_keyboard_interactive({
@@ -119,16 +119,16 @@ export async function establishJumpHostChainConnections(
           });
         }
 
-        item.status = 'authenticated';
+        item.status = "authenticated";
         onJumpHostChainItemUpdate?.(item);
       }
 
       prevJumpHostSession = item.session;
     } catch (error) {
       item.error = error;
-      const errorKind = get(error, 'kind');
-      if (errorKind === 'NotFoundSession' || errorKind === 'Timeout') {
-        item.status = 'connecting';
+      const errorKind = get(error, "kind");
+      if (errorKind === "NotFoundSession" || errorKind === "Timeout") {
+        item.status = "connecting";
       }
 
       throw error;
@@ -142,31 +142,26 @@ export async function establishJumpHostChainConnections(
 }
 
 export async function tearDownJumpHostChainConnections(
-  jumpHostChain: JumpHostChainItem[]
+  jumpHostChain: JumpHostChainItem[],
 ) {
   for (const { session } of [...jumpHostChain].reverse()) {
     await session.disconnect();
   }
 }
 
-
 /**
  * 关闭端口转发
  */
 export async function closePortForwarding(
-  portForwardingsAtom: PortForwardingsAtom
+  portForwardingsAtom: PortForwardingsAtom,
 ): Promise<void> {
   const portForwarding = portForwardingsAtom.portForwarding;
   const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
   if (portForwarding.portForwardingType === PortForwardingType.Local) {
     await sshPortForwarding.closeLocalPortForwarding();
-  } else if (
-    portForwarding.portForwardingType === PortForwardingType.Remote
-  ) {
+  } else if (portForwarding.portForwardingType === PortForwardingType.Remote) {
     await sshPortForwarding.closeRemotePortForwarding();
-  } else if (
-    portForwarding.portForwardingType === PortForwardingType.Dynamic
-  ) {
+  } else if (portForwarding.portForwardingType === PortForwardingType.Dynamic) {
     await sshPortForwarding.closeDynamicPortForwarding();
   }
 }
@@ -177,12 +172,12 @@ export async function closePortForwarding(
 export async function establishPortForwarding(
   portForwardingsAtom: PortForwardingsAtom,
   keysMap: Map<string, Key>,
-  onUpdate?: (portForwardingsAtom: PortForwardingsAtom) => void
+  onUpdate?: (portForwardingsAtom: PortForwardingsAtom) => void,
 ): Promise<void> {
   if (onUpdate) {
     onUpdate({
       ...portForwardingsAtom,
-      status: 'pending',
+      status: "pending",
     });
   }
 
@@ -195,7 +190,7 @@ export async function establishPortForwarding(
           jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) =>
             item.host.id === jumpHostChainItem.host.id
               ? jumpHostChainItem
-              : item
+              : item,
           ),
         });
       }
@@ -232,7 +227,7 @@ export async function establishPortForwarding(
     if (onUpdate) {
       onUpdate({
         ...portForwardingsAtom,
-        status: 'success',
+        status: "success",
         isReconnecting: false, // 清除重连标志
       });
     }
@@ -240,7 +235,7 @@ export async function establishPortForwarding(
     if (onUpdate) {
       onUpdate({
         ...portForwardingsAtom,
-        status: 'failed',
+        status: "failed",
         error,
         isReconnecting: false, // 清除重连标志
       });

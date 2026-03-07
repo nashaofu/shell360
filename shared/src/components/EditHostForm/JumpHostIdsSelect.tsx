@@ -1,27 +1,26 @@
-import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
+  Icon,
   IconButton,
   List,
   ListItem,
   ListItemText,
   MenuItem,
-  TextField,
   Paper,
-  Icon,
   type SxProps,
+  TextField,
   type Theme,
-} from '@mui/material';
-import { type Host } from 'tauri-plugin-data';
-
-import { getHostName } from '../../utils/host';
-import { useHosts } from '../../hooks/useHosts';
+} from "@mui/material";
+import { useMemo, useState } from "react";
+import type { Host } from "tauri-plugin-data";
+import { useHosts } from "../../hooks/useHosts";
+import { getHostName } from "../../utils/host";
 
 function getJumpHostName(
   hostMap: Map<string, Host>,
   hostId: string,
-  index: number
+  index: number,
 ) {
   const host = hostMap.get(hostId);
   if (!host) {
@@ -49,12 +48,12 @@ export default function JumpHostIdsSelect({
   helperText,
 }: JumpHostIdsSelectProps) {
   const { data: hosts } = useHosts();
-  const [selectedHostId, setSelectedHostId] = useState<string>('');
+  const [selectedHostId, setSelectedHostId] = useState<string>("");
 
   const availableHosts = useMemo(
     () =>
       hosts.filter((host) => host.id !== hostId && !value.includes(host.id)),
-    [hosts, hostId, value]
+    [hosts, hostId, value],
   );
 
   const hostsMap = useMemo(() => {
@@ -67,7 +66,7 @@ export default function JumpHostIdsSelect({
   const handleAdd = () => {
     if (selectedHostId) {
       onChange([...value, selectedHostId]);
-      setSelectedHostId('');
+      setSelectedHostId("");
     }
   };
 
@@ -145,7 +144,7 @@ export default function JumpHostIdsSelect({
         </Paper>
       )}
 
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
         <TextField
           select
           fullWidth
