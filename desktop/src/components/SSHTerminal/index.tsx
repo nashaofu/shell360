@@ -54,7 +54,7 @@ export default function SSHTerminal({
           position: "absolute",
           top: 0,
           right: 3,
-          bottom: 54, // reserved space for always-visible virtual keyboard
+          bottom: 0,
           left: 0,
           pl: 3,
           overflow: "hidden",
