@@ -9,13 +9,51 @@ set -e
 echo "[INFO] Adding Rust targets for Android..."
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+if [ ! -d "$ANDROID_HOME" ]; then
+  echo "[INFO] Creating Android SDK directory at $ANDROID_HOME..."
+  mkdir -p "$ANDROID_HOME"
+fi
+
+CMDLINE_TOOLS_DIR="$ANDROID_HOME/cmdline-tools/latest"
+
+# Install Android command line tools only when sdkmanager is unavailable.
+if [ -x "$CMDLINE_TOOLS_DIR/bin/sdkmanager" ]; then
+  echo "[INFO] Found sdkmanager in $CMDLINE_TOOLS_DIR"
+else
+  echo "[INFO] sdkmanager not found, installing Android command line tools..."
+
+  EXTRACT_DIR=/tmp/cmdline-tools-extract
+  ZIP_PATH=/tmp/cmdline-tools.zip
+
+  rm -rf "$CMDLINE_TOOLS_DIR" $EXTRACT_DIR
+  mkdir -p $EXTRACT_DIR "$ANDROID_HOME/cmdline-tools"
+
+  wget -c -O "$ZIP_PATH" https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+
+  CMDLINE_TOOLS_SHA1=48833c34b761c10cb20bcd16582129395d121b27
+  ACTUAL_SHA1=$(sha1sum "$ZIP_PATH" | awk '{print $1}')
+  if [ "$ACTUAL_SHA1" != "$CMDLINE_TOOLS_SHA1" ]; then
+    echo "[ERROR] SHA-1 checksum verification failed for cmdline-tools.zip"
+    exit 1
+  fi
+
+  unzip "$ZIP_PATH" -d "$EXTRACT_DIR"
+  mv "$EXTRACT_DIR/cmdline-tools" "$CMDLINE_TOOLS_DIR"
+fi
+
+export PATH="$CMDLINE_TOOLS_DIR/bin:$PATH"
+
+yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
+
 # Install NDK if not already installed
 echo "[INFO] Checking and configuring Android NDK..."
-if [ ! -d "$ANDROID_HOME/ndk/29.0.14033849" ]; then
-  echo "[INFO] Installing NDK 29.0.14033849..."
-  sdkmanager --install "ndk;29.0.14033849"
+NDK_VERSION="29.0.14206865"
+if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
+  echo "[INFO] Installing NDK $NDK_VERSION..."
+  sdkmanager --install "ndk;$NDK_VERSION"
 fi
-export NDK_HOME="$ANDROID_HOME/ndk/29.0.14033849"
+export NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
 export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
 
 # Configure signing keys

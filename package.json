@@ -7,23 +7,18 @@
     "preinstall": "npx only-allow pnpm",
     "tauri": "tauri",
     "dotenvx": "dotenvx run --",
-    "lint": "eslint . --fix",
+    "lint": "biome lint .",
+    "lint:fix": "biome check . --write",
     "tsc": "pnpm --filter \"*\" run tsc",
     "build": "pnpm --filter \"*\" run build"
   },
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
     "@dotenvx/dotenvx": "^1.51.1",
-    "@eslint/js": "^9.39.1",
-    "@tauri-apps/cli": "^2.9.4",
-    "eslint": "^9.39.1",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "glob": "^13.0.0",
-    "globals": "^16.5.0",
-    "got": "^14.6.4",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.47.0"
+    "@tauri-apps/cli": "^2.10.1",
+    "glob": "^13.0.6",
+    "got": "^14.6.6",
+    "typescript": "^5.9.3"
   }
 }
