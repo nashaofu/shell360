@@ -212,7 +212,6 @@ export function useIsSubscription() {
 
         return false;
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error(err);
         return undefined;
       }

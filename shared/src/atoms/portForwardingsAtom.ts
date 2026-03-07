@@ -84,14 +84,12 @@ export function usePortForwardingsAtomWithApi() {
 
       // 如果正在重连，避免重复触发
       if (currentItem.isReconnecting) {
-        // eslint-disable-next-line no-console
         console.log("端口转发正在重连中，跳过重复重连请求");
         return;
       }
 
       // 如果状态不是 success，说明可能正在连接或已经失败，不需要重连
       if (currentItem.status !== "success") {
-        // eslint-disable-next-line no-console
         console.log("端口转发状态不是 success，跳过重连");
         return;
       }
@@ -109,7 +107,6 @@ export function usePortForwardingsAtomWithApi() {
         await closePortForwarding(currentItem);
       } catch (error) {
         // 忽略关闭时的错误，继续重连
-        // eslint-disable-next-line no-console
         console.error("关闭端口转发失败:", error);
       }
 
@@ -123,7 +120,6 @@ export function usePortForwardingsAtomWithApi() {
         checkItem.status !== "pending" ||
         !checkItem.isReconnecting
       ) {
-        // eslint-disable-next-line no-console
         console.log("端口转发状态已改变，取消重连");
         return;
       }
@@ -174,7 +170,6 @@ export function usePortForwardingsAtomWithApi() {
           });
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error("自动重连失败:", error);
         const failedItem = stateRef.current.get(portForwardingId);
         if (failedItem) {

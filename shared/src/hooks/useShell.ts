@@ -43,7 +43,6 @@ export function useShell({
       try {
         await shellRef.current?.close();
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error(e);
       }
       const shell = new SSHShell({

@@ -71,7 +71,6 @@ function tryGetFromLocalStorage<T>(key: string): T[] {
     }
     return data;
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.log(err);
     return [];
   }

@@ -40,10 +40,8 @@ export function oscParse(data: Buffer, { onCopy }: OscParseOpts = {}): void {
         //   reportedCWD = os.homedir() + reportedCWD.substring(1);
         // }
         // this.cwdReported.next(reportedCWD);
-        // eslint-disable-next-line no-console
         console.log("reportedCWD", reportedCWD);
       } else {
-        // eslint-disable-next-line no-console
         console.debug("Unsupported OSC 1337 parameter:", paramString);
       }
     } else if (oscCode === 52) {
