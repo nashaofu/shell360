@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
 
 export interface HostTerminalSettings {
   fontFamily?: string;
@@ -7,9 +7,9 @@ export interface HostTerminalSettings {
 }
 
 export enum AuthenticationMethod {
-  Password = 'Password',
-  PublicKey = 'PublicKey',
-  Certificate = 'Certificate',
+  Password = "Password",
+  PublicKey = "PublicKey",
+  Certificate = "Certificate",
 }
 
 export interface Env {
@@ -71,19 +71,19 @@ export interface Host {
 }
 
 export async function getHosts(): Promise<Host[]> {
-  return invoke<Host[]>('plugin:data|get_hosts');
+  return invoke<Host[]>("plugin:data|get_hosts");
 }
 
-export function addHost(host: Omit<Host, 'id'>): Promise<Host> {
-  return invoke<Host>('plugin:data|add_host', { host });
+export function addHost(host: Omit<Host, "id">): Promise<Host> {
+  return invoke<Host>("plugin:data|add_host", { host });
 }
 
 export function updateHost(host: Host): Promise<Host> {
-  return invoke<Host>('plugin:data|update_host', { host });
+  return invoke<Host>("plugin:data|update_host", { host });
 }
 
 export function deleteHost(host: Host): Promise<null> {
-  return invoke<null>('plugin:data|delete_host', {
+  return invoke<null>("plugin:data|delete_host", {
     host,
   });
 }

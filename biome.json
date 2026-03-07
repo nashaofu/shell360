@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!shared/src/styles/shell360font/*"]
   },
   "formatter": {
     "enabled": true,

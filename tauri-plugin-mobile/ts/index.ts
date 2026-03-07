@@ -1,17 +1,16 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
+import type { IapCustomerInfo } from "./iap/iapCustomerInfo";
+import type { IapOffering } from "./iap/iapOffering";
 
-import type { IapOffering } from './iap/iapOffering';
-import type { IapCustomerInfo } from './iap/iapCustomerInfo';
-
-export * from './iap/iapOffering';
-export * from './iap/iapCustomerInfo';
+export * from "./iap/iapCustomerInfo";
+export * from "./iap/iapOffering";
 
 export async function iapGetCustomerInfo(): Promise<IapCustomerInfo> {
-  return invoke('plugin:mobile|iap_get_customer_info');
+  return invoke("plugin:mobile|iap_get_customer_info");
 }
 
 export async function iapGetOfferings(): Promise<IapOffering[]> {
-  return invoke('plugin:mobile|iap_get_offerings');
+  return invoke("plugin:mobile|iap_get_offerings");
 }
 
 export type IapPurchasePackageRequest = {
@@ -19,17 +18,17 @@ export type IapPurchasePackageRequest = {
 };
 
 export async function iapPurchasePackage(
-  opts: IapPurchasePackageRequest
+  opts: IapPurchasePackageRequest,
 ): Promise<IapCustomerInfo> {
-  return invoke('plugin:mobile|iap_purchase_package', opts);
+  return invoke("plugin:mobile|iap_purchase_package", opts);
 }
 
 export async function iapRestore(): Promise<IapCustomerInfo> {
-  return invoke('plugin:mobile|iap_restore');
+  return invoke("plugin:mobile|iap_restore");
 }
 
 export async function iapShowPaywall(): Promise<boolean> {
-  return invoke('plugin:mobile|iap_show_paywall');
+  return invoke("plugin:mobile|iap_show_paywall");
 }
 
 export type ExportTextFileRequest = {
@@ -42,9 +41,9 @@ export type ExportTextFileResponse = {
 };
 
 export async function exportTextFile(
-  opts: ExportTextFileRequest
+  opts: ExportTextFileRequest,
 ): Promise<ExportTextFileResponse> {
-  return invoke('plugin:mobile|export_text_file', opts);
+  return invoke("plugin:mobile|export_text_file", opts);
 }
 
 export type ImportTextFileResponse = {
@@ -53,5 +52,5 @@ export type ImportTextFileResponse = {
 };
 
 export async function importTextFile(): Promise<ImportTextFileResponse> {
-  return invoke('plugin:mobile|import_text_file');
+  return invoke("plugin:mobile|import_text_file");
 }

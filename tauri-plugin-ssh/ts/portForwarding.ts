@@ -1,7 +1,7 @@
-import { invoke } from '@tauri-apps/api/core';
-import { v4 as uuidV4 } from 'uuid';
+import { invoke } from "@tauri-apps/api/core";
+import { v4 as uuidV4 } from "uuid";
 
-import { SSHSession } from './session';
+import type { SSHSession } from "./session";
 
 export type SSHPortForwardingOpts = {
   session: SSHSession;
@@ -42,7 +42,7 @@ export class SSHPortForwarding {
     remoteAddress,
     remotePort,
   }: SSHOpenLocalPortForwarding): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_local_open', {
+    return invoke<string>("plugin:ssh|port_forwarding_local_open", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
@@ -53,7 +53,7 @@ export class SSHPortForwarding {
   }
 
   closeLocalPortForwarding(): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_local_close', {
+    return invoke<string>("plugin:ssh|port_forwarding_local_close", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
     });
@@ -65,7 +65,7 @@ export class SSHPortForwarding {
     remoteAddress,
     remotePort,
   }: SSHOpenRemotePortForwarding): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_remote_open', {
+    return invoke<string>("plugin:ssh|port_forwarding_remote_open", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
@@ -76,7 +76,7 @@ export class SSHPortForwarding {
   }
 
   closeRemotePortForwarding(): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_remote_close', {
+    return invoke<string>("plugin:ssh|port_forwarding_remote_close", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
     });
@@ -86,7 +86,7 @@ export class SSHPortForwarding {
     localAddress,
     localPort,
   }: SSHOpenDynamicPortForwarding): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_dynamic_open', {
+    return invoke<string>("plugin:ssh|port_forwarding_dynamic_open", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
       localAddress,
@@ -95,7 +95,7 @@ export class SSHPortForwarding {
   }
 
   closeDynamicPortForwarding(): Promise<string> {
-    return invoke<string>('plugin:ssh|port_forwarding_dynamic_close', {
+    return invoke<string>("plugin:ssh|port_forwarding_dynamic_close", {
       sshSessionId: this.session.sshSessionId,
       sshPortForwardingId: this.sshPortForwardingId,
     });

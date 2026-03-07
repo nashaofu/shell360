@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
 
 export interface Key {
   id: string;
@@ -10,19 +10,19 @@ export interface Key {
 }
 
 export async function getKeys(): Promise<Key[]> {
-  return invoke<Key[]>('plugin:data|get_keys');
+  return invoke<Key[]>("plugin:data|get_keys");
 }
 
-export function addKey(key: Omit<Key, 'id'>): Promise<Key> {
-  return invoke<Key>('plugin:data|add_key', { key });
+export function addKey(key: Omit<Key, "id">): Promise<Key> {
+  return invoke<Key>("plugin:data|add_key", { key });
 }
 
 export function updateKey(key: Key): Promise<Key> {
-  return invoke<Key>('plugin:data|update_key', { key });
+  return invoke<Key>("plugin:data|update_key", { key });
 }
 
 export function deleteKey(key: Key): Promise<null> {
-  return invoke<null>('plugin:data|delete_key', {
+  return invoke<null>("plugin:data|delete_key", {
     key,
   });
 }

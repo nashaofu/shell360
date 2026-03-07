@@ -1,8 +1,8 @@
-import { Channel, invoke } from '@tauri-apps/api/core';
-import { v4 as uuidV4 } from 'uuid';
+import { Channel, invoke } from "@tauri-apps/api/core";
+import { v4 as uuidV4 } from "uuid";
 
 export type SSHSessionDisconnectEvent = {
-  type: 'disconnect';
+  type: "disconnect";
   data: string;
 };
 
@@ -17,17 +17,17 @@ export type SSHSessionConnectOpts = {
 };
 
 export enum SSHSessionCheckServerKey {
-  Continue = 'Continue',
-  AddAndContinue = 'AddAndContinue',
+  Continue = "Continue",
+  AddAndContinue = "AddAndContinue",
 }
 
 export type SSHSessionIpcChannelEvent = SSHSessionDisconnectEvent;
 
 export enum AuthenticationMethod {
-  Password = 'Password',
-  PublicKey = 'PublicKey',
-  Certificate = 'Certificate',
-  KeyboardInteractive = 'KeyboardInteractive',
+  Password = "Password",
+  PublicKey = "PublicKey",
+  Certificate = "Certificate",
+  KeyboardInteractive = "KeyboardInteractive",
 }
 
 export type SSHSessionAuthenticatePasswordOpts = {
@@ -63,14 +63,14 @@ export class SSHSession {
 
   connect(
     opts: SSHSessionConnectOpts,
-    checkServerKey?: SSHSessionCheckServerKey
+    checkServerKey?: SSHSessionCheckServerKey,
   ): Promise<string> {
-    return invoke<string>('plugin:ssh|session_connect', {
+    return invoke<string>("plugin:ssh|session_connect", {
       ...opts,
       sshSessionId: this.sshSessionId,
       checkServerKey,
       ipcChannel: new Channel<SSHSessionIpcChannelEvent>((data) => {
-        if (data.type === 'disconnect') {
+        if (data.type === "disconnect") {
           this.opts.onDisconnect?.(data);
         }
       }),
@@ -78,9 +78,9 @@ export class SSHSession {
   }
 
   authenticate_password(
-    opts: SSHSessionAuthenticatePasswordOpts
+    opts: SSHSessionAuthenticatePasswordOpts,
   ): Promise<string> {
-    return invoke<string>('plugin:ssh|session_authenticate', {
+    return invoke<string>("plugin:ssh|session_authenticate", {
       username: opts.username,
       authenticationData: {
         authenticationMethod: AuthenticationMethod.Password,
@@ -91,9 +91,9 @@ export class SSHSession {
   }
 
   authenticate_public_key(
-    opts: SSHSessionAuthenticatePublicKeyOpts
+    opts: SSHSessionAuthenticatePublicKeyOpts,
   ): Promise<string> {
-    return invoke<string>('plugin:ssh|session_authenticate', {
+    return invoke<string>("plugin:ssh|session_authenticate", {
       username: opts.username,
       authenticationData: {
         authenticationMethod: AuthenticationMethod.PublicKey,
@@ -105,9 +105,9 @@ export class SSHSession {
   }
 
   authenticate_certificate(
-    opts: SSHSessionAuthenticateCertificateOpts
+    opts: SSHSessionAuthenticateCertificateOpts,
   ): Promise<string> {
-    return invoke<string>('plugin:ssh|session_authenticate', {
+    return invoke<string>("plugin:ssh|session_authenticate", {
       username: opts.username,
       authenticationData: {
         authenticationMethod: AuthenticationMethod.Certificate,
@@ -120,9 +120,9 @@ export class SSHSession {
   }
 
   authenticate_keyboard_interactive(
-    opts: SSHSessionAuthenticateKeyboardInteractiveOpts
+    opts: SSHSessionAuthenticateKeyboardInteractiveOpts,
   ): Promise<string> {
-    return invoke<string>('plugin:ssh|session_authenticate', {
+    return invoke<string>("plugin:ssh|session_authenticate", {
       username: opts.username,
       authenticationData: {
         authenticationMethod: AuthenticationMethod.KeyboardInteractive,
@@ -133,7 +133,7 @@ export class SSHSession {
   }
 
   disconnect(): Promise<string> {
-    return invoke<string>('plugin:ssh|session_disconnect', {
+    return invoke<string>("plugin:ssh|session_disconnect", {
       sshSessionId: this.sshSessionId,
     });
   }
