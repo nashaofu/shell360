@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 
 function isModifierKey(key: string): boolean {
-  return ['Control', 'Shift', 'Alt'].includes(key);
+  return ["Control", "Shift", "Alt"].includes(key);
 }
 
 interface KeyboardModifiers {
@@ -22,9 +22,9 @@ function mergeModifiers(
 }
 
 function isImeComposing(
-  event: Pick<KeyboardEvent, 'isComposing' | 'key' | 'keyCode'>,
+  event: Pick<KeyboardEvent, "isComposing" | "key" | "keyCode">,
 ): boolean {
-  return event.isComposing || event.key === 'Process' || event.keyCode === 229;
+  return event.isComposing || event.key === "Process" || event.keyCode === 229;
 }
 
 function translateKeyToSyntheticData(
@@ -40,17 +40,17 @@ function translateKeyToSyntheticData(
       ch = ch.toUpperCase();
     }
     if (mods.alt) {
-      ch = '\x1b' + ch;
+      ch = "\x1b" + ch;
     }
     return ch;
   }
 
   // arrow keys with modifiers: CSI 1;<m><letter>
   const arrow: Record<string, string> = {
-    ArrowUp: 'A',
-    ArrowDown: 'B',
-    ArrowRight: 'C',
-    ArrowLeft: 'D',
+    ArrowUp: "A",
+    ArrowDown: "B",
+    ArrowRight: "C",
+    ArrowLeft: "D",
   };
   if (arrow[key]) {
     const m =
@@ -60,21 +60,21 @@ function translateKeyToSyntheticData(
 
   // other special keys
   const specials: Record<string, string> = {
-    Enter: '\r',
-    Backspace: '\x7f',
-    Tab: '\t',
-    Escape: '\x1b',
-    Home: '\x1b[H',
-    End: '\x1b[F',
-    PageUp: '\x1b[5~',
-    PageDown: '\x1b[6~',
-    Insert: '\x1b[2~',
-    Delete: '\x1b[3~',
+    Enter: "\r",
+    Backspace: "\x7f",
+    Tab: "\t",
+    Escape: "\x1b",
+    Home: "\x1b[H",
+    End: "\x1b[F",
+    PageUp: "\x1b[5~",
+    PageDown: "\x1b[6~",
+    Insert: "\x1b[2~",
+    Delete: "\x1b[3~",
   };
   if (specials[key]) {
     let seq = specials[key];
-    if (mods.alt && seq[0] !== '\x1b') {
-      seq = '\x1b' + seq;
+    if (mods.alt && seq[0] !== "\x1b") {
+      seq = "\x1b" + seq;
     }
     return seq;
   }
@@ -99,25 +99,27 @@ export function useVirtualKeyboard({
     (
       key: string,
       keyboardMods?: { ctrl?: boolean; alt?: boolean; shift?: boolean },
-    ) => {
+    ): boolean => {
       if (isModifierKey(key)) {
-        return;
+        return false;
       }
 
       const effectiveMods = mergeModifiers(modifiers, keyboardMods);
       const data = translateKeyToSyntheticData(key, effectiveMods);
       if (data == null) {
-        return;
+        return false;
       }
 
       onSyntheticData(data);
+
+      return true;
     },
     [modifiers, onSyntheticData],
   );
 
   const onTerminalKeyboardEvent = useCallback(
     (event: KeyboardEvent) => {
-      if (event.type !== 'keydown') {
+      if (event.type !== "keydown") {
         return false;
       }
 
@@ -127,28 +129,15 @@ export function useVirtualKeyboard({
         return true;
       }
 
-      // Modifier-only keys should be handled by xterm/browser.
-      if (isModifierKey(event.key)) {
-        return true;
-      }
-
-      const effectiveMods = mergeModifiers(modifiers, {
+      const isHandled = onVirtualKeyboardInput(event.key, {
         ctrl: event.ctrlKey,
         alt: event.altKey,
         shift: event.shiftKey,
       });
-      const data = translateKeyToSyntheticData(event.key, effectiveMods);
 
-      // If we can't translate this key, let xterm handle it (e.g. F-keys).
-      if (data == null) {
-        return true;
-      }
-
-      onSyntheticData(data);
-      // We handled this event via synthetic data; prevent xterm default.
-      return false;
+      return !isHandled;
     },
-    [modifiers, onSyntheticData],
+    [onVirtualKeyboardInput],
   );
 
   return {
