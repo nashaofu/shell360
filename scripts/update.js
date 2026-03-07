@@ -80,7 +80,10 @@ async function main() {
 
   console.log(content);
 
-  fs.writeFile(path.join(baseDir, "latest.json"), content);
+  await fs.writeFile(path.join(baseDir, "latest.json"), content);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
