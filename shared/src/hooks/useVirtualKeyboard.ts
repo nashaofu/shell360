@@ -127,14 +127,28 @@ export function useVirtualKeyboard({
         return true;
       }
 
-      onVirtualKeyboardInput(event.key, {
+      // Modifier-only keys should be handled by xterm/browser.
+      if (isModifierKey(event.key)) {
+        return true;
+      }
+
+      const effectiveMods = mergeModifiers(modifiers, {
         ctrl: event.ctrlKey,
         alt: event.altKey,
         shift: event.shiftKey,
       });
+      const data = translateKeyToSyntheticData(event.key, effectiveMods);
+
+      // If we can't translate this key, let xterm handle it (e.g. F-keys).
+      if (data == null) {
+        return true;
+      }
+
+      onSyntheticData(data);
+      // We handled this event via synthetic data; prevent xterm default.
       return false;
     },
-    [onVirtualKeyboardInput],
+    [modifiers, onSyntheticData],
   );
 
   return {
