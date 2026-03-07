@@ -36,10 +36,10 @@ if (Test-Path -Path $sdkManager -PathType Leaf) {
 
   Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-14742923_latest.zip" -OutFile $zipPath
 
-  $cmdlineToolsSha256 = "16b3f45ddb3d85ea6bbe6a1c0b47146daf0db450"
-  $actualSha256 = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLower()
-  if ($actualSha256 -ne $cmdlineToolsSha256) {
-    Write-Error "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"
+  $cmdlineToolsSha1 = "16b3f45ddb3d85ea6bbe6a1c0b47146daf0db450"
+  $actualSha1 = (Get-FileHash -Path $zipPath -Algorithm SHA1).Hash.ToLower()
+  if ($actualSha1 -ne $cmdlineToolsSha1) {
+    Write-Error "[ERROR] SHA-1 checksum verification failed for cmdline-tools.zip"
     exit 1
   }
 
