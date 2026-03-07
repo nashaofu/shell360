@@ -29,12 +29,24 @@ if (Test-Path -Path $sdkManager -PathType Leaf) {
   $extractDir = Join-Path $env:TEMP "cmdline-tools-extract"
   $zipPath = Join-Path $env:TEMP "cmdline-tools.zip"
 
+  # SHA-256 checksum for Windows package — verify at https://developer.android.com/studio#command-line-tools-only
+  $cmdlineToolsVersion = "14742923"
+  $cmdlineToolsSha256 = "CC610CCBE83FADDB58E1AA68E8FC8743BB30AA5E83577ECEB4CC168DAE95F9EE"
+
   Remove-Item -Path $cmdlineToolsDir -Recurse -Force -ErrorAction SilentlyContinue
   Remove-Item -Path $extractDir -Recurse -Force -ErrorAction SilentlyContinue
   New-Item -Path $extractDir -ItemType Directory -Force | Out-Null
   New-Item -Path (Join-Path $env:ANDROID_HOME "cmdline-tools") -ItemType Directory -Force | Out-Null
 
-  Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-14742923_latest.zip" -OutFile $zipPath
+  Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-${cmdlineToolsVersion}_latest.zip" -OutFile $zipPath
+
+  $actualHash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash
+  if ($actualHash -ne $cmdlineToolsSha256) {
+    Write-Error "[ERROR] SHA-256 verification failed for Android command line tools!`n  Expected: $cmdlineToolsSha256`n  Got:      $actualHash"
+    exit 1
+  }
+  Write-Host "[INFO] SHA-256 verification passed."
+
   Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
 
   Move-Item -Path (Join-Path $extractDir "cmdline-tools") -Destination $cmdlineToolsDir -Force

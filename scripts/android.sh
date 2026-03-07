@@ -26,7 +26,21 @@ else
   rm -rf "$CMDLINE_TOOLS_DIR" /tmp/cmdline-tools-extract
   mkdir -p /tmp/cmdline-tools-extract "$ANDROID_HOME/cmdline-tools"
 
-  wget -c -O /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+  # SHA-256 checksum for Linux package — verify at https://developer.android.com/studio#command-line-tools-only
+  CMDLINE_TOOLS_VERSION="14742923"
+  CMDLINE_TOOLS_SHA256="a22982e13a031486bc465bfee5107eb3097c3393c7757e289a5acc64c404c7c3"
+
+  wget -c -O /tmp/cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_TOOLS_VERSION}_latest.zip"
+
+  ACTUAL_SHA256=$(sha256sum /tmp/cmdline-tools.zip | cut -d' ' -f1)
+  if [ "$ACTUAL_SHA256" != "$CMDLINE_TOOLS_SHA256" ]; then
+    echo "[ERROR] SHA-256 verification failed for Android command line tools!"
+    echo "  Expected: $CMDLINE_TOOLS_SHA256"
+    echo "  Got:      $ACTUAL_SHA256"
+    exit 1
+  fi
+  echo "[INFO] SHA-256 verification passed."
+
   unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
 
   mv /tmp/cmdline-tools-extract/cmdline-tools "$CMDLINE_TOOLS_DIR"
