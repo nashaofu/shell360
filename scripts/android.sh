@@ -23,13 +23,23 @@ if [ -x "$CMDLINE_TOOLS_DIR/bin/sdkmanager" ]; then
 else
   echo "[INFO] sdkmanager not found, installing Android command line tools..."
 
-  rm -rf "$CMDLINE_TOOLS_DIR" /tmp/cmdline-tools-extract
-  mkdir -p /tmp/cmdline-tools-extract "$ANDROID_HOME/cmdline-tools"
+  EXTRACT_DIR=/tmp/cmdline-tools-extract
+  ZIP_PATH=/tmp/cmdline-tools.zip
 
-  wget -c -O /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
-  unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-extract
+  rm -rf "$CMDLINE_TOOLS_DIR" $EXTRACT_DIR
+  mkdir -p $EXTRACT_DIR "$ANDROID_HOME/cmdline-tools"
 
-  mv /tmp/cmdline-tools-extract/cmdline-tools "$CMDLINE_TOOLS_DIR"
+  wget -c -O "$ZIP_PATH" https://dl.google.com/android/repository/commandlinetools-linux-14742923_latest.zip
+
+  CMDLINE_TOOLS_SHA256=48833c34b761c10cb20bcd16582129395d121b27
+  ACTUAL_SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
+  if [ "$ACTUAL_SHA256" != "$CMDLINE_TOOLS_SHA256" ]; then
+    echo "[ERROR] SHA-256 checksum verification failed for cmdline-tools.zip"
+    exit 1
+  fi
+
+  unzip "$ZIP_PATH" -d "$EXTRACT_DIR"
+  mv "$EXTRACT_DIR/cmdline-tools" "$CMDLINE_TOOLS_DIR"
 fi
 
 export PATH="$CMDLINE_TOOLS_DIR/bin:$PATH"
