@@ -129,26 +129,35 @@ export default function SSHTerminal({
             left: 0,
             right: 0,
             paddingBottom: "env(safe-area-inset-bottom)",
+            borderTop: "1px solid #c6c6c6",
+            backgroundColor: "#d6d6d6",
           }}
         >
-          {session && <Sftp session={session} />}
-
           <Box
             sx={{
               display: "flex",
               justifyContent: "flex-end",
-              px: 0.5,
+              px: 1,
               py: 0.25,
-              borderTop: "1px solid #c6c6c6",
-              backgroundColor: "#d6d6d6",
+              gap: 0.5,
+              fontSize: "0.75rem",
             }}
           >
+            {session && <Sftp session={session} />}
             <Box
               sx={{
                 py: 0.5,
                 px: 1,
+                lineHeight: 0,
                 borderRadius: 1,
-                ":active": { backgroundColor: "#c6c6c6" },
+                borderColor: "#c6c6c6",
+                backgroundColor: "#cfcfcf",
+                color: "#333",
+                ":active": {
+                  borderColor: "#8ea9cf",
+                  backgroundColor: "#c8d7ef",
+                  color: "#000",
+                },
               }}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >

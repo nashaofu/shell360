@@ -311,15 +311,22 @@ export default function Sftp({ session }: SftpProps) {
       {!initLoading && !initError && (
         <Box
           sx={{
-            position: "absolute",
-            right: 10,
-            top: -10,
-            transform: "translateY(-100%)",
+            py: 0.5,
+            px: 1,
+            lineHeight: 0,
+            borderRadius: 1,
+            borderColor: "#c6c6c6",
+            backgroundColor: "#cfcfcf",
+            color: "#333",
+            ":active": {
+              borderColor: "#8ea9cf",
+              backgroundColor: "#c8d7ef",
+              color: "#000",
+            },
           }}
+          onClick={() => setIsOpen(true)}
         >
-          <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
-            <Icon className="icon-folder" />
-          </Fab>
+          <Icon className="icon-folder" />
         </Box>
       )}
       <Dialog
