@@ -1,12 +1,11 @@
-import { Box, type SxProps, type Theme } from "@mui/material";
+import { Box, Button, Icon, type SxProps, type Theme } from "@mui/material";
 import { useSize } from "ahooks";
-import { useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
   type TerminalAtom,
   useTerminal,
-  useVirtualKeyboard,
   VirtualKeyboard,
   XTerminal,
 } from "shared";
@@ -44,25 +43,13 @@ export default function SSHTerminal({
   } = useTerminal({ item, onClose });
 
   const footerRef = useRef<HTMLElement>(null);
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
 
   const size = useSize(footerRef);
-
-  const {
-    modifiers,
-    setModifiers,
-    onVirtualKeyboardInput,
-    onTerminalKeyboardEvent,
-  } = useVirtualKeyboard({
-    onSyntheticData: onTerminalData,
-  });
-
-  useEffect(() => {
-    if (!terminal) {
-      return;
-    }
-
-    terminal.attachCustomKeyEventHandler(onTerminalKeyboardEvent);
-  }, [terminal, onTerminalKeyboardEvent]);
+  const terminalSettings = item.host.terminalSettings;
+  const hasBlockingState = loading || Boolean(error);
+  const showLoadingMask = !terminal || hasBlockingState;
+  const showFooter = !hasBlockingState && Boolean(session);
 
   return (
     <Box
@@ -82,8 +69,8 @@ export default function SSHTerminal({
           bottom: size?.height || 0,
           left: 0,
           overflow: "hidden",
-          pointerEvents: loading || error ? "none" : "unset",
-          visibility: loading || error ? "hidden" : "visible",
+          pointerEvents: hasBlockingState ? "none" : "unset",
+          visibility: hasBlockingState ? "hidden" : "visible",
           ".xterm": {
             width: "100%",
             height: "100%",
@@ -100,11 +87,9 @@ export default function SSHTerminal({
         data-paste="true"
       >
         <XTerminal
-          fontFamily={item.host.terminalSettings?.fontFamily}
-          fontSize={item.host.terminalSettings?.fontSize}
-          theme={
-            TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
-          }
+          fontFamily={terminalSettings?.fontFamily}
+          fontSize={terminalSettings?.fontSize}
+          theme={TERMINAL_THEMES_MAP.get(terminalSettings?.theme)?.theme}
           onReady={onTerminalReady}
           onData={onTerminalData}
           onBinary={onTerminalBinaryData}
@@ -112,7 +97,7 @@ export default function SSHTerminal({
           onOpenUrl={openUrl}
         />
       </Box>
-      {(!terminal || loading || error) && (
+      {showLoadingMask && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
@@ -135,7 +120,7 @@ export default function SSHTerminal({
         />
       )}
 
-      {!loading && !error && session && (
+      {showFooter && (
         <Box
           ref={footerRef}
           sx={{
@@ -143,15 +128,28 @@ export default function SSHTerminal({
             bottom: 0,
             left: 0,
             right: 0,
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
-          <Sftp session={session} />
+          {session && <Sftp session={session} />}
 
-          <VirtualKeyboard
-            modifiers={modifiers}
-            onInput={onVirtualKeyboardInput}
-            onModifiersChange={setModifiers}
-          />
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              px: 0.5,
+              py: 0.25,
+            }}
+          >
+            <Button
+              size="small"
+              onClick={() => setShowVirtualKeyboard((prev) => !prev)}
+            >
+              <Icon className="icon-keyboard" />
+            </Button>
+          </Box>
+
+          {showVirtualKeyboard && <VirtualKeyboard onData={onTerminalData} />}
         </Box>
       )}
     </Box>

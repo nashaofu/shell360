@@ -1,9 +1,8 @@
 @font-face {
   font-family: "Shell360Icons"; /* Project id 4490042 */
-  src:
-    url("iconfont.woff2?t=1761875557515") format("woff2"),
-    url("iconfont.woff?t=1761875557515") format("woff"),
-    url("iconfont.ttf?t=1761875557515") format("truetype");
+  src: url('iconfont.woff2?t=1772978656563') format('woff2'),
+       url('iconfont.woff?t=1772978656563') format('woff'),
+       url('iconfont.ttf?t=1772978656563') format('truetype');
 }
 
 .Shell360Icons {
@@ -12,6 +11,10 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-keyboard:before {
+  content: "\e614";
 }
 
 .icon-variable:before {
@@ -217,3 +220,4 @@
 .icon-close:before {
   content: "\e7cf";
 }
+

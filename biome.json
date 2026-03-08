@@ -7,7 +7,12 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!shared/src/styles/shell360font/*", "!**/permissions"]
+    "includes": [
+      "**",
+      "!shared/src/styles/shell360font/*",
+      "!**/permissions",
+      "!src-tauri/gen/apple/Assets.xcassets"
+    ]
   },
   "formatter": {
     "enabled": true,

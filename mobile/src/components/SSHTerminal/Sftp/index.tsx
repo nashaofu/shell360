@@ -313,7 +313,7 @@ export default function Sftp({ session }: SftpProps) {
           sx={{
             position: "absolute",
             right: 10,
-            top: 0,
+            top: -10,
             transform: "translateY(-100%)",
           }}
         >

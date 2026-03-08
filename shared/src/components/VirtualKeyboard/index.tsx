@@ -1,114 +1,100 @@
-import { Box, Button } from "@mui/material";
-import { useCallback } from "react";
-
-export interface VirtualKeyboardModifiers {
-  ctrl: boolean;
-  alt: boolean;
-  shift: boolean;
-}
+import { Box, type SxProps, type Theme } from "@mui/material";
+import {
+  KEY_ACTIVE_BG,
+  KEY_BG,
+  KEYBOARD_BG,
+  VIRTUAL_KEYBOARD_KEY_WIDTH,
+  VIRTUAL_KEYBOARD_LABELS,
+} from "./constants";
+import { useVirtualKeyboard } from "./useVirtualKeyboard";
 
 export type VirtualKeyboardProps = {
-  /** controlled modifier state */
-  modifiers?: VirtualKeyboardModifiers;
-  /** called whenever ctrl/alt/shift state changes */
-  onModifiersChange?: (modifiers: VirtualKeyboardModifiers) => void;
-  /** called when user clicks a key on the virtual keyboard; sends KeyboardEvent.key value */
-  onInput: (key: string) => void;
+  sx?: SxProps<Theme>;
+  /** called when user clicks a key on the virtual keyboard; sends terminal-ready data */
+  onData: (data: string) => void;
 };
 
 /**
- * A small on-screen keyboard that can send a handful of useful keys to the
- * terminal.  Only the special keys are implemented here; normal characters are
- * usually typed with the real keyboard.  On mobile platforms the normal
- * OS keyboard does not work well inside the xterm canvas, so this component
- * gives the user a way to send control/arrow keys, escape, tab, etc.
+ * A mobile-friendly on-screen keyboard for terminal input.
+ * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({
-  modifiers = { ctrl: false, alt: false, shift: false },
-  onModifiersChange,
-  onInput,
-}: VirtualKeyboardProps) {
-  const toggle = useCallback(
-    (key: keyof VirtualKeyboardModifiers) => {
-      const updated = { ...modifiers, [key]: !modifiers[key] };
-      onModifiersChange?.(updated);
-    },
-    [modifiers, onModifiersChange],
-  );
+export function VirtualKeyboard({ sx, onData: onInput }: VirtualKeyboardProps) {
+  const { rows, isTokenActive, onTokenPress } = useVirtualKeyboard({
+    onData: onInput,
+  });
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        gap: 1,
-        flexWrap: "wrap",
-        bgcolor: "rgba(0,0,0,0.75)",
-      }}
+      sx={[
+        {
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.3,
+          p: 0.5,
+          borderRadius: 1,
+          bgcolor: KEYBOARD_BG,
+          width: "100%",
+          maxWidth: 760,
+          margin: "0 auto",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
-      <Button
-        size="small"
-        variant={modifiers.ctrl ? "contained" : "outlined"}
-        onClick={() => toggle("ctrl")}
-      >
-        Ctrl
-      </Button>
-      <Button
-        size="small"
-        variant={modifiers.alt ? "contained" : "outlined"}
-        onClick={() => toggle("alt")}
-      >
-        Alt
-      </Button>
-      <Button
-        size="small"
-        variant={modifiers.shift ? "contained" : "outlined"}
-        onClick={() => toggle("shift")}
-      >
-        Shift
-      </Button>
-      <Button size="small" onClick={() => onInput("Escape")}>
-        Esc
-      </Button>
-      <Button size="small" onClick={() => onInput("Tab")}>
-        Tab
-      </Button>
-      <Button size="small" onClick={() => onInput("Enter")}>
-        Enter
-      </Button>
-      <Button size="small" onClick={() => onInput("Backspace")}>
-        Backspace
-      </Button>
-      <Button size="small" onClick={() => onInput("Insert")}>
-        Insert
-      </Button>
-      <Button size="small" onClick={() => onInput("Delete")}>
-        Delete
-      </Button>
-      <Button size="small" onClick={() => onInput("Home")}>
-        Home
-      </Button>
-      <Button size="small" onClick={() => onInput("End")}>
-        End
-      </Button>
-      <Button size="small" onClick={() => onInput("PageUp")}>
-        PageUp
-      </Button>
-      <Button size="small" onClick={() => onInput("PageDown")}>
-        PageDown
-      </Button>
-      <Button size="small" onClick={() => onInput("ArrowUp")}>
-        ↑
-      </Button>
-      <Button size="small" onClick={() => onInput("ArrowDown")}>
-        ↓
-      </Button>
-      <Button size="small" onClick={() => onInput("ArrowRight")}>
-        →
-      </Button>
-      <Button size="small" onClick={() => onInput("ArrowLeft")}>
-        ←
-      </Button>
+      {rows.map((row, rowIndex) => (
+        <Box
+          // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout rows are static
+          key={rowIndex}
+          sx={{
+            display: "flex",
+            gap: 0.3,
+            width: "100%",
+          }}
+        >
+          {row.map((token, colIndex) => {
+            const label = VIRTUAL_KEYBOARD_LABELS[token] ?? token;
+            const grow = VIRTUAL_KEYBOARD_KEY_WIDTH[token] ?? 1;
+            const isActive = isTokenActive(token);
+
+            return (
+              <Box
+                // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout keys are static
+                key={`${rowIndex}-${colIndex}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => onTokenPress(token)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onTokenPress(token);
+                  }
+                }}
+                sx={{
+                  flex: `${grow} 1 0`,
+                  minWidth: 0,
+                  px: 1,
+                  fontSize: "0.75rem",
+                  lineHeight: "34px",
+                  height: 34,
+                  textAlign: "center",
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: isActive ? "#8ea9cf" : "#c6c6c6",
+                  bgcolor: isActive ? KEY_ACTIVE_BG : KEY_BG,
+                  cursor: "pointer",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                  touchAction: "manipulation",
+                }}
+              >
+                {label}
+              </Box>
+            );
+          })}
+        </Box>
+      ))}
     </Box>
   );
 }
