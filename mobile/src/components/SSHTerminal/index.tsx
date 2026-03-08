@@ -139,14 +139,21 @@ export default function SSHTerminal({
               justifyContent: "flex-end",
               px: 0.5,
               py: 0.25,
+              borderTop: "1px solid #c6c6c6",
+              backgroundColor: "#d6d6d6",
             }}
           >
-            <Button
-              size="small"
+            <Box
+              sx={{
+                py: 0.5,
+                px: 1,
+                borderRadius: 1,
+                ":active": { backgroundColor: "#c6c6c6" },
+              }}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >
               <Icon className="icon-keyboard" />
-            </Button>
+            </Box>
           </Box>
 
           {showVirtualKeyboard && <VirtualKeyboard onData={onTerminalData} />}
