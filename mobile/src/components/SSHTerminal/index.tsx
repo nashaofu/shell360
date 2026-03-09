@@ -146,7 +146,7 @@ export default function SSHTerminal({
             {session && <Sftp session={session} />}
             <Box
               sx={{
-                py: 0.5,
+                py: 0.3,
                 px: 1,
                 lineHeight: 0,
                 borderRadius: 1,
@@ -155,7 +155,7 @@ export default function SSHTerminal({
                 color: "#333",
                 ":active": {
                   borderColor: "#8ea9cf",
-                  backgroundColor: "#c8d7ef",
+                  backgroundColor: "#c0c0c0",
                   color: "#000",
                 },
               }}
