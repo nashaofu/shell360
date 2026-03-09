@@ -9,25 +9,25 @@ import {
   type DialogProps,
   DialogTitle,
   ThemeProvider,
-} from '@mui/material';
-import { type ReactNode } from 'react';
-import { useAtomValue } from 'jotai';
+} from "@mui/material";
+import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 
-import { themeAtom } from '@/atom/themeAtom';
+import { themeAtom } from "@/atom/themeAtom";
 
 export type HookModalProps = {
   open: boolean;
   icon?: ReactNode;
   title?: ReactNode;
   content?: ReactNode;
-  DialogProps?: Omit<DialogProps, 'open' | 'onCancel'>;
-  DialogContentProps?: Omit<DialogContentProps, 'children'>;
+  DialogProps?: Omit<DialogProps, "open" | "onCancel">;
+  DialogContentProps?: Omit<DialogContentProps, "children">;
   hideCancel?: boolean;
   cancelText?: ReactNode;
-  CancelButtonProps?: Omit<ButtonProps, 'children' | 'onClick'>;
+  CancelButtonProps?: Omit<ButtonProps, "children" | "onClick">;
   hideOk?: boolean;
   okText?: ReactNode;
-  OkButtonProps?: Omit<ButtonProps, 'children' | 'onClick'>;
+  OkButtonProps?: Omit<ButtonProps, "children" | "onClick">;
   onCancel?: () => unknown;
   onOk?: () => unknown;
 };
@@ -50,7 +50,7 @@ export default function HookModal({
 }: HookModalProps) {
   const theme = useAtomValue(themeAtom);
 
-  const { maxWidth = 'xs', ...dialogProps } = HookDialogProps || {};
+  const { maxWidth = "xs", ...dialogProps } = HookDialogProps || {};
   const { sx, ...dialogContentProps } = HookDialogContentProps || {};
 
   return (
@@ -63,8 +63,8 @@ export default function HookModal({
       >
         <DialogTitle
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
           }}
         >
           {icon && (
@@ -82,7 +82,7 @@ export default function HookModal({
           {...dialogContentProps}
           sx={[
             {
-              userSelect: 'text',
+              userSelect: "text",
             },
             ...(Array.isArray(sx) ? sx : [sx]),
           ]}
@@ -92,12 +92,12 @@ export default function HookModal({
         <DialogActions>
           {!hideCancel && (
             <Button {...CancelButtonProps} onClick={onCancel}>
-              {cancelText || 'Cancel'}
+              {cancelText || "Cancel"}
             </Button>
           )}
           {!hideOk && (
             <Button {...OkButtonProps} onClick={onOk}>
-              {okText || 'Ok'}
+              {okText || "Ok"}
             </Button>
           )}
         </DialogActions>

@@ -1,16 +1,16 @@
-import { type ReactNode, useEffect } from 'react';
 import {
   Box,
   Divider,
+  Drawer,
   Icon,
   IconButton,
-  Drawer,
   Toolbar,
   Typography,
-} from '@mui/material';
-import { Loading } from 'shared';
+} from "@mui/material";
+import { type ReactNode, useEffect } from "react";
+import { Loading } from "shared";
 
-import overlay from '@/utils/overlay';
+import overlay from "@/utils/overlay";
 
 type PageDrawerProps = {
   loading?: boolean;
@@ -46,16 +46,16 @@ export default function PageDrawer({
       open={open}
       anchor="right"
       sx={(theme) => ({
-        '& .MuiDrawer-paper': {
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          [theme.breakpoints.down('sm')]: {
-            width: '100%',
+        "& .MuiDrawer-paper": {
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          [theme.breakpoints.down("sm")]: {
+            width: "100%",
           },
-          [theme.breakpoints.up('sm')]: {
+          [theme.breakpoints.up("sm")]: {
             width: 420,
           },
         },
@@ -66,8 +66,8 @@ export default function PageDrawer({
           edge="start"
           sx={(theme) => ({
             mr: 2,
-            [theme.breakpoints.up('sm')]: {
-              display: 'none',
+            [theme.breakpoints.up("sm")]: {
+              display: "none",
             },
           })}
           disabled={loading}
@@ -87,8 +87,8 @@ export default function PageDrawer({
           edge="end"
           sx={(theme) => ({
             ml: 2,
-            [theme.breakpoints.down('sm')]: {
-              display: 'none',
+            [theme.breakpoints.down("sm")]: {
+              display: "none",
             },
           })}
           disabled={loading}
@@ -101,9 +101,9 @@ export default function PageDrawer({
       <Loading
         sx={{
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
         loading={loading}
         size={32}
@@ -111,7 +111,7 @@ export default function PageDrawer({
         <Box
           sx={{
             flexGrow: 1,
-            overflow: 'auto',
+            overflow: "auto",
             px: 2,
             py: 2.5,
           }}

@@ -1,14 +1,14 @@
-import { Box, Typography, Button, Grid } from '@mui/material';
-import { useRequest } from 'ahooks';
-import { type KeyboardEvent, useCallback, useState } from 'react';
-import { loadCryptoByPassword, resetCrypto } from 'tauri-plugin-data';
-import { Loading , TextFieldPassword } from 'shared';
+import { Box, Button, Grid, Typography } from "@mui/material";
+import { useRequest } from "ahooks";
+import { type KeyboardEvent, useCallback, useState } from "react";
+import { Loading, TextFieldPassword } from "shared";
+import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
 
-import useMessage from '@/hooks/useMessage';
-import useModal from '@/hooks/useModal';
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
 
 export default function UnlockVault() {
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const message = useMessage();
   const modal = useModal();
 
@@ -18,17 +18,20 @@ export default function UnlockVault() {
       manual: true,
       onError: () => {
         message.error({
-          message: 'Unlock failed, please confirm the password is correct',
+          message: "Unlock failed, please confirm the password is correct",
         });
       },
-    }
+    },
   );
 
-  const onEnter = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.code === 'Enter') {
-      onUnlock();
-    }
-  }, [onUnlock]);
+  const onEnter = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" || e.code === "Enter") {
+        onUnlock();
+      }
+    },
+    [onUnlock],
+  );
 
   const { run: onReset, loading: resetLoading } = useRequest(
     async () => {
@@ -36,7 +39,7 @@ export default function UnlockVault() {
         modal.confirm({
           title: <Box>Warning</Box>,
           content:
-            'All application data will be reset soon, whether to continue',
+            "All application data will be reset soon, whether to continue",
           onOk: () => {
             resolve(true);
           },
@@ -56,10 +59,10 @@ export default function UnlockVault() {
       manual: true,
       onError: () => {
         message.error({
-          message: 'Reset application failed',
+          message: "Reset application failed",
         });
       },
-    }
+    },
   );
 
   const loading = loadCryptoLoading || resetLoading;
@@ -69,11 +72,11 @@ export default function UnlockVault() {
       sx={{
         flexGrow: 1,
         flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Box

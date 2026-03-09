@@ -1,7 +1,7 @@
-import { Channel, invoke } from '@tauri-apps/api/core';
-import { v4 as uuidV4 } from 'uuid';
+import { Channel, invoke } from "@tauri-apps/api/core";
+import { v4 as uuidV4 } from "uuid";
 
-import { SSHSession } from './session';
+import type { SSHSession } from "./session";
 
 export type SSHShellOpts = {
   session: SSHSession;
@@ -24,7 +24,7 @@ export type SSHShellOpenOpts = {
 };
 
 export type SSHShellIpcChannelEventJson = {
-  type: 'Eof' | 'Close';
+  type: "Eof" | "Close";
 };
 
 export type SSHShellIpcChannelEvent = ArrayBuffer | SSHShellIpcChannelEventJson;
@@ -42,7 +42,7 @@ export class SSHShell {
   }
 
   open({ term, envs, size }: SSHShellOpenOpts): Promise<string> {
-    return invoke<string>('plugin:ssh|shell_open', {
+    return invoke<string>("plugin:ssh|shell_open", {
       sshSessionId: this.session.sshSessionId,
       sshShellId: this.sshShellId,
       term,
@@ -54,9 +54,9 @@ export class SSHShell {
           return;
         }
 
-        if (data.type === 'Eof') {
+        if (data.type === "Eof") {
           this.opts.onEof?.();
-        } else if (data.type === 'Close') {
+        } else if (data.type === "Close") {
           this.opts.onClose?.();
         }
       }),
@@ -64,20 +64,20 @@ export class SSHShell {
   }
 
   close(): Promise<string> {
-    return invoke<string>('plugin:ssh|shell_close', {
+    return invoke<string>("plugin:ssh|shell_close", {
       sshShellId: this.sshShellId,
     });
   }
 
   send(data: string): Promise<string> {
-    return invoke<string>('plugin:ssh|shell_send', {
+    return invoke<string>("plugin:ssh|shell_send", {
       sshShellId: this.sshShellId,
       data,
     });
   }
 
   resize(size: SSHShellSize): Promise<string> {
-    return invoke<string>('plugin:ssh|shell_resize', {
+    return invoke<string>("plugin:ssh|shell_resize", {
       sshShellId: this.sshShellId,
       size,
     });

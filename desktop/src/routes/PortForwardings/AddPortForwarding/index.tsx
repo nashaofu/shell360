@@ -1,19 +1,19 @@
-import { useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { Box, Button } from '@mui/material';
+import { Box, Button } from "@mui/material";
+import { useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import {
-  addPortForwarding,
-  updatePortForwarding,
-  type PortForwarding,
-  PortForwardingType,
-} from 'tauri-plugin-data';
-import {
-  usePortForwardings,
   PortForwardingForm,
   type PortForwardingFormFields,
-} from 'shared';
+  usePortForwardings,
+} from "shared";
+import {
+  addPortForwarding,
+  type PortForwarding,
+  PortForwardingType,
+  updatePortForwarding,
+} from "tauri-plugin-data";
 
-import PageDrawer from '@/components/PageDrawer';
+import PageDrawer from "@/components/PageDrawer";
 
 type AddPortForwardingProps = {
   open?: boolean;
@@ -29,41 +29,41 @@ export default function AddPortForwarding({
   onCancel,
 }: AddPortForwardingProps) {
   const { refresh: refreshPortForwardings } = usePortForwardings();
-  const formApi = useForm<PortForwardingFormFields, 'id'>({
+  const formApi = useForm<PortForwardingFormFields, "id">({
     defaultValues: {
-      name: '',
+      name: "",
       portForwardingType: PortForwardingType.Local,
-      hostId: '',
-      localAddress: '',
-      localPort: '',
-      remoteAddress: '',
-      remotePort: '',
+      hostId: "",
+      localAddress: "",
+      localPort: "",
+      remoteAddress: "",
+      remotePort: "",
     },
     values: {
-      name: data?.name ?? '',
+      name: data?.name ?? "",
       portForwardingType: data?.portForwardingType ?? PortForwardingType.Local,
-      hostId: data?.hostId ?? '',
-      localAddress: data?.localAddress ?? '',
-      localPort: data?.localPort ?? '',
-      remoteAddress: data?.remoteAddress ?? '',
-      remotePort: data?.remotePort ?? '',
+      hostId: data?.hostId ?? "",
+      localAddress: data?.localAddress ?? "",
+      localPort: data?.localPort ?? "",
+      remoteAddress: data?.remoteAddress ?? "",
+      remotePort: data?.remotePort ?? "",
     },
   });
 
   const save = useCallback(
     (values: PortForwardingFormFields) => {
-      const portForwardingData: Omit<PortForwarding, 'id'> = {
+      const portForwardingData: Omit<PortForwarding, "id"> = {
         name: values.name,
         portForwardingType: values.portForwardingType,
         hostId: values.hostId,
         localAddress: values.localAddress,
         localPort: Number(values.localPort),
         remoteAddress:
-          values.remoteAddress !== undefined && values.remoteAddress !== ''
+          values.remoteAddress !== undefined && values.remoteAddress !== ""
             ? values.remoteAddress
             : undefined,
         remotePort:
-          values.remotePort !== undefined && values.remotePort !== ''
+          values.remotePort !== undefined && values.remotePort !== ""
             ? Number(values.remotePort)
             : undefined,
       };
@@ -76,7 +76,7 @@ export default function AddPortForwarding({
 
       return addPortForwarding(portForwardingData);
     },
-    [data]
+    [data],
   );
 
   const onSave = useCallback(
@@ -85,7 +85,7 @@ export default function AddPortForwarding({
       await refreshPortForwardings();
       onOk();
     },
-    [onOk, save, refreshPortForwardings]
+    [onOk, save, refreshPortForwardings],
   );
 
   useEffect(() => {
@@ -99,19 +99,19 @@ export default function AddPortForwarding({
   return (
     <PageDrawer
       open={open}
-      title={data ? 'Edit host' : 'Add host'}
+      title={data ? "Edit host" : "Add host"}
       onCancel={onCancel}
       footer={
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
           <Button
             sx={{
-              width: '48%',
+              width: "48%",
             }}
             variant="outlined"
             onClick={onCancel}
@@ -120,7 +120,7 @@ export default function AddPortForwarding({
           </Button>
           <Button
             sx={{
-              width: '48%',
+              width: "48%",
             }}
             variant="contained"
             onClick={formApi.handleSubmit(onSave)}

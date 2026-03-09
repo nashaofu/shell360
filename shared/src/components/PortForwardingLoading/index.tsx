@@ -1,19 +1,19 @@
 import {
   Box,
   Button,
+  type ButtonProps,
   LinearProgress,
   styled,
-  type ButtonProps,
-} from '@mui/material';
-import { get } from 'lodash-es';
-import { useMemo, type ComponentType } from 'react';
-import type { PortForwarding } from 'tauri-plugin-data';
+} from "@mui/material";
+import { get } from "lodash-es";
+import { type ComponentType, useMemo } from "react";
+import type { PortForwarding } from "tauri-plugin-data";
 
-import { useHosts } from '@/hooks/useHosts';
-import { getPortForwardingDesc } from '@/utils/portForwarding';
+import { useHosts } from "@/hooks/useHosts";
+import { getPortForwardingDesc } from "@/utils/portForwarding";
 
 export const StatusButton: ComponentType<ButtonProps> = styled(Button, {
-  name: 'StatusButton',
+  name: "StatusButton",
 })(() => ({
   minWidth: 150,
 }));
@@ -34,15 +34,15 @@ export function PortForwardingLoading({
   const { data: hosts } = useHosts();
   const hostsMap = useMemo(
     () => new Map(hosts?.map((host) => [host.id, host])),
-    [hosts]
+    [hosts],
   );
 
   return (
     <Box
       sx={{
         p: 3,
-        maxWidth: '100%',
-        mx: 'auto',
+        maxWidth: "100%",
+        mx: "auto",
       }}
     >
       <Box>
@@ -50,9 +50,9 @@ export function PortForwardingLoading({
           sx={{
             fontSize: 16,
             fontWeight: 600,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             py: 1.5,
           }}
         >
@@ -61,8 +61,8 @@ export function PortForwardingLoading({
         <Box
           sx={{
             fontSize: 12,
-            wordBreak: 'break-all',
-            userSelect: 'text',
+            wordBreak: "break-all",
+            userSelect: "text",
           }}
         >
           {getPortForwardingDesc(portForwarding, hostsMap)}
@@ -73,27 +73,27 @@ export function PortForwardingLoading({
           py: 1.5,
         }}
       >
-        <LinearProgress color={error ? 'error' : 'primary'} />
+        <LinearProgress color={error ? "error" : "primary"} />
       </Box>
       {!!error && (
         <>
           <Box
             sx={{
-              fontSize: '14px',
-              mx: 'auto',
+              fontSize: "14px",
+              mx: "auto",
               mt: 3,
               mb: 5,
-              wordBreak: 'break-all',
-              userSelect: 'text',
+              wordBreak: "break-all",
+              userSelect: "text",
             }}
           >
-            {get(error, 'message', String(error))}
+            {get(error, "message", String(error))}
           </Box>
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               gap: 2,
             }}
           >

@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react';
 import {
   AppBar,
   Box,
@@ -6,9 +5,10 @@ import {
   IconButton,
   Toolbar,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
+import type { ReactNode } from "react";
 
-import { useGlobalStateAtomWithApi } from '@/atom/globalState';
+import { useGlobalStateAtomWithApi } from "@/atom/globalState";
 
 type PageProps = {
   title: ReactNode;
@@ -21,13 +21,13 @@ export default function Page({ title, headerRight, children }: PageProps) {
 
   return (
     <>
-      <AppBar position="static" sx={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <AppBar position="static" sx={{ paddingTop: "env(safe-area-inset-top)" }}>
         <Toolbar>
           <IconButton
             size="large"
             edge="start"
             sx={{
-              color: 'inherit',
+              color: "inherit",
               mr: 2,
             }}
             onClick={globalStateAtomWithApi.openSidebar}
@@ -50,9 +50,9 @@ export default function Page({ title, headerRight, children }: PageProps) {
           flexGrow: 1,
           px: 2,
           py: 1,
-          overflowX: 'hidden',
-          overflowY: 'auto',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          overflowX: "hidden",
+          overflowY: "auto",
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         {children}

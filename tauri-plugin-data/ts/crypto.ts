@@ -1,22 +1,22 @@
-import { invoke } from '@tauri-apps/api/core';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export async function checkIsEnableCrypto(): Promise<boolean> {
-  return invoke<boolean>('plugin:data|check_is_enable_crypto');
+  return invoke<boolean>("plugin:data|check_is_enable_crypto");
 }
 
 export async function checkIsInitCrypto(): Promise<boolean> {
-  return invoke<boolean>('plugin:data|check_is_init_crypto');
+  return invoke<boolean>("plugin:data|check_is_init_crypto");
 }
 
 export async function checkIsAuthed(): Promise<boolean> {
-  return invoke<boolean>('plugin:data|check_is_authed');
+  return invoke<boolean>("plugin:data|check_is_authed");
 }
 
 export async function onAuthedChange(
-  callback: (isAuthed: boolean) => unknown
+  callback: (isAuthed: boolean) => unknown,
 ): Promise<UnlistenFn> {
-  const unListen = await listen<boolean>('data://authed_change', (event) => {
+  const unListen = await listen<boolean>("data://authed_change", (event) => {
     callback(event.payload);
   });
 
@@ -24,7 +24,7 @@ export async function onAuthedChange(
 }
 
 export async function initCryptoKey(): Promise<void> {
-  return invoke<void>('plugin:data|init_crypto_key');
+  return invoke<void>("plugin:data|init_crypto_key");
 }
 
 export interface InitCryptoPasswordOpts extends Record<string, unknown> {
@@ -33,9 +33,9 @@ export interface InitCryptoPasswordOpts extends Record<string, unknown> {
 }
 
 export async function initCryptoPassword(
-  opts: InitCryptoPasswordOpts
+  opts: InitCryptoPasswordOpts,
 ): Promise<void> {
-  return invoke<void>('plugin:data|init_crypto_password', opts);
+  return invoke<void>("plugin:data|init_crypto_password", opts);
 }
 
 export interface LoadCryptoByPasswordOpts extends Record<string, unknown> {
@@ -43,9 +43,9 @@ export interface LoadCryptoByPasswordOpts extends Record<string, unknown> {
 }
 
 export async function loadCryptoByPassword(
-  opts: LoadCryptoByPasswordOpts
+  opts: LoadCryptoByPasswordOpts,
 ): Promise<void> {
-  return invoke<void>('plugin:data|load_crypto_by_password', opts);
+  return invoke<void>("plugin:data|load_crypto_by_password", opts);
 }
 
 export interface ChangeCryptoPasswordOpts extends Record<string, unknown> {
@@ -55,17 +55,17 @@ export interface ChangeCryptoPasswordOpts extends Record<string, unknown> {
 }
 
 export async function changeCryptoPassword(
-  opts: ChangeCryptoPasswordOpts
+  opts: ChangeCryptoPasswordOpts,
 ): Promise<void> {
-  return invoke<void>('plugin:data|change_crypto_password', opts);
+  return invoke<void>("plugin:data|change_crypto_password", opts);
 }
 
 export async function initCryptoBiometric(): Promise<void> {
-  return invoke<void>('plugin:data|init_crypto_biometric');
+  return invoke<void>("plugin:data|init_crypto_biometric");
 }
 
 export async function loadCryptoByBiometric(): Promise<void> {
-  return invoke<void>('plugin:data|load_crypto_by_biometric');
+  return invoke<void>("plugin:data|load_crypto_by_biometric");
 }
 
 export interface ChangeCryptoEnableOpts extends Record<string, unknown> {
@@ -75,15 +75,15 @@ export interface ChangeCryptoEnableOpts extends Record<string, unknown> {
 }
 
 export async function changeCryptoEnable(
-  opts: ChangeCryptoEnableOpts
+  opts: ChangeCryptoEnableOpts,
 ): Promise<void> {
-  return invoke<void>('plugin:data|change_crypto_enable', opts);
+  return invoke<void>("plugin:data|change_crypto_enable", opts);
 }
 
 export async function resetCrypto(): Promise<void> {
-  return invoke<void>('plugin:data|reset_crypto');
+  return invoke<void>("plugin:data|reset_crypto");
 }
 
 export async function rotateCryptoKey(password: string): Promise<void> {
-  return invoke<void>('plugin:data|rotate_crypto_key', { password });
+  return invoke<void>("plugin:data|rotate_crypto_key", { password });
 }

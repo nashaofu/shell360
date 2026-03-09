@@ -1,21 +1,18 @@
+import { Box, Icon, IconButton } from "@mui/material";
 import {
-  readTextFile,
   BaseDirectory,
+  readTextFile,
   writeTextFile,
-} from '@tauri-apps/plugin-fs';
-import {
-  type MouseEvent, useCallback, useEffect, useState,
-} from 'react';
-import { Box, Icon, IconButton } from '@mui/material';
-
-import Empty from '@/components/Empty';
-import Page from '@/components/Page';
-import ItemCard from '@/components/ItemCard';
-import AutoRepeatGrid from '@/components/AutoRepeatGrid';
-import useModal from '@/hooks/useModal';
+} from "@tauri-apps/plugin-fs";
+import { type MouseEvent, useCallback, useEffect, useState } from "react";
+import AutoRepeatGrid from "@/components/AutoRepeatGrid";
+import Empty from "@/components/Empty";
+import ItemCard from "@/components/ItemCard";
+import Page from "@/components/Page";
+import useModal from "@/hooks/useModal";
 
 async function readKnownHost() {
-  const data = await readTextFile('./known_hosts', {
+  const data = await readTextFile("./known_hosts", {
     baseDir: BaseDirectory.AppData,
   });
 
@@ -23,7 +20,7 @@ async function readKnownHost() {
     .split(/\r|\n/)
     .filter(Boolean)
     .map((item) => {
-      const result = item.split(' ').filter(Boolean);
+      const result = item.split(" ").filter(Boolean);
       return {
         id: item,
         host: result[0],
@@ -52,20 +49,19 @@ export default function KnownHosts() {
 
       const knownHostContent = ` ${knownHost.host} ${knownHost.type} ${knownHost.key}`;
       modal.confirm({
-        title: 'Delete Confirmation',
+        title: "Delete Confirmation",
         content: (
           <Box
             sx={{
-              wordBreak: 'break-all',
+              wordBreak: "break-all",
             }}
           >
             Are you sure to delete the known host:
-            {knownHostContent}
-            ?
+            {knownHostContent}?
           </Box>
         ),
         OkButtonProps: {
-          color: 'warning',
+          color: "warning",
         },
         onOk: async () => {
           const knownHosts = await readKnownHost();
@@ -75,9 +71,9 @@ export default function KnownHosts() {
           );
           const data = newItems
             .map((item) => `${item.host} ${item.type} ${item.key}`)
-            .join('\r\n');
+            .join("\r\n");
 
-          await writeTextFile('./known_hosts', data, {
+          await writeTextFile("./known_hosts", data, {
             baseDir: BaseDirectory.AppData,
           });
 
@@ -107,17 +103,15 @@ export default function KnownHosts() {
             icon={<Icon className="icon-fingerprint" />}
             title={item.host}
             desc={item.type}
-            extra={(
+            extra={
               <IconButton onClick={(event) => onDelete(event, item)}>
                 <Icon className="icon-delete" />
               </IconButton>
-            )}
+            }
           />
         ))}
       </AutoRepeatGrid>
-      {!items.length && (
-        <Empty desc="There is no known hosts yet." />
-      )}
+      {!items.length && <Empty desc="There is no known hosts yet." />}
     </Page>
   );
 }

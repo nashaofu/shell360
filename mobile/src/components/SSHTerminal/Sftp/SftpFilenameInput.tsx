@@ -1,11 +1,11 @@
-import { type ChangeEvent, type KeyboardEvent, useCallback } from 'react';
 import {
   Button,
   ButtonGroup,
   Icon,
   InputAdornment,
   TextField,
-} from '@mui/material';
+} from "@mui/material";
+import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
 
 type SftpFilenameInputProps = {
   value?: string;
@@ -24,22 +24,22 @@ export default function SftpFilenameInput({
     (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
       onChange(e.target.value);
     },
-    [onChange]
+    [onChange],
   );
 
   const onKeyUp = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.code === 'Enter') {
+      if (e.code === "Enter") {
         onOk();
         return;
       }
 
-      if (e.code === 'Escape') {
+      if (e.code === "Escape") {
         onCancel();
         return;
       }
     },
-    [onCancel, onOk]
+    [onCancel, onOk],
   );
 
   return (
@@ -53,7 +53,7 @@ export default function SftpFilenameInput({
       autoComplete="false"
       autoFocus={true}
       sx={{
-        '.MuiInputBase-root': {
+        ".MuiInputBase-root": {
           paddingRight: 0,
         },
       }}

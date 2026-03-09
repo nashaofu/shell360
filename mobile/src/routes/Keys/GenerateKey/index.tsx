@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { invoke } from '@tauri-apps/api/core';
-import { Box, Button } from '@mui/material';
-import { addKey } from 'tauri-plugin-data';
+import { Box, Button } from "@mui/material";
+import { invoke } from "@tauri-apps/api/core";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
-  useKeys,
-  Loading,
   GenerateKeyForm,
   type GenerateKeyFormFields,
-} from 'shared';
+  Loading,
+  useKeys,
+} from "shared";
+import { addKey } from "tauri-plugin-data";
 
-import PageDrawer from '@/components/PageDrawer';
+import PageDrawer from "@/components/PageDrawer";
 
 type GenerateKeyProps = {
   open?: boolean;
@@ -26,11 +26,11 @@ export default function GenerateKey({
   const { refresh: refreshKeys } = useKeys();
   const formApi = useForm<GenerateKeyFormFields>({
     defaultValues: {
-      name: '',
-      algorithm: '',
-      bitSize: '',
-      curve: '',
-      passphrase: '',
+      name: "",
+      algorithm: "",
+      bitSize: "",
+      curve: "",
+      passphrase: "",
     },
   });
 
@@ -43,7 +43,7 @@ export default function GenerateKey({
         const { privateKey, publicKey } = await invoke<{
           privateKey: string;
           publicKey: string;
-        }>('generate_key', {
+        }>("generate_key", {
           algorithm: {
             type: values.algorithm,
             bitSize: values.bitSize,
@@ -65,7 +65,7 @@ export default function GenerateKey({
       await refreshKeys();
       onOk();
     },
-    [onOk, refreshKeys]
+    [onOk, refreshKeys],
   );
 
   useEffect(() => {
@@ -85,15 +85,15 @@ export default function GenerateKey({
       footer={
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
           <Loading
             loading={loading}
             sx={{
-              width: '48%',
+              width: "48%",
             }}
           >
             <Button fullWidth variant="outlined" onClick={onCancel}>
@@ -104,7 +104,7 @@ export default function GenerateKey({
           <Loading
             loading={loading}
             sx={{
-              width: '48%',
+              width: "48%",
             }}
           >
             <Button

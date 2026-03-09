@@ -58,7 +58,7 @@ jobs:
       - name: Lint Web
         run: |-
           pnpm install
-          pnpm run lint
+          pnpm run check
           pnpm run tsc
 
       - name: Lint Tauri

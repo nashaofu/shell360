@@ -1,7 +1,7 @@
-import { Button, styled, type ButtonProps } from '@mui/material';
-import type { ComponentType } from 'react';
-import type { Host } from 'tauri-plugin-data';
-import type { SSHSessionCheckServerKey } from 'tauri-plugin-ssh';
+import { Button, type ButtonProps, styled } from "@mui/material";
+import type { ComponentType } from "react";
+import type { Host } from "tauri-plugin-data";
+import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 export type ErrorProps = {
   host: Host;
@@ -15,7 +15,7 @@ export type ErrorProps = {
 };
 
 export const StatusButton: ComponentType<ButtonProps> = styled(Button, {
-  name: 'StatusButton',
+  name: "StatusButton",
 })(() => ({
   minWidth: 150,
 }));

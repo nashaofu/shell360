@@ -4,8 +4,8 @@ import {
   Icon,
   IconButton,
   InputBase,
-} from '@mui/material';
-import { useCallback, useRef, useState } from 'react';
+} from "@mui/material";
+import { useCallback, useRef, useState } from "react";
 
 type SftpFileSearchProps = {
   value: string;
@@ -35,8 +35,8 @@ export default function SftpFileSearch({
     <ClickAwayListener onClickAway={onHide}>
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           maxWidth: 120,
         }}
       >
@@ -50,9 +50,9 @@ export default function SftpFileSearch({
           sx={{
             flex: 1,
             width: isShow ? 100 : 0,
-            transitionProperty: 'width',
+            transitionProperty: "width",
             transitionDuration: (theme) =>
-              theme.transitions.duration.short + 'ms',
+              `${theme.transitions.duration.short}ms`,
             transitionTimingFunction: (theme) =>
               theme.transitions.easing.easeInOut,
           }}

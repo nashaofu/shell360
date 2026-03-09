@@ -1,4 +1,4 @@
-import { TERMINAL_THEMES } from './themes';
+import { TERMINAL_THEMES } from "./themes";
 
 export const DEFAULT_TERMINAL_FONT_FAMILY =
   "'courier-new','courier','monospace'";

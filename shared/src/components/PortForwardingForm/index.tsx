@@ -1,17 +1,17 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
-import { Box, MenuItem, TextField } from '@mui/material';
-import { PortForwardingType } from 'tauri-plugin-data';
+import { Box, MenuItem, TextField } from "@mui/material";
+import { Controller, type UseFormReturn } from "react-hook-form";
+import { PortForwardingType } from "tauri-plugin-data";
 
-import { useHosts } from '@/hooks/useHosts';
+import { useHosts } from "@/hooks/useHosts";
 
 export type PortForwardingFormFields = {
   name: string;
   portForwardingType: PortForwardingType;
   hostId: string;
   localAddress: string;
-  localPort: number | '';
+  localPort: number | "";
   remoteAddress?: string;
-  remotePort?: number | '';
+  remotePort?: number | "";
 };
 
 export type PortForwardingFormProps = {
@@ -20,28 +20,28 @@ export type PortForwardingFormProps = {
 
 const PORT_FORWARDING_TYPES = [
   {
-    label: 'Local forwarding',
+    label: "Local forwarding",
     value: PortForwardingType.Local,
   },
   {
-    label: 'Remote forwarding',
+    label: "Remote forwarding",
     value: PortForwardingType.Remote,
   },
   {
-    label: 'Dynamic forwarding',
+    label: "Dynamic forwarding",
     value: PortForwardingType.Dynamic,
   },
 ];
 
 export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
-  const portForwardingType = formApi.watch('portForwardingType');
+  const portForwardingType = formApi.watch("portForwardingType");
   const { data: hosts } = useHosts();
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
       }}
       component="form"
       noValidate
@@ -53,15 +53,15 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter name',
+            message: "Please enter name",
           },
           minLength: {
             value: 1,
-            message: 'Please enter at least 1 characters',
+            message: "Please enter at least 1 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         defaultValue=""
@@ -86,7 +86,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please select port forwarding type',
+            message: "Please select port forwarding type",
           },
         }}
         render={({ field, fieldState }) => (
@@ -118,7 +118,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please select host',
+            message: "Please select host",
           },
         }}
         render={({ field, fieldState }) => (
@@ -150,15 +150,15 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter local address',
+            message: "Please enter local address",
           },
           minLength: {
             value: 3,
-            message: 'Please enter at least 3 characters',
+            message: "Please enter at least 3 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -183,19 +183,19 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter local port',
+            message: "Please enter local port",
           },
           pattern: {
             value: /^\d+$/,
-            message: 'Please enter the number',
+            message: "Please enter the number",
           },
           min: {
             value: 1,
-            message: 'The local port cannot be less than 1',
+            message: "The local port cannot be less than 1",
           },
           max: {
             value: 65535,
-            message: 'The local port cannot be greater than 1',
+            message: "The local port cannot be greater than 1",
           },
         }}
         render={({ field, fieldState }) => (
@@ -223,15 +223,15 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
             rules={{
               required: {
                 value: true,
-                message: 'Please enter remote address',
+                message: "Please enter remote address",
               },
               minLength: {
                 value: 3,
-                message: 'Please enter at least 3 characters',
+                message: "Please enter at least 3 characters",
               },
               maxLength: {
                 value: 60,
-                message: 'Please enter no more than 60 characters',
+                message: "Please enter no more than 60 characters",
               },
             }}
             render={({ field, fieldState }) => (
@@ -256,19 +256,19 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
             rules={{
               required: {
                 value: true,
-                message: 'Please enter remote port',
+                message: "Please enter remote port",
               },
               pattern: {
                 value: /^\d+$/,
-                message: 'Please enter the number',
+                message: "Please enter the number",
               },
               min: {
                 value: 1,
-                message: 'The remote port cannot be less than 1',
+                message: "The remote port cannot be less than 1",
               },
               max: {
                 value: 65535,
-                message: 'The remote port cannot be greater than 1',
+                message: "The remote port cannot be greater than 1",
               },
             }}
             render={({ field, fieldState }) => (

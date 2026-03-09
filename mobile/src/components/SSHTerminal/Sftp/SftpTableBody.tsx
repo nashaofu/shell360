@@ -1,8 +1,7 @@
-import { Box, TableBody, TableCell, TableRow } from '@mui/material';
-
-import { type SftpTableCell } from './types';
-import SftpFilenameInput from './SftpFilenameInput';
-import { CreateType } from './useCreate';
+import { Box, TableBody, TableCell, TableRow } from "@mui/material";
+import SftpFilenameInput from "./SftpFilenameInput";
+import type { SftpTableCell } from "./types";
+import type { CreateType } from "./useCreate";
 
 export type SftpTableBodyProps<T extends Record<string, unknown>> = {
   dataKey: keyof T;
@@ -37,7 +36,7 @@ export function SftpTableBody<T extends Record<string, unknown>>({
             const sx = item.sx?.(false);
             return (
               <TableCell key={String(item.key)} align={item.align} sx={sx}>
-                {index === 0 && <Box sx={{ cursor: 'pointer' }}>..</Box>}
+                {index === 0 && <Box sx={{ cursor: "pointer" }}>..</Box>}
               </TableCell>
             );
           })}
@@ -82,7 +81,7 @@ export function SftpTableBody<T extends Record<string, unknown>>({
                     width: item.width,
                     minWidth: item.minWidth,
                     maxWidth: item.maxWidth,
-                    overflow: 'hidden',
+                    overflow: "hidden",
                   },
                   ...(Array.isArray(sx) ? sx : [sx]),
                 ]}

@@ -1,16 +1,15 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
 import {
   Icon,
-  MenuItem,
-  TextField,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
-import { AuthenticationMethod } from 'tauri-plugin-data';
+  MenuItem,
+  TextField,
+} from "@mui/material";
+import { Controller, type UseFormReturn } from "react-hook-form";
+import { AuthenticationMethod } from "tauri-plugin-data";
 
-import { TextFieldPassword } from '@/components/TextFieldPassword';
-import { useKeys } from '@/hooks/useKeys';
-
+import { TextFieldPassword } from "@/components/TextFieldPassword";
+import { useKeys } from "@/hooks/useKeys";
 
 export type AuthenticationFormFields = {
   username?: string;
@@ -29,7 +28,7 @@ export function AuthenticationForm({
   onOpenAddKey,
 }: AuthenticationFormProps) {
   const { data: keys } = useKeys();
-  const authenticationMethod = formApi.watch('authenticationMethod');
+  const authenticationMethod = formApi.watch("authenticationMethod");
 
   return (
     <>
@@ -39,7 +38,7 @@ export function AuthenticationForm({
         rules={{
           required: {
             value: true,
-            message: 'Please select authentication method',
+            message: "Please select authentication method",
           },
         }}
         render={({ field, fieldState }) => (
@@ -74,7 +73,7 @@ export function AuthenticationForm({
           rules={{
             maxLength: {
               value: 100,
-              message: 'Please enter no more than 100 characters',
+              message: "Please enter no more than 100 characters",
             },
           }}
           render={({ field, fieldState }) => (
@@ -101,7 +100,7 @@ export function AuthenticationForm({
           rules={{
             required: {
               value: true,
-              message: 'Please select key',
+              message: "Please select key",
             },
           }}
           render={({ field, fieldState }) => (

@@ -1,11 +1,11 @@
-import { type ReactNode } from 'react';
 import {
+  alpha,
   Box,
   CircularProgress,
   type SxProps,
   type Theme,
-  alpha,
-} from '@mui/material';
+} from "@mui/material";
+import type { ReactNode } from "react";
 
 export type LoadingProps = {
   sx?: SxProps<Theme>;
@@ -26,7 +26,7 @@ export function Loading({
     <Box
       sx={[
         {
-          position: 'relative',
+          position: "relative",
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
@@ -35,7 +35,7 @@ export function Loading({
       {loading && (
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: 0,
             bottom: 0,
@@ -43,15 +43,15 @@ export function Loading({
             zIndex: 100,
             backgroundColor: (theme) =>
               alpha(theme.palette.background.paper, 0.5),
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <CircularProgress size={size} />
           {progress !== undefined && (
-            <Box sx={{ mt: 3, fontWeight: 'bold' }}>{progress}%</Box>
+            <Box sx={{ mt: 3, fontWeight: "bold" }}>{progress}%</Box>
           )}
         </Box>
       )}

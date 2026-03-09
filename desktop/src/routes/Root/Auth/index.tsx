@@ -1,11 +1,11 @@
-import { Box, CircularProgress } from '@mui/material';
-import { type ReactNode } from 'react';
-import { useAtomValue } from 'jotai';
+import { Box, CircularProgress } from "@mui/material";
+import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 
-import { authAtom } from '@/atom/authAtom';
-import { cryptoIsEnableAtom } from '@/atom/cryptoAtom';
+import { authAtom } from "@/atom/authAtom";
+import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
 
-import UnlockCrypto from './UnlockCrypto';
+import UnlockCrypto from "./UnlockCrypto";
 
 export interface AuthProps {
   children: ReactNode;
@@ -21,9 +21,9 @@ export default function Auth({ children }: AuthProps) {
         sx={{
           flexGrow: 1,
           flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <CircularProgress size={52} />

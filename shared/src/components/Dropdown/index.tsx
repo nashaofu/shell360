@@ -1,4 +1,3 @@
-import { type ReactNode, useState } from 'react';
 import {
   Box,
   Menu,
@@ -7,7 +6,8 @@ import {
   type MenuProps,
   type SxProps,
   type Theme,
-} from '@mui/material';
+} from "@mui/material";
+import { type ReactNode, useState } from "react";
 
 export type DropdownMenu = {
   label: ReactNode;
@@ -22,7 +22,7 @@ export type DropdownChildrenRenderProps = {
 
 export type DropdownProps = Omit<
   MenuProps,
-  'anchorEl' | 'open' | 'onClose' | 'sx' | 'children'
+  "anchorEl" | "open" | "onClose" | "sx" | "children"
 > & {
   sx?: SxProps<Theme>;
   menus?: DropdownMenu[];

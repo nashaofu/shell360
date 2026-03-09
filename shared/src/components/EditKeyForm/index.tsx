@@ -1,19 +1,19 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
-import { useCallback } from 'react';
 import {
   Box,
   Icon,
   IconButton,
   InputAdornment,
   TextField,
-} from '@mui/material';
-import { type Key } from 'tauri-plugin-data';
-import { readTextFile } from '@tauri-apps/plugin-fs';
-import { open } from '@tauri-apps/plugin-dialog';
+} from "@mui/material";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
+import { useCallback } from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
+import type { Key } from "tauri-plugin-data";
 
-import { TextFieldPassword } from '../TextFieldPassword';
+import { TextFieldPassword } from "../TextFieldPassword";
 
-export type EditKeyFormFields = Partial<Omit<Key, 'id'>>;
+export type EditKeyFormFields = Partial<Omit<Key, "id">>;
 
 export type EditKeyFormProps = {
   formApi: UseFormReturn<EditKeyFormFields>;
@@ -32,9 +32,9 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
 
     const text = await readTextFile(file);
 
-    const filename = file.split(/[\\/]/).pop() || '';
-    formApi.setValue('name', filename);
-    formApi.setValue('privateKey', text);
+    const filename = file.split(/[\\/]/).pop() || "";
+    formApi.setValue("name", filename);
+    formApi.setValue("privateKey", text);
   }, [formApi]);
 
   const importPublicKey = useCallback(async () => {
@@ -49,7 +49,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
 
     const text = await readTextFile(file);
 
-    formApi.setValue('publicKey', text);
+    formApi.setValue("publicKey", text);
   }, [formApi]);
 
   const importCertificate = useCallback(async () => {
@@ -64,14 +64,14 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
 
     const text = await readTextFile(file);
 
-    formApi.setValue('certificate', text);
+    formApi.setValue("certificate", text);
   }, [formApi]);
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
       }}
       component="form"
       noValidate
@@ -83,15 +83,15 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter name',
+            message: "Please enter name",
           },
           minLength: {
             value: 1,
-            message: 'Please enter at least 1 characters',
+            message: "Please enter at least 1 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -115,7 +115,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
         rules={{
           required: {
             value: true,
-            message: 'Please enter private key',
+            message: "Please enter private key",
           },
         }}
         render={({ field, fieldState }) => (

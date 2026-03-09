@@ -9,21 +9,20 @@ import {
   MenuItem,
   Paper,
   Select,
-} from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
-import { getVersion } from '@tauri-apps/api/app';
-import { useAtom } from 'jotai';
+} from "@mui/material";
+import { getVersion } from "@tauri-apps/api/app";
+import { useAtom } from "jotai";
+import { useCallback, useEffect, useState } from "react";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import { ThemeMode, themeModeAtom } from "@/atom/themeAtom";
+import Page from "@/components/Page";
+import useExportData from "@/hooks/useExportData";
+import useImportData from "@/hooks/useImportData";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
+import openUrl from "@/utils/openUrl";
 
-import Page from '@/components/Page';
-import { ThemeMode, themeModeAtom } from '@/atom/themeAtom';
-import useExportData from '@/hooks/useExportData';
-import useImportData from '@/hooks/useImportData';
-import useModal from '@/hooks/useModal';
-import openUrl from '@/utils/openUrl';
-import { useIsShowPaywallAtom, useIsSubscription } from '@/atom/iap';
-import useMessage from '@/hooks/useMessage';
-
-import CryptoSettings from './CryptoSettings';
+import CryptoSettings from "./CryptoSettings";
 
 function IOSIAP() {
   const [, setOpen] = useIsShowPaywallAtom();
@@ -33,7 +32,7 @@ function IOSIAP() {
       sx={{
         maxWidth: 560,
         my: 2,
-        mx: 'auto',
+        mx: "auto",
       }}
     >
       <List>
@@ -71,14 +70,14 @@ export default function Settings() {
         return;
       }
       message.success({
-        message: 'Export file successful',
+        message: "Export file successful",
       });
     } catch (err) {
       message.error({
         message: (
           <Box
             sx={{
-              wordBreak: 'break-all',
+              wordBreak: "break-all",
             }}
           >
             Export failed:
@@ -98,7 +97,7 @@ export default function Settings() {
 
     await new Promise<void>((resolve) => {
       modal.confirm({
-        title: 'Warning',
+        title: "Warning",
         icon: (
           <Icon
             color="warning"
@@ -107,7 +106,7 @@ export default function Settings() {
           />
         ),
         content:
-          'The import file will cover the same configuration, which may cause data loss, please do it carefully',
+          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
         onOk: () => resolve(),
       });
     });
@@ -118,14 +117,14 @@ export default function Settings() {
         return;
       }
       message.success({
-        message: 'Import file successful',
+        message: "Import file successful",
       });
     } catch (err) {
       message.error({
         message: (
           <Box
             sx={{
-              wordBreak: 'break-all',
+              wordBreak: "break-all",
             }}
           >
             Import failed:
@@ -148,7 +147,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <List>
@@ -159,10 +158,10 @@ export default function Settings() {
               size="small"
               inputProps={{
                 sx: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  '.MuiListItemIcon-root': {
-                    minWidth: 'unset',
+                  display: "flex",
+                  alignItems: "center",
+                  ".MuiListItemIcon-root": {
+                    minWidth: "unset",
                   },
                 },
               }}
@@ -210,7 +209,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <CryptoSettings />
@@ -220,7 +219,7 @@ export default function Settings() {
         sx={{
           maxWidth: 560,
           my: 2,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <List>
@@ -229,20 +228,20 @@ export default function Settings() {
             <IconButton
               onClick={() =>
                 openUrl(
-                  'https://nashaofu.github.io/shell360/docs/Privacy-Policy.html'
+                  "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
                 )
               }
             >
               <Icon className="icon-arrow-right" />
             </IconButton>
           </ListItem>
-          {import.meta.env.TAURI_PLATFORM === 'ios' && (
+          {import.meta.env.TAURI_PLATFORM === "ios" && (
             <ListItem>
               <ListItemText primary="Terms of Use" />
               <IconButton
                 onClick={() =>
                   openUrl(
-                    'http://www.apple.com/legal/itunes/appstore/dev/stdeula'
+                    "http://www.apple.com/legal/itunes/appstore/dev/stdeula",
                   )
                 }
               >
@@ -253,7 +252,7 @@ export default function Settings() {
           <ListItem>
             <ListItemText primary="About" />
             <IconButton
-              onClick={() => openUrl('https://nashaofu.github.io/shell360/')}
+              onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
             >
               <Icon className="icon-arrow-right" />
             </IconButton>
@@ -265,7 +264,7 @@ export default function Settings() {
         </List>
       </Paper>
 
-      {import.meta.env.TAURI_PLATFORM === 'ios' && <IOSIAP />}
+      {import.meta.env.TAURI_PLATFORM === "ios" && <IOSIAP />}
     </Page>
   );
 }

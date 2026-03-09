@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -9,11 +9,11 @@ import {
   Icon,
   IconButton,
   TextField,
-  CircularProgress,
-} from '@mui/material';
-import { type SSHSftpFile } from 'tauri-plugin-ssh';
+} from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import type { SSHSftpFile } from "tauri-plugin-ssh";
 
-import useMessage from '@/hooks/useMessage';
+import useMessage from "@/hooks/useMessage";
 
 type FileEditorModalProps = {
   open: boolean;
@@ -30,7 +30,7 @@ export default function FileEditorModal({
   onSave,
   onLoadContent,
 }: FileEditorModalProps) {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const message = useMessage();
@@ -43,10 +43,9 @@ export default function FileEditorModal({
           setContent(fileContent);
         })
         .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error('Failed to load file:', err);
+          console.error("Failed to load file:", err);
           message.error({
-            message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? 'Unknown error'}`,
+            message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
           });
           onClose();
         })
@@ -61,12 +60,12 @@ export default function FileEditorModal({
     try {
       await onSave(content);
       message.success({
-        message: 'File saved successfully',
+        message: "File saved successfully",
       });
       onClose();
     } catch (err: unknown) {
       message.error({
-        message: `Failed to save file: ${(err as Error).message ?? 'Unknown error'}`,
+        message: `Failed to save file: ${(err as Error).message ?? "Unknown error"}`,
       });
     } finally {
       setSaving(false);
@@ -74,20 +73,16 @@ export default function FileEditorModal({
   }, [content, onSave, onClose, message]);
 
   const handleCancel = useCallback(() => {
-    setContent('');
+    setContent("");
     onClose();
   }, [onClose]);
 
   return (
-    <Dialog
-      open={open}
-      fullScreen
-      onClose={handleCancel}
-    >
+    <Dialog open={open} fullScreen onClose={handleCancel}>
       <DialogTitle
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <Icon
@@ -101,7 +96,7 @@ export default function FileEditorModal({
           size="small"
           edge="end"
           sx={{
-            color: 'inherit',
+            color: "inherit",
             ml: 2,
           }}
           disabled={loading || saving}
@@ -113,17 +108,17 @@ export default function FileEditorModal({
       <DialogContent
         dividers
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           p: 0,
         }}
       >
         {loading ? (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               flex: 1,
             }}
           >
@@ -139,18 +134,18 @@ export default function FileEditorModal({
             disabled={saving}
             sx={{
               flex: 1,
-              '& .MuiInputBase-root': {
-                height: '100%',
-                alignItems: 'flex-start',
-                fontFamily: 'monospace',
-                fontSize: '14px',
+              "& .MuiInputBase-root": {
+                height: "100%",
+                alignItems: "flex-start",
+                fontFamily: "monospace",
+                fontSize: "14px",
               },
-              '& .MuiInputBase-input': {
-                height: '100% !important',
-                overflow: 'auto !important',
+              "& .MuiInputBase-input": {
+                height: "100% !important",
+                overflow: "auto !important",
               },
-              '& fieldset': {
-                border: 'none',
+              "& fieldset": {
+                border: "none",
               },
             }}
           />
@@ -167,10 +162,9 @@ export default function FileEditorModal({
           color="primary"
           startIcon={saving ? <CircularProgress size={16} /> : undefined}
         >
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? "Saving..." : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
-

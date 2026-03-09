@@ -1,16 +1,16 @@
-import { Controller } from 'react-hook-form';
 import {
   Box,
-  ToggleButtonGroup,
-  ToggleButton,
-  Typography,
   Divider,
   type SxProps,
   type Theme,
-} from '@mui/material';
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import { Controller } from "react-hook-form";
 
-import JumpHostIdsSelect from './JumpHostIdsSelect';
-import type { EditHostFormApi } from './types';
+import JumpHostIdsSelect from "./JumpHostIdsSelect";
+import type { EditHostFormApi } from "./types";
 
 type JumpHostsFormProps = {
   formApi: EditHostFormApi;
@@ -18,8 +18,8 @@ type JumpHostsFormProps = {
 };
 
 export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
-  const jumpHostEnabled = formApi.watch('jumpHostEnabled');
-  const hostId = formApi.watch('id');
+  const jumpHostEnabled = formApi.watch("jumpHostEnabled");
+  const hostId = formApi.watch("id");
 
   return (
     <Box sx={sx}>
@@ -52,7 +52,7 @@ export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
           rules={{
             validate: (value) => {
               if (value?.length === 0) {
-                return 'Please select at least one jump host';
+                return "Please select at least one jump host";
               }
               return true;
             },

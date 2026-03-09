@@ -1,11 +1,9 @@
-import { Box } from '@mui/material';
-
-import { TITLE_BAR_Z_INDEX } from '@/constants/titleBar';
-import { useColorsAtomWithApi } from '@/atom/colorsAtom';
-
-import TitleBar from './Titlebar';
-import Auth from './Auth';
-import Content from './Content';
+import { Box } from "@mui/material";
+import { useColorsAtomWithApi } from "@/atom/colorsAtom";
+import { TITLE_BAR_Z_INDEX } from "@/constants/titleBar";
+import Auth from "./Auth";
+import Content from "./Content";
+import TitleBar from "./Titlebar";
 
 export default function Root() {
   const colorsAtomWithApi = useColorsAtomWithApi();
@@ -13,16 +11,16 @@ export default function Root() {
   return (
     <Box
       sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'row',
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "row",
         bgcolor: colorsAtomWithApi.colors.bgColor,
       }}
     >
       <Box
         sx={{
-          position: 'fixed',
+          position: "fixed",
           top: 0,
           right: 0,
           left: 0,

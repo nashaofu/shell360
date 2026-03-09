@@ -1,27 +1,26 @@
-import { Controller } from 'react-hook-form';
 import {
+  Autocomplete,
   Box,
+  Chip,
   Icon,
   InputAdornment,
-  MenuItem,
-  type SxProps,
-  type Theme,
-  Autocomplete,
-  Chip,
-  TextField,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
-import { useMemo } from 'react';
-import { AuthenticationMethod } from 'tauri-plugin-data';
+  MenuItem,
+  type SxProps,
+  TextField,
+  type Theme,
+} from "@mui/material";
+import { useMemo } from "react";
+import { Controller } from "react-hook-form";
+import { AuthenticationMethod } from "tauri-plugin-data";
 
-import { useHosts } from '@/hooks/useHosts';
-import { useKeys } from '@/hooks/useKeys';
+import { useHosts } from "@/hooks/useHosts";
+import { useKeys } from "@/hooks/useKeys";
 
-import { TextFieldPassword } from '../TextFieldPassword';
-
-import type { EditHostFormApi } from './types';
-import { TERMINAL_TYPES } from './terminalTypes';
+import { TextFieldPassword } from "../TextFieldPassword";
+import { TERMINAL_TYPES } from "./terminalTypes";
+import type { EditHostFormApi } from "./types";
 
 type BasicFormProps = {
   formApi: EditHostFormApi;
@@ -36,7 +35,7 @@ export default function BasicForm({
 }: BasicFormProps) {
   const { data: hosts } = useHosts();
   const { data: keys } = useKeys();
-  const authenticationMethod = formApi.watch('authenticationMethod');
+  const authenticationMethod = formApi.watch("authenticationMethod");
 
   const tags = useMemo(() => {
     return hosts.reduce<string[]>((acc, cur) => {
@@ -55,7 +54,7 @@ export default function BasicForm({
         rules={{
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -79,7 +78,7 @@ export default function BasicForm({
         rules={{
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => {
@@ -122,15 +121,15 @@ export default function BasicForm({
         rules={{
           required: {
             value: true,
-            message: 'Please enter hostname',
+            message: "Please enter hostname",
           },
           minLength: {
             value: 3,
-            message: 'Please enter at least 3 characters',
+            message: "Please enter at least 3 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -162,19 +161,19 @@ export default function BasicForm({
         rules={{
           required: {
             value: true,
-            message: 'Please enter port',
+            message: "Please enter port",
           },
           pattern: {
             value: /^\d+$/,
-            message: 'Please enter the number',
+            message: "Please enter the number",
           },
           min: {
             value: 1,
-            message: 'The port cannot be less than 1',
+            message: "The port cannot be less than 1",
           },
           max: {
             value: 65535,
-            message: 'The port cannot be greater than 1',
+            message: "The port cannot be greater than 1",
           },
         }}
         render={({ field, fieldState }) => (
@@ -207,15 +206,15 @@ export default function BasicForm({
         rules={{
           required: {
             value: true,
-            message: 'Please enter username',
+            message: "Please enter username",
           },
           minLength: {
             value: 1,
-            message: 'Please enter at least 1 characters',
+            message: "Please enter at least 1 characters",
           },
           maxLength: {
             value: 60,
-            message: 'Please enter no more than 60 characters',
+            message: "Please enter no more than 60 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -247,7 +246,7 @@ export default function BasicForm({
         rules={{
           required: {
             value: true,
-            message: 'Please select authentication method',
+            message: "Please select authentication method",
           },
         }}
         render={({ field, fieldState }) => (
@@ -282,7 +281,7 @@ export default function BasicForm({
           rules={{
             maxLength: {
               value: 100,
-              message: 'Please enter no more than 100 characters',
+              message: "Please enter no more than 100 characters",
             },
           }}
           render={({ field, fieldState }) => (
@@ -309,7 +308,7 @@ export default function BasicForm({
           rules={{
             required: {
               value: true,
-              message: 'Please select key',
+              message: "Please select key",
             },
           }}
           render={({ field, fieldState }) => (
@@ -348,7 +347,7 @@ export default function BasicForm({
         rules={{
           maxLength: {
             value: 500,
-            message: 'Please enter no more than 500 characters',
+            message: "Please enter no more than 500 characters",
           },
         }}
         render={({ field, fieldState }) => (
@@ -381,7 +380,7 @@ export default function BasicForm({
         rules={{
           required: {
             value: true,
-            message: 'Please select terminal type',
+            message: "Please select terminal type",
           },
         }}
         render={({ field, fieldState }) => (
@@ -414,14 +413,14 @@ export default function BasicForm({
             if (!value) {
               return true;
             }
-            const envs = value.split(',');
+            const envs = value.split(",");
             for (const env of envs) {
-              let [key, value] = env.split('=');
+              let [key, value] = env.split("=");
               key = key.trim();
               value = value?.trim();
 
               if (!key || value === undefined) {
-                return 'Invalid environment variable format';
+                return "Invalid environment variable format";
               }
             }
             return true;

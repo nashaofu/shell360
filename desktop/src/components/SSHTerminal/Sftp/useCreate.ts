@@ -1,14 +1,14 @@
+import { useRequest } from "ahooks";
 import {
   type MutableRefObject,
   type RefObject,
   useCallback,
   useEffect,
   useState,
-} from 'react';
-import { SSHSftp, type SSHSftpFile } from 'tauri-plugin-ssh';
-import { useRequest } from 'ahooks';
+} from "react";
+import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
-import useMessage from '@/hooks/useMessage';
+import type useMessage from "@/hooks/useMessage";
 
 type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
@@ -20,8 +20,8 @@ type UseCreateOpts = {
 };
 
 export enum CreateType {
-  File = 'File',
-  Dir = 'Dir',
+  File = "File",
+  Dir = "Dir",
 }
 
 export default function useCreate({
@@ -47,15 +47,15 @@ export default function useCreate({
       manual: true,
       onSuccess: () => {
         message.success({
-          message: 'create file success',
+          message: "create file success",
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'create file failed',
+          message: err.message ?? "create file failed",
         }),
-    }
+    },
   );
 
   const { loading: createDirLoading, runAsync: createDir } = useRequest(
@@ -71,19 +71,19 @@ export default function useCreate({
       manual: true,
       onSuccess: () => {
         message.success({
-          message: 'create dir success',
+          message: "create dir success",
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'create dir failed',
+          message: err.message ?? "create dir failed",
         }),
-    }
+    },
   );
 
   const onCreatingFilenameChange = useCallback((val: string) => {
-    setCreatingFilename(val.replace('/', ''));
+    setCreatingFilename(val.replace("/", ""));
   }, []);
 
   const onCreate = useCallback(
@@ -91,12 +91,12 @@ export default function useCreate({
       tableContainerRef.current?.scrollTo({
         top: 0,
         left: 0,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
       setCreatingFilename(filename);
       setCreateType(val);
     },
-    [tableContainerRef]
+    [tableContainerRef],
   );
 
   const onCreateCancel = useCallback(() => {
@@ -125,9 +125,9 @@ export default function useCreate({
     onCreateCancel,
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: files 改变时重置创建状态
   useEffect(() => {
     onCreateCancel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
   return {

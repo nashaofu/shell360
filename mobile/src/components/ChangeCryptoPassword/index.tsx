@@ -6,15 +6,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from '@mui/material';
-import { useRequest } from 'ahooks';
-import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { changeCryptoPassword } from 'tauri-plugin-data';
-import { Loading , TextFieldPassword } from 'shared';
+} from "@mui/material";
+import { useRequest } from "ahooks";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Loading, TextFieldPassword } from "shared";
+import { changeCryptoPassword } from "tauri-plugin-data";
 
-import useMessage from '@/hooks/useMessage';
-
+import useMessage from "@/hooks/useMessage";
 
 interface ChangeCryptoPasswordProps {
   open: boolean;
@@ -30,9 +29,9 @@ export default function ChangeCryptoPassword({
   const message = useMessage();
   const formApi = useForm({
     defaultValues: {
-      oldPassword: '',
-      password: '',
-      confirmPassword: '',
+      oldPassword: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -45,16 +44,16 @@ export default function ChangeCryptoPassword({
       manual: true,
       onSuccess: () => {
         message.success({
-          message: 'Change crypto password success',
+          message: "Change crypto password success",
         });
         onOk();
       },
       onError: () => {
         message.error({
-          message: 'Change crypto password failed',
+          message: "Change crypto password failed",
         });
       },
-    }
+    },
   );
 
   useEffect(() => {
@@ -68,8 +67,8 @@ export default function ChangeCryptoPassword({
     <Dialog
       open={open}
       sx={{
-        '.MuiDialog-container': {
-          paddingTop: 'env(safe-area-inset-top)',
+        ".MuiDialog-container": {
+          paddingTop: "env(safe-area-inset-top)",
         },
       }}
     >
@@ -87,15 +86,15 @@ export default function ChangeCryptoPassword({
                 rules={{
                   required: {
                     value: true,
-                    message: 'Please enter old password',
+                    message: "Please enter old password",
                   },
                   minLength: {
                     value: 8,
-                    message: 'Please enter at least 8 characters',
+                    message: "Please enter at least 8 characters",
                   },
                   maxLength: {
                     value: 128,
-                    message: 'Please enter no more than 128 characters',
+                    message: "Please enter no more than 128 characters",
                   },
                 }}
                 render={({ field, fieldState }) => (
@@ -118,15 +117,15 @@ export default function ChangeCryptoPassword({
                 rules={{
                   required: {
                     value: true,
-                    message: 'Please enter password',
+                    message: "Please enter password",
                   },
                   minLength: {
                     value: 8,
-                    message: 'Please enter at least 8 characters',
+                    message: "Please enter at least 8 characters",
                   },
                   maxLength: {
                     value: 128,
-                    message: 'Please enter no more than 128 characters',
+                    message: "Please enter no more than 128 characters",
                   },
                 }}
                 render={({ field, fieldState }) => (
@@ -149,19 +148,19 @@ export default function ChangeCryptoPassword({
                 rules={{
                   required: {
                     value: true,
-                    message: 'Please enter confirm password',
+                    message: "Please enter confirm password",
                   },
                   minLength: {
                     value: 8,
-                    message: 'Please enter at least 8 characters',
+                    message: "Please enter at least 8 characters",
                   },
                   maxLength: {
                     value: 128,
-                    message: 'Please enter no more than 128 characters',
+                    message: "Please enter no more than 128 characters",
                   },
                   validate: (value, formValues) => {
                     if (value !== formValues.password) {
-                      return 'The password confirmation does not match the password';
+                      return "The password confirmation does not match the password";
                     }
                     return true;
                   },

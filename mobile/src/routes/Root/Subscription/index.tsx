@@ -4,44 +4,44 @@ import {
   Box,
   Dialog,
   DialogContent,
+  type DialogProps,
   Icon,
   IconButton,
+  Slide,
   ThemeProvider,
   Toolbar,
   Typography,
-  Slide,
-  type DialogProps,
-} from '@mui/material';
+} from "@mui/material";
+import dayjs from "dayjs";
+import { useAtomValue } from "jotai";
+import { get } from "lodash-es";
 import {
+  forwardRef,
   type ReactElement,
   type Ref,
-  forwardRef,
   useEffect,
   useMemo,
   useState,
-} from 'react';
-import dayjs from 'dayjs';
-import { get } from 'lodash-es';
-import { useAtomValue } from 'jotai';
-import { Loading } from 'shared';
+} from "react";
+import { Loading } from "shared";
 
 import {
   useIsShowPaywallAtom,
   useIsSubscription,
-  useLoadableOfferingsAtomValue,
   useLoadableCustomerInfoAtom,
-} from '@/atom/iap';
-import { themeAtom } from '@/atom/themeAtom';
+  useLoadableOfferingsAtomValue,
+} from "@/atom/iap";
+import { themeAtom } from "@/atom/themeAtom";
 
-import Buy from './Buy';
+import Buy from "./Buy";
 
 const Transition = forwardRef(
   (
-    props: DialogProps['TransitionProps'] & {
+    props: DialogProps["TransitionProps"] & {
       children: ReactElement;
     },
-    ref: Ref<unknown>
-  ) => <Slide direction="up" ref={ref} {...props} />
+    ref: Ref<unknown>,
+  ) => <Slide direction="up" ref={ref} {...props} />,
 );
 
 export default function Subscription() {
@@ -54,7 +54,7 @@ export default function Subscription() {
   const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
 
   const customerInfo = useMemo(() => {
-    if (loadableCustomerInfoAtom.state === 'hasData') {
+    if (loadableCustomerInfoAtom.state === "hasData") {
       return loadableCustomerInfoAtom.data;
     }
 
@@ -72,23 +72,23 @@ export default function Subscription() {
 
     const expirationDate = get(
       customerInfo,
-      'entitlements.all.premium.expirationDate'
+      "entitlements.all.premium.expirationDate",
     );
 
-    if (typeof expirationDate !== 'number') {
+    if (typeof expirationDate !== "number") {
       return undefined;
     }
 
-    return dayjs.unix(expirationDate).format('YYYY-MM-DD HH:mm');
+    return dayjs.unix(expirationDate).format("YYYY-MM-DD HH:mm");
   }, [isSubscription, customerInfo]);
 
   useEffect(() => {
     const onResize = () => {
       setWindowWidth(window.innerWidth);
     };
-    window.addEventListener('resize', onResize);
+    window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -100,8 +100,8 @@ export default function Subscription() {
         fullScreen={windowWidth < 580}
         TransitionComponent={Transition}
         sx={{
-          '.MuiDialog-container': {
-            paddingTop: 'env(safe-area-inset-top)',
+          ".MuiDialog-container": {
+            paddingTop: "env(safe-area-inset-top)",
           },
         }}
       >
@@ -119,11 +119,11 @@ export default function Subscription() {
               size="large"
               edge="end"
               sx={{
-                color: 'inherit',
+                color: "inherit",
                 ml: 2,
               }}
               disabled={
-                loadableOfferingsAtomValue.state === 'loading' || buyLoading
+                loadableOfferingsAtomValue.state === "loading" || buyLoading
               }
               onClick={() => setOpen(false)}
             >
@@ -134,7 +134,7 @@ export default function Subscription() {
         <DialogContent>
           <Loading
             loading={
-              loadableOfferingsAtomValue.state === 'loading' || buyLoading
+              loadableOfferingsAtomValue.state === "loading" || buyLoading
             }
             size={32}
           >
@@ -147,14 +147,14 @@ export default function Subscription() {
             <Box
               sx={{
                 maxWidth: 420,
-                mr: 'auto',
-                ml: 'auto',
+                mr: "auto",
+                ml: "auto",
                 pt: 2,
                 pb: 3,
-                textAlign: 'center',
+                textAlign: "center",
               }}
             >
-              {loadableOfferingsAtomValue.state === 'loading' && (
+              {loadableOfferingsAtomValue.state === "loading" && (
                 <Box
                   sx={{
                     p: 4,
@@ -163,10 +163,10 @@ export default function Subscription() {
                   Loading...
                 </Box>
               )}
-              {loadableOfferingsAtomValue.state === 'hasError' && (
+              {loadableOfferingsAtomValue.state === "hasError" && (
                 <Box
                   sx={{
-                    textAlign: 'center',
+                    textAlign: "center",
                   }}
                 >
                   <Icon
@@ -179,7 +179,7 @@ export default function Subscription() {
                   <Typography>Loading failed</Typography>
                 </Box>
               )}
-              {loadableOfferingsAtomValue.state === 'hasData' && (
+              {loadableOfferingsAtomValue.state === "hasData" && (
                 <Buy
                   offerings={loadableOfferingsAtomValue.data}
                   onLoadingChange={setBuyLoading}

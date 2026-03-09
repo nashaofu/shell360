@@ -1,3 +1,4 @@
+import { useMemoizedFn } from "ahooks";
 import {
   addHost,
   addKey,
@@ -5,12 +6,11 @@ import {
   type Host,
   type Key,
   type PortForwarding,
-} from 'tauri-plugin-data';
-import { useMemoizedFn } from 'ahooks';
+} from "tauri-plugin-data";
 
-import { useHosts } from './useHosts';
-import { useKeys } from './useKeys';
-import { usePortForwardings } from './usePortForwardings';
+import { useHosts } from "./useHosts";
+import { useKeys } from "./useKeys";
+import { usePortForwardings } from "./usePortForwardings";
 
 export function useImportAppData() {
   const { refresh: refreshHosts } = useHosts();
@@ -65,7 +65,7 @@ export function useImportAppData() {
           ...item,
           // 新旧 hostId 映射
           hostId: hostsMap.get(item.hostId)?.id as string,
-        })
+        }),
       );
 
     await Promise.all(addPortForwardingTasks);

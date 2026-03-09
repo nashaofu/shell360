@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!shared/src/styles/shell360font/*",
+      "!**/permissions",
+      "!src-tauri/gen/apple/Assets.xcassets"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -15,7 +21,8 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "a11y": "off"
     }
   },
   "javascript": {

@@ -1,10 +1,10 @@
-import { Icon, ListItemIcon, ListItemText } from '@mui/material';
-import { type ReactNode, useEffect } from 'react';
-import { readText } from '@tauri-apps/plugin-clipboard-manager';
+import { Icon, ListItemIcon, ListItemText } from "@mui/material";
+import { readText } from "@tauri-apps/plugin-clipboard-manager";
+import { type ReactNode, useEffect } from "react";
 
-import { cut, copy, paste } from '@/utils/clipboard';
+import { copy, cut, paste } from "@/utils/clipboard";
 
-const editableNodeNames = ['INPUT', 'TEXTAREA'];
+const editableNodeNames = ["INPUT", "TEXTAREA"];
 
 const getCutEl = (parentElement: EventTarget | null) => {
   if (!(parentElement instanceof HTMLElement)) {
@@ -31,8 +31,8 @@ const getPasteEl = (parentElement: EventTarget | null) => {
   while (current) {
     const { dataset } = current;
     if (
-      editableNodeNames.includes(current.nodeName)
-      || dataset.paste === 'true'
+      editableNodeNames.includes(current.nodeName) ||
+      dataset.paste === "true"
     ) {
       return current;
     }
@@ -74,17 +74,16 @@ export default function useContextmenu({
 
       const cutEl = getCutEl(target);
       const pasteEl = getPasteEl(target);
-      let data = '';
+      let data = "";
       try {
         data = await readText();
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error(err);
       }
 
       const menus: ContextmenuItem[] = [
         {
-          key: 'Cut',
+          key: "Cut",
           label: (
             <>
               <ListItemIcon>
@@ -101,7 +100,7 @@ export default function useContextmenu({
           },
         },
         {
-          key: 'Copy',
+          key: "Copy",
           label: (
             <>
               <ListItemIcon>
@@ -118,7 +117,7 @@ export default function useContextmenu({
           },
         },
         {
-          key: 'Paste',
+          key: "Paste",
           label: (
             <>
               <ListItemIcon>
@@ -145,10 +144,10 @@ export default function useContextmenu({
         });
       }
     };
-    document.addEventListener('contextmenu', onContextMenu);
+    document.addEventListener("contextmenu", onContextMenu);
 
     return () => {
-      document.removeEventListener('contextmenu', onContextMenu);
+      document.removeEventListener("contextmenu", onContextMenu);
     };
   }, [onCloseContextmenu, setContextmenuState]);
 }

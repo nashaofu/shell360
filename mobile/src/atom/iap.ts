@@ -1,54 +1,54 @@
-import { useCallback, useMemo } from 'react';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { atomWithRefresh, loadable } from 'jotai/utils';
+import dayjs from "dayjs";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atomWithRefresh, loadable } from "jotai/utils";
+import { get } from "lodash-es";
+import { useCallback, useMemo } from "react";
 import {
   type IapCustomerInfo,
+  type IapOffering,
   iapGetCustomerInfo,
   iapGetOfferings,
-  type IapOffering,
   iapShowPaywall,
-} from 'tauri-plugin-mobile';
-import { get } from 'lodash-es';
-import dayjs from 'dayjs';
+} from "tauri-plugin-mobile";
 
-const IAP_CUSTOMER_INFO = 'iap-customer-info';
+const IAP_CUSTOMER_INFO = "iap-customer-info";
 
 const iapGetCustomerInfoWithMock = () => {
-  if (import.meta.env.TAURI_PLATFORM === 'android') {
+  if (import.meta.env.TAURI_PLATFORM === "android") {
     return Promise.resolve({
       activeSubscriptions: [],
       allPurchasedProductIdentifiers: [],
       entitlements: {
         all: {
           premium: {
-            identifier: '$rc_annual',
+            identifier: "$rc_annual",
             isActive: true,
             willRenew: true,
             periodType: {
               // 假设的周期类型枚举值
-              value: 'MONTHLY',
+              value: "MONTHLY",
             },
             latestPurchaseDate: Date.now(), // 使用当前时间的时间戳
             originalPurchaseDate: Date.now() - 1000 * 60 * 60 * 24 * 30, // 假设是30天前
             expirationDate: null, // 假设没有到期日期
             store: {
               // 假设的商店信息
-              name: 'App Store',
-              platform: 'iOS',
+              name: "App Store",
+              platform: "iOS",
             },
-            productIdentifier: '$rc_annual',
+            productIdentifier: "$rc_annual",
             productPlanIdentifier: null, // 假设没有产品计划标识符
             isSandbox: false,
             unsubscribeDetectedAt: null, // 假设没有检测到取消订阅
             billingIssueDetectedAt: null, // 假设没有检测到账单问题
             ownershipType: {
               // 假设的所有权类型枚举值
-              value: 'PURCHASED',
+              value: "PURCHASED",
             },
             verification: {
               // 假设的验证信息
-              status: 'VERIFIED',
-              receipt: 'mock_receipt_data',
+              status: "VERIFIED",
+              receipt: "mock_receipt_data",
             },
           },
         },
@@ -56,7 +56,7 @@ const iapGetCustomerInfoWithMock = () => {
       },
       firstSeen: 1722665474,
       nonSubscriptions: [],
-      originalAppUserId: '$RCAnonymousID:6b909d61e0f641279b8a41726bb7659f',
+      originalAppUserId: "$RCAnonymousID:6b909d61e0f641279b8a41726bb7659f",
       requestDate: 1722780249,
     } as unknown as IapCustomerInfo);
   }
@@ -64,24 +64,24 @@ const iapGetCustomerInfoWithMock = () => {
 };
 
 const iapGetOfferingsWithMock = async () => {
-  if (import.meta.env.TAURI_PLATFORM === 'android') {
+  if (import.meta.env.TAURI_PLATFORM === "android") {
     return Promise.resolve([
       {
         annual: {
-          identifier: '$rc_annual',
+          identifier: "$rc_annual",
           packageType: 1,
           storeProduct: {
-            currencyCode: 'USD',
+            currencyCode: "USD",
             discounts: [],
             isFamilyShareable: true,
-            localizedDescription: 'Get one year of premium benefits',
-            localizedPriceString: '$19.99',
-            localizedTitle: '1 year',
+            localizedDescription: "Get one year of premium benefits",
+            localizedPriceString: "$19.99",
+            localizedTitle: "1 year",
             price: 19.989999999999995,
             productCategory: 0,
-            productIdentifier: 'annual_payment',
+            productIdentifier: "annual_payment",
             productType: 3,
-            subscriptionGroupIdentifier: '21495632',
+            subscriptionGroupIdentifier: "21495632",
             subscriptionPeriod: {
               unit: 3,
               value: 1,
@@ -90,20 +90,20 @@ const iapGetOfferingsWithMock = async () => {
         },
         availablePackages: [
           {
-            identifier: '$rc_monthly',
+            identifier: "$rc_monthly",
             packageType: 5,
             storeProduct: {
-              currencyCode: 'USD',
+              currencyCode: "USD",
               discounts: [],
               isFamilyShareable: true,
-              localizedDescription: 'Get one month of premium benefits',
-              localizedPriceString: '$1.99',
-              localizedTitle: '1 month',
+              localizedDescription: "Get one month of premium benefits",
+              localizedPriceString: "$1.99",
+              localizedTitle: "1 month",
               price: 1.99,
               productCategory: 0,
-              productIdentifier: 'monthly_payment',
+              productIdentifier: "monthly_payment",
               productType: 3,
-              subscriptionGroupIdentifier: '21495632',
+              subscriptionGroupIdentifier: "21495632",
               subscriptionPeriod: {
                 unit: 2,
                 value: 1,
@@ -111,20 +111,20 @@ const iapGetOfferingsWithMock = async () => {
             },
           },
           {
-            identifier: '$rc_annual',
+            identifier: "$rc_annual",
             packageType: 1,
             storeProduct: {
-              currencyCode: 'USD',
+              currencyCode: "USD",
               discounts: [],
               isFamilyShareable: true,
-              localizedDescription: 'Get one year of premium benefits',
-              localizedPriceString: '$19.99',
-              localizedTitle: '1 year',
+              localizedDescription: "Get one year of premium benefits",
+              localizedPriceString: "$19.99",
+              localizedTitle: "1 year",
               price: 19.989999999999995,
               productCategory: 0,
-              productIdentifier: 'annual_payment',
+              productIdentifier: "annual_payment",
               productType: 3,
-              subscriptionGroupIdentifier: '21495632',
+              subscriptionGroupIdentifier: "21495632",
               subscriptionPeriod: {
                 unit: 3,
                 value: 1,
@@ -132,29 +132,29 @@ const iapGetOfferingsWithMock = async () => {
             },
           },
         ],
-        identifier: 'default',
+        identifier: "default",
         monthly: {
-          identifier: '$rc_monthly',
+          identifier: "$rc_monthly",
           packageType: 5,
           storeProduct: {
-            currencyCode: 'USD',
+            currencyCode: "USD",
             discounts: [],
             isFamilyShareable: true,
-            localizedDescription: 'Get one month of premium benefits',
-            localizedPriceString: '$1.99',
-            localizedTitle: '1 month',
+            localizedDescription: "Get one month of premium benefits",
+            localizedPriceString: "$1.99",
+            localizedTitle: "1 month",
             price: 1.99,
             productCategory: 0,
-            productIdentifier: 'monthly_payment',
+            productIdentifier: "monthly_payment",
             productType: 3,
-            subscriptionGroupIdentifier: '21495632',
+            subscriptionGroupIdentifier: "21495632",
             subscriptionPeriod: {
               unit: 2,
               value: 1,
             },
           },
         },
-        serverDescription: 'The standard set of packages',
+        serverDescription: "The standard set of packages",
       },
     ] as unknown as IapOffering[]);
   }
@@ -184,41 +184,40 @@ export function useIsSubscription() {
   const [state] = useLoadableCustomerInfoAtom();
 
   const isSubscription = useMemo(() => {
-    if (state.state === 'loading') {
+    if (state.state === "loading") {
       return undefined;
     }
 
-    if (state.state === 'hasError') {
+    if (state.state === "hasError") {
       try {
         const json = localStorage.getItem(IAP_CUSTOMER_INFO);
         if (!json) {
           return false;
         }
         const customerInfo = JSON.parse(json) as IapCustomerInfo;
-        const premium = get(customerInfo, 'entitlements.all.premium');
+        const premium = get(customerInfo, "entitlements.all.premium");
         if (!premium) {
           return false;
         }
 
-        const expirationDate = get(premium, 'expirationDate');
-        if (typeof expirationDate !== 'number') {
+        const expirationDate = get(premium, "expirationDate");
+        if (typeof expirationDate !== "number") {
           return false;
         }
 
         // 过期 7 天内还可使用
-        if (dayjs.unix(expirationDate).add(7, 'day').isAfter(dayjs())) {
+        if (dayjs.unix(expirationDate).add(7, "day").isAfter(dayjs())) {
           return premium?.isActive ?? false;
         }
 
         return false;
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error(err);
         return undefined;
       }
     }
 
-    return get(state.data, 'entitlements.all.premium.isActive', false);
+    return get(state.data, "entitlements.all.premium.isActive", false);
   }, [state]);
 
   return isSubscription;
@@ -246,7 +245,7 @@ export function useIsShowPaywallAtom() {
         setIsShow(false);
       }
     },
-    [refreshCustomerInfoAtom, setIsShow]
+    [refreshCustomerInfoAtom, setIsShow],
   );
 
   return [isShow, setShowPaywall] as const;

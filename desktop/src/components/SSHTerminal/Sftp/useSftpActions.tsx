@@ -1,11 +1,11 @@
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { useRequest } from 'ahooks';
-import { type MutableRefObject, useState } from 'react';
-import { SSHSftp, type SSHSftpFile } from 'tauri-plugin-ssh';
-import { Icon } from '@mui/material';
+import { Icon } from "@mui/material";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { useRequest } from "ahooks";
+import { type MutableRefObject, useState } from "react";
+import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
-import useMessage from '@/hooks/useMessage';
-import useModal from '@/hooks/useModal';
+import type useMessage from "@/hooks/useMessage";
+import type useModal from "@/hooks/useModal";
 
 type UseSftpActionsOpts = {
   dirname?: string;
@@ -34,12 +34,12 @@ export default function useSftpActions({
       if (!file) {
         return true;
       }
-      const filename = dirname + '/' + file.split(/(\/)|(\\)/).pop();
+      const filename = `${dirname}/${file.split(/(\/)|(\\)/).pop()}`;
       const isExists = await sftpRef.current?.sftpExists(filename);
       if (isExists) {
         const isCancel = await new Promise<boolean>((resolve) => {
           modal.confirm({
-            title: 'Warning',
+            title: "Warning",
             icon: (
               <Icon
                 color="warning"
@@ -75,14 +75,14 @@ export default function useSftpActions({
           return;
         }
         message.success({
-          message: 'upload file success',
+          message: "upload file success",
         });
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'upload file failed',
+          message: err.message ?? "upload file failed",
         }),
-    }
+    },
   );
 
   const { loading: downloadFileLoading, run: downloadFile } = useRequest(
@@ -112,14 +112,14 @@ export default function useSftpActions({
           return;
         }
         message.success({
-          message: 'download file success',
+          message: "download file success",
         });
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? 'download file failed',
+          message: err.message ?? "download file failed",
         }),
-    }
+    },
   );
 
   const { loading: removeFileLoading, run: removeFile } = useRequest(
@@ -131,13 +131,13 @@ export default function useSftpActions({
       onFinally: () => refreshDir(),
       onSuccess: () =>
         message.success({
-          message: 'remove file success',
+          message: "remove file success",
         }),
       onError: (err) =>
         message.error({
-          message: err.message ?? 'remove file failed',
+          message: err.message ?? "remove file failed",
         }),
-    }
+    },
   );
 
   const { loading: removeDirLoading, run: removeDir } = useRequest(
@@ -149,13 +149,13 @@ export default function useSftpActions({
       onFinally: () => refreshDir(),
       onSuccess: () =>
         message.success({
-          message: 'remove dir success',
+          message: "remove dir success",
         }),
       onError: (err) =>
         message.error({
-          message: err.message ?? 'remove dir failed',
+          message: err.message ?? "remove dir failed",
         }),
-    }
+    },
   );
 
   return {

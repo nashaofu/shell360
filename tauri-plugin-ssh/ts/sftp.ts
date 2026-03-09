@@ -1,7 +1,7 @@
-import { Channel, invoke } from '@tauri-apps/api/core';
-import { v4 as uuidV4 } from 'uuid';
+import { Channel, invoke } from "@tauri-apps/api/core";
+import { v4 as uuidV4 } from "uuid";
 
-import { SSHSession } from './session';
+import type { SSHSession } from "./session";
 
 export type SSHSftpOpts = {
   session: SSHSession;
@@ -32,10 +32,10 @@ export type SSHSftpRenameOpts = {
 };
 
 export enum SSHSftpFileType {
-  Dir = 'Dir',
-  File = 'File',
-  Symlink = 'Symlink',
-  Other = 'Other',
+  Dir = "Dir",
+  File = "File",
+  Symlink = "Symlink",
+  Other = "Other",
 }
 
 export type SSHSftpFile = {
@@ -53,7 +53,7 @@ export type SSHSftpFile = {
 };
 
 export type SSHSftpIpcChannelEvent = {
-  type: 'Eof' | 'Close';
+  type: "Eof" | "Close";
 };
 
 export class SSHSftp {
@@ -69,26 +69,26 @@ export class SSHSftp {
   }
 
   open() {
-    return invoke<string>('plugin:ssh|sftp_open', {
+    return invoke<string>("plugin:ssh|sftp_open", {
       sshSessionId: this.session.sshSessionId,
       sshSftpId: this.sshSftpId,
       ipcChannel: new Channel<SSHSftpIpcChannelEvent>((data) => {
-        if (data.type === 'Eof') {
+        if (data.type === "Eof") {
           this.opts.onEof?.();
-        } else if (data.type === 'Close') {
+        } else if (data.type === "Close") {
           this.opts.onClose?.();
         }
       }),
     });
   }
   close() {
-    return invoke<string>('plugin:ssh|sftp_close', {
+    return invoke<string>("plugin:ssh|sftp_close", {
       sshSftpId: this.sshSftpId,
     });
   }
 
   sftpReadDir(dirname: string) {
-    return invoke<SSHSftpFile[]>('plugin:ssh|sftp_read_dir', {
+    return invoke<SSHSftpFile[]>("plugin:ssh|sftp_read_dir", {
       sshSftpId: this.sshSftpId,
       dirname,
     });
@@ -104,7 +104,7 @@ export class SSHSftp {
       onProgress?.(data);
     };
 
-    return invoke<string>('plugin:ssh|sftp_upload_file', {
+    return invoke<string>("plugin:ssh|sftp_upload_file", {
       sshSftpId: this.sshSftpId,
       localFilename,
       remoteFilename,
@@ -122,7 +122,7 @@ export class SSHSftp {
       onProgress?.(data);
     };
 
-    return invoke<string>('plugin:ssh|sftp_download_file', {
+    return invoke<string>("plugin:ssh|sftp_download_file", {
       sshSftpId: this.sshSftpId,
       localFilename,
       remoteFilename,
@@ -131,35 +131,35 @@ export class SSHSftp {
   }
 
   sftpCreateFile(filename: string) {
-    return invoke<string>('plugin:ssh|sftp_create_file', {
+    return invoke<string>("plugin:ssh|sftp_create_file", {
       sshSftpId: this.sshSftpId,
       filename,
     });
   }
 
   sftpCreateDir(dirname: string) {
-    return invoke<string>('plugin:ssh|sftp_create_dir', {
+    return invoke<string>("plugin:ssh|sftp_create_dir", {
       sshSftpId: this.sshSftpId,
       dirname,
     });
   }
 
   sftpRemoveDir(dirname: string) {
-    return invoke<string>('plugin:ssh|sftp_remove_dir', {
+    return invoke<string>("plugin:ssh|sftp_remove_dir", {
       sshSftpId: this.sshSftpId,
       dirname,
     });
   }
 
   sftpRemoveFile(filename: string) {
-    return invoke<string>('plugin:ssh|sftp_remove_file', {
+    return invoke<string>("plugin:ssh|sftp_remove_file", {
       sshSftpId: this.sshSftpId,
       filename,
     });
   }
 
   sftpRename({ oldPath, newPath }: SSHSftpRenameOpts) {
-    return invoke<string>('plugin:ssh|sftp_rename', {
+    return invoke<string>("plugin:ssh|sftp_rename", {
       sshSftpId: this.sshSftpId,
       oldPath,
       newPath,
@@ -167,28 +167,28 @@ export class SSHSftp {
   }
 
   sftpExists(path: string) {
-    return invoke<string>('plugin:ssh|sftp_exists', {
+    return invoke<string>("plugin:ssh|sftp_exists", {
       sshSftpId: this.sshSftpId,
       path,
     });
   }
 
   sftpCanonicalize(path: string) {
-    return invoke<string>('plugin:ssh|sftp_canonicalize', {
+    return invoke<string>("plugin:ssh|sftp_canonicalize", {
       sshSftpId: this.sshSftpId,
       path,
     });
   }
 
   sftpReadTextFile(filename: string) {
-    return invoke<string>('plugin:ssh|sftp_read_text_file', {
+    return invoke<string>("plugin:ssh|sftp_read_text_file", {
       sshSftpId: this.sshSftpId,
       filename,
     });
   }
 
   sftpWriteTextFile(filename: string, content: string) {
-    return invoke<string>('plugin:ssh|sftp_write_text_file', {
+    return invoke<string>("plugin:ssh|sftp_write_text_file", {
       sshSftpId: this.sshSftpId,
       filename,
       content,

@@ -1,10 +1,3 @@
-import { type MouseEvent, useCallback } from 'react';
-import {
-  matchPath,
-  useLocation,
-  useMatch,
-  useNavigate,
-} from 'react-router-dom';
 import {
   Icon,
   IconButton,
@@ -13,8 +6,15 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-} from '@mui/material';
-import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
+} from "@mui/material";
+import { type MouseEvent, useCallback } from "react";
+import {
+  matchPath,
+  useLocation,
+  useMatch,
+  useNavigate,
+} from "react-router-dom";
+import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
 
 type TerminalsProps = {
   expand?: boolean;
@@ -23,7 +23,7 @@ type TerminalsProps = {
 
 export default function Terminals({ expand, onClick }: TerminalsProps) {
   const { pathname } = useLocation();
-  const match = useMatch('/terminal/:uuid');
+  const match = useMatch("/terminal/:uuid");
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
@@ -32,7 +32,7 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
       navigate(`/terminal/${item.uuid}`, { replace: true });
       onClick?.();
     },
-    [navigate, onClick]
+    [navigate, onClick],
   );
 
   const onListItemCloseClick = useCallback(
@@ -44,11 +44,11 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
         if (first) {
           navigate(`/terminal/${first.uuid}`, { replace: true });
         } else {
-          navigate('/', { replace: true });
+          navigate("/", { replace: true });
         }
       }
     },
-    [match?.params.uuid, navigate, terminalsAtomWithApi]
+    [match?.params.uuid, navigate, terminalsAtomWithApi],
   );
 
   return (
@@ -62,7 +62,7 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
         >
           <ListItemButton
             sx={{
-              justifyContent: expand ? 'initial' : 'center',
+              justifyContent: expand ? "initial" : "center",
             }}
             selected={
               !!matchPath(
@@ -70,15 +70,15 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
                   path: `/terminal/${item.uuid}`,
                   end: true,
                 },
-                pathname
+                pathname,
               )
             }
           >
             <ListItemIcon
               sx={{
-                minWidth: 'unset',
+                minWidth: "unset",
                 mr: expand ? 2 : 0,
-                justifyContent: expand ? 'initial' : 'center',
+                justifyContent: expand ? "initial" : "center",
               }}
             >
               <Icon className="icon-terminal" />
@@ -87,11 +87,11 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
               <ListItemText
                 primary={item.name}
                 sx={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  '.MuiTypography-root': {
-                    display: 'inline',
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  ".MuiTypography-root": {
+                    display: "inline",
                   },
                 }}
               />

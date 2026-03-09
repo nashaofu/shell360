@@ -1,5 +1,5 @@
-import { Alert, Box } from '@mui/material';
-import type { ReactNode } from 'react';
+import { Alert, Box } from "@mui/material";
+import type { ReactNode } from "react";
 
 export type ErrorTextProps = {
   title?: ReactNode;

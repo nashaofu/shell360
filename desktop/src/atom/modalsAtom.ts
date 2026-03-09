@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 
 export type ModalAtom = {
   uuid: string;

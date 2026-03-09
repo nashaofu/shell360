@@ -4,11 +4,11 @@ import {
   type Key,
   type PortForwarding,
   PortForwardingType,
-} from 'tauri-plugin-data';
+} from "tauri-plugin-data";
 
 enum OldAuthMethod {
-  Password = 'Password',
-  Key = 'Key',
+  Password = "Password",
+  Key = "Key",
 }
 
 const AUTH_METHOD_MAP = {
@@ -39,9 +39,9 @@ type OldKey = {
 };
 
 enum OldPortForwardingType {
-  Local = 'Local',
-  Remote = 'Remote',
-  Dynamic = 'Dynamic',
+  Local = "Local",
+  Remote = "Remote",
+  Dynamic = "Dynamic",
 }
 
 const PORT_FORWARDING_TYPE_MAP = {
@@ -65,23 +65,22 @@ type OldPortForwarding = {
 function tryGetFromLocalStorage<T>(key: string): T[] {
   const str = localStorage.getItem(key);
   try {
-    const data = JSON.parse(str || '');
+    const data = JSON.parse(str || "");
     if (!Array.isArray(data)) {
       throw new Error(`localStorage ${key} is not array`);
     }
     return data;
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.log(err);
     return [];
   }
 }
 
 export function migrationData() {
-  const oldHosts = tryGetFromLocalStorage<OldHost>('hosts');
-  const oldKeys = tryGetFromLocalStorage<OldKey>('keys');
+  const oldHosts = tryGetFromLocalStorage<OldHost>("hosts");
+  const oldKeys = tryGetFromLocalStorage<OldKey>("keys");
   const oldPortForwardings =
-    tryGetFromLocalStorage<OldPortForwarding>('port-forwarding');
+    tryGetFromLocalStorage<OldPortForwarding>("port-forwarding");
 
   const hosts: Host[] = oldHosts.map((item) => {
     return {
@@ -105,8 +104,8 @@ export function migrationData() {
     return {
       id: item.uuid,
       name: item.name,
-      privateKey: item.privateKey || '',
-      publicKey: item.publicKey || '',
+      privateKey: item.privateKey || "",
+      publicKey: item.publicKey || "",
       passphrase: item.passphrase,
     };
   });

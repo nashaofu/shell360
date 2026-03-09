@@ -4,17 +4,16 @@ import {
   LinearProgress,
   type SxProps,
   type Theme,
-} from '@mui/material';
-import { get } from 'lodash-es';
+} from "@mui/material";
+import { get } from "lodash-es";
 
-import { getHostName } from '@/utils/host';
+import { getHostName } from "@/utils/host";
 
-import { Loading } from '../Loading';
-
-import DefaultError from './DefaultError';
-import UnknownKey from './UnknownKey';
-import AuthenticationError from './AuthenticationError';
-import type { ErrorProps } from './common';
+import { Loading } from "../Loading";
+import AuthenticationError from "./AuthenticationError";
+import type { ErrorProps } from "./common";
+import DefaultError from "./DefaultError";
+import UnknownKey from "./UnknownKey";
 
 const STATUS_BUTTONS = {
   ConnectFailed: DefaultError,
@@ -38,16 +37,16 @@ export function SSHLoading({
   onClose,
   onOpenAddKey,
 }: SSHLoadingProps) {
-  const errorType = get(error as never, 'type') as keyof typeof STATUS_BUTTONS;
+  const errorType = get(error as never, "type") as keyof typeof STATUS_BUTTONS;
 
   const render = STATUS_BUTTONS[errorType] || STATUS_BUTTONS.default;
   return (
     <Box
       sx={[
         {
-          display: 'flex',
-          alignItems: 'center',
-          justifySelf: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifySelf: "center",
           padding: 2,
           backgroundColor: (theme) => theme.palette.background.paper,
         },
@@ -57,16 +56,16 @@ export function SSHLoading({
       <Box
         sx={{
           width: 480,
-          maxWidth: '100%',
+          maxWidth: "100%",
           minHeight: 260,
-          mx: 'auto',
+          mx: "auto",
         }}
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             padding: 1.5,
           }}
         >
@@ -74,10 +73,10 @@ export function SSHLoading({
             sx={{
               width: 42,
               height: 42,
-              display: 'flex',
+              display: "flex",
               flexShrink: 0,
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 30,
               borderRadius: 2,
               color: (theme) => theme.palette.common.white,
@@ -90,17 +89,17 @@ export function SSHLoading({
             sx={{
               flexGrow: 1,
               pl: 1.5,
-              overflow: 'hidden',
-              userSelect: 'text',
+              overflow: "hidden",
+              userSelect: "text",
             }}
           >
             <Box
               sx={{
                 fontSize: 14,
                 fontWeight: 600,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {getHostName(host)}
@@ -108,9 +107,9 @@ export function SSHLoading({
             <Box
               sx={{
                 fontSize: 12,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {`ssh ${host.username}@${host.hostname} -p ${host.port}`}
@@ -122,14 +121,14 @@ export function SSHLoading({
             p: 1.5,
           }}
         >
-          <LinearProgress color={error ? 'error' : 'primary'} />
+          <LinearProgress color={error ? "error" : "primary"} />
         </Box>
         {!!error && (
           <Box
             sx={{
               px: 1.5,
               py: 1,
-              mx: 'auto',
+              mx: "auto",
             }}
           >
             <Loading loading={loading}>

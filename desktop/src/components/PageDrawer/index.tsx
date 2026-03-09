@@ -1,4 +1,3 @@
-import { type ReactNode } from 'react';
 import {
   Box,
   Divider,
@@ -6,10 +5,11 @@ import {
   Icon,
   IconButton,
   Typography,
-} from '@mui/material';
-import { Loading } from 'shared';
+} from "@mui/material";
+import type { ReactNode } from "react";
+import { Loading } from "shared";
 
-import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
+import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
 
 type PageDrawerProps = {
   loading?: boolean;
@@ -33,19 +33,19 @@ export default function PageDrawer({
       open={open}
       anchor="right"
       sx={{
-        '& .MuiDrawer-paper': {
+        "& .MuiDrawer-paper": {
           width: 420,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           px: 2,
           py: 1,
           mt: `${TITLE_BAR_HEIGHT}px`,
@@ -62,9 +62,9 @@ export default function PageDrawer({
       <Loading
         sx={{
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
         loading={loading}
         size={32}
@@ -72,7 +72,7 @@ export default function PageDrawer({
         <Box
           sx={{
             flexGrow: 1,
-            overflow: 'auto',
+            overflow: "auto",
             px: 2,
             py: 2.5,
           }}

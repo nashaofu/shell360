@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useMatch, useNavigate } from 'react-router-dom';
-import { type TerminalAtom, useTerminalsAtomWithApi } from 'shared';
-
-import SSHTerminal from '@/components/SSHTerminal';
-import AddKey from '@/components/AddKey';
+import { useCallback, useEffect, useState } from "react";
+import { useMatch, useNavigate } from "react-router-dom";
+import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
+import AddKey from "@/components/AddKey";
+import SSHTerminal from "@/components/SSHTerminal";
 
 export default function Terminals() {
-  const match = useMatch('/terminal/:uuid');
+  const match = useMatch("/terminal/:uuid");
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
@@ -19,18 +18,18 @@ export default function Terminals() {
         if (first) {
           navigate(`/terminal/${first.uuid}`, { replace: true });
         } else {
-          navigate('/', { replace: true });
+          navigate("/", { replace: true });
         }
       }
     },
-    [match?.params.uuid, navigate, terminalsAtomWithApi]
+    [match?.params.uuid, navigate, terminalsAtomWithApi],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在terminalsAtomWithApi.state.size变化时执行
   useEffect(() => {
     if (!terminalsAtomWithApi.state.size && match) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [terminalsAtomWithApi.state.size, navigate]);
 
   return (
@@ -41,7 +40,7 @@ export default function Terminals() {
           <SSHTerminal
             key={item.uuid}
             sx={{
-              display: visible ? 'flex' : 'none',
+              display: visible ? "flex" : "none",
               flexGrow: 1,
               flexShrink: 0,
             }}

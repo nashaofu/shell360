@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography } from "@mui/material";
+import type { ReactNode } from "react";
 
 type PageProps = {
   title: ReactNode;
@@ -14,8 +14,8 @@ export default function Page({ title, children }: PageProps) {
         px: 2,
         pt: 0,
         pb: 1,
-        overflowX: 'hidden',
-        overflowY: 'auto',
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
       <Typography variant="h5" fontWeight={500}>

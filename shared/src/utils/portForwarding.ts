@@ -1,12 +1,12 @@
 import {
-  PortForwardingType,
   type Host,
   type PortForwarding,
-} from 'tauri-plugin-data';
+  PortForwardingType,
+} from "tauri-plugin-data";
 
 export function getPortForwardingDesc(
   item: PortForwarding,
-  hostsMap: Map<string, Host>
+  hostsMap: Map<string, Host>,
 ) {
   const host = hostsMap.get(item.hostId);
   if (item.portForwardingType === PortForwardingType.Local) {

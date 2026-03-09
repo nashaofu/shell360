@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeTextFile } from '@tauri-apps/plugin-fs';
-import { useHosts, useKeys, usePortForwardings } from 'shared';
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { useCallback } from "react";
+import { useHosts, useKeys, usePortForwardings } from "shared";
 
 export default function useExportData() {
   const { data: hosts } = useHosts();
@@ -12,15 +12,15 @@ export default function useExportData() {
     const path = await save({
       filters: [
         {
-          name: 'JSON',
-          extensions: ['json'],
+          name: "JSON",
+          extensions: ["json"],
         },
         {
-          name: '*',
-          extensions: ['*'],
+          name: "*",
+          extensions: ["*"],
         },
       ],
-      defaultPath: 'shell360.json',
+      defaultPath: "shell360.json",
     });
 
     if (!path) {
@@ -33,7 +33,7 @@ export default function useExportData() {
         hosts,
         keys,
         portForwardings,
-      })
+      }),
     );
     return true;
   }, [hosts, keys, portForwardings]);

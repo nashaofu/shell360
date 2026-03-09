@@ -1,22 +1,22 @@
-import { atom, useAtom } from 'jotai';
-import { useMemo, useRef, useEffect } from 'react';
-import { SSHPortForwarding } from 'tauri-plugin-ssh';
-import { type PortForwarding } from 'tauri-plugin-data';
+import { useLatest, useMemoizedFn } from "ahooks";
+import { atom, useAtom } from "jotai";
+import { useEffect, useMemo, useRef } from "react";
 import {
+  closePortForwarding,
+  establishPortForwarding,
+  type JumpHostChainItem,
   resolveJumpHostChain,
   useHosts,
   useKeys,
-  type JumpHostChainItem,
-  closePortForwarding,
-  establishPortForwarding,
-} from 'shared';
-import { useLatest, useMemoizedFn } from 'ahooks';
+} from "shared";
+import type { PortForwarding } from "tauri-plugin-data";
+import { SSHPortForwarding } from "tauri-plugin-ssh";
 
 export type PortForwardingsAtom = {
   portForwarding: PortForwarding;
   jumpHostChain: JumpHostChainItem[];
   sshPortForwarding: SSHPortForwarding;
-  status: 'pending' | 'success' | 'failed';
+  status: "pending" | "success" | "failed";
   error?: unknown;
   isReconnecting?: boolean; // 标记是否正在重连，防止重复重连
 };
@@ -32,12 +32,12 @@ export function usePortForwardingsAtomWithApi() {
 
   const hostsMap = useMemo(
     () => new Map(hosts.map((item) => [item.id, item])),
-    [hosts]
+    [hosts],
   );
 
   const keysMap = useMemo(
     () => new Map(keys.map((key) => [key.id, key])),
-    [keys]
+    [keys],
   );
 
   const getState = useMemoizedFn(() => stateRef.current);
@@ -49,7 +49,7 @@ export function usePortForwardingsAtomWithApi() {
 
   const deletePortForwarding = useMemoizedFn(
     (
-      portForwardingId: string
+      portForwardingId: string,
     ): [PortForwardingsAtom | undefined, Map<string, PortForwardingsAtom>] => {
       const newState = new Map(stateRef.current);
 
@@ -59,19 +59,19 @@ export function usePortForwardingsAtomWithApi() {
 
       setState(newState);
       return [item, newState];
-    }
+    },
   );
 
   const updatePortForwarding = useMemoizedFn(
     (
-      portForwarding: PortForwardingsAtom
+      portForwarding: PortForwardingsAtom,
     ): [PortForwardingsAtom | undefined, Map<string, PortForwardingsAtom>] => {
       const newState = new Map(stateRef.current);
       newState.set(portForwarding.portForwarding.id, portForwarding);
 
       setState(newState);
       return [portForwarding, newState];
-    }
+    },
   );
 
   // 处理端口转发断开重连的函数
@@ -84,15 +84,13 @@ export function usePortForwardingsAtomWithApi() {
 
       // 如果正在重连，避免重复触发
       if (currentItem.isReconnecting) {
-        // eslint-disable-next-line no-console
-        console.log('端口转发正在重连中，跳过重复重连请求');
+        console.log("端口转发正在重连中，跳过重复重连请求");
         return;
       }
 
       // 如果状态不是 success，说明可能正在连接或已经失败，不需要重连
-      if (currentItem.status !== 'success') {
-        // eslint-disable-next-line no-console
-        console.log('端口转发状态不是 success，跳过重连');
+      if (currentItem.status !== "success") {
+        console.log("端口转发状态不是 success，跳过重连");
         return;
       }
 
@@ -100,7 +98,7 @@ export function usePortForwardingsAtomWithApi() {
       const reconnectingItem: PortForwardingsAtom = {
         ...currentItem,
         isReconnecting: true,
-        status: 'pending',
+        status: "pending",
       };
       updatePortForwarding(reconnectingItem);
 
@@ -109,8 +107,7 @@ export function usePortForwardingsAtomWithApi() {
         await closePortForwarding(currentItem);
       } catch (error) {
         // 忽略关闭时的错误，继续重连
-        // eslint-disable-next-line no-console
-        console.error('关闭端口转发失败:', error);
+        console.error("关闭端口转发失败:", error);
       }
 
       // 添加短暂延迟，避免过于频繁的重连
@@ -118,9 +115,12 @@ export function usePortForwardingsAtomWithApi() {
 
       // 重新检查状态，可能在延迟期间被删除或状态改变
       const checkItem = stateRef.current.get(portForwardingId);
-      if (!checkItem || checkItem.status !== 'pending' || !checkItem.isReconnecting) {
-        // eslint-disable-next-line no-console
-        console.log('端口转发状态已改变，取消重连');
+      if (
+        !checkItem ||
+        checkItem.status !== "pending" ||
+        !checkItem.isReconnecting
+      ) {
+        console.log("端口转发状态已改变，取消重连");
         return;
       }
 
@@ -148,7 +148,7 @@ export function usePortForwardingsAtomWithApi() {
         ...currentItem,
         jumpHostChain: newJumpHostChain,
         sshPortForwarding: newSshPortForwarding,
-        status: 'pending',
+        status: "pending",
         error: undefined,
         isReconnecting: true,
       };
@@ -170,19 +170,18 @@ export function usePortForwardingsAtomWithApi() {
           });
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('自动重连失败:', error);
+        console.error("自动重连失败:", error);
         const failedItem = stateRef.current.get(portForwardingId);
         if (failedItem) {
           updatePortForwarding({
             ...failedItem,
-            status: 'failed',
+            status: "failed",
             error,
             isReconnecting: false,
           });
         }
       }
-    }
+    },
   );
 
   // 使用 useEffect 来更新 ref，避免在 render 期间更新
@@ -192,7 +191,7 @@ export function usePortForwardingsAtomWithApi() {
 
   const addPortForwarding = useMemoizedFn(
     (
-      portForwarding: PortForwarding
+      portForwarding: PortForwarding,
     ): [PortForwardingsAtom, Map<string, PortForwardingsAtom>] => {
       const newState = new Map(stateRef.current);
 
@@ -217,7 +216,7 @@ export function usePortForwardingsAtomWithApi() {
         portForwarding,
         jumpHostChain,
         sshPortForwarding,
-        status: 'pending',
+        status: "pending",
         error: undefined,
         isReconnecting: false,
       };
@@ -226,7 +225,7 @@ export function usePortForwardingsAtomWithApi() {
 
       setState(newState);
       return [item, newState];
-    }
+    },
   );
 
   return {

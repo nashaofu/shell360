@@ -5,16 +5,15 @@ import {
   Icon,
   IconButton,
   SwipeableDrawer,
-} from '@mui/material';
-import { useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { useGlobalStateAtomWithApi } from '@/atom/globalState';
-import overlay from '@/utils/overlay';
-
-import Terminals from './Terminals';
-import logo from './logo.svg';
-import Menus from './Menus';
+import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import overlay from "@/utils/overlay";
+import logo from "./logo.svg";
+import Menus from "./Menus";
+import Terminals from "./Terminals";
 
 export default function Sidebar() {
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
@@ -22,7 +21,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const goSettings = useCallback(() => {
-    navigate('/settings', { replace: true });
+    navigate("/settings", { replace: true });
     globalStateAtomWithApi.closeSidebar();
   }, [globalStateAtomWithApi, navigate]);
 
@@ -45,13 +44,13 @@ export default function Sidebar() {
     <SwipeableDrawer
       sx={{
         width: 300,
-        '& .MuiDrawer-paper': {
+        "& .MuiDrawer-paper": {
           width: 300,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
         },
       }}
       open={globalStateAtomWithApi.isOpenSidebar}
@@ -61,8 +60,8 @@ export default function Sidebar() {
     >
       <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           px: 2,
           py: 1,
           mt: 2,
@@ -71,9 +70,9 @@ export default function Sidebar() {
       >
         <Box
           sx={{
-            display: 'flex',
+            display: "flex",
             flex: 1,
-            alignItems: 'center',
+            alignItems: "center",
           }}
         >
           <Avatar src={logo} alt="logo" />
@@ -100,7 +99,7 @@ export default function Sidebar() {
       <Box
         sx={{
           flex: 1,
-          overflow: 'auto',
+          overflow: "auto",
         }}
       >
         <Terminals onClick={globalStateAtomWithApi.closeSidebar} />

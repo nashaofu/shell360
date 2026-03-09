@@ -1,26 +1,23 @@
 import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
-import {
   Box,
   Button,
   ClickAwayListener,
+  createTheme,
   Divider,
   Drawer,
   Icon,
   IconButton,
   ThemeProvider,
-  createTheme,
   useTheme,
-} from '@mui/material';
-import { lightGreen } from '@mui/material/colors';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { lightGreen } from "@mui/material/colors";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { TITLE_BAR_HEIGHT } from '@/constants/titleBar';
-
-import Terminals from './Terminals';
-import Menus from './Menus';
-import Logo from './Logo';
+import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
+import Logo from "./Logo";
+import Menus from "./Menus";
+import Terminals from "./Terminals";
 
 const MINI_WINDOW_WIDTH = 720;
 
@@ -40,39 +37,40 @@ export default function Sidebar() {
 
   const globalTheme = useTheme();
   const sidebarTheme = useMemo(
-    () => createTheme(globalTheme, {
-      palette: {
-        primary: {
-          main: '#fff',
-        },
-        text: {
-          primary: '#fff',
-        },
-        divider: 'rgba(255, 255, 255, 0.12)',
-        background: {
-          paper: '#2c2c2c',
-          default: '#2c2c2c',
-        },
-        success: globalTheme.palette.augmentColor({
-          color: {
-            main: lightGreen['700'],
+    () =>
+      createTheme(globalTheme, {
+        palette: {
+          primary: {
+            main: "#fff",
           },
-        }),
-        action: {
-          active: '#fff',
-          hover: 'rgba(255, 255, 255, 0.08)',
-          hoverOpacity: 0.08,
-          selected: 'rgba(255, 255, 255, 0.16)',
-          selectedOpacity: 0.16,
-          disabled: 'rgba(255, 255, 255, 0.3)',
-          disabledBackground: 'rgba(255, 255, 255, 0.12)',
-          disabledOpacity: 0.38,
-          focus: 'rgba(255, 255, 255, 0.12)',
-          focusOpacity: 0.12,
-          activatedOpacity: 0.24,
+          text: {
+            primary: "#fff",
+          },
+          divider: "rgba(255, 255, 255, 0.12)",
+          background: {
+            paper: "#2c2c2c",
+            default: "#2c2c2c",
+          },
+          success: globalTheme.palette.augmentColor({
+            color: {
+              main: lightGreen["700"],
+            },
+          }),
+          action: {
+            active: "#fff",
+            hover: "rgba(255, 255, 255, 0.08)",
+            hoverOpacity: 0.08,
+            selected: "rgba(255, 255, 255, 0.16)",
+            selectedOpacity: 0.16,
+            disabled: "rgba(255, 255, 255, 0.3)",
+            disabledBackground: "rgba(255, 255, 255, 0.12)",
+            disabledOpacity: 0.38,
+            focus: "rgba(255, 255, 255, 0.12)",
+            focusOpacity: 0.12,
+            activatedOpacity: 0.24,
+          },
         },
-      },
-    }),
+      }),
     [globalTheme],
   );
 
@@ -89,10 +87,10 @@ export default function Sidebar() {
         setExpand(false);
       }
     };
-    window.addEventListener('resize', onResize);
+    window.addEventListener("resize", onResize);
 
     return () => {
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -103,11 +101,11 @@ export default function Sidebar() {
           sx={{
             width: drawerWidth,
             flexShrink: 0,
-            '& .MuiDrawer-paper': {
+            "& .MuiDrawer-paper": {
               width: expand ? 240 : 70,
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
             },
           }}
           open={expand}
@@ -116,9 +114,9 @@ export default function Sidebar() {
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: expand ? 'row' : 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: expand ? "row" : "column",
+              alignItems: "center",
               // 顶部 TitleBar 的高度
               mt: `${TITLE_BAR_HEIGHT}px`,
               px: 2,
@@ -129,7 +127,7 @@ export default function Sidebar() {
             <Logo expand={expand} />
             <IconButton
               size="small"
-              onClick={() => navigate('/settings', { replace: true })}
+              onClick={() => navigate("/settings", { replace: true })}
             >
               <Icon className="icon-settings" />
             </IconButton>
@@ -144,7 +142,7 @@ export default function Sidebar() {
           <Box
             sx={{
               flex: 1,
-              overflow: 'auto',
+              overflow: "auto",
             }}
           >
             <Terminals expand={expand} />
@@ -156,7 +154,7 @@ export default function Sidebar() {
             variant="text"
             size="large"
             sx={{
-              width: '100%',
+              width: "100%",
               flexShrink: 0,
             }}
             onClick={() => setExpand((val) => !val)}

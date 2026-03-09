@@ -1,17 +1,17 @@
-import { Controller } from 'react-hook-form';
 import {
   Box,
-  MenuItem,
-  TextField,
-  Typography,
   Divider,
+  MenuItem,
   type SxProps,
+  TextField,
   type Theme,
-} from '@mui/material';
+  Typography,
+} from "@mui/material";
+import { Controller } from "react-hook-form";
 
-import { TERMINAL_THEMES } from '../XTerminal/themes';
+import { TERMINAL_THEMES } from "../XTerminal/themes";
 
-import type { EditHostFormApi } from './types';
+import type { EditHostFormApi } from "./types";
 
 type TerminalSettingsFormProps = {
   formApi: EditHostFormApi;
@@ -34,7 +34,7 @@ export default function TerminalSettingsForm({
         rules={{
           required: {
             value: true,
-            message: 'Please enter font family',
+            message: "Please enter font family",
           },
         }}
         render={({ field, fieldState }) => (
@@ -59,19 +59,19 @@ export default function TerminalSettingsForm({
         rules={{
           required: {
             value: true,
-            message: 'Please enter font size',
+            message: "Please enter font size",
           },
           pattern: {
             value: /^\d+$/,
-            message: 'Please enter the number',
+            message: "Please enter the number",
           },
           min: {
             value: 10,
-            message: 'The font size cannot be less than 10',
+            message: "The font size cannot be less than 10",
           },
           max: {
             value: 48,
-            message: 'The font size cannot be greater than 48',
+            message: "The font size cannot be greater than 48",
           },
         }}
         render={({ field, fieldState }) => (
@@ -97,7 +97,7 @@ export default function TerminalSettingsForm({
         rules={{
           required: {
             value: true,
-            message: 'Please select theme',
+            message: "Please select theme",
           },
         }}
         render={({ field, fieldState }) => (
