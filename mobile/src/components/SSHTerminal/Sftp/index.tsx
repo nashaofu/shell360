@@ -310,7 +310,7 @@ export default function Sftp({ session }: SftpProps) {
       {!initLoading && !initError && (
         <Box
           sx={{
-            py: 0.3,
+            py: 0.25,
             px: 1,
             lineHeight: 0,
             borderRadius: 1,

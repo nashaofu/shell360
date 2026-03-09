@@ -26,6 +26,38 @@ function hasAnyModifier(mods: KeyboardModifiers): boolean {
   return mods.ctrl || mods.alt || mods.shift;
 }
 
+function getFunctionKeyWithModifiers(
+  key: string,
+  baseSequence: string,
+  mods: KeyboardModifiers,
+): string {
+  if (!hasAnyModifier(mods)) {
+    return baseSequence;
+  }
+
+  const modifierParam = getModifierParam(mods);
+  const ss3FunctionKeySuffix: Record<string, string> = {
+    F1: "P",
+    F2: "Q",
+    F3: "R",
+    F4: "S",
+  };
+
+  const ss3Suffix = ss3FunctionKeySuffix[key];
+  if (ss3Suffix) {
+    return `\x1b[1;${modifierParam}${ss3Suffix}`;
+  }
+
+  if (baseSequence.startsWith("\x1b[") && baseSequence.endsWith("~")) {
+    const csiCode = baseSequence.slice(2, -1);
+    if (/^\d+$/.test(csiCode)) {
+      return `\x1b[${csiCode};${modifierParam}~`;
+    }
+  }
+
+  return baseSequence;
+}
+
 function mergeModifiers(
   virtualMods: KeyboardModifiers,
   keyboardMods?: Partial<KeyboardModifiers>,
@@ -56,12 +88,16 @@ function translateKeyToSyntheticData(
 
   const arrowSuffix = ARROW_KEY_SUFFIX[key];
   if (arrowSuffix) {
+    if (!hasAnyModifier(mods)) {
+      return `\x1b[${arrowSuffix}`;
+    }
+
     return `\x1b[1;${getModifierParam(mods)}${arrowSuffix}`;
   }
 
   const functionKey = FUNCTION_KEY_TO_ESCAPE_SEQUENCE[key.toUpperCase()];
   if (functionKey) {
-    return functionKey;
+    return getFunctionKeyWithModifiers(key.toUpperCase(), functionKey, mods);
   }
 
   if (SPECIAL_KEYS[key]) {
@@ -69,6 +105,10 @@ function translateKeyToSyntheticData(
 
     if (key === "Escape") {
       return mods.alt ? "\x1b\x1b" : seq;
+    }
+
+    if (key === "Tab" && mods.shift && !mods.alt && !mods.ctrl) {
+      return "\x1b[Z";
     }
 
     if (hasAnyModifier(mods)) {

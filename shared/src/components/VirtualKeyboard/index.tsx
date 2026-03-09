@@ -18,9 +18,9 @@ export type VirtualKeyboardProps = {
  * A mobile-friendly on-screen keyboard for terminal input.
  * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({ sx, onData: onInput }: VirtualKeyboardProps) {
+export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
   const { rows, isTokenActive, onTokenPress } = useVirtualKeyboard({
-    onData: onInput,
+    onData,
   });
 
   return (

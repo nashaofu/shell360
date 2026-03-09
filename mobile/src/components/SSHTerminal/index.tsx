@@ -138,7 +138,8 @@ export default function SSHTerminal({
               display: "flex",
               justifyContent: "flex-end",
               px: 1,
-              py: 0.25,
+              pt: 0.25,
+              pb: 0.1,
               gap: 0.5,
               fontSize: "0.75rem",
             }}
@@ -146,7 +147,7 @@ export default function SSHTerminal({
             {session && <Sftp session={session} />}
             <Box
               sx={{
-                py: 0.3,
+                py: 0.25,
                 px: 1,
                 lineHeight: 0,
                 borderRadius: 1,
