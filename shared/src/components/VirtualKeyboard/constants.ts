@@ -109,10 +109,6 @@ export const VIRTUAL_KEYBOARD_KEY_WIDTH: Record<string, number> = {
   "{enter}": 1.8,
 };
 
-export const KEYBOARD_BG = "#d6d6d6";
-export const KEY_BG = "#ececec";
-export const KEY_ACTIVE_BG = "#c8d7ef";
-
 export const TOKEN_TO_INPUT_KEY: Record<string, string> = {
   "{esc}": "Escape",
   "{tab}": "Tab",

@@ -129,8 +129,11 @@ export default function SSHTerminal({
             left: 0,
             right: 0,
             paddingBottom: "env(safe-area-inset-bottom)",
-            borderTop: "1px solid #c6c6c6",
-            backgroundColor: "#d6d6d6",
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? theme.palette.background.paper
+                : theme.palette.grey[300],
           }}
         >
           <Box
@@ -151,13 +154,23 @@ export default function SSHTerminal({
                 px: 1,
                 lineHeight: 0,
                 borderRadius: 1,
-                borderColor: "#c6c6c6",
-                backgroundColor: "#cfcfcf",
-                color: "#333",
+                border: "1px solid",
+                borderColor: (theme) =>
+                  showVirtualKeyboard
+                    ? theme.palette.primary.main
+                    : theme.palette.divider,
+                backgroundColor: (theme) =>
+                  showVirtualKeyboard
+                    ? theme.palette.action.selected
+                    : theme.palette.background.default,
+                color: (theme) =>
+                  showVirtualKeyboard
+                    ? theme.palette.primary.main
+                    : theme.palette.text.primary,
                 ":active": {
-                  borderColor: "#8ea9cf",
-                  backgroundColor: "#c0c0c0",
-                  color: "#000",
+                  borderColor: (theme) => theme.palette.primary.main,
+                  backgroundColor: (theme) => theme.palette.action.hover,
+                  color: (theme) => theme.palette.text.primary,
                 },
               }}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}

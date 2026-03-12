@@ -1,8 +1,5 @@
 import { Box, type SxProps, type Theme } from "@mui/material";
 import {
-  KEY_ACTIVE_BG,
-  KEY_BG,
-  KEYBOARD_BG,
   VIRTUAL_KEYBOARD_KEY_WIDTH,
   VIRTUAL_KEYBOARD_LABELS,
 } from "./constants";
@@ -32,7 +29,10 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
           gap: 0.3,
           p: 0.5,
           borderRadius: 1,
-          bgcolor: KEYBOARD_BG,
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? theme.palette.background.paper
+              : theme.palette.grey[300],
           width: "100%",
           maxWidth: 760,
           margin: "0 auto",
@@ -80,8 +80,15 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
                   textAlign: "center",
                   borderRadius: 1,
                   border: "1px solid",
-                  borderColor: isActive ? "#8ea9cf" : "#c6c6c6",
-                  bgcolor: isActive ? KEY_ACTIVE_BG : KEY_BG,
+                  borderColor: (theme) =>
+                    isActive
+                      ? theme.palette.primary.main
+                      : theme.palette.divider,
+                  bgcolor: (theme) =>
+                    isActive
+                      ? theme.palette.action.selected
+                      : theme.palette.background.default,
+                  color: (theme) => theme.palette.text.primary,
                   cursor: "pointer",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
