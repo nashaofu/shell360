@@ -12,7 +12,6 @@ settingGroups:
     base:
       PRODUCT_NAME: Shell360
       PRODUCT_BUNDLE_IDENTIFIER: com.nashaofu.shell360
-      DEVELOPMENT_TEAM: 2A5UB5KQ66
 targetTemplates:
   app:
     type: application
@@ -52,8 +51,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.1.5
-        CFBundleVersion: "0.1.5"
+        CFBundleShortVersionString: 0.1.18
+        CFBundleVersion: "0.1.18"
     entitlements:
       path: shell360_iOS/shell360_iOS.entitlements
     scheme:
