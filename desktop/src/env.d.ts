@@ -1,7 +1,12 @@
 /// <reference types="@rsbuild/core/types" />
 
 interface ImportMetaEnv {
-  readonly TAURI_PLATFORM: "windows" | "darwin" | "linux" | "ios" | "android";
+  readonly TAURI_ENV_PLATFORM:
+    | "windows"
+    | "darwin"
+    | "linux"
+    | "ios"
+    | "android";
 }
 
 interface ImportMeta {

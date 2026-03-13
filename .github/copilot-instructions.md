@@ -111,7 +111,7 @@ pnpm tauri dev             # 桌面开发（带热更新）
 **跨平台差异处理**：
 
 - 条件编译：`#[cfg(desktop)]`、`#[cfg(mobile)]`（Rust）
-- 运行时检查：`import.meta.env.TAURI_PLATFORM`（TypeScript）
+- 运行时检查：`import.meta.env.TAURI_ENV_PLATFORM`（TypeScript）
 
 ## 构建与部署
 

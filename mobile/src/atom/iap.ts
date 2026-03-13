@@ -14,7 +14,7 @@ import {
 const IAP_CUSTOMER_INFO = "iap-customer-info";
 
 const iapGetCustomerInfoWithMock = () => {
-  if (import.meta.env.TAURI_PLATFORM === "android") {
+  if (import.meta.env.TAURI_ENV_PLATFORM === "android") {
     return Promise.resolve({
       activeSubscriptions: [],
       allPurchasedProductIdentifiers: [],
@@ -64,7 +64,7 @@ const iapGetCustomerInfoWithMock = () => {
 };
 
 const iapGetOfferingsWithMock = async () => {
-  if (import.meta.env.TAURI_PLATFORM === "android") {
+  if (import.meta.env.TAURI_ENV_PLATFORM === "android") {
     return Promise.resolve([
       {
         annual: {
