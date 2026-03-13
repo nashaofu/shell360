@@ -79,7 +79,7 @@ jobs:
             build: powershell ./scripts/windows.ps1
 
           - name: macos
-            host: macos-15
+            host: macos-26
             build: zsh ./scripts/macos.sh
 
           - name: linux
