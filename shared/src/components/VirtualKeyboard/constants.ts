@@ -1,251 +1,189 @@
-export interface KeyboardModifiers {
-  ctrl: boolean;
-  alt: boolean;
-  shift: boolean;
-}
+export type KeyboardLayoutName = "Lowercase" | "Uppercase" | "Fn" | "Symbols";
 
-export type ModifierKey = keyof KeyboardModifiers;
-export type KeyboardLayoutName = "lowercase" | "uppercase" | "fn" | "more";
-
-export const DEFAULT_KEYBOARD_MODIFIERS: KeyboardModifiers = {
-  ctrl: false,
-  alt: false,
-  shift: false,
-};
-
-export const VIRTUAL_KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[]> = {
-  lowercase: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "1 2 3 4 5 6 7 8 9 0",
-    "q w e r t y u i o p",
-    "a s d f g h j k l",
-    "{caps} z x c v b n m",
-    "{fn} {more} {space} {backspace} {enter}",
+export const KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[][]> = {
+  Lowercase: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+    ["Caps", "z", "x", "c", "v", "b", "n", "m"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  uppercase: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "1 2 3 4 5 6 7 8 9 0",
-    "Q W E R T Y U I O P",
-    "A S D F G H J K L",
-    "{caps} Z X C V B N M",
-    "{fn} {more} {space} {backspace} {enter}",
+  Uppercase: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["Caps", "Z", "X", "C", "V", "B", "N", "M"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  fn: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "{f1} {f2} {f3} {f4} {f5} {f6} {f7} {f8} {f9} {f10}",
-    "{f11} {f12} {insert} {delete} {home} {end}",
-    "{pageup} {pagedown} {arrowup} {arrowdown} {arrowleft} {arrowright}",
-    "{fn} {more} {space} {backspace} {enter}",
+  Fn: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"],
+    ["F11", "F12", "Ins", "Del", "Home", "End"],
+    ["PgUp", "PgDn", "←", "↑", "→", "↓"],
+    [";", "=", ",", "-", "."],
+    ["/", "`", "[", "\\", "]", "'"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  more: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "{ctrl+w} {ctrl+r} {ctrl+a} {ctrl+e} {ctrl+c} {ctrl+l}",
-    "{ctrl+s} {ctrl+z} {ctrl+x} {ctrl+d} {ctrl+n} {ctrl+p}",
-    "` ~ - = _ | [ ] \\",
-    "; ' , . / \" < >",
-    "{fn} {more} {space} {backspace} {enter}",
+  Symbols: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["^W", "^R", "^A", "^E", "^C", "^L"],
+    ["^S", "^Z", "^X", "^D", "^N", "^P"],
+    // ["`", "~", "-", "=", "_", "|", "[", "]", "\\"],
+    // [";", "'", ",", ".", "/", '"', "<", ">"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
 };
 
-export const VIRTUAL_KEYBOARD_LABELS: Record<string, string> = {
-  "{ctrl}": "Ctrl",
-  "{shift}": "Shift",
-  "{alt}": "Alt",
-  "{esc}": "Esc",
-  "{tab}": "Tab",
-  "{backspace}": "⌫",
-  "{enter}": "Enter",
-  "{caps}": "Caps",
-  "{fn}": "⌘",
-  "{space}": "Space",
-  "{more}": "...",
-  "{f1}": "F1",
-  "{f2}": "F2",
-  "{f3}": "F3",
-  "{f4}": "F4",
-  "{f5}": "F5",
-  "{f6}": "F6",
-  "{f7}": "F7",
-  "{f8}": "F8",
-  "{f9}": "F9",
-  "{f10}": "F10",
-  "{f11}": "F11",
-  "{f12}": "F12",
-  "{insert}": "Ins",
-  "{delete}": "Del",
-  "{home}": "Home",
-  "{end}": "End",
-  "{pageup}": "PgUp",
-  "{pagedown}": "PgDn",
-  "{arrowup}": "↑",
-  "{arrowdown}": "↓",
-  "{arrowleft}": "←",
-  "{arrowright}": "→",
-  "{ctrl+w}": "^W",
-  "{ctrl+r}": "^R",
-  "{ctrl+a}": "^A",
-  "{ctrl+e}": "^E",
-  "{ctrl+c}": "^C",
-  "{ctrl+l}": "^L",
-  "{ctrl+s}": "^S",
-  "{ctrl+z}": "^Z",
-  "{ctrl+x}": "^X",
-  "{ctrl+d}": "^D",
-  "{ctrl+n}": "^N",
-  "{ctrl+p}": "^P",
+export const KEYBOARD_KEY_WIDTH: Record<string, number> = {
+  Ctrl: 1.2,
+  Shift: 1.2,
+  Alt: 1.2,
+  Esc: 1.2,
+  Tab: 1.2,
+  Caps: 1.2,
+  Fn: 1.1,
+  "...": 1.1,
+  Space: 2.8,
+  "⌫": 1.8,
+  Enter: 1.8,
 };
 
-export const VIRTUAL_KEYBOARD_KEY_WIDTH: Record<string, number> = {
-  "{ctrl}": 1.2,
-  "{shift}": 1.2,
-  "{alt}": 1.2,
-  "{esc}": 1.2,
-  "{tab}": 1.2,
-  "{caps}": 1.2,
-  "{fn}": 1.1,
-  "{more}": 1.1,
-  "{space}": 2.8,
-  "{backspace}": 1.8,
-  "{enter}": 1.8,
+export type KeyboardModifierToken = "Ctrl" | "Alt" | "Shift";
+
+export const KEYBOARD_MODIFIER_TOKENS: Array<KeyboardModifierToken> = [
+  "Ctrl",
+  "Shift",
+  "Alt",
+];
+
+export type KeyboardLayoutToken = "Caps" | "Fn" | "...";
+
+export const KEYBOARD_LAYOUT_TOKENS: Array<KeyboardLayoutToken> = [
+  "Caps",
+  "Fn",
+  "...",
+];
+
+export const TOKEN_TO_KEY_EVENT_INIT: Record<
+  string,
+  Partial<KeyboardEventInit>
+> = {
+  "⌫": { keyCode: 8, key: "Backspace", code: "Backspace" },
+  Tab: { keyCode: 9, key: "Tab", code: "Tab" },
+  Enter: { keyCode: 13, key: "Enter", code: "Enter" },
+  Shift: { keyCode: 16, key: "Shift", code: "ShiftLeft", shiftKey: true },
+  Ctrl: { keyCode: 17, key: "Control", code: "ControlLeft", ctrlKey: true },
+  Alt: { keyCode: 18, key: "Alt", code: "AltLeft", altKey: true },
+  Caps: { keyCode: 20, key: "CapsLock", code: "CapsLock" },
+  Esc: { keyCode: 27, key: "Escape", code: "Escape" },
+  Space: { keyCode: 32, key: " ", code: "Space" },
+  PgUp: { keyCode: 33, key: "PageUp", code: "PageUp" },
+  PgDn: { keyCode: 34, key: "PageDown", code: "PageDown" },
+  End: { keyCode: 35, key: "End", code: "End" },
+  Home: { keyCode: 36, key: "Home", code: "Home" },
+  "←": { keyCode: 37, key: "ArrowLeft", code: "ArrowLeft" },
+  "↑": { keyCode: 38, key: "ArrowUp", code: "ArrowUp" },
+  "→": { keyCode: 39, key: "ArrowRight", code: "ArrowRight" },
+  "↓": { keyCode: 40, key: "ArrowDown", code: "ArrowDown" },
+  Ins: { keyCode: 45, key: "Insert", code: "Insert" },
+  Del: { keyCode: 46, key: "Delete", code: "Delete" },
+  0: { keyCode: 48, key: "0", code: "Digit0" },
+  1: { keyCode: 49, key: "1", code: "Digit1" },
+  2: { keyCode: 50, key: "2", code: "Digit2" },
+  3: { keyCode: 51, key: "3", code: "Digit3" },
+  4: { keyCode: 52, key: "4", code: "Digit4" },
+  5: { keyCode: 53, key: "5", code: "Digit5" },
+  6: { keyCode: 54, key: "6", code: "Digit6" },
+  7: { keyCode: 55, key: "7", code: "Digit7" },
+  8: { keyCode: 56, key: "8", code: "Digit8" },
+  9: { keyCode: 57, key: "9", code: "Digit9" },
+  a: { keyCode: 65, key: "a", code: "KeyA" },
+  b: { keyCode: 66, key: "b", code: "KeyB" },
+  c: { keyCode: 67, key: "c", code: "KeyC" },
+  d: { keyCode: 68, key: "d", code: "KeyD" },
+  e: { keyCode: 69, key: "e", code: "KeyE" },
+  f: { keyCode: 70, key: "f", code: "KeyF" },
+  g: { keyCode: 71, key: "g", code: "KeyG" },
+  h: { keyCode: 72, key: "h", code: "KeyH" },
+  i: { keyCode: 73, key: "i", code: "KeyI" },
+  j: { keyCode: 74, key: "j", code: "KeyJ" },
+  k: { keyCode: 75, key: "k", code: "KeyK" },
+  l: { keyCode: 76, key: "l", code: "KeyL" },
+  m: { keyCode: 77, key: "m", code: "KeyM" },
+  n: { keyCode: 78, key: "n", code: "KeyN" },
+  o: { keyCode: 79, key: "o", code: "KeyO" },
+  p: { keyCode: 80, key: "p", code: "KeyP" },
+  q: { keyCode: 81, key: "q", code: "KeyQ" },
+  r: { keyCode: 82, key: "r", code: "KeyR" },
+  s: { keyCode: 83, key: "s", code: "KeyS" },
+  t: { keyCode: 84, key: "t", code: "KeyT" },
+  u: { keyCode: 85, key: "u", code: "KeyU" },
+  v: { keyCode: 86, key: "v", code: "KeyV" },
+  w: { keyCode: 87, key: "w", code: "KeyW" },
+  x: { keyCode: 88, key: "x", code: "KeyX" },
+  y: { keyCode: 89, key: "y", code: "KeyY" },
+  z: { keyCode: 90, key: "z", code: "KeyZ" },
+  A: { keyCode: 65, key: "A", code: "KeyA" },
+  B: { keyCode: 66, key: "B", code: "KeyB" },
+  C: { keyCode: 67, key: "C", code: "KeyC" },
+  D: { keyCode: 68, key: "D", code: "KeyD" },
+  E: { keyCode: 69, key: "E", code: "KeyE" },
+  F: { keyCode: 70, key: "F", code: "KeyF" },
+  G: { keyCode: 71, key: "G", code: "KeyG" },
+  H: { keyCode: 72, key: "H", code: "KeyH" },
+  I: { keyCode: 73, key: "I", code: "KeyI" },
+  J: { keyCode: 74, key: "J", code: "KeyJ" },
+  K: { keyCode: 75, key: "K", code: "KeyK" },
+  L: { keyCode: 76, key: "L", code: "KeyL" },
+  M: { keyCode: 77, key: "M", code: "KeyM" },
+  N: { keyCode: 78, key: "N", code: "KeyN" },
+  O: { keyCode: 79, key: "O", code: "KeyO" },
+  P: { keyCode: 80, key: "P", code: "KeyP" },
+  Q: { keyCode: 81, key: "Q", code: "KeyQ" },
+  R: { keyCode: 82, key: "R", code: "KeyR" },
+  S: { keyCode: 83, key: "S", code: "KeyS" },
+  T: { keyCode: 84, key: "T", code: "KeyT" },
+  U: { keyCode: 85, key: "U", code: "KeyU" },
+  V: { keyCode: 86, key: "V", code: "KeyV" },
+  W: { keyCode: 87, key: "W", code: "KeyW" },
+  X: { keyCode: 88, key: "X", code: "KeyX" },
+  Y: { keyCode: 89, key: "Y", code: "KeyY" },
+  Z: { keyCode: 90, key: "Z", code: "KeyZ" },
+  F1: { keyCode: 112, key: "F1", code: "F1" },
+  F2: { keyCode: 113, key: "F2", code: "F2" },
+  F3: { keyCode: 114, key: "F3", code: "F3" },
+  F4: { keyCode: 115, key: "F4", code: "F4" },
+  F5: { keyCode: 116, key: "F5", code: "F5" },
+  F6: { keyCode: 117, key: "F6", code: "F6" },
+  F7: { keyCode: 118, key: "F7", code: "F7" },
+  F8: { keyCode: 119, key: "F8", code: "F8" },
+  F9: { keyCode: 120, key: "F9", code: "F9" },
+  F10: { keyCode: 121, key: "F10", code: "F10" },
+  F11: { keyCode: 122, key: "F11", code: "F11" },
+  F12: { keyCode: 123, key: "F12", code: "F12" },
+  ";": { keyCode: 186, key: ";", code: "Semicolon" },
+  "=": { keyCode: 187, key: "=", code: "Equal" },
+  ",": { keyCode: 188, key: ",", code: "Comma" },
+  "-": { keyCode: 189, key: "-", code: "Minus" },
+  ".": { keyCode: 190, key: ".", code: "Period" },
+  "/": { keyCode: 191, key: "/", code: "Slash" },
+  "`": { keyCode: 192, key: "`", code: "Backquote" },
+  "[": { keyCode: 219, key: "[", code: "BracketLeft" },
+  "\\": { keyCode: 220, key: "\\", code: "Backslash" },
+  "]": { keyCode: 221, key: "]", code: "BracketRight" },
+  "'": { keyCode: 222, key: "'", code: "Quote" },
+  "^W": { keyCode: 87, key: "w", code: "KeyW", ctrlKey: true },
+  "^R": { keyCode: 82, key: "r", code: "KeyR", ctrlKey: true },
+  "^A": { keyCode: 65, key: "a", code: "KeyA", ctrlKey: true },
+  "^E": { keyCode: 69, key: "e", code: "KeyE", ctrlKey: true },
+  "^C": { keyCode: 67, key: "c", code: "KeyC", ctrlKey: true },
+  "^L": { keyCode: 76, key: "l", code: "KeyL", ctrlKey: true },
+  "^S": { keyCode: 83, key: "s", code: "KeyS", ctrlKey: true },
+  "^Z": { keyCode: 90, key: "z", code: "KeyZ", ctrlKey: true },
+  "^X": { keyCode: 88, key: "x", code: "KeyX", ctrlKey: true },
+  "^D": { keyCode: 68, key: "d", code: "KeyD", ctrlKey: true },
+  "^N": { keyCode: 78, key: "n", code: "KeyN", ctrlKey: true },
+  "^P": { keyCode: 80, key: "p", code: "KeyP", ctrlKey: true },
 };
-
-export const KEYCODE_KEY_MAPPINGS: Record<number, [string, string]> = {
-  48: ["0", ")"],
-  49: ["1", "!"],
-  50: ["2", "@"],
-  51: ["3", "#"],
-  52: ["4", "$"],
-  53: ["5", "%"],
-  54: ["6", "^"],
-  55: ["7", "&"],
-  56: ["8", "*"],
-  57: ["9", "("],
-  186: [";", ":"],
-  187: ["=", "+"],
-  188: [",", "<"],
-  189: ["-", "_"],
-  190: [".", ">"],
-  191: ["/", "?"],
-  192: ["`", "~"],
-  219: ["[", "{"],
-  220: ["\\", "|"],
-  221: ["]", "}"],
-  222: ["'", '"'],
-};
-
-export const SHIFTED_PRINTABLE_KEYS: Record<string, string> =
-  Object.fromEntries(
-    Object.values(KEYCODE_KEY_MAPPINGS).map(([unshifted, shifted]) => [
-      unshifted,
-      shifted,
-    ]),
-  );
-
-export const PRINTABLE_KEY_TO_KEY_CODE: Record<string, number> = {
-  " ": 32,
-  ...Object.fromEntries(
-    Array.from({ length: 26 }, (_, index) => {
-      const keyCode = 65 + index;
-      const char = String.fromCharCode(keyCode + 32);
-      const upper = String.fromCharCode(keyCode);
-      return [
-        [char, keyCode],
-        [upper, keyCode],
-      ];
-    }).flat(),
-  ),
-  ...Object.fromEntries(
-    Object.entries(KEYCODE_KEY_MAPPINGS).flatMap(
-      ([keyCode, [unshifted, shifted]]) => [
-        [unshifted, Number(keyCode)],
-        [shifted, Number(keyCode)],
-      ],
-    ),
-  ),
-};
-
-export const TOKEN_TO_INPUT_KEY: Record<string, string> = {
-  "{esc}": "Escape",
-  "{tab}": "Tab",
-  "{backspace}": "Backspace",
-  "{enter}": "Enter",
-  "{space}": " ",
-  "{insert}": "Insert",
-  "{delete}": "Delete",
-  "{home}": "Home",
-  "{end}": "End",
-  "{pageup}": "PageUp",
-  "{pagedown}": "PageDown",
-  "{arrowup}": "ArrowUp",
-  "{arrowdown}": "ArrowDown",
-  "{arrowleft}": "ArrowLeft",
-  "{arrowright}": "ArrowRight",
-};
-
-export const TOKEN_TO_CTRL_CHAR: Record<string, string> = {
-  "{ctrl+w}": "w",
-  "{ctrl+r}": "r",
-  "{ctrl+a}": "a",
-  "{ctrl+e}": "e",
-  "{ctrl+c}": "c",
-  "{ctrl+l}": "l",
-  "{ctrl+s}": "s",
-  "{ctrl+z}": "z",
-  "{ctrl+x}": "x",
-  "{ctrl+d}": "d",
-  "{ctrl+n}": "n",
-  "{ctrl+p}": "p",
-};
-
-export const MODIFIER_TOKEN_TO_KEY: Record<string, ModifierKey> = {
-  "{ctrl}": "ctrl",
-  "{shift}": "shift",
-  "{alt}": "alt",
-};
-
-export const ARROW_KEY_SUFFIX: Record<string, string> = {
-  ArrowUp: "A",
-  ArrowDown: "B",
-  ArrowRight: "C",
-  ArrowLeft: "D",
-};
-
-export const SPECIAL_KEYS: Record<string, string> = {
-  Enter: "\r",
-  Backspace: "\x7f",
-  Tab: "\t",
-  Escape: "\x1b",
-  Home: "\x1b[H",
-  End: "\x1b[F",
-  PageUp: "\x1b[5~",
-  PageDown: "\x1b[6~",
-  Insert: "\x1b[2~",
-  Delete: "\x1b[3~",
-};
-
-export const FUNCTION_KEY_TO_ESCAPE_SEQUENCE: Record<string, string> = {
-  F1: "\x1bOP",
-  F2: "\x1bOQ",
-  F3: "\x1bOR",
-  F4: "\x1bOS",
-  F5: "\x1b[15~",
-  F6: "\x1b[17~",
-  F7: "\x1b[18~",
-  F8: "\x1b[19~",
-  F9: "\x1b[20~",
-  F10: "\x1b[21~",
-  F11: "\x1b[23~",
-  F12: "\x1b[24~",
-};
-
-export const CSI_SPECIAL_WITH_MODIFIERS: Record<string, (m: number) => string> =
-  {
-    Home: (m) => `\x1b[1;${m}H`,
-    End: (m) => `\x1b[1;${m}F`,
-    PageUp: (m) => `\x1b[5;${m}~`,
-    PageDown: (m) => `\x1b[6;${m}~`,
-    Insert: (m) => `\x1b[2;${m}~`,
-    Delete: (m) => `\x1b[3;${m}~`,
-  };
-
-export const FUNCTION_KEY_REGEX = /^\{f(\d{1,2})\}$/;

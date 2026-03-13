@@ -1,23 +1,19 @@
 import { Box, type SxProps, type Theme } from "@mui/material";
-import {
-  VIRTUAL_KEYBOARD_KEY_WIDTH,
-  VIRTUAL_KEYBOARD_LABELS,
-} from "./constants";
+import { KEYBOARD_KEY_WIDTH } from "./constants";
 import { useVirtualKeyboard } from "./useVirtualKeyboard";
 
 export type VirtualKeyboardProps = {
   sx?: SxProps<Theme>;
-  /** called when user clicks a key on the virtual keyboard; sends terminal-ready data */
-  onData: (data: string) => void;
+  onKeydown: (event: KeyboardEvent) => void;
 };
 
 /**
  * A mobile-friendly on-screen keyboard for terminal input.
  * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
-  const { rows, isTokenActive, onTokenPress } = useVirtualKeyboard({
-    onData,
+export function VirtualKeyboard({ sx, onKeydown }: VirtualKeyboardProps) {
+  const { rows, checkKeyIsActive, onInput } = useVirtualKeyboard({
+    onKeydown,
   });
 
   return (
@@ -53,15 +49,14 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
           }}
         >
           {row.map((token, colIndex) => {
-            const label = VIRTUAL_KEYBOARD_LABELS[token] ?? token;
-            const grow = VIRTUAL_KEYBOARD_KEY_WIDTH[token] ?? 1;
-            const isActive = isTokenActive(token);
+            const grow = KEYBOARD_KEY_WIDTH[token] ?? 1;
+            const isActive = checkKeyIsActive(token);
 
             return (
               <Box
                 // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout keys are static
                 key={`${rowIndex}-${colIndex}`}
-                onClick={() => onTokenPress(token)}
+                onClick={() => onInput(token)}
                 sx={{
                   flex: `${grow} 1 0`,
                   minWidth: 0,
@@ -88,7 +83,7 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
                   touchAction: "manipulation",
                 }}
               >
-                {label}
+                {token}
               </Box>
             );
           })}

@@ -1,9 +1,11 @@
-import { Box, type SxProps, type Theme } from "@mui/material";
+import { Box, Fab, Icon, type SxProps, type Theme } from "@mui/material";
+import { useState } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
   type TerminalAtom,
   useTerminal,
+  VirtualKeyboard,
   XTerminal,
 } from "shared";
 import { copy } from "@/utils/clipboard";
@@ -24,6 +26,8 @@ export default function SSHTerminal({
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
+
   const {
     loading,
     error,
@@ -38,6 +42,49 @@ export default function SSHTerminal({
     onTerminalBinaryData,
     onTerminalResize,
   } = useTerminal({ item, onClose, onCopy: copy });
+
+  const hasBlockingState = loading || Boolean(error);
+  const showLoadingMask = !terminal || hasBlockingState;
+  const showVirtualKeyboardTools = !hasBlockingState && Boolean(session);
+  const onVirtualKeyboardKeydown = (event: KeyboardEvent) => {
+    const textarea = terminal?.textarea;
+    if (!textarea) {
+      return;
+    }
+
+    const keyboardEvent = new KeyboardEvent("keydown", {
+      key: event.key,
+      code: event.code,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
+      repeat: event.repeat,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    const keyCode =
+      event.keyCode ||
+      event.which ||
+      (event.key === " " || event.code === "Space" ? 32 : 0);
+    const charCode = event.key.length === 1 ? event.key.charCodeAt(0) : 0;
+
+    Object.defineProperty(keyboardEvent, "keyCode", {
+      configurable: true,
+      get: () => keyCode,
+    });
+    Object.defineProperty(keyboardEvent, "which", {
+      configurable: true,
+      get: () => keyCode,
+    });
+    Object.defineProperty(keyboardEvent, "charCode", {
+      configurable: true,
+      get: () => charCode,
+    });
+
+    textarea.dispatchEvent(keyboardEvent);
+  };
 
   return (
     <Box
@@ -54,12 +101,12 @@ export default function SSHTerminal({
           position: "absolute",
           top: 0,
           right: 3,
-          bottom: 0,
+          bottom: showVirtualKeyboard ? 165 : 0,
           left: 0,
           pl: 3,
           overflow: "hidden",
-          pointerEvents: loading || error ? "none" : "unset",
-          visibility: loading || error ? "hidden" : "visible",
+          pointerEvents: hasBlockingState ? "none" : "unset",
+          visibility: hasBlockingState ? "hidden" : "visible",
           ".xterm": {
             width: "100%",
             height: "100%",
@@ -87,7 +134,7 @@ export default function SSHTerminal({
           onOpenUrl={openUrl}
         />
       </Box>
-      {(!terminal || loading || error) && (
+      {showLoadingMask && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
@@ -108,7 +155,47 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && <Sftp session={session} />}
+
+      {showVirtualKeyboardTools && (
+        <Box
+          sx={{
+            position: "absolute",
+            right: 84,
+            bottom: 10,
+            zIndex: 20,
+          }}
+        >
+          <Fab
+            color={showVirtualKeyboard ? "secondary" : "default"}
+            onClick={() => setShowVirtualKeyboard((prev) => !prev)}
+            size="medium"
+          >
+            <Icon className="icon-keyboard" />
+          </Fab>
+        </Box>
+      )}
+
+      {showVirtualKeyboard && showVirtualKeyboardTools && (
+        <Box
+          sx={{
+            position: "absolute",
+            right: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 15,
+            p: 1,
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? theme.palette.background.paper
+                : theme.palette.grey[300],
+          }}
+        >
+          <VirtualKeyboard onKeydown={onVirtualKeyboardKeydown} />
+        </Box>
+      )}
+
+      {!hasBlockingState && session && <Sftp session={session} />}
     </Box>
   );
 }

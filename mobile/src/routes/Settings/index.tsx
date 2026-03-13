@@ -235,7 +235,7 @@ export default function Settings() {
               <Icon className="icon-arrow-right" />
             </IconButton>
           </ListItem>
-          {import.meta.env.TAURI_PLATFORM === "ios" && (
+          {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
             <ListItem>
               <ListItemText primary="Terms of Use" />
               <IconButton
@@ -264,7 +264,7 @@ export default function Settings() {
         </List>
       </Paper>
 
-      {import.meta.env.TAURI_PLATFORM === "ios" && <IOSIAP />}
+      {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <IOSIAP />}
     </Page>
   );
 }
