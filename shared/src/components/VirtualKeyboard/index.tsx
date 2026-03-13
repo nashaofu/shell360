@@ -61,15 +61,7 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
               <Box
                 // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout keys are static
                 key={`${rowIndex}-${colIndex}`}
-                role="button"
-                tabIndex={0}
                 onClick={() => onTokenPress(token)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onTokenPress(token);
-                  }
-                }}
                 sx={{
                   flex: `${grow} 1 0`,
                   minWidth: 0,

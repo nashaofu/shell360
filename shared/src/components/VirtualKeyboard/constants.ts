@@ -109,6 +109,61 @@ export const VIRTUAL_KEYBOARD_KEY_WIDTH: Record<string, number> = {
   "{enter}": 1.8,
 };
 
+export const KEYCODE_KEY_MAPPINGS: Record<number, [string, string]> = {
+  48: ["0", ")"],
+  49: ["1", "!"],
+  50: ["2", "@"],
+  51: ["3", "#"],
+  52: ["4", "$"],
+  53: ["5", "%"],
+  54: ["6", "^"],
+  55: ["7", "&"],
+  56: ["8", "*"],
+  57: ["9", "("],
+  186: [";", ":"],
+  187: ["=", "+"],
+  188: [",", "<"],
+  189: ["-", "_"],
+  190: [".", ">"],
+  191: ["/", "?"],
+  192: ["`", "~"],
+  219: ["[", "{"],
+  220: ["\\", "|"],
+  221: ["]", "}"],
+  222: ["'", '"'],
+};
+
+export const SHIFTED_PRINTABLE_KEYS: Record<string, string> =
+  Object.fromEntries(
+    Object.values(KEYCODE_KEY_MAPPINGS).map(([unshifted, shifted]) => [
+      unshifted,
+      shifted,
+    ]),
+  );
+
+export const PRINTABLE_KEY_TO_KEY_CODE: Record<string, number> = {
+  " ": 32,
+  ...Object.fromEntries(
+    Array.from({ length: 26 }, (_, index) => {
+      const keyCode = 65 + index;
+      const char = String.fromCharCode(keyCode + 32);
+      const upper = String.fromCharCode(keyCode);
+      return [
+        [char, keyCode],
+        [upper, keyCode],
+      ];
+    }).flat(),
+  ),
+  ...Object.fromEntries(
+    Object.entries(KEYCODE_KEY_MAPPINGS).flatMap(
+      ([keyCode, [unshifted, shifted]]) => [
+        [unshifted, Number(keyCode)],
+        [shifted, Number(keyCode)],
+      ],
+    ),
+  ),
+};
+
 export const TOKEN_TO_INPUT_KEY: Record<string, string> = {
   "{esc}": "Escape",
   "{tab}": "Tab",

@@ -8,6 +8,8 @@ import {
   type KeyboardLayoutName,
   type KeyboardModifiers,
   MODIFIER_TOKEN_TO_KEY,
+  PRINTABLE_KEY_TO_KEY_CODE,
+  SHIFTED_PRINTABLE_KEYS,
   SPECIAL_KEYS,
   TOKEN_TO_CTRL_CHAR,
   TOKEN_TO_INPUT_KEY,
@@ -69,20 +71,89 @@ function mergeModifiers(
   };
 }
 
+function resolvePrintableKey(key: string, shift: boolean): string {
+  if (!shift || key.length !== 1) {
+    return key;
+  }
+
+  if (SHIFTED_PRINTABLE_KEYS[key]) {
+    return SHIFTED_PRINTABLE_KEYS[key];
+  }
+
+  if (key >= "a" && key <= "z") {
+    return key.toUpperCase();
+  }
+
+  return key;
+}
+
+function getCtrlCharacter(key: string, keyCode?: number): string | undefined {
+  if (keyCode == null) {
+    return undefined;
+  }
+
+  if (keyCode >= 65 && keyCode <= 90) {
+    return String.fromCharCode(keyCode - 64);
+  }
+
+  if (keyCode === 32 || key === "@") {
+    return "\x00";
+  }
+
+  if (keyCode >= 51 && keyCode <= 55) {
+    return String.fromCharCode(keyCode - 24);
+  }
+
+  if (keyCode === 56) {
+    return "\x7f";
+  }
+
+  if (keyCode === 191) {
+    return "\x1f";
+  }
+
+  if (keyCode === 219) {
+    return "\x1b";
+  }
+
+  if (keyCode === 220) {
+    return "\x1c";
+  }
+
+  if (keyCode === 221) {
+    return "\x1d";
+  }
+
+  if (keyCode === 189 && key === "_") {
+    return "\x1f";
+  }
+
+  return undefined;
+}
+
 function translateKeyToSyntheticData(
   key: string,
   mods: KeyboardModifiers,
 ): string | undefined {
   if (key.length === 1) {
-    let ch = key;
+    const ch = resolvePrintableKey(key, mods.shift);
+    const keyCode =
+     
+      PRINTABLE_KEY_TO_KEY_CODE[key] ?? PRINTABLE_KEY_TO_KEY_CODE[ch];
+
     if (mods.ctrl) {
-      ch = String.fromCharCode(ch.charCodeAt(0) & 0x1f);
-    } else if (mods.shift) {
-      ch = ch.toUpperCase();
+      const ctrlChar = getCtrlCharacter(ch, keyCode);
+      if (ctrlChar == null) {
+        return undefined;
+      }
+
+      return mods.alt ? `\x1b${ctrlChar}` : ctrlChar;
     }
+
     if (mods.alt) {
-      ch = `\x1b${ch}`;
+      return `\x1b${ch}`;
     }
+
     return ch;
   }
 
@@ -103,11 +174,15 @@ function translateKeyToSyntheticData(
   if (SPECIAL_KEYS[key]) {
     let seq = SPECIAL_KEYS[key];
 
+    if (key === "Backspace") {
+      seq = mods.ctrl ? "\b" : seq;
+    }
+
     if (key === "Escape") {
       return mods.alt ? "\x1b\x1b" : seq;
     }
 
-    if (key === "Tab" && mods.shift && !mods.alt && !mods.ctrl) {
+    if (key === "Tab" && mods.shift) {
       return "\x1b[Z";
     }
 
