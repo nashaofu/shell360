@@ -1,7 +1,7 @@
 {
   "build": {
     "beforeDevCommand": "pnpm --filter mobile run dev",
-    "devUrl": "http://0.0.0.0:1420",
+    "devUrl": "http://0.0.0.0:1421",
     "beforeBuildCommand": "pnpm --filter mobile run build",
     "frontendDist": "../mobile/dist"
   }

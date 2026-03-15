@@ -4,16 +4,22 @@ import { useVirtualKeyboard } from "./useVirtualKeyboard";
 
 export type VirtualKeyboardProps = {
   sx?: SxProps<Theme>;
-  onKeydown: (event: KeyboardEvent) => void;
+  onInput: (data: string) => void;
+  applicationCursorKeysMode?: boolean;
 };
 
 /**
  * A mobile-friendly on-screen keyboard for terminal input.
  * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({ sx, onKeydown }: VirtualKeyboardProps) {
-  const { rows, checkKeyIsActive, onInput } = useVirtualKeyboard({
-    onKeydown,
+export function VirtualKeyboard({
+  sx,
+  onInput,
+  applicationCursorKeysMode,
+}: VirtualKeyboardProps) {
+  const { rows, checkKeyIsActive, onKeyClick } = useVirtualKeyboard({
+    onInput,
+    applicationCursorKeysMode,
   });
 
   return (
@@ -55,8 +61,8 @@ export function VirtualKeyboard({ sx, onKeydown }: VirtualKeyboardProps) {
             return (
               <Box
                 // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout keys are static
-                key={`${rowIndex}-${colIndex}`}
-                onClick={() => onInput(token)}
+                key={`${rowIndex}-${colIndex}-${token}`}
+                onClick={() => onKeyClick(token)}
                 sx={{
                   flex: `${grow} 1 0`,
                   minWidth: 0,
@@ -81,6 +87,9 @@ export function VirtualKeyboard({ sx, onKeydown }: VirtualKeyboardProps) {
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis",
                   touchAction: "manipulation",
+                  "&:active": {
+                    bgcolor: (theme) => theme.palette.action.hover,
+                  },
                 }}
               >
                 {token}
