@@ -6,12 +6,8 @@ import {
   type KeyboardLayoutName,
   type KeyboardLayoutToken,
   type KeyboardModifierToken,
+  TOKEN_TO_INPUT,
 } from "./constants";
-import {
-  KEY_TO_CODE,
-  KEY_TO_KEYCODE,
-  SPECIAL_KEY_TO_KEYCODE,
-} from "./keyboardEventConstants";
 
 function isModifierToken(token: string): token is KeyboardModifierToken {
   return KEYBOARD_MODIFIER_TOKENS.includes(token as KeyboardModifierToken);
@@ -23,194 +19,55 @@ function isLayoutToken(token: string): token is KeyboardLayoutToken {
 
 export type KeyboardModifiers = Partial<Record<KeyboardModifierToken, boolean>>;
 
-export interface UseVirtualKeyboardOptions {
-  onKeydown: (event: KeyboardEvent) => void;
-}
-
-interface VirtualKeyboardEventLike {
-  altKey: boolean;
-  ctrlKey: boolean;
-  shiftKey: boolean;
-  metaKey: boolean;
-  keyCode: number;
-  key: string;
-  type: string;
-  code: string;
-}
-
-function resolveKeyAndModifiers(
+/**
+ * Resolves a keyboard token + active modifiers into a terminal input string.
+ * Returns null if the token cannot be resolved.
+ */
+function resolveInput(
   token: string,
   modifiers: KeyboardModifiers,
-): Pick<
-  VirtualKeyboardEventLike,
-  "key" | "ctrlKey" | "altKey" | "shiftKey" | "metaKey"
-> {
-  const eventModifiers = {
-    ctrlKey: modifiers.Ctrl ?? false,
-    altKey: modifiers.Alt ?? false,
-    shiftKey: modifiers.Shift ?? false,
-    metaKey: false,
-  };
-
-  switch (token) {
-    case "Space":
-      return { ...eventModifiers, key: " " };
-    case "⌫":
-      return { ...eventModifiers, key: "Backspace" };
-    case "Enter":
-      return { ...eventModifiers, key: "Enter" };
-    case "Esc":
-      return { ...eventModifiers, key: "Escape" };
-    case "Tab":
-      return { ...eventModifiers, key: "Tab" };
-    case "Ins":
-      return { ...eventModifiers, key: "Insert" };
-    case "Del":
-      return { ...eventModifiers, key: "Delete" };
-    case "PgUp":
-      return { ...eventModifiers, key: "PageUp" };
-    case "PgDn":
-      return { ...eventModifiers, key: "PageDown" };
-    case "↑":
-      return { ...eventModifiers, key: "ArrowUp" };
-    case "↓":
-      return { ...eventModifiers, key: "ArrowDown" };
-    case "←":
-      return { ...eventModifiers, key: "ArrowLeft" };
-    case "→":
-      return { ...eventModifiers, key: "ArrowRight" };
-    default:
-      break;
+): string | null {
+  // Direct mapping (special keys, function keys, ctrl shortcuts, etc.)
+  const mapped = TOKEN_TO_INPUT[token];
+  if (mapped !== undefined) {
+    return mapped;
   }
 
-  if (token.startsWith("^") && token.length === 2) {
-    return {
-      ...eventModifiers,
-      ctrlKey: true,
-      key: token[1].toLowerCase(),
-    };
-  }
+  // Single printable character
+  if (token.length === 1) {
+    let char = token;
 
-  return {
-    ...eventModifiers,
-    key: token,
-  };
-}
-
-function resolveCodeAndKeyCode(
-  key: string,
-): Pick<VirtualKeyboardEventLike, "code" | "keyCode"> {
-  const functionMatch = /^F(\d{1,2})$/.exec(key);
-  if (functionMatch) {
-    const fn = Number(functionMatch[1]);
-    if (fn >= 1 && fn <= 12) {
-      return {
-        code: `F${fn}`,
-        keyCode: 111 + fn,
-      };
+    // Shift toggles letter case
+    if (modifiers.Shift) {
+      char =
+        char === char.toLowerCase() ? char.toUpperCase() : char.toLowerCase();
     }
+
+    // Ctrl+letter → control character (\x01..\x1a)
+    if (modifiers.Ctrl) {
+      const code = char.toUpperCase().charCodeAt(0);
+      if (code >= 0x41 && code <= 0x5a) {
+        const ctrlChar = String.fromCharCode(code - 0x40);
+        return modifiers.Alt ? `\x1b${ctrlChar}` : ctrlChar;
+      }
+    }
+
+    // Alt+key → ESC prefix
+    if (modifiers.Alt) {
+      return `\x1b${char}`;
+    }
+
+    return char;
   }
 
-  if (SPECIAL_KEY_TO_KEYCODE[key] != null) {
-    return {
-      code: KEY_TO_CODE[key] ?? key,
-      keyCode: SPECIAL_KEY_TO_KEYCODE[key],
-    };
-  }
-
-  if (key.length === 1 && key >= "a" && key <= "z") {
-    return {
-      code: `Key${key.toUpperCase()}`,
-      keyCode: key.toUpperCase().charCodeAt(0),
-    };
-  }
-
-  if (key.length === 1 && key >= "A" && key <= "Z") {
-    return {
-      code: `Key${key}`,
-      keyCode: key.charCodeAt(0),
-    };
-  }
-
-  if (key.length === 1 && key >= "0" && key <= "9") {
-    return {
-      code: `Digit${key}`,
-      keyCode: key.charCodeAt(0),
-    };
-  }
-
-  if (KEY_TO_KEYCODE[key] != null) {
-    return {
-      code: KEY_TO_CODE[key] ?? key,
-      keyCode: KEY_TO_KEYCODE[key],
-    };
-  }
-
-  return {
-    code: KEY_TO_CODE[key] ?? "",
-    keyCode: 0,
-  };
+  return null;
 }
 
-function buildKeyboardEventLike(
-  token: string,
-  modifiers: KeyboardModifiers,
-): VirtualKeyboardEventLike {
-  const { key, ctrlKey, altKey, shiftKey, metaKey } = resolveKeyAndModifiers(
-    token,
-    modifiers,
-  );
-  const { code, keyCode } = resolveCodeAndKeyCode(key);
-
-  return {
-    altKey,
-    ctrlKey,
-    shiftKey,
-    metaKey,
-    keyCode,
-    key,
-    type: "keydown",
-    code,
-  };
+export interface UseVirtualKeyboardOptions {
+  onInput: (data: string) => void;
 }
 
-function createKeydownEvent(
-  token: string,
-  modifiers: KeyboardModifiers,
-): KeyboardEvent {
-  const eventLike = buildKeyboardEventLike(token, modifiers);
-  const keyCode =
-    eventLike.keyCode ||
-    (eventLike.key === " " || eventLike.code === "Space" ? 32 : 0);
-  const charCode = eventLike.key.length === 1 ? eventLike.key.charCodeAt(0) : 0;
-  const event = new KeyboardEvent(eventLike.type, {
-    key: eventLike.key,
-    code: eventLike.code,
-    ctrlKey: eventLike.ctrlKey,
-    altKey: eventLike.altKey,
-    shiftKey: eventLike.shiftKey,
-    metaKey: eventLike.metaKey,
-    bubbles: true,
-    cancelable: true,
-  });
-
-  Object.defineProperty(event, "keyCode", {
-    configurable: true,
-    get: () => keyCode,
-  });
-  Object.defineProperty(event, "which", {
-    configurable: true,
-    get: () => keyCode,
-  });
-  Object.defineProperty(event, "charCode", {
-    configurable: true,
-    get: () => charCode,
-  });
-
-  return event;
-}
-
-export function useVirtualKeyboard({ onKeydown }: UseVirtualKeyboardOptions) {
+export function useVirtualKeyboard({ onInput }: UseVirtualKeyboardOptions) {
   const [modifiers, setModifiers] = useState<KeyboardModifiers>({});
   const [layout, setLayout] = useState<KeyboardLayoutName>("Lowercase");
 
@@ -226,7 +83,7 @@ export function useVirtualKeyboard({ onKeydown }: UseVirtualKeyboardOptions) {
         if (token === "Caps") {
           return layout === "Uppercase";
         }
-        if (token === "⌘") {
+        if (token === "Fn") {
           return layout === "Fn";
         }
         if (token === "...") {
@@ -238,7 +95,7 @@ export function useVirtualKeyboard({ onKeydown }: UseVirtualKeyboardOptions) {
     [modifiers, layout],
   );
 
-  const onInput = useCallback(
+  const onKeyClick = useCallback(
     (token: string) => {
       if (isModifierToken(token)) {
         setModifiers((prev) => ({ ...prev, [token]: !prev[token] }));
@@ -252,7 +109,7 @@ export function useVirtualKeyboard({ onKeydown }: UseVirtualKeyboardOptions) {
           );
           return;
         }
-        if (token === "⌘") {
+        if (token === "Fn") {
           setLayout((prev) => (prev === "Fn" ? "Lowercase" : "Fn"));
           return;
         }
@@ -262,15 +119,17 @@ export function useVirtualKeyboard({ onKeydown }: UseVirtualKeyboardOptions) {
         }
       }
 
-      const event = createKeydownEvent(token, modifiers);
-      onKeydown(event);
+      const data = resolveInput(token, modifiers);
+      if (data !== null) {
+        onInput(data);
+      }
     },
-    [modifiers, onKeydown],
+    [modifiers, onInput],
   );
 
   return {
     rows,
     checkKeyIsActive,
-    onInput,
+    onKeyClick,
   };
 }

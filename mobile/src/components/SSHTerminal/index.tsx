@@ -1,6 +1,6 @@
 import { Box, Icon, type SxProps, type Theme } from "@mui/material";
 import { useSize } from "ahooks";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -50,45 +50,20 @@ export default function SSHTerminal({
   const hasBlockingState = loading || Boolean(error);
   const showLoadingMask = !terminal || hasBlockingState;
   const showFooter = !hasBlockingState && Boolean(session);
-  const onVirtualKeyboardKeydown = (event: KeyboardEvent) => {
+
+  useEffect(() => {
     const textarea = terminal?.textarea;
     if (!textarea) {
       return;
     }
+    if (showVirtualKeyboard) {
+      textarea.readOnly = true;
+    }
 
-    const keyboardEvent = new KeyboardEvent("keydown", {
-      key: event.key,
-      code: event.code,
-      ctrlKey: event.ctrlKey,
-      altKey: event.altKey,
-      shiftKey: event.shiftKey,
-      metaKey: event.metaKey,
-      repeat: event.repeat,
-      bubbles: true,
-      cancelable: true,
-    });
-
-    const keyCode =
-      event.keyCode ||
-      event.which ||
-      (event.key === " " || event.code === "Space" ? 32 : 0);
-    const charCode = event.key.length === 1 ? event.key.charCodeAt(0) : 0;
-
-    Object.defineProperty(keyboardEvent, "keyCode", {
-      configurable: true,
-      get: () => keyCode,
-    });
-    Object.defineProperty(keyboardEvent, "which", {
-      configurable: true,
-      get: () => keyCode,
-    });
-    Object.defineProperty(keyboardEvent, "charCode", {
-      configurable: true,
-      get: () => charCode,
-    });
-
-    textarea.dispatchEvent(keyboardEvent);
-  };
+    return () => {
+      textarea.readOnly = false;
+    };
+  }, [showVirtualKeyboard, terminal]);
 
   return (
     <Box
@@ -219,7 +194,7 @@ export default function SSHTerminal({
           </Box>
 
           {showVirtualKeyboard && (
-            <VirtualKeyboard onKeydown={onVirtualKeyboardKeydown} />
+            <VirtualKeyboard onInput={(data) => terminal?.input(data, true)} />
           )}
         </Box>
       )}
