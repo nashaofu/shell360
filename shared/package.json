@@ -15,7 +15,8 @@
     "postinstall": "pnpm run build && npm run tsc",
     "dev": "rslib build --watch",
     "build": "rslib build",
-    "tsc": "tsc -b"
+    "tsc": "tsc -b",
+    "test": "rstest"
   },
   "dependencies": {
     "@mui/material": "^7.3.5",
@@ -45,6 +46,7 @@
     "@rslib/core": "^0.18.0",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^19.2.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@rstest/core": "latest"
   }
 }

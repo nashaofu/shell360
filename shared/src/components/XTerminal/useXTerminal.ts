@@ -147,15 +147,11 @@ export function useXTerminal({
     const unListenData = terminal.onData(onDataFn);
     const unListenBinary = terminal.onBinary(onBinaryFn);
     const unListenResize = terminal.onResize(onResizeFn);
-    const unListenKey = terminal.onKey(({ key, domEvent }) => {
-      console.log("terminal onKey", JSON.stringify(key), domEvent);
-    });
-
+    console.log("terminal listeners registered", terminal);
     return () => {
       unListenData.dispose();
       unListenBinary.dispose();
       unListenResize.dispose();
-      unListenKey.dispose();
     };
   }, [onDataFn, onBinaryFn, onResizeFn]);
 

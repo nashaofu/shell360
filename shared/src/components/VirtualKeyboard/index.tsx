@@ -5,15 +5,21 @@ import { useVirtualKeyboard } from "./useVirtualKeyboard";
 export type VirtualKeyboardProps = {
   sx?: SxProps<Theme>;
   onInput: (data: string) => void;
+  applicationCursorKeysMode?: boolean;
 };
 
 /**
  * A mobile-friendly on-screen keyboard for terminal input.
  * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({ sx, onInput }: VirtualKeyboardProps) {
+export function VirtualKeyboard({
+  sx,
+  onInput,
+  applicationCursorKeysMode,
+}: VirtualKeyboardProps) {
   const { rows, checkKeyIsActive, onKeyClick } = useVirtualKeyboard({
     onInput,
+    applicationCursorKeysMode,
   });
 
   return (

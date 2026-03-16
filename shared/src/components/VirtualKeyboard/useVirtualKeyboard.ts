@@ -6,8 +6,10 @@ import {
   type KeyboardLayoutName,
   type KeyboardLayoutToken,
   type KeyboardModifierToken,
-  TOKEN_TO_INPUT,
 } from "./constants";
+import { type KeyboardModifiers, resolveInput } from "./resolveInput";
+
+export type { KeyboardModifiers } from "./resolveInput";
 
 function isModifierToken(token: string): token is KeyboardModifierToken {
   return KEYBOARD_MODIFIER_TOKENS.includes(token as KeyboardModifierToken);
@@ -17,57 +19,15 @@ function isLayoutToken(token: string): token is KeyboardLayoutToken {
   return KEYBOARD_LAYOUT_TOKENS.includes(token as KeyboardLayoutToken);
 }
 
-export type KeyboardModifiers = Partial<Record<KeyboardModifierToken, boolean>>;
-
-/**
- * Resolves a keyboard token + active modifiers into a terminal input string.
- * Returns null if the token cannot be resolved.
- */
-function resolveInput(
-  token: string,
-  modifiers: KeyboardModifiers,
-): string | null {
-  // Direct mapping (special keys, function keys, ctrl shortcuts, etc.)
-  const mapped = TOKEN_TO_INPUT[token];
-  if (mapped !== undefined) {
-    return mapped;
-  }
-
-  // Single printable character
-  if (token.length === 1) {
-    let char = token;
-
-    // Shift toggles letter case
-    if (modifiers.Shift) {
-      char =
-        char === char.toLowerCase() ? char.toUpperCase() : char.toLowerCase();
-    }
-
-    // Ctrl+letter → control character (\x01..\x1a)
-    if (modifiers.Ctrl) {
-      const code = char.toUpperCase().charCodeAt(0);
-      if (code >= 0x41 && code <= 0x5a) {
-        const ctrlChar = String.fromCharCode(code - 0x40);
-        return modifiers.Alt ? `\x1b${ctrlChar}` : ctrlChar;
-      }
-    }
-
-    // Alt+key → ESC prefix
-    if (modifiers.Alt) {
-      return `\x1b${char}`;
-    }
-
-    return char;
-  }
-
-  return null;
-}
-
 export interface UseVirtualKeyboardOptions {
   onInput: (data: string) => void;
+  applicationCursorKeysMode?: boolean;
 }
 
-export function useVirtualKeyboard({ onInput }: UseVirtualKeyboardOptions) {
+export function useVirtualKeyboard({
+  onInput,
+  applicationCursorKeysMode = false,
+}: UseVirtualKeyboardOptions) {
   const [modifiers, setModifiers] = useState<KeyboardModifiers>({});
   const [layout, setLayout] = useState<KeyboardLayoutName>("Lowercase");
 
@@ -87,7 +47,7 @@ export function useVirtualKeyboard({ onInput }: UseVirtualKeyboardOptions) {
           return layout === "Fn";
         }
         if (token === "...") {
-          return layout === "Symbols";
+          return layout === "Shortcuts";
         }
       }
       return false;
@@ -114,17 +74,19 @@ export function useVirtualKeyboard({ onInput }: UseVirtualKeyboardOptions) {
           return;
         }
         if (token === "...") {
-          setLayout((prev) => (prev === "Symbols" ? "Lowercase" : "Symbols"));
+          setLayout((prev) =>
+            prev === "Shortcuts" ? "Lowercase" : "Shortcuts",
+          );
           return;
         }
       }
 
-      const data = resolveInput(token, modifiers);
+      const data = resolveInput(token, modifiers, applicationCursorKeysMode);
       if (data !== null) {
         onInput(data);
       }
     },
-    [modifiers, onInput],
+    [modifiers, onInput, applicationCursorKeysMode],
   );
 
   return {

@@ -1,4 +1,36 @@
-export type KeyboardLayoutName = "Lowercase" | "Uppercase" | "Fn" | "Symbols";
+/**
+ * reg + shift key mappings for digits and special chars
+ * @see https://github.com/xtermjs/xterm.js/blob/master/src/common/input/Keyboard.ts
+ */
+export const KEYCODE_KEY_MAPPINGS: { [key: number]: [string, string] } = {
+  // digits 0-9
+  48: ["0", ")"],
+  49: ["1", "!"],
+  50: ["2", "@"],
+  51: ["3", "#"],
+  52: ["4", "$"],
+  53: ["5", "%"],
+  54: ["6", "^"],
+  55: ["7", "&"],
+  56: ["8", "*"],
+  57: ["9", "("],
+  // special chars
+  186: [";", ":"],
+  187: ["=", "+"],
+  188: [",", "<"],
+  189: ["-", "_"],
+  190: [".", ">"],
+  191: ["/", "?"],
+  192: ["`", "~"],
+  219: ["[", "{"],
+  220: ["\\", "|"],
+  221: ["]", "}"],
+  222: ["'", '"'],
+};
+
+// ─── Virtual keyboard UI constants ───────────────────────────
+
+export type KeyboardLayoutName = "Lowercase" | "Uppercase" | "Fn" | "Shortcuts";
 
 export const KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[][]> = {
   Lowercase: [
@@ -22,16 +54,16 @@ export const KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[][]> = {
     ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"],
     ["F11", "F12", "Ins", "Del", "Home", "End"],
     ["PgUp", "PgDn", "←", "↑", "→", "↓"],
-    [";", "=", ",", "-", "."],
-    ["/", "`", "[", "\\", "]", "'"],
+    ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"],
+    ["`", "~", "-", "_", "=", "+"],
+    ["[", "{", "]", "}", "\\", "|"],
+    [";", ":", "'", '"', ",", "<", ".", ">", "/", "?"],
     ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  Symbols: [
+  Shortcuts: [
     ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
     ["^W", "^R", "^A", "^E", "^C", "^L"],
     ["^S", "^Z", "^X", "^D", "^N", "^P"],
-    // ["`", "~", "-", "=", "_", "|", "[", "]", "\\"],
-    // [";", "'", ",", ".", "/", '"', "<", ">"],
     ["Fn", "...", "Space", "⌫", "Enter"],
   ],
 };
@@ -67,41 +99,10 @@ export const KEYBOARD_LAYOUT_TOKENS: Array<KeyboardLayoutToken> = [
 ];
 
 /**
- * Maps keyboard tokens to terminal input sequences (ANSI escape codes).
- * Single printable characters are handled directly in useVirtualKeyboard.
+ * Fixed input sequences for Ctrl shortcut tokens on the Shortcuts layout.
+ * These tokens already encode Ctrl semantics, so modifier toggles don't apply.
  */
-export const TOKEN_TO_INPUT: Record<string, string> = {
-  // Editing keys
-  "⌫": "\x7f",
-  Tab: "\t",
-  Enter: "\r",
-  Esc: "\x1b",
-  Space: " ",
-  Ins: "\x1b[2~",
-  Del: "\x1b[3~",
-  // Navigation
-  Home: "\x1b[H",
-  End: "\x1b[F",
-  PgUp: "\x1b[5~",
-  PgDn: "\x1b[6~",
-  "←": "\x1b[D",
-  "↑": "\x1b[A",
-  "→": "\x1b[C",
-  "↓": "\x1b[B",
-  // Function keys
-  F1: "\x1bOP",
-  F2: "\x1bOQ",
-  F3: "\x1bOR",
-  F4: "\x1bOS",
-  F5: "\x1b[15~",
-  F6: "\x1b[17~",
-  F7: "\x1b[18~",
-  F8: "\x1b[19~",
-  F9: "\x1b[20~",
-  F10: "\x1b[21~",
-  F11: "\x1b[23~",
-  F12: "\x1b[24~",
-  // Ctrl shortcuts (Ctrl+letter = letter_code - 0x40)
+export const CTRL_SHORTCUT_TO_INPUT: Record<string, string> = {
   "^A": "\x01",
   "^C": "\x03",
   "^D": "\x04",
