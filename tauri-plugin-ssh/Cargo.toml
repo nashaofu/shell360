@@ -1,31 +1,55 @@
 [package]
 name = "tauri-plugin-ssh"
 version = "0.0.0"
-authors = ["You"]
+authors = [ "You" ]
 description = "Tauri plugin for SSH"
 edition = "2024"
-exclude = ["/webview-dist", "/webview-src", "/node_modules"]
+exclude = [ "/webview-dist", "/webview-src", "/node_modules" ]
 links = "tauri-plugin-ssh"
 
 [dependencies]
-tauri = { workspace = true, features = [] }
-log.workspace = true
-serde.workspace = true
-thiserror.workspace = true
-russh = { version = "0.56.0", default-features = false, features = [
-  "flate2",
-  "ring",
-  "rsa",
-] }
-uuid = { version = "1.18.1", features = ["serde", "v4"] }
 async-trait = "0.1.89"
-tokio = { version = "1.48.0", features = ["full"] }
-serde_json.workspace = true
-strum = { version = "0.27.2", features = ["derive"] }
 russh-sftp = "2.1.1"
 rusocks = "0.0.7"
 percent-encoding = "2.3.2"
-tauri-plugin-fs.workspace = true
 
-[build-dependencies]
-tauri-plugin = { workspace = true, features = ["build"] }
+[dependencies.tauri]
+workspace = true
+features = []
+
+[dependencies.log]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.russh]
+version = "0.58.0"
+default-features = false
+features = [ "flate2", "ring", "rsa" ]
+
+[dependencies.uuid]
+version = "1.22.0"
+features = [ "serde", "v4" ]
+
+[dependencies.tokio]
+version = "1.50.0"
+features = [ "full" ]
+
+[dependencies.serde_json]
+workspace = true
+
+[dependencies.strum]
+version = "0.28.0"
+features = [ "derive" ]
+
+[dependencies.tauri-plugin-fs]
+workspace = true
+
+[build-dependencies.tauri-plugin]
+workspace = true
+features = [ "build" ]
+

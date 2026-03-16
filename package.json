@@ -9,16 +9,18 @@
     "dotenvx": "dotenvx run --",
     "check": "biome check .",
     "check:fix": "biome check . --write",
+    "deps": "node ./scripts/updateCargoDependencies.js && node ./scripts/updatePackageDependencies.js",
     "tsc": "pnpm --filter \"*\" run tsc",
     "build": "pnpm --filter \"*\" run build"
   },
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.4.7",
-    "@dotenvx/dotenvx": "^1.51.1",
+    "@biomejs/biome": "^2.4.8",
+    "@dotenvx/dotenvx": "^1.57.1",
     "@tauri-apps/cli": "^2.10.1",
     "glob": "^13.0.6",
     "got": "^14.6.6",
+    "smol-toml": "^1.6.0",
     "typescript": "^5.9.3"
   }
 }

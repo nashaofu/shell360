@@ -2,48 +2,74 @@
 name = "shell360"
 version = "0.0.0"
 description = "A cross-platform SSH and SFTP client."
-authors = ["nashaofu"]
+authors = [ "nashaofu" ]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 name = "shell360_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = [ "staticlib", "cdylib", "rlib" ]
 
-[build-dependencies]
-tauri-build = { workspace = true, features = [] }
+[build-dependencies.tauri-build]
+workspace = true
+features = []
 
 [dependencies]
-tauri = { workspace = true, features = [] }
-tauri-plugin-store.workspace = true
-tauri-plugin-process.workspace = true
-tauri-plugin-dialog.workspace = true
-tauri-plugin-fs.workspace = true
-tauri-plugin-log.workspace = true
-tauri-plugin-machine-uid.workspace = true
-tauri-plugin-clipboard-manager.workspace = true
-tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
-tauri-plugin-data = { path = "../tauri-plugin-data" }
-serde = { workspace = true, features = ["derive"] }
-serde_json.workspace = true
-log.workspace = true
-thiserror.workspace = true
-rand = "0.8.5"
-ssh-key = { version = "0.6.7", features = [
-  "ed25519",
-  "rsa",
-  "encryption",
-  "p256",
-  "p384",
-  "p521",
-] }
-webbrowser = "1.0.6"
+rand = "~0.9"
+webbrowser = "1.2.0"
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = { version = "2.9.0", default-features = false, features = [
-  "native-tls-vendored",
-] }
+[dependencies.tauri]
+workspace = true
+features = []
 
-[target.'cfg(any(target_os = "ios", target_os="android"))'.dependencies]
-tauri-plugin-mobile = { path = "../tauri-plugin-mobile" }
+[dependencies.tauri-plugin-store]
+workspace = true
+
+[dependencies.tauri-plugin-process]
+workspace = true
+
+[dependencies.tauri-plugin-dialog]
+workspace = true
+
+[dependencies.tauri-plugin-fs]
+workspace = true
+
+[dependencies.tauri-plugin-log]
+workspace = true
+
+[dependencies.tauri-plugin-machine-uid]
+workspace = true
+
+[dependencies.tauri-plugin-clipboard-manager]
+workspace = true
+
+[dependencies.tauri-plugin-ssh]
+path = "../tauri-plugin-ssh"
+
+[dependencies.tauri-plugin-data]
+path = "../tauri-plugin-data"
+
+[dependencies.serde]
+workspace = true
+features = [ "derive" ]
+
+[dependencies.serde_json]
+workspace = true
+
+[dependencies.log]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.ssh-key]
+version = "0.6.7"
+features = [ "ed25519", "rsa", "encryption", "p256", "p384", "p521" ]
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies.tauri-plugin-updater]
+version = "2.9.0"
+default-features = false
+features = [ "native-tls-vendored" ]
+
+[target."cfg(any(target_os = \"ios\", target_os=\"android\"))".dependencies.tauri-plugin-mobile]
+path = "../tauri-plugin-mobile"
+

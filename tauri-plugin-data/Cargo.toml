@@ -1,34 +1,55 @@
 [package]
 name = "tauri-plugin-data"
 version = "0.1.0"
-authors = ["You"]
+authors = [ "You" ]
 description = "Tauri plugin for data"
 edition = "2024"
-exclude = ["/dist-js", "/guest-js", "/node_modules"]
+exclude = [ "/dist-js", "/guest-js", "/node_modules" ]
 links = "tauri-plugin-data"
 
 [dependencies]
-tauri = { workspace = true }
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-sea-orm = { version = "1.1.19", features = [
-  "runtime-tokio-rustls",
-  "sqlx-sqlite",
-] }
-sea-orm-migration = { version = "1.1.19", features = [
-  "runtime-tokio-rustls",
-  "sqlx-sqlite",
-] }
-tokio = { version = "1.48.0", features = ["fs"] }
-strum = { version = "0.27.2", features = ["derive"] }
-serde_with = "3.16.0"
+serde_with = "3.18.0"
 defendor = "0.0.6"
 zeroize = "1.8.2"
-futures = "0.3.31"
-tauri-plugin-store.workspace = true
+futures = "0.3.32"
 secrecy = "0.10.3"
-base64ct = { version = "1.6.0", features = ["std"] }
 
-[build-dependencies]
-tauri-plugin = { workspace = true, features = ["build"] }
+[dependencies.tauri]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.serde_json]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.sea-orm]
+version = "1.1.19"
+features = [ "runtime-tokio-rustls", "sqlx-sqlite" ]
+
+[dependencies.sea-orm-migration]
+version = "1.1.19"
+features = [ "runtime-tokio-rustls", "sqlx-sqlite" ]
+
+[dependencies.tokio]
+version = "1.50.0"
+features = [ "fs" ]
+
+[dependencies.strum]
+version = "0.28.0"
+features = [ "derive" ]
+
+[dependencies.tauri-plugin-store]
+workspace = true
+
+[dependencies.base64ct]
+version = "~1.6"
+features = [ "std" ]
+
+[build-dependencies.tauri-plugin]
+workspace = true
+features = [ "build" ]
+
