@@ -1,200 +1,118 @@
-export interface KeyboardModifiers {
-  ctrl: boolean;
-  alt: boolean;
-  shift: boolean;
-}
-
-export type ModifierKey = keyof KeyboardModifiers;
-export type KeyboardLayoutName = "lowercase" | "uppercase" | "fn" | "more";
-
-export const DEFAULT_KEYBOARD_MODIFIERS: KeyboardModifiers = {
-  ctrl: false,
-  alt: false,
-  shift: false,
+/**
+ * reg + shift key mappings for digits and special chars
+ * Keep this in VirtualKeyboard layer to avoid modifying xterm upstream-copied files.
+ */
+export const KEYCODE_KEY_MAPPINGS: { [key: number]: [string, string] } = {
+  // digits 0-9
+  48: ["0", ")"],
+  49: ["1", "!"],
+  50: ["2", "@"],
+  51: ["3", "#"],
+  52: ["4", "$"],
+  53: ["5", "%"],
+  54: ["6", "^"],
+  55: ["7", "&"],
+  56: ["8", "*"],
+  57: ["9", "("],
+  // special chars
+  186: [";", ":"],
+  187: ["=", "+"],
+  188: [",", "<"],
+  189: ["-", "_"],
+  190: [".", ">"],
+  191: ["/", "?"],
+  192: ["`", "~"],
+  219: ["[", "{"],
+  220: ["\\", "|"],
+  221: ["]", "}"],
+  222: ["'", '"'],
 };
 
-export const VIRTUAL_KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[]> = {
-  lowercase: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "1 2 3 4 5 6 7 8 9 0",
-    "q w e r t y u i o p",
-    "a s d f g h j k l",
-    "{caps} z x c v b n m",
-    "{fn} {more} {space} {backspace} {enter}",
+// ─── Virtual keyboard UI constants ───────────────────────────
+
+export type KeyboardLayoutName = "Lowercase" | "Uppercase" | "Fn" | "Shortcuts";
+
+export const KEYBOARD_LAYOUT: Record<KeyboardLayoutName, string[][]> = {
+  Lowercase: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+    ["Caps", "z", "x", "c", "v", "b", "n", "m"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  uppercase: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "1 2 3 4 5 6 7 8 9 0",
-    "Q W E R T Y U I O P",
-    "A S D F G H J K L",
-    "{caps} Z X C V B N M",
-    "{fn} {more} {space} {backspace} {enter}",
+  Uppercase: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["Caps", "Z", "X", "C", "V", "B", "N", "M"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  fn: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "{f1} {f2} {f3} {f4} {f5} {f6} {f7} {f8} {f9} {f10}",
-    "{f11} {f12} {insert} {delete} {home} {end}",
-    "{pageup} {pagedown} {arrowup} {arrowdown} {arrowleft} {arrowright}",
-    "{fn} {more} {space} {backspace} {enter}",
+  Fn: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"],
+    ["F11", "F12", "Ins", "Del", "Home", "End"],
+    ["PgUp", "PgDn", "←", "↑", "→", "↓"],
+    ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"],
+    ["`", "~", "-", "_", "=", "+"],
+    ["[", "{", "]", "}", "\\", "|"],
+    [";", ":", "'", '"', ",", "<", ".", ">", "/", "?"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
-  more: [
-    "{ctrl} {shift} {alt} {esc} {tab}",
-    "{ctrl+w} {ctrl+r} {ctrl+a} {ctrl+e} {ctrl+c} {ctrl+l}",
-    "{ctrl+s} {ctrl+z} {ctrl+x} {ctrl+d} {ctrl+n} {ctrl+p}",
-    "` ~ - = _ | [ ] \\",
-    "; ' , . / \" < >",
-    "{fn} {more} {space} {backspace} {enter}",
+  Shortcuts: [
+    ["Ctrl", "Shift", "Alt", "Esc", "Tab"],
+    ["^W", "^R", "^A", "^E", "^C", "^L"],
+    ["^S", "^Z", "^X", "^D", "^N", "^P"],
+    ["Fn", "...", "Space", "⌫", "Enter"],
   ],
 };
 
-export const VIRTUAL_KEYBOARD_LABELS: Record<string, string> = {
-  "{ctrl}": "Ctrl",
-  "{shift}": "Shift",
-  "{alt}": "Alt",
-  "{esc}": "Esc",
-  "{tab}": "Tab",
-  "{backspace}": "⌫",
-  "{enter}": "Enter",
-  "{caps}": "Caps",
-  "{fn}": "⌘",
-  "{space}": "Space",
-  "{more}": "...",
-  "{f1}": "F1",
-  "{f2}": "F2",
-  "{f3}": "F3",
-  "{f4}": "F4",
-  "{f5}": "F5",
-  "{f6}": "F6",
-  "{f7}": "F7",
-  "{f8}": "F8",
-  "{f9}": "F9",
-  "{f10}": "F10",
-  "{f11}": "F11",
-  "{f12}": "F12",
-  "{insert}": "Ins",
-  "{delete}": "Del",
-  "{home}": "Home",
-  "{end}": "End",
-  "{pageup}": "PgUp",
-  "{pagedown}": "PgDn",
-  "{arrowup}": "↑",
-  "{arrowdown}": "↓",
-  "{arrowleft}": "←",
-  "{arrowright}": "→",
-  "{ctrl+w}": "^W",
-  "{ctrl+r}": "^R",
-  "{ctrl+a}": "^A",
-  "{ctrl+e}": "^E",
-  "{ctrl+c}": "^C",
-  "{ctrl+l}": "^L",
-  "{ctrl+s}": "^S",
-  "{ctrl+z}": "^Z",
-  "{ctrl+x}": "^X",
-  "{ctrl+d}": "^D",
-  "{ctrl+n}": "^N",
-  "{ctrl+p}": "^P",
+export const KEYBOARD_KEY_WIDTH: Record<string, number> = {
+  Ctrl: 1.2,
+  Shift: 1.2,
+  Alt: 1.2,
+  Esc: 1.2,
+  Tab: 1.2,
+  Caps: 1.2,
+  Fn: 1.1,
+  "...": 1.1,
+  Space: 2.8,
+  "⌫": 1.8,
+  Enter: 1.8,
 };
 
-export const VIRTUAL_KEYBOARD_KEY_WIDTH: Record<string, number> = {
-  "{ctrl}": 1.2,
-  "{shift}": 1.2,
-  "{alt}": 1.2,
-  "{esc}": 1.2,
-  "{tab}": 1.2,
-  "{caps}": 1.2,
-  "{fn}": 1.1,
-  "{more}": 1.1,
-  "{space}": 2.8,
-  "{backspace}": 1.8,
-  "{enter}": 1.8,
+export type KeyboardModifierToken = "Ctrl" | "Alt" | "Shift";
+
+export const KEYBOARD_MODIFIER_TOKENS: Array<KeyboardModifierToken> = [
+  "Ctrl",
+  "Shift",
+  "Alt",
+];
+
+export type KeyboardLayoutToken = "Caps" | "Fn" | "...";
+
+export const KEYBOARD_LAYOUT_TOKENS: Array<KeyboardLayoutToken> = [
+  "Caps",
+  "Fn",
+  "...",
+];
+
+/**
+ * Fixed input sequences for Ctrl shortcut tokens on the Shortcuts layout.
+ * These tokens already encode Ctrl semantics, so modifier toggles don't apply.
+ */
+export const CTRL_SHORTCUT_TO_INPUT: Record<string, string> = {
+  "^A": "\x01",
+  "^C": "\x03",
+  "^D": "\x04",
+  "^E": "\x05",
+  "^L": "\x0c",
+  "^N": "\x0e",
+  "^P": "\x10",
+  "^R": "\x12",
+  "^S": "\x13",
+  "^W": "\x17",
+  "^X": "\x18",
+  "^Z": "\x1a",
 };
-
-export const KEYBOARD_BG = "#d6d6d6";
-export const KEY_BG = "#ececec";
-export const KEY_ACTIVE_BG = "#c8d7ef";
-
-export const TOKEN_TO_INPUT_KEY: Record<string, string> = {
-  "{esc}": "Escape",
-  "{tab}": "Tab",
-  "{backspace}": "Backspace",
-  "{enter}": "Enter",
-  "{space}": " ",
-  "{insert}": "Insert",
-  "{delete}": "Delete",
-  "{home}": "Home",
-  "{end}": "End",
-  "{pageup}": "PageUp",
-  "{pagedown}": "PageDown",
-  "{arrowup}": "ArrowUp",
-  "{arrowdown}": "ArrowDown",
-  "{arrowleft}": "ArrowLeft",
-  "{arrowright}": "ArrowRight",
-};
-
-export const TOKEN_TO_CTRL_CHAR: Record<string, string> = {
-  "{ctrl+w}": "w",
-  "{ctrl+r}": "r",
-  "{ctrl+a}": "a",
-  "{ctrl+e}": "e",
-  "{ctrl+c}": "c",
-  "{ctrl+l}": "l",
-  "{ctrl+s}": "s",
-  "{ctrl+z}": "z",
-  "{ctrl+x}": "x",
-  "{ctrl+d}": "d",
-  "{ctrl+n}": "n",
-  "{ctrl+p}": "p",
-};
-
-export const MODIFIER_TOKEN_TO_KEY: Record<string, ModifierKey> = {
-  "{ctrl}": "ctrl",
-  "{shift}": "shift",
-  "{alt}": "alt",
-};
-
-export const ARROW_KEY_SUFFIX: Record<string, string> = {
-  ArrowUp: "A",
-  ArrowDown: "B",
-  ArrowRight: "C",
-  ArrowLeft: "D",
-};
-
-export const SPECIAL_KEYS: Record<string, string> = {
-  Enter: "\r",
-  Backspace: "\x7f",
-  Tab: "\t",
-  Escape: "\x1b",
-  Home: "\x1b[H",
-  End: "\x1b[F",
-  PageUp: "\x1b[5~",
-  PageDown: "\x1b[6~",
-  Insert: "\x1b[2~",
-  Delete: "\x1b[3~",
-};
-
-export const FUNCTION_KEY_TO_ESCAPE_SEQUENCE: Record<string, string> = {
-  F1: "\x1bOP",
-  F2: "\x1bOQ",
-  F3: "\x1bOR",
-  F4: "\x1bOS",
-  F5: "\x1b[15~",
-  F6: "\x1b[17~",
-  F7: "\x1b[18~",
-  F8: "\x1b[19~",
-  F9: "\x1b[20~",
-  F10: "\x1b[21~",
-  F11: "\x1b[23~",
-  F12: "\x1b[24~",
-};
-
-export const CSI_SPECIAL_WITH_MODIFIERS: Record<string, (m: number) => string> =
-  {
-    Home: (m) => `\x1b[1;${m}H`,
-    End: (m) => `\x1b[1;${m}F`,
-    PageUp: (m) => `\x1b[5;${m}~`,
-    PageDown: (m) => `\x1b[6;${m}~`,
-    Insert: (m) => `\x1b[2;${m}~`,
-    Delete: (m) => `\x1b[3;${m}~`,
-  };
-
-export const FUNCTION_KEY_REGEX = /^\{f(\d{1,2})\}$/;

@@ -68,7 +68,7 @@ export default function Content() {
         </Box>
       </Box>
       <Sidebar />
-      {import.meta.env.TAURI_PLATFORM === "ios" && <Subscription />}
+      {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <Subscription />}
     </>
   );
 }

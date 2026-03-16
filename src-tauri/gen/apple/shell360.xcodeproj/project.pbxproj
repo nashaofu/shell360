@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,8 +13,8 @@
 		43BD242FC6126F2000B26ADC /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE0D6EDC50A9DA9A28BA674B /* Security.framework */; };
 		488799B20D1D80284DA059F6 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93350E01B99C25DF894C5362 /* MetalKit.framework */; };
 		4C9C495692569CBBAE48FB41 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B53039B752412B16AAFD17B7 /* LaunchScreen.storyboard */; };
-		5BD4993A2E7E905C002C6B3A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD499392E7E905C002C6B3A /* RevenueCat */; };
-		5BD4993C2E7E905C002C6B3A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5BD4993B2E7E905C002C6B3A /* RevenueCatUI */; };
+		5B5AB2EF2F63176600139C60 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 5B5AB2EE2F63176600139C60 /* RevenueCat */; };
+		5B5AB2F12F63176600139C60 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5B5AB2F02F63176600139C60 /* RevenueCatUI */; };
 		88C83CEC25DE1D08447F6277 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 49E4F96802FA2088C06DA4AF /* main.mm */; };
 		978475ED2DCC362A95079984 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB90134B235620029D81F398 /* CoreGraphics.framework */; };
 		A992858B70B3AED4D3B87D7B /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 656A16A312B355C684A4C713 /* assets */; };
@@ -24,7 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0450B71B37C0A447129B2428 /* shell360_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = shell360_iOS.app; path = Shell360.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0450B71B37C0A447129B2428 /* Shell360.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shell360.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		05414DBCE394BCAC74C654BB /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		159A61A710A9C84ED00AAF84 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		27A56A3FE7BCF53CD56E46C9 /* command.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = command.rs; sourceTree = "<group>"; };
@@ -56,10 +56,10 @@
 				415F845321CA7E90169BCD57 /* Metal.framework in Frameworks */,
 				488799B20D1D80284DA059F6 /* MetalKit.framework in Frameworks */,
 				E5B7DA99CD93A85F8366F963 /* QuartzCore.framework in Frameworks */,
-				5BD4993A2E7E905C002C6B3A /* RevenueCat in Frameworks */,
+				5B5AB2EF2F63176600139C60 /* RevenueCat in Frameworks */,
 				43BD242FC6126F2000B26ADC /* Security.framework in Frameworks */,
 				3EFF3CD16CF9455CDC905E45 /* UIKit.framework in Frameworks */,
-				5BD4993C2E7E905C002C6B3A /* RevenueCatUI in Frameworks */,
+				5B5AB2F12F63176600139C60 /* RevenueCatUI in Frameworks */,
 				3A1599CD8516F876B9C4686D /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -153,7 +153,7 @@
 		FADF6A2AE07BF80ADCB97609 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0450B71B37C0A447129B2428 /* shell360_iOS.app */,
+				0450B71B37C0A447129B2428 /* Shell360.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -176,11 +176,11 @@
 			);
 			name = shell360_iOS;
 			packageProductDependencies = (
-				5BD499392E7E905C002C6B3A /* RevenueCat */,
-				5BD4993B2E7E905C002C6B3A /* RevenueCatUI */,
+				5B5AB2EE2F63176600139C60 /* RevenueCat */,
+				5B5AB2F02F63176600139C60 /* RevenueCatUI */,
 			);
 			productName = shell360_iOS;
-			productReference = 0450B71B37C0A447129B2428 /* shell360_iOS.app */;
+			productReference = 0450B71B37C0A447129B2428 /* Shell360.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -191,14 +191,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					221D11474131CA65EA243411 = {
-						DevelopmentTeam = 2A5UB5KQ66;
-					};
-				};
 			};
 			buildConfigurationList = 1049F47643818A22BDAF3D49 /* Build configuration list for PBXProject "shell360" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -208,8 +202,10 @@
 			mainGroup = D2F9025F39A165D83B346E61;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				5B5AB2ED2F63176600139C60 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FADF6A2AE07BF80ADCB97609 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -340,8 +336,11 @@
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = shell360_iOS/shell360_iOS.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Distribution: diao cheng (2A5UB5KQ66)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: diao cheng (2A5UB5KQ66)";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "2A5UB5KQ66";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = "2A5UB5KQ66";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -369,9 +368,11 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.nashaofu.shell360;
 				PRODUCT_NAME = "Shell360";
+				PROVISIONING_PROFILE_SPECIFIER = "b414753d-bd72-46b2-8f34-c810ab95c0f4";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  x86_64";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "b414753d-bd72-46b2-8f34-c810ab95c0f4";
 			};
 			name = debug;
 		};
@@ -385,8 +386,9 @@
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = shell360_iOS/shell360_iOS.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "2A5UB5KQ66";
+				CODE_SIGN_IDENTITY = "Apple Distribution: diao cheng (2A5UB5KQ66)";
+				CODE_SIGN_STYLE = Manual;
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = "2A5UB5KQ66";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -414,11 +416,15 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.nashaofu.shell360;
 				PRODUCT_NAME = "Shell360";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "b414753d-bd72-46b2-8f34-c810ab95c0f4";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64  x86_64";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: diao cheng (2A5UB5KQ66)";
 			};
+				DEVELOPMENT_TEAM = "2A5UB5KQ66";
 			name = release;
+				PROVISIONING_PROFILE_SPECIFIER = "b414753d-bd72-46b2-8f34-c810ab95c0f4";
 		};
 		DC7633F670E04EAEDAA14117 /* release */ = {
 			isa = XCBuildConfiguration;
@@ -500,25 +506,25 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+		5B5AB2ED2F63176600139C60 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.39.3;
+				minimumVersion = 5.63.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		5BD499392E7E905C002C6B3A /* RevenueCat */ = {
+		5B5AB2EE2F63176600139C60 /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			package = 5B5AB2ED2F63176600139C60 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
 		};
-		5BD4993B2E7E905C002C6B3A /* RevenueCatUI */ = {
+		5B5AB2F02F63176600139C60 /* RevenueCatUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5BD499382E7E905C002C6B3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			package = 5B5AB2ED2F63176600139C60 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */

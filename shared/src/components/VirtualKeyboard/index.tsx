@@ -1,26 +1,25 @@
 import { Box, type SxProps, type Theme } from "@mui/material";
-import {
-  KEY_ACTIVE_BG,
-  KEY_BG,
-  KEYBOARD_BG,
-  VIRTUAL_KEYBOARD_KEY_WIDTH,
-  VIRTUAL_KEYBOARD_LABELS,
-} from "./constants";
+import { KEYBOARD_KEY_WIDTH } from "./constants";
 import { useVirtualKeyboard } from "./useVirtualKeyboard";
 
 export type VirtualKeyboardProps = {
   sx?: SxProps<Theme>;
-  /** called when user clicks a key on the virtual keyboard; sends terminal-ready data */
-  onData: (data: string) => void;
+  onInput: (data: string) => void;
+  applicationCursorKeysMode?: boolean;
 };
 
 /**
  * A mobile-friendly on-screen keyboard for terminal input.
  * It supports default/caps/fn/more view switching and uses flex rows.
  */
-export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
-  const { rows, isTokenActive, onTokenPress } = useVirtualKeyboard({
-    onData,
+export function VirtualKeyboard({
+  sx,
+  onInput,
+  applicationCursorKeysMode,
+}: VirtualKeyboardProps) {
+  const { rows, checkKeyIsActive, onKeyClick } = useVirtualKeyboard({
+    onInput,
+    applicationCursorKeysMode,
   });
 
   return (
@@ -32,7 +31,10 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
           gap: 0.3,
           p: 0.5,
           borderRadius: 1,
-          bgcolor: KEYBOARD_BG,
+          backgroundColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? theme.palette.background.paper
+              : theme.palette.grey[300],
           width: "100%",
           maxWidth: 760,
           margin: "0 auto",
@@ -53,23 +55,14 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
           }}
         >
           {row.map((token, colIndex) => {
-            const label = VIRTUAL_KEYBOARD_LABELS[token] ?? token;
-            const grow = VIRTUAL_KEYBOARD_KEY_WIDTH[token] ?? 1;
-            const isActive = isTokenActive(token);
+            const grow = KEYBOARD_KEY_WIDTH[token] ?? 1;
+            const isActive = checkKeyIsActive(token);
 
             return (
               <Box
                 // biome-ignore lint/suspicious/noArrayIndexKey: keyboard layout keys are static
-                key={`${rowIndex}-${colIndex}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => onTokenPress(token)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onTokenPress(token);
-                  }
-                }}
+                key={`${rowIndex}-${colIndex}-${token}`}
+                onClick={() => onKeyClick(token)}
                 sx={{
                   flex: `${grow} 1 0`,
                   minWidth: 0,
@@ -80,16 +73,26 @@ export function VirtualKeyboard({ sx, onData }: VirtualKeyboardProps) {
                   textAlign: "center",
                   borderRadius: 1,
                   border: "1px solid",
-                  borderColor: isActive ? "#8ea9cf" : "#c6c6c6",
-                  bgcolor: isActive ? KEY_ACTIVE_BG : KEY_BG,
+                  borderColor: (theme) =>
+                    isActive
+                      ? theme.palette.primary.main
+                      : theme.palette.divider,
+                  bgcolor: (theme) =>
+                    isActive
+                      ? theme.palette.action.selected
+                      : theme.palette.background.default,
+                  color: (theme) => theme.palette.text.primary,
                   cursor: "pointer",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis",
                   touchAction: "manipulation",
+                  "&:active": {
+                    bgcolor: (theme) => theme.palette.action.hover,
+                  },
                 }}
               >
-                {label}
+                {token}
               </Box>
             );
           })}

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [pluginReact(), pluginLess()],
   source: {
     define: {
-      "import.meta.env.TAURI_PLATFORM": JSON.stringify(
+      "import.meta.env.TAURI_ENV_PLATFORM": JSON.stringify(
         process.env.TAURI_ENV_PLATFORM,
       ),
     },
@@ -14,12 +14,12 @@ export default defineConfig({
   html: {
     template: "./index.html",
     templateParameters: {
-      TAURI_PLATFORM: process.env.TAURI_ENV_PLATFORM,
+      TAURI_ENV_PLATFORM: process.env.TAURI_ENV_PLATFORM,
     },
   },
   server: {
     host: "0.0.0.0",
-    port: 1420,
+    port: 1421,
     strictPort: true,
   },
 });

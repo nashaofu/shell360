@@ -1,11 +1,13 @@
 @font-face {
   font-family: "Shell360Icons"; /* Project id 4490042 */
-  src: url('iconfont.woff2?t=1772983951339') format('woff2'),
-       url('iconfont.woff?t=1772983951339') format('woff'),
-       url('iconfont.ttf?t=1772983951339') format('truetype');
+  src:
+    url("iconfont.woff2?t=1772983951339") format("woff2"),
+    url("iconfont.woff?t=1772983951339") format("woff"),
+    url("iconfont.ttf?t=1772983951339") format("truetype");
 }
 
 .Shell360Icons {
+  /* biome-ignore lint/complexity/noImportantStyles: keyboard layout rows are static */
   font-family: "Shell360Icons" !important;
   font-size: 16px;
   font-style: normal;
@@ -224,4 +226,3 @@
 .icon-close:before {
   content: "\e7cf";
 }
-
