@@ -1,33 +1,3 @@
-/**
- * reg + shift key mappings for digits and special chars
- * @see https://github.com/xtermjs/xterm.js/blob/master/src/common/input/Keyboard.ts
- */
-export const KEYCODE_KEY_MAPPINGS: { [key: number]: [string, string] } = {
-  // digits 0-9
-  48: ["0", ")"],
-  49: ["1", "!"],
-  50: ["2", "@"],
-  51: ["3", "#"],
-  52: ["4", "$"],
-  53: ["5", "%"],
-  54: ["6", "^"],
-  55: ["7", "&"],
-  56: ["8", "*"],
-  57: ["9", "("],
-  // special chars
-  186: [";", ":"],
-  187: ["=", "+"],
-  188: [",", "<"],
-  189: ["-", "_"],
-  190: [".", ">"],
-  191: ["/", "?"],
-  192: ["`", "~"],
-  219: ["[", "{"],
-  220: ["\\", "|"],
-  221: ["]", "}"],
-  222: ["'", '"'],
-};
-
 // ─── Virtual keyboard UI constants ───────────────────────────
 
 export type KeyboardLayoutName = "Lowercase" | "Uppercase" | "Fn" | "Shortcuts";

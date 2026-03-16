@@ -225,6 +225,18 @@ describe("resolveInput", () => {
     it("Ctrl+/ → \\x1f (US)", () => {
       expect(ri("/", { Ctrl: true })).toBe("\x1f");
     });
+
+    it("Ctrl+@ → \\x00 (NUL)", () => {
+      expect(ri("@", { Ctrl: true })).toBe("\x00");
+    });
+
+    it("Ctrl+^ → \\x1e (RS)", () => {
+      expect(ri("^", { Ctrl: true })).toBe("\x1e");
+    });
+
+    it("Ctrl+_ → \\x1f (US)", () => {
+      expect(ri("_", { Ctrl: true })).toBe("\x1f");
+    });
   });
 
   // ─────────────────────────────────────────────────────────────

@@ -1,9 +1,12 @@
 import {
   CTRL_SHORTCUT_TO_INPUT,
-  KEYCODE_KEY_MAPPINGS,
   type KeyboardModifierToken,
 } from "./constants";
-import { evaluateKeyboardEvent, type IKeyboardEvent } from "./xterm/Keyboard";
+import {
+  evaluateKeyboardEvent,
+  type IKeyboardEvent,
+  KEYCODE_KEY_MAPPINGS,
+} from "./xterm/Keyboard";
 
 export type KeyboardModifiers = Partial<Record<KeyboardModifierToken, boolean>>;
 
@@ -37,6 +40,30 @@ for (const [keyCode, [normal, shifted]] of Object.entries(
   CHAR_TO_KEYCODE[normal] = [kc, false];
   CHAR_TO_KEYCODE[shifted] = [kc, true];
 }
+
+const KEYCODE_TO_CODE: Partial<Record<number, string>> = {
+  48: "Digit0",
+  49: "Digit1",
+  50: "Digit2",
+  51: "Digit3",
+  52: "Digit4",
+  53: "Digit5",
+  54: "Digit6",
+  55: "Digit7",
+  56: "Digit8",
+  57: "Digit9",
+  186: "Semicolon",
+  187: "Equal",
+  188: "Comma",
+  189: "Minus",
+  190: "Period",
+  191: "Slash",
+  192: "Backquote",
+  219: "BracketLeft",
+  220: "Backslash",
+  221: "BracketRight",
+  222: "Quote",
+};
 
 function tokenToKeyboardEvent(
   token: string,
@@ -104,6 +131,7 @@ function tokenToKeyboardEvent(
     if (charMapping) {
       const [kc, impliesShift] = charMapping;
       ev.keyCode = kc;
+      ev.code = KEYCODE_TO_CODE[kc] ?? "";
       if (impliesShift) {
         ev.shiftKey = true;
         ev.key = token;
@@ -113,9 +141,6 @@ function tokenToKeyboardEvent(
         ev.key = mapping ? mapping[1] : token;
       } else {
         ev.key = token;
-      }
-      if (kc === 189) {
-        ev.code = "Minus";
       }
       return ev;
     }
