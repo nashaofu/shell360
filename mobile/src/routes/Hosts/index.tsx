@@ -21,7 +21,7 @@ import {
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
-import { deleteHost, type Host } from "tauri-plugin-data";
+import { addHost, deleteHost, type Host } from "tauri-plugin-data";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
@@ -92,6 +92,46 @@ export default function Hosts() {
     refreshHosts();
   }, [refreshHosts]);
 
+  const onCopyHost = useCallback(async () => {
+    const selectedHost = selectedHostRef.current;
+    selectedHostRef.current = null;
+
+    if (!selectedHost) {
+      return;
+    }
+
+    if (!isSubscription && hosts.length >= 3) {
+      setOpen(true);
+      return;
+    }
+
+    try {
+      const copiedHost = await addHost({
+        name: selectedHost.name,
+        tags: selectedHost.tags,
+        hostname: selectedHost.hostname,
+        port: selectedHost.port,
+        username: selectedHost.username,
+        authenticationMethod: selectedHost.authenticationMethod,
+        password: selectedHost.password,
+        keyId: selectedHost.keyId,
+        startupCommand: selectedHost.startupCommand,
+        terminalType: selectedHost.terminalType,
+        envs: selectedHost.envs,
+        jumpHostIds: selectedHost.jumpHostIds,
+        terminalSettings: selectedHost.terminalSettings,
+      });
+
+      await refreshHosts();
+      setEditHost(copiedHost);
+      setIsOpenAddHost(true);
+    } catch (err) {
+      message.error({
+        message: get(err, "message") || "Copy failed",
+      });
+    }
+  }, [hosts.length, isSubscription, message, refreshHosts, setOpen]);
+
   const menus = useMemo(
     () => [
       {
@@ -109,6 +149,18 @@ export default function Hosts() {
           setEditHost(selectedHostRef.current || undefined);
           selectedHostRef.current = null;
         },
+      },
+      {
+        label: (
+          <>
+            <ListItemIcon>
+              <Icon className="icon-content-copy" />
+            </ListItemIcon>
+            <ListItemText>Copy</ListItemText>
+          </>
+        ),
+        value: "Copy",
+        onClick: onCopyHost,
       },
       {
         label: (
@@ -153,7 +205,7 @@ export default function Hosts() {
         },
       },
     ],
-    [message, modal, refreshHosts],
+    [message, modal, onCopyHost, refreshHosts],
   );
 
   return (
