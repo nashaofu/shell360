@@ -66,6 +66,10 @@ function isSkip(spec) {
     return true;
   }
 
+  if (spec.version.startsWith("~")) {
+    return true;
+  }
+
   return false;
 }
 

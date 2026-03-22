@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { useAtomValue } from "jotai";
 import { Suspense, useLayoutEffect, useMemo } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { Outlet, useMatch } from "react-router-dom";
 import {
   TERMINAL_THEMES,
@@ -12,8 +13,8 @@ import {
 } from "shared";
 import { useColorsAtomWithApi } from "@/atom/colorsAtom";
 import { themeAtom } from "@/atom/themeAtom";
+import ErrorBoundaryFallback from "@/components/ErrorBoundaryFallback";
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
-
 import Sidebar from "../Sidebar";
 import Terminals from "../Terminals";
 
@@ -102,7 +103,9 @@ export default function Content() {
             overflow: "hidden",
           }}
         >
-          <Terminals />
+          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+            <Terminals />
+          </ErrorBoundary>
         </Box>
       </Box>
     </>

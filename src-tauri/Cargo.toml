@@ -14,7 +14,7 @@ workspace = true
 features = []
 
 [dependencies]
-rand = "~0.9"
+rand = "~0.8"
 webbrowser = "1.2.0"
 
 [dependencies.tauri]
