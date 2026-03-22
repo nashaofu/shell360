@@ -89,20 +89,10 @@ export default function Hosts() {
     }
 
     try {
+      const { id, ...rest } = selectedHost;
       const copiedHost = await addHost({
+        ...rest,
         name: `${getHostName(selectedHost)} Copy`,
-        tags: selectedHost.tags,
-        hostname: selectedHost.hostname,
-        port: selectedHost.port,
-        username: selectedHost.username,
-        authenticationMethod: selectedHost.authenticationMethod,
-        password: selectedHost.password,
-        keyId: selectedHost.keyId,
-        startupCommand: selectedHost.startupCommand,
-        terminalType: selectedHost.terminalType,
-        envs: selectedHost.envs,
-        jumpHostIds: selectedHost.jumpHostIds,
-        terminalSettings: selectedHost.terminalSettings,
       });
 
       await refreshHosts();
