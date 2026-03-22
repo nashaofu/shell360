@@ -10,7 +10,7 @@ import {
   ListItemText,
   OutlinedInput,
 } from "@mui/material";
-import { get } from "lodash-es";
+import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,7 +21,7 @@ import {
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
-import { deleteHost, type Host } from "tauri-plugin-data";
+import { addHost, deleteHost, type Host } from "tauri-plugin-data";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
@@ -80,6 +80,30 @@ export default function Hosts() {
     setEditHost(undefined);
   }, []);
 
+  const onCopyHost = useCallback(async () => {
+    const selectedHost = selectedHostRef.current;
+    selectedHostRef.current = null;
+
+    if (!selectedHost) {
+      return;
+    }
+
+    try {
+      const copiedHost = await addHost({
+        ...omit(selectedHost, ["id"]),
+        name: `${getHostName(selectedHost)} Copy`,
+      });
+
+      await refreshHosts();
+      setEditHost(copiedHost);
+      setIsOpenAddHost(true);
+    } catch (err) {
+      message.error({
+        message: get(err, "message") || "Copy failed",
+      });
+    }
+  }, [message, refreshHosts]);
+
   const menus = useMemo(
     () => [
       {
@@ -97,6 +121,18 @@ export default function Hosts() {
           setEditHost(selectedHostRef.current || undefined);
           selectedHostRef.current = null;
         },
+      },
+      {
+        label: (
+          <>
+            <ListItemIcon>
+              <Icon className="icon-content-copy" />
+            </ListItemIcon>
+            <ListItemText>Copy</ListItemText>
+          </>
+        ),
+        value: "Copy",
+        onClick: onCopyHost,
       },
       {
         label: (
@@ -141,7 +177,7 @@ export default function Hosts() {
         },
       },
     ],
-    [modal, refreshHosts, message],
+    [modal, onCopyHost, refreshHosts, message],
   );
 
   return (
