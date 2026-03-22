@@ -1,0 +1,49 @@
+{
+  "accounts": [
+    {
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "loginId": "refresh-test@example.com",
+      "credentialHash": "cd577fe2561ebff23505db0bb006300c7cdecbd46bc0e03c449afafaca2c25bf",
+      "createdAt": "2026-03-22T10:45:34.531379400+00:00"
+    }
+  ],
+  "accessTokens": [
+    {
+      "token": "atk_55602903-56d6-4a2a-b0ba-e66f8422c52d",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-03-22T22:45:34.531397300+00:00"
+    },
+    {
+      "token": "atk_f3a758e3-b557-4bc7-a052-a8e86f68d7cd",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-03-22T23:47:46.690940300+00:00"
+    },
+    {
+      "token": "atk_b8f9c732-a9c6-4430-9fca-9766dadc9d88",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-03-22T23:47:46.698989900+00:00"
+    }
+  ],
+  "refreshTokens": [
+    {
+      "token": "rtk_925af9ef-a9ad-4a92-b159-5e37455d94a2",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-04-21T10:45:34.531399400+00:00"
+    },
+    {
+      "token": "rtk_c672d369-7322-4a12-b00f-e0fc7ce302ff",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-04-21T11:47:46.690946600+00:00"
+    },
+    {
+      "token": "rtk_cb2f0eef-b54d-4976-8943-850a15d36d45",
+      "accountId": "acc_7dc9d2a6-a001-4861-b5d8-543e76f54537",
+      "expiresAt": "2026-04-21T11:47:46.698991900+00:00"
+    }
+  ],
+  "devices": [],
+  "snapshots": [],
+  "restoreRecords": [],
+  "idempotencyRecords": [],
+  "snapshotHeads": {}
+}

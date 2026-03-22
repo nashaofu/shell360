@@ -1,0 +1,19 @@
+[package]
+name = "sync-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-cors = "0.7.1"
+actix-web = "4.11.0"
+chrono = { version = "0.4.42", features = ["serde"] }
+env_logger = "0.11.8"
+sea-orm = { version = "1.1.17", features = ["macros", "runtime-tokio-rustls", "sqlx-sqlite"] }
+sea-orm-migration = { version = "1.1.17", features = ["runtime-tokio-rustls", "sqlx-sqlite"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = "0.10.9"
+uuid = { version = "1.18.1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+actix-http = "3.11.2"

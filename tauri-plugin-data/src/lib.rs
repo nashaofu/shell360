@@ -4,6 +4,7 @@ mod data_manager;
 mod entities;
 mod error;
 mod migration;
+mod sync_secret_manager;
 mod utils;
 
 use tauri::{
@@ -12,10 +13,11 @@ use tauri::{
 };
 
 use crate::{
-  commands::{crypto, host, key, port_forwarding},
+  commands::{crypto, host, key, port_forwarding, sync},
   crypto_manager::CryptoManager,
   data_manager::DataManager,
   error::DataError,
+  sync_secret_manager::SyncSecretManager,
 };
 
 /// Initializes the plugin.
@@ -34,6 +36,16 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
       crypto::change_crypto_enable,
       crypto::reset_crypto,
       crypto::rotate_crypto_key,
+      sync::export_sync_snapshot,
+      sync::validate_sync_snapshot,
+      sync::import_sync_snapshot,
+      sync::encrypt_sync_snapshot,
+      sync::decrypt_sync_snapshot,
+      sync::init_sync_secret,
+      sync::unlock_sync_secret,
+      sync::rotate_sync_secret,
+      sync::clear_sync_session,
+      sync::check_sync_session,
       host::get_hosts,
       host::add_host,
       host::update_host,
@@ -56,6 +68,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
         let data_manager = DataManager::init(&app_handle).await?;
         app_handle.manage(data_manager);
+
+        let sync_secret_manager = SyncSecretManager::init(app_handle.clone()).await?;
+        app_handle.manage(sync_secret_manager);
 
         Ok::<(), DataError>(())
       })?;

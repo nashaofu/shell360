@@ -16,21 +16,21 @@ use crate::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HostBase {
-  name: Option<String>,
-  tags: Option<Vec<String>>,
-  hostname: String,
-  port: i32,
-  username: String,
-  authentication_method: entities::hosts::AuthenticationMethod,
-  password: Option<String>,
+  pub name: Option<String>,
+  pub tags: Option<Vec<String>>,
+  pub hostname: String,
+  pub port: i32,
+  pub username: String,
+  pub authentication_method: entities::hosts::AuthenticationMethod,
+  pub password: Option<String>,
   #[serde_as(as = "Option<DisplayFromStr>")]
-  key_id: Option<i64>,
-  startup_command: Option<String>,
-  terminal_type: Option<String>,
-  envs: Option<Vec<entities::hosts::Env>>,
+  pub key_id: Option<i64>,
+  pub startup_command: Option<String>,
+  pub terminal_type: Option<String>,
+  pub envs: Option<Vec<entities::hosts::Env>>,
   #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
-  jump_host_ids: Option<Vec<i64>>,
-  terminal_settings: Option<entities::hosts::TerminalSettings>,
+  pub jump_host_ids: Option<Vec<i64>>,
+  pub terminal_settings: Option<entities::hosts::TerminalSettings>,
 }
 impl ModelConvert for HostBase {
   type Model = entities::hosts::Model;

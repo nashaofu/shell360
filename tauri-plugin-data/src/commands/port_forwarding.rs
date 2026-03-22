@@ -13,14 +13,14 @@ use crate::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PortForwardingBase {
-  name: String,
-  port_forwarding_type: entities::port_forwardings::PortForwardingType,
+  pub name: String,
+  pub port_forwarding_type: entities::port_forwardings::PortForwardingType,
   #[serde_as(as = "DisplayFromStr")]
-  host_id: i64,
-  local_address: String,
-  local_port: i32,
-  remote_address: Option<String>,
-  remote_port: Option<i32>,
+  pub host_id: i64,
+  pub local_address: String,
+  pub local_port: i32,
+  pub remote_address: Option<String>,
+  pub remote_port: Option<i32>,
 }
 
 impl ModelConvert for PortForwardingBase {

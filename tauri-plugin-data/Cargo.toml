@@ -49,6 +49,9 @@ workspace = true
 version = "~1.6"
 features = [ "std" ]
 
+[dependencies.sha2]
+version = "0.10.9"
+
 [build-dependencies.tauri-plugin]
 workspace = true
 features = [ "build" ]

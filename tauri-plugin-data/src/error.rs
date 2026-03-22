@@ -51,6 +51,18 @@ pub enum DataError {
 
   #[error("Migration vault config error")]
   MigrationVaultConfigError,
+
+  #[error("Sync secret repeated init")]
+  SyncSecretRepeatedInit,
+
+  #[error("Sync secret not initialized")]
+  SyncSecretNotInitialized,
+
+  #[error("Sync session locked")]
+  SyncSessionLocked,
+
+  #[error("Sync envelope payload hash mismatch")]
+  SyncEnvelopePayloadHashMismatch,
 }
 
 pub type DataResult<T> = Result<T, DataError>;
