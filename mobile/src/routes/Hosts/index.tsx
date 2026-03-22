@@ -10,7 +10,7 @@ import {
   ListItemText,
   OutlinedInput,
 } from "@mui/material";
-import { get } from "lodash-es";
+import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -106,9 +106,8 @@ export default function Hosts() {
     }
 
     try {
-      const { id, name, ...rest } = selectedHost;
       const copiedHost = await addHost({
-        ...rest,
+        ...omit(selectedHost, ["id"]),
         name: `${getHostName(selectedHost)} Copy`,
       });
 
