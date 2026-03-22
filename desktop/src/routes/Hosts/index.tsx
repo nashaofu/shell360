@@ -90,7 +90,7 @@ export default function Hosts() {
 
     try {
       const copiedHost = await addHost({
-        name: selectedHost.name,
+        name: `${getHostName(selectedHost)} Copy`,
         tags: selectedHost.tags,
         hostname: selectedHost.hostname,
         port: selectedHost.port,
