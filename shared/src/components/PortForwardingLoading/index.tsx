@@ -1,22 +1,11 @@
-import {
-  Box,
-  Button,
-  type ButtonProps,
-  LinearProgress,
-  styled,
-} from "@mui/material";
+import { Button, Progress } from "@radix-ui/themes";
 import { get } from "lodash-es";
-import { type ComponentType, useMemo } from "react";
+import { useMemo } from "react";
 import type { PortForwarding } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { getPortForwardingDesc } from "@/utils/portForwarding";
-
-export const StatusButton: ComponentType<ButtonProps> = styled(Button, {
-  name: "StatusButton",
-})(() => ({
-  minWidth: 150,
-}));
+import styles from "./index.module.less";
 
 export type PortForwardingLoadingProps = {
   portForwarding: PortForwarding;
@@ -38,74 +27,38 @@ export function PortForwardingLoading({
   );
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        maxWidth: "100%",
-        mx: "auto",
-      }}
-    >
-      <Box>
-        <Box
-          sx={{
-            fontSize: 16,
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            py: 1.5,
-          }}
-        >
-          Opening {portForwarding.name} ...
-        </Box>
-        <Box
-          sx={{
-            fontSize: 12,
-            wordBreak: "break-all",
-            userSelect: "text",
-          }}
-        >
+    <div className={styles.root}>
+      <div>
+        <div className={styles.title}>Opening {portForwarding.name}...</div>
+        <div className={styles.description}>
           {getPortForwardingDesc(portForwarding, hostsMap)}
-        </Box>
-      </Box>
-      <Box
-        sx={{
-          py: 1.5,
-        }}
-      >
-        <LinearProgress color={error ? "error" : "primary"} />
-      </Box>
+        </div>
+      </div>
+      <div className={styles.progressWrap}>
+        <Progress
+          value={error ? 100 : null}
+          color={error ? "red" : undefined}
+        />
+      </div>
       {!!error && (
         <>
-          <Box
-            sx={{
-              fontSize: "14px",
-              mx: "auto",
-              mt: 3,
-              mb: 5,
-              wordBreak: "break-all",
-              userSelect: "text",
-            }}
-          >
+          <div className={styles.errorText}>
             {get(error, "message", String(error))}
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-            }}
-          >
-            <StatusButton variant="outlined" onClick={onClose}>
+          </div>
+          <div className={styles.actions}>
+            <Button
+              className={styles.actionButton}
+              variant="outline"
+              onClick={onClose}
+            >
               Close
-            </StatusButton>
-            <StatusButton variant="contained" onClick={onRetry}>
+            </Button>
+            <Button className={styles.actionButton} onClick={onRetry}>
               Retry
-            </StatusButton>
-          </Box>
+            </Button>
+          </div>
         </>
       )}
-    </Box>
+    </div>
   );
 }

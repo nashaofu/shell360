@@ -1,15 +1,11 @@
-import {
-  Icon,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  TextField,
-} from "@mui/material";
+import { Select, Text } from "@radix-ui/themes";
+import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
 
-import { TextFieldPassword } from "@/components/TextFieldPassword";
 import { useKeys } from "@/hooks/useKeys";
+import { TextFieldPassword } from "../../TextFieldPassword";
+import styles from "../styles.module.less";
 
 export type AuthenticationFormFields = {
   username?: string;
@@ -23,11 +19,14 @@ export type AuthenticationFormProps = {
   onOpenAddKey: () => void;
 };
 
+const ADD_KEY_VALUE = "__add_key__";
+
 export function AuthenticationForm({
   formApi,
   onOpenAddKey,
 }: AuthenticationFormProps) {
   const { data: keys } = useKeys();
+  const keyOptions = keys ?? [];
   const authenticationMethod = formApi.watch("authenticationMethod");
 
   return (
@@ -42,27 +41,38 @@ export function AuthenticationForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            required
-            fullWidth
-            label="Authentication method"
-            placeholder="Authentication method"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            <MenuItem value={AuthenticationMethod.Password}>Password</MenuItem>
-            <MenuItem value={AuthenticationMethod.PublicKey}>
-              PublicKey
-            </MenuItem>
-            <MenuItem value={AuthenticationMethod.Certificate}>
-              Certificate
-            </MenuItem>
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Authentication method
+            </Text>
+            <Select.Root
+              value={field.value || AuthenticationMethod.Password}
+              onValueChange={(value) => field.onChange(value)}
+            >
+              <Select.Trigger style={{ width: "100%" }} />
+              <Select.Content>
+                <Select.Item value={AuthenticationMethod.Password}>
+                  Password
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.PublicKey}>
+                  PublicKey
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.Certificate}>
+                  Certificate
+                </Select.Item>
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -77,17 +87,29 @@ export function AuthenticationForm({
             },
           }}
           render={({ field, fieldState }) => (
-            <TextFieldPassword
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              fullWidth
-              label="Password"
-              placeholder="Password"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            />
+            <div className={styles.formField}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Password
+              </Text>
+              <TextFieldPassword
+                value={field.value || ""}
+                error={fieldState.invalid}
+                placeholder="Password"
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  field.onChange(e.target.value)
+                }
+              />
+              {fieldState.invalid && (
+                <Text size="1" className={styles.errorHint}>
+                  {fieldState.error?.message}
+                </Text>
+              )}
+            </div>
           )}
         />
       )}
@@ -104,31 +126,45 @@ export function AuthenticationForm({
             },
           }}
           render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              select
-              fullWidth
-              required
-              label="Key"
-              placeholder="Key"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            >
-              <MenuItem value="" onClick={onOpenAddKey}>
-                <ListItemIcon>
-                  <Icon className="icon-add" />
-                </ListItemIcon>
-                <ListItemText>Add key</ListItemText>
-              </MenuItem>
-              {keys.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <div className={styles.formField}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Key
+              </Text>
+              <Select.Root
+                value={field.value || ""}
+                onValueChange={(value) => {
+                  if (value === ADD_KEY_VALUE) {
+                    onOpenAddKey();
+                    return;
+                  }
+
+                  field.onChange(value);
+                }}
+              >
+                <Select.Trigger
+                  style={{ width: "100%" }}
+                  placeholder="Select key"
+                />
+                <Select.Content>
+                  <Select.Item value={ADD_KEY_VALUE}>+ Add key</Select.Item>
+                  {keyOptions.map((item) => (
+                    <Select.Item key={item.id} value={item.id}>
+                      {item.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+              {fieldState.invalid && (
+                <Text size="1" className={styles.errorHint}>
+                  {fieldState.error?.message}
+                </Text>
+              )}
+            </div>
           )}
         />
       )}

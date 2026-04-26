@@ -1,0 +1,53 @@
+.wrapper {
+  width: 100%;
+}
+
+.selectedListCard {
+  border: 1px solid var(--gray-a5);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.selectedList {
+  display: flex;
+  flex-direction: column;
+}
+
+.selectedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gray-a4);
+}
+
+.selectedItem:last-child {
+  border-bottom: 0;
+}
+
+.itemTextWrap {
+  min-width: 0;
+}
+
+.itemActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.selectorRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.selectorField {
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldLabel {
+  display: inline-block;
+  margin-bottom: 6px;
+}

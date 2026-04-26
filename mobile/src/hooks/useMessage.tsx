@@ -1,39 +1,23 @@
-import {
-  type OptionsWithExtraProps,
-  useSnackbar,
-  type VariantType,
-} from "notistack";
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
+import { message as sharedMessage } from "shared";
+
+type NotistackCompatArg = { message: ReactNode };
+
+function normalizeArg(arg: ReactNode | NotistackCompatArg): ReactNode {
+  return typeof arg === "object" && arg !== null && "message" in arg
+    ? (arg as NotistackCompatArg).message
+    : (arg as ReactNode);
+}
 
 export default function useMessage() {
-  const { enqueueSnackbar } = useSnackbar();
-
-  const fns = useMemo(() => {
-    const implMessageFn =
-      (variant: VariantType) =>
-      ({
-        anchorOrigin = {
-          vertical: "top",
-          horizontal: "center",
-        },
-        ...props
-      }: Omit<OptionsWithExtraProps<VariantType>, "variant"> & {
-        message: ReactNode;
-      }) => {
-        enqueueSnackbar({
-          ...props,
-          anchorOrigin,
-          variant,
-        });
-      };
-
-    return {
-      info: implMessageFn("info"),
-      success: implMessageFn("success"),
-      error: implMessageFn("error"),
-      warning: implMessageFn("warning"),
-    };
-  }, [enqueueSnackbar]);
-
-  return fns;
+  return {
+    success: (arg: ReactNode | NotistackCompatArg) =>
+      sharedMessage.success(normalizeArg(arg)),
+    error: (arg: ReactNode | NotistackCompatArg) =>
+      sharedMessage.error(normalizeArg(arg)),
+    info: (arg: ReactNode | NotistackCompatArg) =>
+      sharedMessage.info(normalizeArg(arg)),
+    warning: (arg: ReactNode | NotistackCompatArg) =>
+      sharedMessage.warning(normalizeArg(arg)),
+  };
 }

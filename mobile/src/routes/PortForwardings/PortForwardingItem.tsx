@@ -1,22 +1,16 @@
-import {
-  Box,
-  Dialog,
-  Icon,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-} from "@mui/material";
+import { DropdownMenu, Portal } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
 import {
-  closePortForwarding as closePortForwardingUtil,
-  Dropdown,
+  DeleteIcon,
+  EditIcon,
   establishPortForwarding as establishPortForwardingUtil,
   getPortForwardingDesc,
+  MoreIcon,
   PortForwardingLoading,
   type PortForwardingsAtom,
   SSHLoading,
-  tearDownJumpHostChainConnections,
+  stopPortForwardingRuntime,
   useKeys,
   usePortForwardings,
   usePortForwardingsAtomWithApi,
@@ -28,6 +22,7 @@ import {
 } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 import ItemCard from "@/components/ItemCard";
+import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 
 const PORT_FORWARDING_STATUS = {
@@ -53,6 +48,7 @@ export default function PortForwardingItem({
   const portForwardingsAtomWithApi = usePortForwardingsAtomWithApi();
   const { data: keys } = useKeys();
   const modal = useModal();
+  const message = useMessage();
 
   const title = useMemo(() => {
     const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
@@ -81,13 +77,6 @@ export default function PortForwardingItem({
     );
   }, [portForwardingsAtomWithApi, item.id]);
 
-  const closePortForwarding = useCallback(
-    async (portForwardingsAtom: PortForwardingsAtom) => {
-      await closePortForwardingUtil(portForwardingsAtom);
-    },
-    [],
-  );
-
   const establishPortForwarding = useCallback(
     async (portForwardingsAtom: PortForwardingsAtom) => {
       await establishPortForwardingUtil(
@@ -106,10 +95,8 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <EditIcon style={{ marginRight: 8 }} />
+            Edit
           </>
         ),
         value: "Edit",
@@ -118,85 +105,65 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <DeleteIcon style={{ marginRight: 8 }} />
+            Delete
           </>
         ),
         value: "Delete",
         onClick: () => {
           modal.confirm({
             title: "Delete Confirmation",
-            content: `Are you sure to delete the port forwarding: ${item.name}?`,
+            content: `Are you sure to delete the tunnel: ${item.name}?`,
             OkButtonProps: {
-              color: "warning",
+              color: "orange",
             },
             onOk: async () => {
-              await deletePortForwarding(item);
-              refreshPortForwardings();
+              try {
+                await deletePortForwarding(item);
+                refreshPortForwardings();
+              } catch (err) {
+                message.error(
+                  `Failed to delete: ${(err as Error).message ?? "Unknown error"}`,
+                );
+              }
             },
           });
         },
       },
     ],
-    [item, modal, onEdit, refreshPortForwardings],
+    [item, modal, message.error, onEdit, refreshPortForwardings],
   );
 
   const onOpenOrClosePortForwarding = useCallback(async () => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (portForwardingsAtom) {
-      await closePortForwarding(portForwardingsAtom);
-      tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+      await stopPortForwardingRuntime(portForwardingsAtom);
       portForwardingsAtomWithApi.delete(portForwardingsAtom.portForwarding.id);
       return;
     }
 
     const [added] = portForwardingsAtomWithApi.add(item);
     await establishPortForwarding(added);
-  }, [
-    closePortForwarding,
-    establishPortForwarding,
-    item,
-    portForwardingsAtomWithApi,
-  ]);
+  }, [establishPortForwarding, item, portForwardingsAtomWithApi]);
 
   const onReConnect = useMemoizedFn(
     (checkServerKey?: SSHSessionCheckServerKey) => {
-      let portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+      const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
       if (!portForwardingsAtom) {
         return;
       }
 
-      portForwardingsAtom = {
-        ...portForwardingsAtom,
-        jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) => ({
-          ...item,
-          checkServerKey,
-        })),
-      };
-      portForwardingsAtomWithApi.update(portForwardingsAtom);
-
-      establishPortForwarding(portForwardingsAtom);
+      portForwardingsAtomWithApi.restart(item.id, { checkServerKey });
     },
   );
 
-  const onReAuth = useMemoizedFn((hostData) => {
-    let portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+  const onReAuth = useMemoizedFn((hostData: Host) => {
+    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (!portForwardingsAtom) {
       return;
     }
 
-    portForwardingsAtom = {
-      ...portForwardingsAtom,
-      jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) => ({
-        ...item,
-        host: hostData,
-      })),
-    };
-    portForwardingsAtomWithApi.update(portForwardingsAtom);
-
-    establishPortForwarding(portForwardingsAtom);
+    portForwardingsAtomWithApi.restart(item.id, { hostData });
   });
 
   const onRetry = useMemoizedFn(() => {
@@ -204,7 +171,7 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    establishPortForwarding(portForwardingsAtom);
+    portForwardingsAtomWithApi.restart(item.id);
   });
 
   const onClose = useCallback(async () => {
@@ -212,10 +179,9 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    closePortForwarding(portForwardingsAtom);
-    tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+    await stopPortForwardingRuntime(portForwardingsAtom);
     portForwardingsAtomWithApi.delete(item.id);
-  }, [closePortForwarding, item.id, portForwardingsAtomWithApi]);
+  }, [item.id, portForwardingsAtomWithApi]);
 
   return (
     <>
@@ -225,56 +191,75 @@ export default function PortForwardingItem({
         title={title}
         desc={getPortForwardingDesc(item, hostsMap)}
         extra={
-          <Box onClick={(event) => event.stopPropagation()}>
-            <Dropdown
-              menus={menus}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-            >
-              {({ onChangeOpen }) => (
-                <IconButton
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
+          <div onClick={(event) => event.stopPropagation()}>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: 4,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
-                  <Icon className="icon-more" />
-                </IconButton>
-              )}
-            </Dropdown>
-          </Box>
+                  <MoreIcon />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                {menus.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.value}
+                    onSelect={() => item.onClick?.()}
+                  >
+                    {item.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          </div>
         }
         onClick={() => onOpenOrClosePortForwarding()}
       />
-      <Dialog
-        open={isLoading}
-        sx={{
-          zIndex: 100,
-        }}
-      >
-        {currentJumpHostChainItem ? (
-          <SSHLoading
-            host={currentJumpHostChainItem.host}
-            loading={currentJumpHostChainItem.loading}
-            error={currentJumpHostChainItem.error}
-            onReConnect={onReConnect}
-            onReAuth={onReAuth}
-            onRetry={onRetry}
-            onClose={onClose}
-            onOpenAddKey={onOpenAddKey}
-          />
-        ) : (
-          <PortForwardingLoading
-            portForwarding={item}
-            error={portForwardingsAtomWithApi.state.get(item.id)?.error}
-            onClose={onClose}
-            onRetry={onRetry}
-          />
-        )}
-      </Dialog>
+      {isLoading && (
+        <Portal>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.5)",
+            }}
+          >
+            {currentJumpHostChainItem ? (
+              <SSHLoading
+                host={currentJumpHostChainItem.host}
+                loading={currentJumpHostChainItem.loading}
+                error={currentJumpHostChainItem.error}
+                onReConnect={onReConnect}
+                onReAuth={onReAuth}
+                onRetry={onRetry}
+                onClose={onClose}
+                onOpenAddKey={onOpenAddKey}
+              />
+            ) : (
+              <PortForwardingLoading
+                portForwarding={item}
+                error={portForwardingsAtomWithApi.state.get(item.id)?.error}
+                onClose={onClose}
+                onRetry={onRetry}
+              />
+            )}
+          </div>
+        </Portal>
+      )}
     </>
   );
 }

@@ -1,18 +1,11 @@
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@mui/material";
+import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { Loading, TextFieldPassword } from "shared";
+import { useForm } from "react-hook-form";
+import { Loading } from "shared";
 import { changeCryptoPassword } from "tauri-plugin-data";
 
+import CryptoPasswordField from "@/components/CryptoPasswordField";
 import useMessage from "@/hooks/useMessage";
 
 interface ChangeCryptoPasswordProps {
@@ -44,13 +37,13 @@ export default function ChangeCryptoPassword({
       manual: true,
       onSuccess: () => {
         message.success({
-          message: "Change crypto password success",
+          message: "Encryption password changed successfully",
         });
         onOk();
       },
       onError: () => {
         message.error({
-          message: "Change crypto password failed",
+          message: "Failed to change encryption password",
         });
       },
     },
@@ -64,120 +57,50 @@ export default function ChangeCryptoPassword({
   }, [open, formApi]);
 
   return (
-    <Dialog open={open}>
-      <DialogTitle>Change Crypto Password</DialogTitle>
-      <Loading loading={loading} size={32}>
-        <DialogContent>
-          <DialogContentText>
-            Please enter the encryption password to reset the key
-          </DialogContentText>
-          <Box component="form" noValidate autoComplete="off">
-            <Box sx={{ mt: 4 }}>
-              <Controller
+    <Dialog.Root open={open}>
+      <Dialog.Content style={{ maxWidth: 420 }}>
+        <Dialog.Title>Change Encryption Password</Dialog.Title>
+        <Loading loading={loading} size={32}>
+          <Dialog.Description size="2" color="gray">
+            Enter your current password and choose a new one to re-encrypt your
+            application data.
+          </Dialog.Description>
+          <form noValidate autoComplete="off">
+            <Flex direction="column" gap="4" mt="4">
+              <CryptoPasswordField
+                control={formApi.control}
                 name="oldPassword"
-                control={formApi.control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Please enter old password",
-                  },
-                  minLength: {
-                    value: 8,
-                    message: "Please enter at least 8 characters",
-                  },
-                  maxLength: {
-                    value: 128,
-                    message: "Please enter no more than 128 characters",
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <TextFieldPassword
-                    {...field}
-                    required
-                    fullWidth
-                    label="Old Password"
-                    placeholder="Old Password"
-                    error={fieldState.invalid}
-                    helperText={fieldState.error?.message}
-                  ></TextFieldPassword>
-                )}
+                label="Old Password"
+                placeholder="Old password"
+                requiredMessage="Please enter old password"
               />
-            </Box>
-            <Box sx={{ mt: 4 }}>
-              <Controller
+              <CryptoPasswordField
+                control={formApi.control}
                 name="password"
-                control={formApi.control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Please enter password",
-                  },
-                  minLength: {
-                    value: 8,
-                    message: "Please enter at least 8 characters",
-                  },
-                  maxLength: {
-                    value: 128,
-                    message: "Please enter no more than 128 characters",
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <TextFieldPassword
-                    {...field}
-                    required
-                    fullWidth
-                    label="Password"
-                    placeholder="Password"
-                    error={fieldState.invalid}
-                    helperText={fieldState.error?.message}
-                  ></TextFieldPassword>
-                )}
+                label="Password"
+                placeholder="Password"
+                requiredMessage="Please enter password"
               />
-            </Box>
-            <Box sx={{ mt: 4 }}>
-              <Controller
-                name="confirmPassword"
+              <CryptoPasswordField
                 control={formApi.control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Please enter confirm password",
-                  },
-                  minLength: {
-                    value: 8,
-                    message: "Please enter at least 8 characters",
-                  },
-                  maxLength: {
-                    value: 128,
-                    message: "Please enter no more than 128 characters",
-                  },
-                  validate: (value, formValues) => {
-                    if (value !== formValues.password) {
-                      return "The password confirmation does not match the password";
-                    }
-                    return true;
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <TextFieldPassword
-                    {...field}
-                    required
-                    fullWidth
-                    label="Confirm Password"
-                    placeholder="Confirm password"
-                    error={fieldState.invalid}
-                    helperText={fieldState.error?.message}
-                  ></TextFieldPassword>
-                )}
-              ></Controller>
-            </Box>
-          </Box>
-          <DialogActions sx={{ pt: 4 }}>
-            <Button onClick={onCancel}>Cancel</Button>
-            <Button onClick={formApi.handleSubmit(onSubmit)}>Submit</Button>
-          </DialogActions>
-        </DialogContent>
-      </Loading>
-    </Dialog>
+                name="confirmPassword"
+                label="Confirm Password"
+                placeholder="Confirm password"
+                requiredMessage="Please enter confirm password"
+                matchField="password"
+              />
+            </Flex>
+          </form>
+          <Flex gap="3" justify="end" mt="4">
+            <Button variant="outline" disabled={loading} onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button loading={loading} onClick={formApi.handleSubmit(onSubmit)}>
+              Submit
+            </Button>
+          </Flex>
+        </Loading>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

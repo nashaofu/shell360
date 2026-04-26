@@ -1,18 +1,16 @@
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Icon,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  OutlinedInput,
-} from "@mui/material";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Dropdown, useKeys } from "shared";
+import { useCallback, useMemo, useState } from "react";
+import {
+  AddIcon,
+  DeleteIcon,
+  EditIcon,
+  KeyIcon,
+  MoreIcon,
+  useKeys,
+} from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
@@ -25,7 +23,6 @@ import GenerateKey from "./GenerateKey";
 
 export default function Keys() {
   const [keyword, setKeyword] = useState("");
-  const selectedKeyRef = useRef<Key>(null);
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -52,7 +49,7 @@ export default function Keys() {
   }, []);
 
   const onAddKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;
@@ -61,7 +58,7 @@ export default function Keys() {
   }, [isSubscription, keys.length, setOpen]);
 
   const onGenerateKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;
@@ -96,64 +93,28 @@ export default function Keys() {
     [onAddKeyButtonClick, onGenerateKeyButtonClick],
   );
 
-  const itemMenus = useMemo(
-    () => [
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
-          </>
-        ),
-        value: "Edit",
-        onClick: () => {
-          setIsOpenAddKey(true);
-          setEditKey(selectedKeyRef.current || undefined);
-          selectedKeyRef.current = null;
+  const onDeleteKey = useCallback(
+    (key: Key) => {
+      modal.confirm({
+        title: "Delete Confirmation",
+        content: `Are you sure to delete the key: ${key.name}?`,
+        OkButtonProps: {
+          color: "orange",
         },
-      },
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
-          </>
-        ),
-        value: "Delete",
-        onClick: () => {
-          const selectedKey = selectedKeyRef.current;
-          selectedKeyRef.current = null;
-          if (!selectedKey) {
-            return;
+        onOk: async () => {
+          try {
+            await deleteKey(key);
+          } catch (err) {
+            message.error({
+              message: get(err, "message") || "Deletion failed",
+            });
+            throw err;
           }
-          const deleteKeyName = selectedKey.name;
 
-          modal.confirm({
-            title: "Delete Confirmation",
-            content: `Are you sure to delete the key: ${deleteKeyName}?`,
-            OkButtonProps: {
-              color: "warning",
-            },
-            onOk: async () => {
-              try {
-                await deleteKey(selectedKey);
-              } catch (err) {
-                message.error({
-                  message: get(err, "message") || "Deletion failed",
-                });
-                throw err;
-              }
-
-              refreshKeys();
-            },
-          });
+          refreshKeys();
         },
-      },
-    ],
+      });
+    },
     [message, modal, refreshKeys],
   );
 
@@ -161,77 +122,83 @@ export default function Keys() {
     <Page
       title="Keys"
       headerRight={
-        <Dropdown menus={headerRightMenus}>
-          {({ onChangeOpen }) => (
-            <IconButton
-              sx={(theme) => ({
-                ml: 2,
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <button
+              type="button"
+              style={{
+                marginLeft: 8,
+                background: "none",
+                border: "none",
                 color: "inherit",
-                [theme.breakpoints.up("sm")]: {
-                  display: "none",
-                },
-              })}
-              edge="end"
-              size="small"
-              onClick={(event) => onChangeOpen(event.currentTarget)}
+                cursor: "pointer",
+                padding: 4,
+              }}
             >
-              <Icon className="icon-more" />
-            </IconButton>
-          )}
-        </Dropdown>
+              <MoreIcon />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+            {headerRightMenus.map((item) => (
+              <DropdownMenu.Item
+                key={item.value}
+                onSelect={() => item.onClick?.()}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       }
     >
-      <Box
-        sx={{
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 600,
-            flexGrow: 1,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ maxWidth: 600, flexGrow: 1 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Box
-          sx={(theme) => ({
-            ml: 2,
-            [theme.breakpoints.down("sm")]: {
-              display: "none",
-            },
-          })}
-        >
-          <Dropdown menus={menus}>
-            {({ onChangeOpen }) => (
-              <ButtonGroup variant="contained">
-                <Button
-                  startIcon={<Icon className="icon-add" />}
-                  onClick={onAddKeyButtonClick}
-                >
-                  Add key
+        </div>
+        <div style={{ marginLeft: 16 }}>
+          <div style={{ display: "flex", gap: 1 }}>
+            <Button onClick={onAddKeyButtonClick}>
+              <AddIcon />
+              Add key
+            </Button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <Button variant="soft">
+                  <MoreIcon />
                 </Button>
-                <Button
-                  size="small"
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
-                >
-                  <Icon className="icon-more" />
-                </Button>
-              </ButtonGroup>
-            )}
-          </Dropdown>
-        </Box>
-      </Box>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                {menus.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.value}
+                    onSelect={() => item.onClick?.()}
+                  >
+                    {item.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          </div>
+        </div>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -241,42 +208,56 @@ export default function Keys() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<Icon className="icon-key" />}
+            icon={<KeyIcon />}
             title={item.name}
             extra={
-              <Box onClick={(event) => event.stopPropagation()}>
-                <Dropdown
-                  menus={itemMenus}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
-                    <IconButton
-                      onClick={(event) => {
-                        selectedKeyRef.current = item;
-                        onChangeOpen(event.currentTarget);
+              <div onClick={(event) => event.stopPropagation()}>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    <button
+                      type="button"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "inherit",
+                        padding: 4,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
                       }}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
-                  )}
-                </Dropdown>
-              </Box>
+                      <MoreIcon />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  >
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        setEditKey(item);
+                        setIsOpenAddKey(true);
+                      }}
+                    >
+                      <EditIcon style={{ marginRight: 8 }} />
+                      Edit
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => onDeleteKey(item)}>
+                      <DeleteIcon style={{ marginRight: 8 }} />
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </div>
             }
           />
         ))}
       </AutoRepeatGrid>
       {!items.length && (
         <Empty desc="There is no key yet, add it now.">
-          <Button variant="contained" onClick={() => setIsOpenAddKey(true)}>
-            Add key
-          </Button>
+          <Button onClick={() => setIsOpenAddKey(true)}>Add key</Button>
         </Empty>
       )}
 

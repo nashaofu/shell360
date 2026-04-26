@@ -1,0 +1,216 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+  justify-content: start;
+  gap: 10px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 14px;
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
+  border-radius: 12px;
+  background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
+  box-shadow: var(--app-shadow-card, none);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--app-panel-border, var(--gray-a7));
+  background: color-mix(in srgb, var(--app-panel-bg, var(--color-panel-solid)) 92%, var(--app-hover-bg, var(--gray-a2)));
+  box-shadow: 0 6px 18px rgba(18, 25, 38, 0.055);
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.cardInfo {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fingerprint {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 10px;
+  color: var(--gray-9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listName {
+  max-width: 220px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-9) 12%, transparent);
+  color: var(--accent-11);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.protectedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--amber-9) 12%, transparent);
+  color: var(--amber-11);
+  flex-shrink: 0;
+}
+
+.stateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--gray-9) 10%, transparent);
+  color: var(--gray-11);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.certBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--green-9) 10%, transparent);
+  color: var(--green-11);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 9px;
+  border-top: 1px solid var(--app-soft-border, var(--gray-a4));
+}
+
+.primaryBtn {
+  flex: 1;
+  height: 26px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-9) 30%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent-9) 10%, transparent);
+  color: var(--accent-11);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.13s ease,
+    border-color 0.13s ease;
+}
+
+.primaryBtn:hover {
+  background: color-mix(in srgb, var(--accent-9) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent-9) 50%, transparent);
+}
+
+.dangerBtn {
+  height: 26px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gray-10);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.dangerBtn:hover {
+  background: color-mix(in srgb, var(--red-9) 12%, transparent);
+  border-color: color-mix(in srgb, var(--red-9) 24%, transparent);
+  color: var(--red-11);
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}

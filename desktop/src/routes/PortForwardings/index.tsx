@@ -1,23 +1,27 @@
-import { Box, Button, Icon, OutlinedInput } from "@mui/material";
+import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
-import { useHosts, usePortForwardings } from "shared";
+import { AddIcon, useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
+import AddPortForwarding from "@/components/AddPortForwarding";
 import Empty from "@/components/Empty";
-import Page from "@/components/Page";
-
-import AddPortForwarding from "./AddPortForwarding";
+import ListToolbar from "@/components/ListToolbar";
+import { useListView } from "@/hooks/useListView";
+import panel from "@/styles/panel.module.less";
+import { filterByKeyword } from "@/utils/list";
+import styles from "./index.module.less";
 import PortForwardingItem from "./PortForwardingItem";
+import { usePortForwardingRuntime } from "./usePortForwardingRuntime";
 
 export default function PortForwardings() {
-  const { data: hosts } = useHosts();
-  const { data: portForwardings } = usePortForwardings();
+  const { data: hosts = [] } = useHosts();
+  const { data: portForwardings = [] } = usePortForwardings();
 
-  const [keyword, setKeyword] = useState("");
+  const { keyword, setKeyword, viewMode, setViewMode } = useListView();
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
   const [editItem, setEditItem] = useState<PortForwarding>();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
+  const getPortForwardingRuntime = usePortForwardingRuntime();
 
   const hostsMap = useMemo(
     () => new Map(hosts.map((item) => [item.id, item])),
@@ -34,70 +38,103 @@ export default function PortForwardings() {
     setIsOpenAddPortForwarding(true);
   }, []);
 
+  const filteredItems = useMemo(() => {
+    return filterByKeyword(portForwardings, keyword, [
+      (item) => item.name,
+      (item) => item.portForwardingType,
+      (item) => `${item.localAddress}:${item.localPort}`,
+      (item) => `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`,
+      (item) => {
+        const host = hostsMap.get(item.hostId);
+        return host?.name;
+      },
+      (item) => {
+        const host = hostsMap.get(item.hostId);
+        return host?.hostname;
+      },
+    ]);
+  }, [hostsMap, keyword, portForwardings]);
+
   return (
-    <Page title="Port forwardings">
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          my: 2,
-        }}
-      >
-        <Box
-          sx={{
-            flexGrow: 1,
-            maxWidth: 380,
-            mr: 2,
-          }}
+    <>
+      <section className={panel.page}>
+        <ListToolbar
+          title="Tunnels"
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder="Filter tunnels..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         >
-          <OutlinedInput
-            value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </Box>
-        <Button
-          variant="contained"
-          sx={{
-            height: 40,
-          }}
-          startIcon={<Icon className="icon-add" />}
-          onClick={() => setIsOpenAddPortForwarding(true)}
-        >
-          Add
-        </Button>
-      </Box>
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-          mt: 2,
-        }}
-        itemWidth={360}
-      >
-        {portForwardings.map((item) => (
-          <PortForwardingItem
-            key={item.id}
-            item={item}
-            hostsMap={hostsMap}
-            onEdit={() => onEdit(item)}
-            onOpenAddKey={() => setAddKeyOpen(true)}
-          />
-        ))}
-      </AutoRepeatGrid>
-      {!portForwardings.length && (
-        <Empty desc="There is no port forwarding yet, add it now.">
-          <Button
-            variant="contained"
+          <button
+            type="button"
+            className={clsx(panel.button, panel.buttonPrimary)}
             onClick={() => setIsOpenAddPortForwarding(true)}
           >
-            Add port forwarding
-          </Button>
-        </Empty>
-      )}
+            <AddIcon width="11" height="11" />
+            New Tunnel
+          </button>
+        </ListToolbar>
+        <div className={panel.content}>
+          {filteredItems.length && viewMode === "list" ? (
+            <div className={panel.tableWrap}>
+              <table className={panel.table}>
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }} />
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Local Address</th>
+                    <th>Local Port</th>
+                    <th>Remote Address</th>
+                    <th>Remote Port</th>
+                    <th>Host</th>
+                    <th>Status</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <PortForwardingItem
+                      key={item.id}
+                      item={item}
+                      hostsMap={hostsMap}
+                      runtime={getPortForwardingRuntime(item)}
+                      viewMode="list"
+                      onEdit={() => onEdit(item)}
+                      onOpenAddKey={() => setAddKeyOpen(true)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : filteredItems.length ? (
+            <div className={styles.grid}>
+              {filteredItems.map((item) => (
+                <PortForwardingItem
+                  key={item.id}
+                  item={item}
+                  hostsMap={hostsMap}
+                  runtime={getPortForwardingRuntime(item)}
+                  viewMode="grid"
+                  onEdit={() => onEdit(item)}
+                  onOpenAddKey={() => setAddKeyOpen(true)}
+                />
+              ))}
+            </div>
+          ) : (
+            <Empty desc="There is no tunnel yet, add it now.">
+              <button
+                type="button"
+                className={clsx(panel.button, panel.buttonPrimary)}
+                onClick={() => setIsOpenAddPortForwarding(true)}
+              >
+                New Tunnel
+              </button>
+            </Empty>
+          )}
+        </div>
+      </section>
 
       <AddPortForwarding
         open={isOpenAddPortForwarding}
@@ -111,6 +148,6 @@ export default function PortForwardings() {
         onCancel={() => setAddKeyOpen(false)}
         onOk={() => setAddKeyOpen(false)}
       />
-    </Page>
+    </>
   );
 }

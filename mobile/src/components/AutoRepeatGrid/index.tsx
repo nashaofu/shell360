@@ -1,13 +1,26 @@
-import { Box, type SxProps, type Theme } from "@mui/material";
-import type { ReactNode } from "react";
-
+import type { CSSProperties, ReactNode } from "react";
+import styles from "./index.module.less";
 import useAutoRepeatGridTemplateColumns from "./useAutoRepeatGridTemplateColumns";
 
 type AutoRepeatGridProps = {
   itemWidth: number;
-  sx: SxProps<Theme>;
+  sx: {
+    gap?: number | string;
+    mt?: number;
+    mb?: number;
+  };
   children: ReactNode;
 };
+
+function toSpace(value?: number | string) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return `${value * 8}px`;
+  }
+  return value;
+}
 
 export default function AutoRepeatGrid({
   itemWidth,
@@ -17,18 +30,16 @@ export default function AutoRepeatGrid({
   const { gridElRef, gridTemplateColumns } =
     useAutoRepeatGridTemplateColumns(itemWidth);
 
+  const gridStyle: CSSProperties = {
+    gridTemplateColumns,
+    gap: toSpace(sx?.gap),
+    marginTop: toSpace(sx?.mt),
+    marginBottom: toSpace(sx?.mb),
+  };
+
   return (
-    <Box
-      ref={gridElRef}
-      sx={[
-        {
-          display: "grid",
-          gridTemplateColumns,
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
+    <div ref={gridElRef} className={styles.grid} style={gridStyle}>
       {children}
-    </Box>
+    </div>
   );
 }

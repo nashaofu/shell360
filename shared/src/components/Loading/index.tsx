@@ -1,19 +1,22 @@
-import {
-  alpha,
-  Box,
-  CircularProgress,
-  type SxProps,
-  type Theme,
-} from "@mui/material";
-import type { ReactNode } from "react";
+import { Spinner } from "@radix-ui/themes";
+import type { CSSProperties, ReactNode } from "react";
+
+import styles from "./index.module.less";
 
 export type LoadingProps = {
-  sx?: SxProps<Theme>;
+  sx?: CSSProperties | Array<CSSProperties | undefined>;
   loading?: boolean;
   size?: string | number;
   progress?: number;
   children?: ReactNode;
 };
+
+function getSpinnerSize(size: string | number): "1" | "2" | "3" {
+  const num = typeof size === "number" ? size : Number.parseInt(size, 10);
+  if (num < 20) return "1";
+  if (num <= 28) return "2";
+  return "3";
+}
 
 export function Loading({
   sx,
@@ -22,39 +25,21 @@ export function Loading({
   children,
   progress,
 }: LoadingProps) {
+  const rootStyle = Array.isArray(sx)
+    ? Object.assign({}, ...sx.filter(Boolean))
+    : sx;
+
   return (
-    <Box
-      sx={[
-        {
-          position: "relative",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
+    <div className={styles.root} style={rootStyle}>
       {children}
       {loading && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 100,
-            backgroundColor: (theme) =>
-              alpha(theme.palette.background.paper, 0.5),
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <CircularProgress size={size} />
+        <div className={styles.overlay}>
+          <Spinner size={getSpinnerSize(size)} />
           {progress !== undefined && (
-            <Box sx={{ mt: 3, fontWeight: "bold" }}>{progress}%</Box>
+            <div className={styles.progress}>{progress}%</div>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

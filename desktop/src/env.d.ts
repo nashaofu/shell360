@@ -17,6 +17,21 @@ interface RsbuildTypeOptions {
   strictImportMetaEnv: true;
 }
 
+declare module "*.less";
+
+declare module "*.module.less" {
+  const classes: Record<string, string>;
+  export default classes;
+}
+
+declare module "*.svg" {
+  import type { ComponentType, SVGProps } from "react";
+
+  const SvgComponent: ComponentType<SVGProps<SVGSVGElement>>;
+  export default SvgComponent;
+  export const ReactComponent: ComponentType<SVGProps<SVGSVGElement>>;
+}
+
 interface Window {
   umami: {
     track: {

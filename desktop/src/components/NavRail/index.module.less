@@ -1,0 +1,74 @@
+.navRail {
+  width: var(--nav-rail-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  border-right: 1px solid var(--app-panel-border, var(--gray-a3));
+  background: var(--gray-3);
+  flex-shrink: 0;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-section-gap);
+  padding: 0;
+  align-items: center;
+}
+
+.navSpacer {
+  flex: 1;
+}
+
+.navBottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nav-section-gap);
+  padding: 0;
+}
+
+.navItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--nav-item-size);
+  height: var(--nav-item-size);
+  flex-shrink: 0;
+  position: relative;
+  padding: 0;
+  border: none;
+  border-radius: var(--nav-item-radius);
+  background: transparent;
+  color: var(--gray-10);
+  cursor: pointer;
+  transition: background-color 0.13s ease, color 0.13s ease;
+}
+
+.navItem:hover {
+  background: var(--app-hover-bg, var(--gray-a3));
+  color: var(--gray-12);
+}
+
+.active {
+  background: var(--accent-a3);
+  color: var(--accent-11);
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 16px;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent-9);
+  }
+}
+
+.navIcon {
+  font-size: 18px;
+}

@@ -1,13 +1,13 @@
-import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
-
-import { Dropdown } from "@/components/Dropdown";
 import { useHosts } from "@/hooks/useHosts";
+import { MoreIcon } from "../../Icon";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
+import styles from "../styles.module.less";
 
 import {
   AuthenticationForm,
@@ -38,15 +38,6 @@ export default function AuthenticationError({
       keyId: host?.keyId ?? "",
     },
   });
-
-  // const authMethods = useMemo(() => {
-  //   const kind = get(error, 'kind');
-  //   if (kind === 'Password' || kind === 'PublicKey' || kind === 'Certificate') {
-  //     return get(error, 'methodSet');
-  //   }
-  // }, [error]);
-
-  // console.log(authMethods);
 
   const errorInfo = useMemo(() => {
     const kind = get(error, "kind");
@@ -102,65 +93,40 @@ export default function AuthenticationError({
   );
 
   return (
-    <Box component="form" noValidate autoComplete="off">
+    <form className={styles.authForm} noValidate autoComplete="off">
       <ErrorText title={errorInfo.title} message={errorInfo.message} />
       <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
+      <div className={styles.actions}>
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
-        <Dropdown
-          menus={[
-            {
-              label: "Save and continue",
-              value: "Save and continue",
-              onClick: formApi.handleSubmit((values) =>
-                onContinue(values, true),
-              ),
-            },
-          ]}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-        >
-          {({ onChangeOpen }) => (
-            <ButtonGroup
-              sx={{
-                minWidth: 150,
-              }}
-              variant="contained"
-              color="primary"
-            >
-              <Button
-                fullWidth
-                onClick={formApi.handleSubmit((values) =>
-                  onContinue(values, false),
-                )}
-              >
-                Continue
+        <div className={styles.splitButtonGroup}>
+          <Button
+            className={styles.splitPrimaryButton}
+            onClick={formApi.handleSubmit((values) =>
+              onContinue(values, false),
+            )}
+          >
+            Continue
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button className={styles.splitMenuButton}>
+                <MoreIcon />
               </Button>
-              <Button
-                size="small"
-                onClick={(event) => onChangeOpen(event.currentTarget)}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+              <DropdownMenu.Item
+                onSelect={() => {
+                  formApi.handleSubmit((values) => onContinue(values, true))();
+                }}
               >
-                <Icon className="icon-more" />
-              </Button>
-            </ButtonGroup>
-          )}
-        </Dropdown>
-      </Box>
-    </Box>
+                Save and continue
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        </div>
+      </div>
+    </form>
   );
 }

@@ -1,4 +1,4 @@
-import { TableCell, TableHead, TableRow, TableSortLabel } from "@mui/material";
+import styles from "./SftpTableHead.module.less";
 
 import { type SftpTableCell, SftpTableOrder } from "./types";
 
@@ -31,8 +31,8 @@ export function SftpTableHead<T extends Record<string, unknown>>({
           );
         })}
       </colgroup>
-      <TableHead>
-        <TableRow>
+      <thead>
+        <tr>
           {cells.map((item) => {
             const isSortable = typeof item.compare === "function";
             const isActive = orderBy === item.id;
@@ -40,22 +40,30 @@ export function SftpTableHead<T extends Record<string, unknown>>({
             const sx = item.sx?.(true);
 
             return (
-              <TableCell
+              <th
                 key={item.id}
-                align={item.align}
-                sx={[
-                  {
-                    width: item.width,
-                    minWidth: item.minWidth,
-                    maxWidth: item.maxWidth,
-                  },
-                  ...(Array.isArray(sx) ? sx : [sx]),
-                ]}
+                className={styles.headerCell}
+                style={{
+                  width: item.width,
+                  minWidth: item.minWidth,
+                  maxWidth: item.maxWidth,
+                  textAlign: (item.align || "left") as
+                    | "left"
+                    | "center"
+                    | "right"
+                    | "justify"
+                    | "inherit",
+                  ...(sx || {}),
+                }}
               >
                 {isSortable ? (
-                  <TableSortLabel
-                    active={isActive}
-                    direction={order}
+                  <button
+                    type="button"
+                    className={
+                      isActive
+                        ? `${styles.sortButton} ${styles.sortButtonActive}`
+                        : styles.sortButton
+                    }
                     onClick={() =>
                       onSort(
                         item.key,
@@ -64,15 +72,16 @@ export function SftpTableHead<T extends Record<string, unknown>>({
                     }
                   >
                     {item.title}
-                  </TableSortLabel>
+                    <span className={styles.sortIcon}>{isAsc ? "^" : "v"}</span>
+                  </button>
                 ) : (
                   item.title
                 )}
-              </TableCell>
+              </th>
             );
           })}
-        </TableRow>
-      </TableHead>
+        </tr>
+      </thead>
     </>
   );
 }

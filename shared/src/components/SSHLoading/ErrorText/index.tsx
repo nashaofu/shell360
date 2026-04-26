@@ -1,5 +1,6 @@
-import { Alert, Box } from "@mui/material";
 import type { ReactNode } from "react";
+
+import styles from "../styles.module.less";
 
 export type ErrorTextProps = {
   title?: ReactNode;
@@ -8,11 +9,9 @@ export type ErrorTextProps = {
 
 export default function ErrorText({ title, message }: ErrorTextProps) {
   return (
-    <Box sx={{ mb: 5 }}>
-      <Box sx={{ fontWeight: 500, fontSize: 14, mb: 1 }}>{title}</Box>
-      <Alert severity="error" icon={false}>
-        {message}
-      </Alert>
-    </Box>
+    <div className={styles.errorTextBlock}>
+      <div className={styles.errorTextTitle}>{title}</div>
+      <div className={styles.errorTextMessage}>{message}</div>
+    </div>
   );
 }

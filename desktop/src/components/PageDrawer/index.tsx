@@ -1,15 +1,23 @@
 import {
-  Box,
-  Divider,
-  Drawer,
-  Icon,
+  Heading,
   IconButton,
-  Typography,
-} from "@mui/material";
-import type { ReactNode } from "react";
-import { Loading } from "shared";
+  Portal,
+  Separator,
+  Spinner,
+  Theme,
+} from "@radix-ui/themes";
+import clsx from "clsx";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { ArrowRightIcon } from "shared";
 
-import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
+import { TITLE_BAR_HEIGHT } from "@/utils/titleBar";
+import styles from "./index.module.less";
 
 type PageDrawerProps = {
   loading?: boolean;
@@ -28,70 +36,88 @@ export default function PageDrawer({
   footer,
   onCancel,
 }: PageDrawerProps) {
+  const [closing, setClosing] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    if (timerRef.current !== null) return;
+    setClosing(true);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      setClosing(false);
+      onCancel();
+    }, 200);
+  }, [onCancel]);
+
+  const handleKeyDownRef = useRef(handleCancel);
+  handleKeyDownRef.current = handleCancel;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleKeyDownRef.current();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  if (!open && !closing) return null;
+
   return (
-    <Drawer
-      open={open}
-      anchor="right"
-      sx={{
-        "& .MuiDrawer-paper": {
-          width: 420,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 2,
-          py: 1,
-          mt: `${TITLE_BAR_HEIGHT}px`,
-        }}
-      >
-        <Typography variant="h6">{title}</Typography>
-        {!loading && (
-          <IconButton size="small" onClick={onCancel}>
-            <Icon className="icon-arrow-right" />
-          </IconButton>
-        )}
-      </Box>
-      <Divider />
-      <Loading
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        loading={loading}
-        size={32}
-      >
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflow: "auto",
-            px: 2,
-            py: 2.5,
-          }}
-        >
-          {children}
-        </Box>
-      </Loading>
-      {footer && (
-        <>
-          <Divider />
-          <Box
-            sx={{
-              p: 2,
-            }}
+    <Portal>
+      <Theme asChild>
+        <div className={clsx(styles.overlay, closing && styles.closingOverlay)}>
+          <div
+            className={clsx(styles.panel, closing && styles.closingPanel)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="page-drawer-title"
+            tabIndex={-1}
+            onClick={(e) => e.stopPropagation()}
           >
-            {footer}
-          </Box>
-        </>
-      )}
-    </Drawer>
+            <div
+              className={styles.header}
+              style={{ marginTop: TITLE_BAR_HEIGHT }}
+            >
+              <Heading id="page-drawer-title" size="4" weight="medium">
+                {title}
+              </Heading>
+              {!loading && (
+                <IconButton
+                  type="button"
+                  variant="ghost"
+                  color="gray"
+                  aria-label="Close"
+                  onClick={handleCancel}
+                >
+                  <ArrowRightIcon />
+                </IconButton>
+              )}
+            </div>
+            <Separator size="4" />
+            <div className={clsx(styles.body, loading && styles.bodyLoading)}>
+              <div className={styles.content}>{children}</div>
+              {loading && (
+                <div className={styles.spinnerOverlay}>
+                  <Spinner size="3" />
+                </div>
+              )}
+            </div>
+            {footer && (
+              <>
+                <Separator size="4" />
+                <div className={styles.footer}>{footer}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </Theme>
+    </Portal>
   );
 }

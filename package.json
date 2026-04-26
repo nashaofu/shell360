@@ -14,11 +14,11 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.4.7",
-    "@dotenvx/dotenvx": "^1.51.1",
-    "@tauri-apps/cli": "^2.10.1",
+    "@biomejs/biome": "^2.4.16",
+    "@dotenvx/dotenvx": "^1.69.2",
+    "@tauri-apps/cli": "^2.11.2",
     "glob": "^13.0.6",
-    "got": "^14.6.6",
-    "typescript": "^5.9.3"
+    "got": "^15.0.5",
+    "typescript": "^6.0.3"
   }
 }

@@ -1,4 +1,4 @@
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 function select(el: HTMLElement) {
   if (
@@ -66,4 +66,8 @@ export function paste(pasteEl: HTMLElement | null, content?: string) {
   select(pasteEl);
   document.execCommand("insertText", false, content);
   clear(pasteEl, "end");
+}
+
+export async function readClipboard() {
+  return await readText();
 }

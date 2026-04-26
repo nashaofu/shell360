@@ -1,19 +1,8 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Icon,
-  IconButton,
-  TextField,
-} from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
+import { CloseIcon, FileIcon } from "shared";
 import type { SSHSftpFile } from "tauri-plugin-ssh";
-
 import useMessage from "@/hooks/useMessage";
+import styles from "./FileEditorModal.module.less";
 
 type FileEditorModalProps = {
   open: boolean;
@@ -36,23 +25,35 @@ export default function FileEditorModal({
   const message = useMessage();
 
   useEffect(() => {
-    if (open && file) {
-      setLoading(true);
-      onLoadContent()
-        .then((fileContent) => {
-          setContent(fileContent);
-        })
-        .catch((err) => {
-          console.error("Failed to load file:", err);
-          message.error({
-            message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
-          });
-          onClose();
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+    if (!open || !file) {
+      return;
     }
+    let cancelled = false;
+    setLoading(true);
+    onLoadContent()
+      .then((fileContent) => {
+        if (cancelled) {
+          return;
+        }
+        setContent(fileContent);
+      })
+      .catch((err) => {
+        if (cancelled) {
+          return;
+        }
+        message.error({
+          message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
+        });
+        onClose();
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open, file, onLoadContent, onClose, message]);
 
   const handleSave = useCallback(async () => {
@@ -77,94 +78,57 @@ export default function FileEditorModal({
     onClose();
   }, [onClose]);
 
+  if (!open) {
+    return null;
+  }
+
   return (
-    <Dialog open={open} fullScreen onClose={handleCancel}>
-      <DialogTitle
-        sx={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Icon
-          className="icon-file"
-          sx={{
-            mr: 1,
-          }}
-        />
-        <Box sx={{ flex: 1 }}>Edit: {file?.name}</Box>
-        <IconButton
-          size="small"
-          edge="end"
-          sx={{
-            color: "inherit",
-            ml: 2,
-          }}
-          disabled={loading || saving}
-          onClick={handleCancel}
-        >
-          <Icon className="icon-close" fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent
-        dividers
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          p: 0,
-        }}
-      >
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flex: 1,
-            }}
+    <div className={styles.overlay} role="dialog" aria-modal="true">
+      <div className={styles.modal}>
+        <div className={styles.header}>
+          <FileIcon />
+          <div className={styles.title}>Edit: {file?.name}</div>
+          <button
+            type="button"
+            className={styles.iconButton}
+            disabled={loading || saving}
+            onClick={handleCancel}
           >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TextField
-            multiline
-            fullWidth
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="File content..."
-            disabled={saving}
-            sx={{
-              flex: 1,
-              "& .MuiInputBase-root": {
-                height: "100%",
-                alignItems: "flex-start",
-                fontFamily: "monospace",
-                fontSize: "14px",
-              },
-              "& .MuiInputBase-input": {
-                height: "100% !important",
-                overflow: "auto !important",
-              },
-              "& fieldset": {
-                border: "none",
-              },
-            }}
-          />
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCancel} disabled={loading || saving}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSave}
-          disabled={loading || saving}
-          variant="contained"
-          color="primary"
-          startIcon={saving ? <CircularProgress size={16} /> : undefined}
-        >
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <CloseIcon />
+          </button>
+        </div>
+        <div className={styles.content}>
+          {loading ? (
+            <div className={styles.loadingWrap}>Loading...</div>
+          ) : (
+            <textarea
+              className={styles.editor}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="File content..."
+              disabled={saving}
+            />
+          )}
+        </div>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleCancel}
+            disabled={loading || saving}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={handleSave}
+            disabled={loading || saving}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

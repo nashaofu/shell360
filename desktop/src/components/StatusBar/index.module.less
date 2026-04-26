@@ -1,0 +1,71 @@
+.statusBar {
+  height: var(--status-bar-height, 28px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: var(--gray-3);
+  border-top: 1px solid var(--app-panel-border, var(--gray-a3));
+  position: relative;
+  z-index: 20;
+  font-size: 10px;
+  color: var(--gray-9);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.chip {
+  height: var(--status-bar-height, 28px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: none;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-10);
+  cursor: default;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  span[class^="icon-"] {
+    font-size: 11px;
+    color: var(--gray-9);
+  }
+
+  &:hover {
+    background: var(--app-hover-bg, var(--gray-a3));
+    color: var(--gray-11);
+  }
+}
+
+.value {
+  min-width: 1ch;
+  font-family: monospace;
+  color: var(--gray-10);
+  font-size: 10px;
+  line-height: 1;
+  text-align: right;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background: var(--app-soft-border, var(--gray-a5));
+  margin: 0 3px;
+  flex-shrink: 0;
+}

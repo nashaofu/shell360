@@ -1,7 +1,25 @@
-@import "@fontsource/roboto/300.css";
-@import "@fontsource/roboto/400.css";
-@import "@fontsource/roboto/500.css";
-@import "@fontsource/roboto/700.css";
+@import "@radix-ui/themes/styles.css";
+@import "./vars.css";
+
+.radix-themes:where(.light, .light-theme) {
+  --color-background: #fbfbfc;
+  --color-panel-solid: #ffffff;
+  --color-panel-translucent: rgba(255, 255, 255, 0.9);
+  --color-surface: rgba(255, 255, 255, 0.96);
+
+  --app-workspace-bg: #fbfbfc;
+  --app-panel-bg: #ffffff;
+  --app-elevated-bg: #ffffff;
+  --app-toolbar-bg: #ffffff;
+  --app-status-bg: #f7f7f8;
+  --app-panel-border: var(--gray-a4);
+  --app-soft-border: var(--gray-a3);
+  --app-hover-bg: var(--gray-a3);
+  --app-active-bg: var(--accent-a3);
+  --app-control-bg: #ffffff;
+  --app-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --app-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
 *::-webkit-scrollbar {
   width: 6px;
@@ -19,7 +37,7 @@
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: #7f7f7f;
+  background: var(--gray-a8);
 }
 
 html,
@@ -28,6 +46,8 @@ body,
   height: 100%;
   overflow: hidden;
   user-select: none;
+  margin: 0;
+  padding: 0;
 }
 
 input {

@@ -1,0 +1,38 @@
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: #7f7f7f;
+}
+
+html,
+body,
+#root {
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+input {
+  &::-ms-clear,
+  &::-ms-reveal {
+    display: none;
+  }
+}

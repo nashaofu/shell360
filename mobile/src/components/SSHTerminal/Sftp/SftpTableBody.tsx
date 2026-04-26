@@ -1,5 +1,5 @@
-import { Box, TableBody, TableCell, TableRow } from "@mui/material";
 import SftpFilenameInput from "./SftpFilenameInput";
+import styles from "./SftpTableBody.module.less";
 import type { SftpTableCell } from "./types";
 import type { CreateType } from "./useCreate";
 
@@ -29,69 +29,93 @@ export function SftpTableBody<T extends Record<string, unknown>>({
   onParentClick,
 }: SftpTableBodyProps<T>) {
   return (
-    <TableBody>
+    <tbody>
       {!isRoot && (
-        <TableRow onDoubleClick={onParentClick}>
+        <tr onDoubleClick={onParentClick}>
           {cells.map((item, index) => {
             const sx = item.sx?.(false);
             return (
-              <TableCell key={String(item.key)} align={item.align} sx={sx}>
-                {index === 0 && <Box sx={{ cursor: "pointer" }}>..</Box>}
-              </TableCell>
+              <td
+                key={String(item.key)}
+                className={styles.bodyCell}
+                style={{
+                  textAlign: (item.align || "left") as
+                    | "left"
+                    | "center"
+                    | "right"
+                    | "justify"
+                    | "inherit",
+                  ...(sx || {}),
+                }}
+              >
+                {index === 0 && <div className={styles.parentLink}>..</div>}
+              </td>
             );
           })}
-        </TableRow>
+        </tr>
       )}
       {createType && (
-        <TableRow onDoubleClick={onParentClick}>
+        <tr onDoubleClick={onParentClick}>
           {cells.map((item, index) => {
             const sx = item.sx?.(false);
             return (
-              <TableCell key={String(item.key)} align={item.align} sx={sx}>
+              <td
+                key={String(item.key)}
+                className={styles.bodyCell}
+                style={{
+                  textAlign: (item.align || "left") as
+                    | "left"
+                    | "center"
+                    | "right"
+                    | "justify"
+                    | "inherit",
+                  ...(sx || {}),
+                }}
+              >
                 {index === 0 && (
-                  <Box
-                    sx={{
-                      width: 288,
-                    }}
-                  >
+                  <div className={styles.createInputWrap}>
                     <SftpFilenameInput
                       value={creatingFilename}
                       onChange={onCreatingFilenameChange}
                       onCancel={onCreateCancel}
                       onOk={onCreateOk}
                     ></SftpFilenameInput>
-                  </Box>
+                  </div>
                 )}
-              </TableCell>
+              </td>
             );
           })}
-        </TableRow>
+        </tr>
       )}
       {data.map((row, index) => (
-        <TableRow key={String(row[dataKey] ?? index)}>
+        <tr key={String(row[dataKey] ?? index)}>
           {cells.map((item) => {
             const sx = item.sx?.(false);
 
             return (
-              <TableCell
+              <td
                 key={String(item.key)}
-                align={item.align}
-                sx={[
-                  {
-                    width: item.width,
-                    minWidth: item.minWidth,
-                    maxWidth: item.maxWidth,
-                    overflow: "hidden",
-                  },
-                  ...(Array.isArray(sx) ? sx : [sx]),
-                ]}
+                className={styles.bodyCell}
+                style={{
+                  width: item.width,
+                  minWidth: item.minWidth,
+                  maxWidth: item.maxWidth,
+                  overflow: "hidden",
+                  textAlign: (item.align || "left") as
+                    | "left"
+                    | "center"
+                    | "right"
+                    | "justify"
+                    | "inherit",
+                  ...(sx || {}),
+                }}
               >
                 {item.render(row, index)}
-              </TableCell>
+              </td>
             );
           })}
-        </TableRow>
+        </tr>
       ))}
-    </TableBody>
+    </tbody>
   );
 }

@@ -70,8 +70,7 @@ function tryGetFromLocalStorage<T>(key: string): T[] {
       throw new Error(`localStorage ${key} is not array`);
     }
     return data;
-  } catch (err) {
-    console.log(err);
+  } catch {
     return [];
   }
 }

@@ -1,20 +1,16 @@
-import {
-  AppBar,
-  Box,
-  Dialog,
-  DialogContent,
-  Divider,
-  Icon,
-  IconButton,
-  Paper,
-  Table,
-  TableContainer,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Dropdown, Loading, useSftp } from "shared";
+import {
+  CloseIcon,
+  FileUploadIcon,
+  FolderIcon,
+  getSftpBrowserFiles,
+  Loading,
+  MoreIcon,
+  useSftp,
+  useSftpFileEditor,
+} from "shared";
 import {
   type SSHSession,
   type SSHSftpFile,
@@ -23,6 +19,7 @@ import {
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
+import styles from "./index.module.less";
 import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
@@ -47,8 +44,6 @@ export default function Sftp({ session }: SftpProps) {
   const message = useMessage();
   const [keyword, setKeyword] = useState("");
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
 
   const {
     sftpRef,
@@ -122,35 +117,14 @@ export default function Sftp({ session }: SftpProps) {
     }
   }, []);
 
-  const onEditFile = useCallback((item: SSHSftpFile) => {
-    if (item.fileType === SSHSftpFileType.File) {
-      setEditingFile(item);
-      setIsEditorOpen(true);
-    }
-  }, []);
-
-  const handleLoadFileContent = useCallback(async () => {
-    if (!editingFile || !sftpRef.current) {
-      throw new Error("No file selected or SFTP not initialized");
-    }
-    return await sftpRef.current.sftpReadTextFile(editingFile.path);
-  }, [editingFile, sftpRef]);
-
-  const handleSaveFileContent = useCallback(
-    async (content: string) => {
-      if (!editingFile || !sftpRef.current) {
-        throw new Error("No file selected or SFTP not initialized");
-      }
-      await sftpRef.current.sftpWriteTextFile(editingFile.path, content);
-      refreshDir();
-    },
-    [editingFile, sftpRef, refreshDir],
-  );
-
-  const handleCloseEditor = useCallback(() => {
-    setIsEditorOpen(false);
-    setEditingFile(null);
-  }, []);
+  const {
+    isEditorOpen,
+    editingFile,
+    onEditFile,
+    loadFileContent,
+    saveFileContent,
+    closeEditor,
+  } = useSftpFileEditor({ sftpRef, refreshDir });
 
   const {
     renameLoading,
@@ -178,31 +152,14 @@ export default function Sftp({ session }: SftpProps) {
   });
 
   const data = useMemo(() => {
-    const filteredFiles = (files ?? [])
-      .filter((item) => {
-        if (isShowHiddenFiles) {
-          return true;
-        } else {
-          return !item.name.startsWith(".");
-        }
-      })
-      .filter((item) =>
-        item.name.toLowerCase().includes(keyword.toLowerCase()),
-      );
-
     const sortCell = cells.find((item) => item.key === orderBy);
-    if (!sortCell) {
-      return filteredFiles;
-    } else {
-      return filteredFiles.sort((a, b) => {
-        const compare = sortCell.compare?.(a, b) ?? 0;
-        if (order === SftpTableOrder.Desc) {
-          return compare;
-        } else {
-          return -compare;
-        }
-      });
-    }
+    return getSftpBrowserFiles({
+      files,
+      keyword,
+      showHiddenFiles: isShowHiddenFiles,
+      sortCell,
+      isDesc: order === SftpTableOrder.Desc,
+    });
   }, [cells, files, order, orderBy, keyword, isShowHiddenFiles]);
 
   const isRoot = dirname === "/";
@@ -308,177 +265,126 @@ export default function Sftp({ session }: SftpProps) {
   return (
     <>
       {!initLoading && !initError && (
-        <Box
-          sx={{
-            py: 0.25,
-            px: 1,
-            lineHeight: 0,
-            borderRadius: 1,
-            border: "1px solid",
-            borderColor: (theme) =>
-              isOpen ? theme.palette.primary.main : theme.palette.divider,
-            backgroundColor: (theme) =>
-              isOpen
-                ? theme.palette.action.selected
-                : theme.palette.background.default,
-            color: (theme) =>
-              isOpen ? theme.palette.primary.main : theme.palette.text.primary,
-            ":active": {
-              borderColor: (theme) => theme.palette.primary.main,
-              backgroundColor: (theme) => theme.palette.action.hover,
-              color: (theme) => theme.palette.text.primary,
-            },
-          }}
+        <button
+          type="button"
+          className={
+            isOpen
+              ? `${styles.openButton} ${styles.openButtonActive}`
+              : styles.openButton
+          }
           onClick={() => setIsOpen(true)}
         >
-          <Icon className="icon-folder" />
-        </Box>
+          <FolderIcon />
+        </button>
       )}
-      <Dialog
-        open={isOpen}
-        fullWidth
-        fullScreen
-        sx={{
-          ".MuiDialog-container": {
-            paddingTop: "env(safe-area-inset-top)",
-          },
-          ".MuiDialog-paper": {
-            maxWidth: 880,
-          },
-        }}
-      >
-        <AppBar position="static">
-          <Toolbar>
-            <Typography
-              sx={{
-                flex: 1,
-              }}
-              variant="h6"
-            >
-              SFTP
-            </Typography>
-            <IconButton
-              size="small"
-              edge="end"
-              sx={{
-                color: "inherit",
-                ml: 2,
-              }}
-              disabled={isLoading}
-              onClick={() => setIsOpen(false)}
-            >
-              <Icon className="icon-close" fontSize="small" />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-
-        <DialogContent
-          dividers
-          sx={{
-            p: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Loading
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-            loading={isLoading}
-            size={48}
-            progress={progress}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                p: 1,
-              }}
-            >
-              <SftpBreadcrumbs
-                dirname={dirname}
-                onClick={onSftpBreadcrumbsClick}
-                onNavigate={onNavigatePath}
-              ></SftpBreadcrumbs>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
+      {isOpen && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>SFTP</div>
+              <button
+                type="button"
+                className={styles.iconButton}
+                disabled={isLoading}
+                onClick={() => setIsOpen(false)}
               >
-                <SftpFileSearch
-                  value={keyword}
-                  onChange={setKeyword}
-                ></SftpFileSearch>
-                <IconButton disabled={uploadFileLoading} onClick={uploadFile}>
-                  <Icon className="icon-file-upload"></Icon>
-                </IconButton>
-                <Dropdown
-                  menus={actions}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
-                    <IconButton
-                      onClick={(event) => onChangeOpen(event.currentTarget)}
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className={styles.modalContent}>
+              <Loading
+                sx={{
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                }}
+                loading={isLoading}
+                size={48}
+                progress={progress}
+              >
+                <div className={styles.toolbar}>
+                  <SftpBreadcrumbs
+                    dirname={dirname}
+                    onClick={onSftpBreadcrumbsClick}
+                    onNavigate={onNavigatePath}
+                  ></SftpBreadcrumbs>
+                  <div className={styles.toolbarRight}>
+                    <SftpFileSearch
+                      value={keyword}
+                      onChange={setKeyword}
+                    ></SftpFileSearch>
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      disabled={uploadFileLoading}
+                      onClick={uploadFile}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
-                  )}
-                </Dropdown>
-              </Box>
-            </Box>
-            <Divider />
-            <Paper
-              sx={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
-              <TableContainer ref={tableContainerRef} sx={{ flex: 1 }}>
-                <Table stickyHeader>
-                  <SftpTableHead
-                    cells={cells}
-                    orderBy={orderBy}
-                    order={order}
-                    onSort={onSort}
-                  ></SftpTableHead>
-                  <SftpTableBody
-                    dataKey="name"
-                    data={data}
-                    cells={cells}
-                    isRoot={isRoot}
-                    createType={createType}
-                    creatingFilename={creatingFilename}
-                    onCreatingFilenameChange={onCreatingFilenameChange}
-                    onCreateCancel={onCreateCancel}
-                    onCreateOk={onCreateOk}
-                    onParentClick={onParentClick}
-                  ></SftpTableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Loading>
-        </DialogContent>
-      </Dialog>
+                      <FileUploadIcon />
+                    </button>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        <button type="button" className={styles.iconButton}>
+                          <MoreIcon />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content
+                        side="bottom"
+                        align="end"
+                        sideOffset={4}
+                      >
+                        {actions.map((item) => (
+                          <DropdownMenu.Item
+                            key={item.value}
+                            onSelect={() => item.onClick?.()}
+                          >
+                            {item.label}
+                          </DropdownMenu.Item>
+                        ))}
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
+                  </div>
+                </div>
+                <div className={styles.divider} />
+                <div className={styles.tablePanel}>
+                  <div
+                    ref={tableContainerRef}
+                    className={styles.tableContainer}
+                  >
+                    <table className={styles.table}>
+                      <SftpTableHead
+                        cells={cells}
+                        orderBy={orderBy}
+                        order={order}
+                        onSort={onSort}
+                      ></SftpTableHead>
+                      <SftpTableBody
+                        dataKey="name"
+                        data={data}
+                        cells={cells}
+                        isRoot={isRoot}
+                        createType={createType}
+                        creatingFilename={creatingFilename}
+                        onCreatingFilenameChange={onCreatingFilenameChange}
+                        onCreateCancel={onCreateCancel}
+                        onCreateOk={onCreateOk}
+                        onParentClick={onParentClick}
+                      ></SftpTableBody>
+                    </table>
+                  </div>
+                </div>
+              </Loading>
+            </div>
+          </div>
+        </div>
+      )}
       <FileEditorModal
         open={isEditorOpen}
         file={editingFile}
-        onClose={handleCloseEditor}
-        onSave={handleSaveFileContent}
-        onLoadContent={handleLoadFileContent}
+        onClose={closeEditor}
+        onSave={saveFileContent}
+        onLoadContent={loadFileContent}
       />
     </>
   );

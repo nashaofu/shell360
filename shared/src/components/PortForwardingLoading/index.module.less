@@ -1,0 +1,56 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 440px;
+  max-width: 100%;
+  padding: 20px;
+  background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
+  border: 1px solid var(--app-soft-border, var(--gray-a4));
+  border-radius: 12px;
+  box-shadow: var(--app-shadow-card, none);
+}
+
+.title {
+  padding: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.description {
+  font-size: 12px;
+  user-select: text;
+  word-break: break-all;
+  color: var(--gray-10);
+}
+
+.progressWrap {
+  padding: 18px 0 0;
+}
+
+.errorText {
+  margin: 16px 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  user-select: text;
+  word-break: break-all;
+  color: var(--red-11);
+  border: 1px solid color-mix(in srgb, var(--red-9) 28%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red-3) 44%, transparent);
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actionButton {
+  min-width: 104px;
+}

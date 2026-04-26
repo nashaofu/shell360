@@ -1,0 +1,42 @@
+.bodyCell {
+  height: 40px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--gray-a4);
+  vertical-align: middle;
+  background: var(--color-panel);
+}
+
+.stickyCell {
+  background: var(--gray-3);
+}
+
+.tableRow {
+  transition: background-color 0.1s;
+}
+
+.tableRow:hover td {
+  background-color: var(--gray-a3);
+}
+
+.tableRow:hover .stickyCell {
+  background-color: var(--gray-3);
+}
+
+.parentLink {
+  cursor: pointer;
+  color: var(--accent-11);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 2px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.parentLink:hover {
+  text-decoration: underline;
+}
+
+.createInputWrap {
+  width: 288px;
+}

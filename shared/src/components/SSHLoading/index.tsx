@@ -1,18 +1,15 @@
-import {
-  Box,
-  Icon,
-  LinearProgress,
-  type SxProps,
-  type Theme,
-} from "@mui/material";
+import { Progress } from "@radix-ui/themes";
 import { get } from "lodash-es";
+import type { CSSProperties } from "react";
 
 import { getHostName } from "@/utils/host";
 
+import { HostIcon } from "../Icon";
 import { Loading } from "../Loading";
 import AuthenticationError from "./AuthenticationError";
 import type { ErrorProps } from "./common";
 import DefaultError from "./DefaultError";
+import styles from "./styles.module.less";
 import UnknownKey from "./UnknownKey";
 
 const STATUS_BUTTONS = {
@@ -23,7 +20,8 @@ const STATUS_BUTTONS = {
 };
 
 type SSHLoadingProps = {
-  sx?: SxProps<Theme>;
+  sx?: CSSProperties | Array<CSSProperties | undefined>;
+  command?: string;
 } & ErrorProps;
 
 export function SSHLoading({
@@ -31,6 +29,7 @@ export function SSHLoading({
   loading,
   error,
   sx,
+  command,
   onReConnect,
   onReAuth,
   onRetry,
@@ -40,97 +39,32 @@ export function SSHLoading({
   const errorType = get(error as never, "type") as keyof typeof STATUS_BUTTONS;
 
   const render = STATUS_BUTTONS[errorType] || STATUS_BUTTONS.default;
+  const rootStyle = Array.isArray(sx)
+    ? Object.assign({}, ...sx.filter(Boolean))
+    : sx;
+
   return (
-    <Box
-      sx={[
-        {
-          display: "flex",
-          alignItems: "center",
-          justifySelf: "center",
-          padding: 2,
-          backgroundColor: (theme) => theme.palette.background.paper,
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
-      <Box
-        sx={{
-          width: 480,
-          maxWidth: "100%",
-          minHeight: 260,
-          mx: "auto",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 1.5,
-          }}
-        >
-          <Box
-            sx={{
-              width: 42,
-              height: 42,
-              display: "flex",
-              flexShrink: 0,
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 30,
-              borderRadius: 2,
-              color: (theme) => theme.palette.common.white,
-              bgcolor: (theme) => theme.palette.primary.dark,
-            }}
-          >
-            <Icon className="icon-host" />
-          </Box>
-          <Box
-            sx={{
-              flexGrow: 1,
-              pl: 1.5,
-              overflow: "hidden",
-              userSelect: "text",
-            }}
-          >
-            <Box
-              sx={{
-                fontSize: 14,
-                fontWeight: 600,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {getHostName(host)}
-            </Box>
-            <Box
-              sx={{
-                fontSize: 12,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {`ssh ${host.username}@${host.hostname} -p ${host.port}`}
-            </Box>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            p: 1.5,
-          }}
-        >
-          <LinearProgress color={error ? "error" : "primary"} />
-        </Box>
+    <div className={styles.root} style={rootStyle}>
+      <div className={styles.panel}>
+        <div className={styles.header}>
+          <div className={styles.hostIcon}>
+            <HostIcon />
+          </div>
+          <div className={styles.hostText}>
+            <div className={styles.hostName}>{getHostName(host)}</div>
+            <div
+              className={styles.hostCommand}
+            >{`${command ?? `ssh ${host.username}@${host.hostname} -p ${host.port}`}`}</div>
+          </div>
+        </div>
+        <div className={styles.progressWrap}>
+          <Progress
+            value={error ? 100 : null}
+            color={error ? "red" : undefined}
+          />
+        </div>
         {!!error && (
-          <Box
-            sx={{
-              px: 1.5,
-              py: 1,
-              mx: "auto",
-            }}
-          >
+          <div className={styles.errorSection}>
             <Loading loading={loading}>
               {render({
                 host,
@@ -143,9 +77,9 @@ export function SSHLoading({
                 onOpenAddKey,
               })}
             </Loading>
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

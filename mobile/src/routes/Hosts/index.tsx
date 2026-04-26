@@ -1,28 +1,23 @@
-import {
-  Box,
-  Button,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  OutlinedInput,
-} from "@mui/material";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get, omit } from "lodash-es";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Dropdown,
+  AddIcon,
+  ContentCopyIcon,
+  DeleteIcon,
+  EditIcon,
   getHostDesc,
   getHostName,
+  HostIcon,
   HostTagsSelect,
+  LabelIcon,
+  MoreIcon,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
 import { addHost, deleteHost, type Host } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
@@ -34,7 +29,6 @@ import AddHost from "./AddHost";
 
 export default function Hosts() {
   const [keyword, setKeyword] = useState("");
-  const selectedHostRef = useRef<Host>(null);
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
   const navigate = useNavigate();
@@ -78,7 +72,7 @@ export default function Hosts() {
   );
 
   const onAddHostButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个host
+    // 没订阅时，最多只能创�?个host
     if (!isSubscription && hosts.length >= 3) {
       setOpen(true);
       return;
@@ -92,109 +86,55 @@ export default function Hosts() {
     refreshHosts();
   }, [refreshHosts]);
 
-  const onCopyHost = useCallback(async () => {
-    const selectedHost = selectedHostRef.current;
-    selectedHostRef.current = null;
+  const onCopyHost = useCallback(
+    async (host: Host) => {
+      if (!isSubscription && hosts.length >= 3) {
+        setOpen(true);
+        return;
+      }
 
-    if (!selectedHost) {
-      return;
-    }
+      try {
+        const copiedHost = await addHost({
+          ...omit(host, ["id"]),
+          name: `${getHostName(host)} Copy`,
+        });
 
-    if (!isSubscription && hosts.length >= 3) {
-      setOpen(true);
-      return;
-    }
+        await refreshHosts();
+        setEditHost(copiedHost);
+        setIsOpenAddHost(true);
+      } catch (err) {
+        message.error({
+          message: get(err, "message") || "Copy failed",
+        });
+      }
+    },
+    [hosts.length, isSubscription, message, refreshHosts, setOpen],
+  );
 
-    try {
-      const copiedHost = await addHost({
-        ...omit(selectedHost, ["id"]),
-        name: `${getHostName(selectedHost)} Copy`,
-      });
+  const onDeleteHost = useCallback(
+    (host: Host) => {
+      const hostname = host.name || `${host.hostname}:${host.port}`;
 
-      await refreshHosts();
-      setEditHost(copiedHost);
-      setIsOpenAddHost(true);
-    } catch (err) {
-      message.error({
-        message: get(err, "message") || "Copy failed",
-      });
-    }
-  }, [hosts.length, isSubscription, message, refreshHosts, setOpen]);
-
-  const menus = useMemo(
-    () => [
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
-          </>
-        ),
-        value: "Edit",
-        onClick: () => {
-          setIsOpenAddHost(true);
-          setEditHost(selectedHostRef.current || undefined);
-          selectedHostRef.current = null;
+      modal.confirm({
+        title: "Delete Confirmation",
+        content: `Are you sure to delete the host: ${hostname}?`,
+        OkButtonProps: {
+          color: "orange",
         },
-      },
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-content-copy" />
-            </ListItemIcon>
-            <ListItemText>Copy</ListItemText>
-          </>
-        ),
-        value: "Copy",
-        onClick: onCopyHost,
-      },
-      {
-        label: (
-          <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
-          </>
-        ),
-        value: "Delete",
-        onClick: () => {
-          const selectedHost = selectedHostRef.current;
-          selectedHostRef.current = null;
-
-          if (!selectedHost) {
-            return;
+        onOk: async () => {
+          try {
+            await deleteHost(host);
+          } catch (err) {
+            message.error({
+              message: get(err, "message") || "Deletion failed",
+            });
+            throw err;
           }
-
-          const hostname =
-            selectedHost.name ||
-            `${selectedHost.hostname}:${selectedHost.port}`;
-
-          modal.confirm({
-            title: "Delete Confirmation",
-            content: `Are you sure to delete the host: ${hostname}?`,
-            OkButtonProps: {
-              color: "warning",
-            },
-            onOk: async () => {
-              try {
-                await deleteHost(selectedHost);
-              } catch (err) {
-                message.error({
-                  message: get(err, "message") || "Deletion failed",
-                });
-                throw err;
-              }
-              refreshHosts();
-            },
-          });
+          refreshHosts();
         },
-      },
-    ],
-    [message, modal, onCopyHost, refreshHosts],
+      });
+    },
+    [message, modal, refreshHosts],
   );
 
   return (
@@ -203,104 +143,92 @@ export default function Hosts() {
       headerRight={
         <>
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-            {({ onChangeOpen }) => {
+            {() => {
               return (
-                <IconButton
-                  sx={(theme) => ({
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
                     color: "inherit",
-                    [theme.breakpoints.up("sm")]: {
-                      display: "none",
-                    },
-                  })}
-                  edge="end"
-                  size="small"
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
+                    cursor: "pointer",
+                    padding: 4,
+                  }}
                 >
-                  <Icon className="icon-label" />
-                </IconButton>
+                  <LabelIcon />
+                </button>
               );
             }}
           </HostTagsSelect>
-          <IconButton
-            sx={(theme) => ({
+          <button
+            type="button"
+            style={{
+              background: "none",
+              border: "none",
               color: "inherit",
-              [theme.breakpoints.up("sm")]: {
-                display: "none",
-              },
-            })}
-            edge="end"
-            size="small"
+              cursor: "pointer",
+              padding: 4,
+            }}
             onClick={onAddHostButtonClick}
           >
-            <Icon className="icon-add" />
-          </IconButton>
+            <AddIcon />
+          </button>
         </>
       }
     >
-      <Box
-        sx={{
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 600,
-            flexGrow: 1,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ maxWidth: 600, flexGrow: 1 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Box
-          sx={(theme) => ({
-            ml: 2,
-            [theme.breakpoints.down("sm")]: {
-              display: "none",
-            },
-          })}
-        >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+        </div>
+        <div style={{ marginLeft: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-              {({ onChangeOpen, label }) => (
-                <List component="nav" dense>
-                  <ListItem>
-                    <ListItemButton
-                      onClick={(event) => onChangeOpen(event.currentTarget)}
-                    >
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Icon className="icon-label" />
-                            <Box component="span" sx={{ paddingLeft: 0.5 }}>
-                              {label}
-                            </Box>
-                          </Box>
-                        }
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </List>
+              {({ label }) => (
+                <button
+                  type="button"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    background: "none",
+                    border: "1px solid var(--gray-a6)",
+                    borderRadius: "var(--radius-2)",
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                    color: "inherit",
+                    height: 36,
+                  }}
+                >
+                  <LabelIcon />
+                  {label}
+                </button>
               )}
             </HostTagsSelect>
-            <Button
-              variant="contained"
-              startIcon={<Icon className="icon-add" />}
-              onClick={onAddHostButtonClick}
-            >
+            <Button onClick={onAddHostButtonClick}>
+              <AddIcon />
               Add host
             </Button>
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -310,34 +238,54 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<Icon className="icon-host" />}
+            icon={<HostIcon />}
             title={getHostName(item)}
             desc={getHostDesc(item)}
             extra={
-              <Box onClick={(event) => event.stopPropagation()}>
-                <Dropdown
-                  menus={menus}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
-                    <IconButton
-                      onClick={(event) => {
-                        selectedHostRef.current = item;
-                        onChangeOpen(event.currentTarget);
+              <div onClick={(event) => event.stopPropagation()}>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    <button
+                      type="button"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "inherit",
+                        padding: 4,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
                       }}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
-                  )}
-                </Dropdown>
-              </Box>
+                      <MoreIcon />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  >
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        setEditHost(item);
+                        setIsOpenAddHost(true);
+                      }}
+                    >
+                      <EditIcon style={{ marginRight: 8 }} />
+                      Edit
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
+                      <ContentCopyIcon style={{ marginRight: 8 }} />
+                      Copy
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
+                      <DeleteIcon style={{ marginRight: 8 }} />
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </div>
             }
             onClick={() => onOpenChannel(item)}
           />
@@ -346,9 +294,7 @@ export default function Hosts() {
 
       {!items.length && (
         <Empty desc="There is no host yet, add it now.">
-          <Button variant="contained" onClick={() => setIsOpenAddHost(true)}>
-            Add host
-          </Button>
+          <Button onClick={() => setIsOpenAddHost(true)}>Add host</Button>
         </Empty>
       )}
 

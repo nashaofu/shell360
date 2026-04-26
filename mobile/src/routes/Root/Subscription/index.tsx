@@ -1,51 +1,18 @@
-import {
-  Alert,
-  AppBar,
-  Box,
-  Dialog,
-  DialogContent,
-  type DialogProps,
-  Icon,
-  IconButton,
-  Slide,
-  ThemeProvider,
-  Toolbar,
-  Typography,
-} from "@mui/material";
 import dayjs from "dayjs";
-import { useAtomValue } from "jotai";
 import { get } from "lodash-es";
-import {
-  forwardRef,
-  type ReactElement,
-  type Ref,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { Loading } from "shared";
+import { useEffect, useMemo, useState } from "react";
+import { CloseIcon, ErrorCircleIcon, Loading } from "shared";
 
 import {
   useIsShowPaywallAtom,
   useIsSubscription,
   useLoadableCustomerInfoAtom,
   useLoadableOfferingsAtomValue,
-} from "@/atom/iap";
-import { themeAtom } from "@/atom/themeAtom";
+} from "@/atoms/iap.atom";
 
 import Buy from "./Buy";
 
-const Transition = forwardRef(
-  (
-    props: DialogProps["TransitionProps"] & {
-      children: ReactElement;
-    },
-    ref: Ref<unknown>,
-  ) => <Slide direction="up" ref={ref} {...props} />,
-);
-
 export default function Subscription() {
-  const theme = useAtomValue(themeAtom);
   const isSubscription = useIsSubscription();
   const [open, setOpen] = useIsShowPaywallAtom();
   const loadableOfferingsAtomValue = useLoadableOfferingsAtomValue();
@@ -92,46 +59,60 @@ export default function Subscription() {
     };
   }, []);
 
-  return (
-    <ThemeProvider theme={theme}>
-      <Dialog
-        open={open}
-        fullWidth
-        fullScreen={windowWidth < 580}
-        TransitionComponent={Transition}
-        sx={{
-          ".MuiDialog-container": {
-            paddingTop: "env(safe-area-inset-top)",
-          },
+  return open ? (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        background: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: windowWidth < 580 ? "stretch" : "center",
+        justifyContent: "center",
+        paddingTop: "env(safe-area-inset-top)",
+      }}
+    >
+      <div
+        style={{
+          width: windowWidth < 580 ? "100%" : "min(680px, 92vw)",
+          height: windowWidth < 580 ? "100%" : "auto",
+          maxHeight: windowWidth < 580 ? "100%" : "90vh",
+          overflow: "auto",
+          background: "var(--color-panel-solid)",
+          color: "var(--gray-12)",
+          borderRadius: windowWidth < 580 ? 0 : 12,
         }}
       >
-        <AppBar position="static">
-          <Toolbar>
-            <Typography
-              sx={{
-                flex: 1,
-              }}
-              variant="h6"
-            >
-              Subscription
-            </Typography>
-            <IconButton
-              size="large"
-              edge="end"
-              sx={{
-                color: "inherit",
-                ml: 2,
-              }}
-              disabled={
-                loadableOfferingsAtomValue.state === "loading" || buyLoading
-              }
-              onClick={() => setOpen(false)}
-            >
-              <Icon className="icon-close" />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-        <DialogContent>
+        <div
+          style={{
+            minHeight: 56,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 12px",
+            borderBottom: "1px solid var(--gray-a6)",
+          }}
+        >
+          <div style={{ flex: 1, fontSize: 20, fontWeight: 600 }}>
+            Subscription
+          </div>
+          <button
+            type="button"
+            disabled={
+              loadableOfferingsAtomValue.state === "loading" || buyLoading
+            }
+            onClick={() => setOpen(false)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+              padding: 6,
+            }}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+        <div style={{ padding: 16 }}>
           <Loading
             loading={
               loadableOfferingsAtomValue.state === "loading" || buyLoading
@@ -139,45 +120,37 @@ export default function Subscription() {
             size={32}
           >
             {isSubscription && (
-              <Alert severity="success">
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  background: "var(--green-a3)",
+                  color: "var(--green-11)",
+                }}
+              >
                 Your subscription is about to expire in {expiredTime}
-              </Alert>
+              </div>
             )}
 
-            <Box
-              sx={{
+            <div
+              style={{
                 maxWidth: 420,
-                mr: "auto",
-                ml: "auto",
-                pt: 2,
-                pb: 3,
+                margin: "0 auto",
+                padding: "16px 0 24px",
                 textAlign: "center",
               }}
             >
               {loadableOfferingsAtomValue.state === "loading" && (
-                <Box
-                  sx={{
-                    p: 4,
-                  }}
-                >
-                  Loading...
-                </Box>
+                <div style={{ padding: 32 }}>Loading...</div>
               )}
               {loadableOfferingsAtomValue.state === "hasError" && (
-                <Box
-                  sx={{
-                    textAlign: "center",
-                  }}
-                >
-                  <Icon
-                    sx={{
-                      fontSize: (theme) => theme.typography.h1.fontSize,
-                      color: (theme) => theme.palette.error.light,
-                    }}
-                    className="icon-error-circle"
+                <div style={{ textAlign: "center" }}>
+                  <ErrorCircleIcon
+                    style={{ fontSize: 48, color: "var(--red-9)" }}
                   />
-                  <Typography>Loading failed</Typography>
-                </Box>
+                  <div>Loading failed</div>
+                </div>
               )}
               {loadableOfferingsAtomValue.state === "hasData" && (
                 <Buy
@@ -185,10 +158,10 @@ export default function Subscription() {
                   onLoadingChange={setBuyLoading}
                 />
               )}
-            </Box>
+            </div>
           </Loading>
-        </DialogContent>
-      </Dialog>
-    </ThemeProvider>
-  );
+        </div>
+      </div>
+    </div>
+  ) : null;
 }

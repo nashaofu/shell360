@@ -1,0 +1,105 @@
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.formField {
+  margin-bottom: 12px;
+}
+
+.fieldLabel {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.tagsFieldWrapper {
+  position: relative;
+}
+
+.tagsWrap {
+  min-height: var(--text-field-height);
+  border: 1px solid var(--gray-a7);
+  border-radius: var(--radius-2);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px var(--space-2);
+  background: var(--color-surface);
+  transition: outline 0.1s;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+
+.tagsWrapFocused {
+  outline-color: var(--accent-8);
+}
+
+.tagChip {
+  height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  background: var(--gray-a3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-11);
+  font-size: 12px;
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 120px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--gray-12);
+  font-size: var(--font-size-2);
+  font-family: inherit;
+  height: 24px;
+}
+
+.tagsSuggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: var(--space-1);
+  background: var(--color-panel-solid);
+  border: 1px solid var(--gray-a5);
+  border-radius: max(var(--radius-3), var(--radius-full));
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-4);
+  scrollbar-width: thin;
+}
+
+.tagSuggestionChip {
+  min-height: var(--select-item-height, var(--space-7));
+  border-radius: max(var(--radius-2), var(--radius-full));
+  padding: 0 var(--space-2);
+  display: flex;
+  align-items: center;
+  color: var(--gray-11);
+  font-size: var(--font-size-2);
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+  scroll-margin: var(--space-1) 0;
+
+  &[data-highlighted] {
+    background: var(--accent-a3);
+    color: var(--accent-11);
+    outline: none;
+  }
+
+  &:hover {
+    background: var(--accent-a3);
+    color: var(--accent-11);
+  }
+}
+

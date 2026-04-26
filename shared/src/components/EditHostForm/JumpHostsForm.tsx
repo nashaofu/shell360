@@ -1,46 +1,45 @@
-import {
-  Box,
-  Divider,
-  type SxProps,
-  type Theme,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { SegmentedControl, Text } from "@radix-ui/themes";
 import { Controller } from "react-hook-form";
 
+import { resolveSpacing } from "@/utils/style";
 import JumpHostIdsSelect from "./JumpHostIdsSelect";
+import styles from "./JumpHostsForm.module.less";
 import type { EditHostFormApi } from "./types";
 
 type JumpHostsFormProps = {
   formApi: EditHostFormApi;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
 };
 
 export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
   const jumpHostEnabled = formApi.watch("jumpHostEnabled");
   const hostId = formApi.watch("id");
+  const wrapperStyle = resolveSpacing(sx);
 
   return (
-    <Box sx={sx}>
-      <Divider sx={{ mb: 2 }}>
-        <Typography variant="subtitle1">Jump Hosts</Typography>
-      </Divider>
+    <section className={styles.section} style={wrapperStyle}>
+      <div className={styles.sectionTitleWrap}>
+        <Text size="3" weight="medium">
+          Jump Hosts
+        </Text>
+      </div>
       <Controller
         name="jumpHostEnabled"
         control={formApi.control}
         render={({ field }) => {
           return (
-            <ToggleButtonGroup
-              {...field}
-              onChange={(_, value) => field.onChange(!!value)}
-              exclusive
-              size="small"
-              fullWidth
+            <SegmentedControl.Root
+              style={{ width: "100%" }}
+              value={field.value ? "true" : "false"}
+              onValueChange={(v) => field.onChange(v === "true")}
             >
-              <ToggleButton value={false}>Disabled</ToggleButton>
-              <ToggleButton value={true}>Enabled</ToggleButton>
-            </ToggleButtonGroup>
+              <SegmentedControl.Item value="false">
+                Disabled
+              </SegmentedControl.Item>
+              <SegmentedControl.Item value="true">
+                Enabled
+              </SegmentedControl.Item>
+            </SegmentedControl.Root>
           );
         }}
       />
@@ -69,6 +68,6 @@ export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
           )}
         />
       )}
-    </Box>
+    </section>
   );
 }

@@ -3,9 +3,9 @@
   "compilerOptions": {
     "lib": ["DOM", "ES2020"],
     "jsx": "react-jsx",
-    "baseUrl": ".",
+    "noImplicitAny": false,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],

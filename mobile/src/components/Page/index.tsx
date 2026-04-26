@@ -1,14 +1,8 @@
-import {
-  AppBar,
-  Box,
-  Icon,
-  IconButton,
-  Toolbar,
-  Typography,
-} from "@mui/material";
 import type { ReactNode } from "react";
 
-import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import { MenuIcon } from "shared";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
+import styles from "./index.module.less";
 
 type PageProps = {
   title: ReactNode;
@@ -21,42 +15,21 @@ export default function Page({ title, headerRight, children }: PageProps) {
 
   return (
     <>
-      <AppBar position="static" sx={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            sx={{
-              color: "inherit",
-              mr: 2,
-            }}
+      <header className={styles.header}>
+        <div className={styles.toolbar}>
+          <button
+            type="button"
+            className={styles.menuButton}
             onClick={globalStateAtomWithApi.openSidebar}
+            aria-label="Open sidebar"
           >
-            <Icon className="icon-menu" />
-          </IconButton>
-          <Typography
-            sx={{
-              flex: 1,
-            }}
-            variant="h6"
-          >
-            {title}
-          </Typography>
+            <MenuIcon aria-hidden="true" />
+          </button>
+          <h1 className={styles.title}>{title}</h1>
           {headerRight}
-        </Toolbar>
-      </AppBar>
-      <Box
-        sx={{
-          flexGrow: 1,
-          px: 2,
-          py: 1,
-          overflowX: "hidden",
-          overflowY: "auto",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
-        {children}
-      </Box>
+        </div>
+      </header>
+      <section className={styles.content}>{children}</section>
     </>
   );
 }

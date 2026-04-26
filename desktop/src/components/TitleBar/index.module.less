@@ -1,0 +1,330 @@
+.titleBar {
+  height: var(--title-bar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 8px;
+  background: var(--gray-3);
+  border-bottom: 1px solid var(--gray-a3);
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  position: relative;
+  z-index: var(--title-bar-z-index, 4000);
+}
+
+.leftRail {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-a4);
+  border-radius: 4px;
+}
+
+.appName {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+}
+
+.dragRegion {
+  flex: 1;
+  height: 100%;
+  min-width: 16px;
+}
+
+/* --- workspace button: accent-led entry point --- */
+.workspaceBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 11px 0 9px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent-a3);
+  color: var(--accent-11);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color 0.13s ease,
+    color 0.13s ease,
+    opacity 0.13s ease;
+
+  &:hover {
+    background: var(--accent-a4);
+  }
+
+  &:active {
+    background: var(--accent-a5);
+  }
+}
+
+.workspaceBtn:disabled {
+  cursor: default;
+  background: var(--gray-a2);
+  color: var(--gray-8);
+}
+
+.workspaceBtnActive {
+  background: var(--accent-a5);
+  color: var(--accent-12);
+
+  &:hover {
+    background: var(--accent-a6);
+  }
+}
+
+.workspaceBtnIcon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex-shrink: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+}
+
+.workspaceBtnLabel {
+  color: inherit;
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+  font-weight: 550;
+}
+
+/* --- center search: command-bar focal point, centered to the whole bar --- */
+.centerRail {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(40vw, 440px);
+  display: flex;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.searchTrigger {
+  width: min(100%, 440px);
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 11px;
+  border: 1px solid var(--gray-a4);
+  border-radius: 8px;
+  background: var(--gray-a2);
+  color: var(--gray-10);
+  cursor: pointer;
+  transition:
+    background-color 0.13s ease,
+    border-color 0.13s ease,
+    color 0.13s ease,
+    box-shadow 0.13s ease;
+
+  &:hover {
+    background: var(--color-panel-solid);
+    border-color: var(--gray-a7);
+    color: var(--gray-11);
+  }
+
+  &:active {
+    border-color: var(--accent-a7);
+    box-shadow: 0 0 0 3px var(--accent-a3);
+  }
+}
+
+.searchTriggerIcon {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex-shrink: 0;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.searchTriggerLabel {
+  flex: 1;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  color: inherit;
+  font-weight: 400;
+}
+
+.searchTriggerShortcut {
+  height: 18px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border-radius: 5px;
+  background: var(--gray-a3);
+  color: var(--gray-10);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 550;
+  flex-shrink: 0;
+}
+
+/* --- right rail --- */
+.rightRail {
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.utilityGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--gray-11);
+  cursor: pointer;
+  transition:
+    background-color 0.13s ease,
+    color 0.13s ease;
+
+  &:hover {
+    background: var(--gray-a3);
+    color: var(--gray-12);
+  }
+
+  &:active {
+    background: var(--gray-a4);
+  }
+}
+
+.profileAvatar {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent-9);
+  color: var(--accent-contrast);
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rightSep {
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--gray-a4);
+  flex-shrink: 0;
+}
+
+/* --- window controls (win/linux) --- */
+.winControls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.winControlsBtn {
+  width: 34px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--gray-11);
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  transition:
+    background-color 0.13s ease,
+    color 0.13s ease;
+
+  &:hover {
+    background: var(--gray-a3);
+    color: var(--gray-12);
+  }
+}
+
+.winControlsBtnClose:hover {
+  background: var(--red-9);
+  color: #fff;
+}
+
+/* --- macOS: reserve space for the native traffic lights --- */
+.titleBar[data-platform="darwin"] {
+  padding-left: 80px;
+}
+
+/* fullscreen hides the native traffic lights, so reclaim the reserved space */
+.titleBar[data-platform="darwin"][data-fullscreen="true"] {
+  padding-left: 8px;
+}
+
+/* --- responsive --- */
+@media (max-width: 720px) {
+  .centerRail {
+    width: min(50vw, 260px);
+  }
+
+  .workspaceBtnLabel {
+    display: none;
+  }
+
+  .workspaceBtn {
+    width: 28px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .centerRail {
+    display: none;
+  }
+}

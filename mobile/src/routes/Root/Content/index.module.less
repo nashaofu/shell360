@@ -1,0 +1,35 @@
+.root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.pageLayer,
+.terminalLayer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.pageLayer {
+  display: flex;
+  flex-direction: column;
+}
+
+.terminalLayer {
+  display: flex;
+}
+
+.hidden {
+  display: none;
+}

@@ -1,10 +1,11 @@
-import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+import { MoreIcon } from "../../Icon";
 
-import { Dropdown } from "@/components/Dropdown";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
+import styles from "../styles.module.less";
 
 export default function UnknownKey({
   error,
@@ -18,59 +19,35 @@ export default function UnknownKey({
         message={get(error, "message", String(error))}
       />
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
+      <div className={styles.actions}>
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
-        <Dropdown
-          menus={[
-            {
-              label: "Add and continue",
-              value: "Add and continue",
-              onClick: () =>
-                onReConnect(SSHSessionCheckServerKey.AddAndContinue),
-            },
-          ]}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-        >
-          {({ onChangeOpen }) => (
-            <ButtonGroup
-              sx={{
-                minWidth: 150,
-              }}
-              variant="contained"
-              color="warning"
-            >
-              <Button
-                fullWidth
-                onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
-              >
-                Continue
+        <div className={styles.splitButtonGroup}>
+          <Button
+            className={styles.splitPrimaryButton}
+            onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
+          >
+            Continue
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button className={styles.splitMenuButton}>
+                <MoreIcon />
               </Button>
-              <Button
-                size="small"
-                onClick={(event) => onChangeOpen(event.currentTarget)}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  onReConnect(SSHSessionCheckServerKey.AddAndContinue)
+                }
               >
-                <Icon className="icon-more" />
-              </Button>
-            </ButtonGroup>
-          )}
-        </Dropdown>
-      </Box>
+                Add and continue
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        </div>
+      </div>
     </>
   );
 }

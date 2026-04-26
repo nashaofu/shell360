@@ -1,0 +1,5 @@
+:root {
+  --title-bar-height: 40px;
+  --status-bar-height: 24px;
+  --title-bar-z-index: 4000;
+}

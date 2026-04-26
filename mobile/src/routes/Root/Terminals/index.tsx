@@ -1,24 +1,13 @@
-import {
-  AppBar,
-  Box,
-  createTheme,
-  darken,
-  Icon,
-  IconButton,
-  ThemeProvider,
-  Toolbar,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
 import {
-  Dropdown,
-  TERMINAL_THEMES_MAP,
+  MenuIcon,
+  MoreIcon,
   type TerminalAtom,
   useTerminalsAtomWithApi,
 } from "shared";
-import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
 
@@ -27,7 +16,6 @@ export default function Terminals() {
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
-  const globalTheme = useTheme();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
 
   const activeTerminal = useMemo(
@@ -69,42 +57,7 @@ export default function Terminals() {
     [activeTerminal, onClose],
   );
 
-  const appBarTheme = useMemo(() => {
-    if (!activeTerminal) {
-      return globalTheme;
-    }
-
-    const isLoading =
-      activeTerminal?.jumpHostChain.some(
-        (it) => it.status !== "authenticated" || it.loading || it.error,
-      ) || activeTerminal?.status !== "success";
-
-    if (isLoading) {
-      return globalTheme;
-    }
-
-    const defaultBackground = globalTheme.palette.background.default;
-    const theme = TERMINAL_THEMES_MAP.get(
-      activeTerminal.host.terminalSettings?.theme,
-    );
-
-    const bgColor = darken(theme?.theme.background ?? defaultBackground, 0.52);
-
-    return createTheme({
-      palette: {
-        mode: globalTheme.palette.mode,
-        text: {
-          primary: globalTheme.palette.getContrastText(bgColor),
-        },
-        background: {
-          paper: bgColor,
-          default: bgColor,
-        },
-      },
-    });
-  }, [activeTerminal, globalTheme]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在terminalsAtomWithApi.state.size变化时执行
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only run when terminal count changes
   useEffect(() => {
     if (!terminalsAtomWithApi.state.size && match) {
       navigate("/", { replace: true });
@@ -112,65 +65,87 @@ export default function Terminals() {
   }, [terminalsAtomWithApi.state.size, navigate]);
 
   return (
-    <Box
-      sx={{
+    <div
+      style={{
         flexGrow: 1,
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <ThemeProvider theme={appBarTheme}>
-        <AppBar
-          position="static"
-          sx={{
-            paddingTop: "env(safe-area-inset-top)",
+      <div
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          minHeight: 56,
+          display: "flex",
+          alignItems: "center",
+          paddingLeft: 12,
+          paddingRight: 12,
+          borderBottom: "1px solid var(--gray-a6)",
+          background: "var(--color-panel-solid)",
+          color: "var(--gray-12)",
+          gap: 8,
+        }}
+      >
+        <button
+          type="button"
+          style={{
+            background: "none",
+            border: "none",
+            color: "inherit",
+            cursor: "pointer",
+            padding: 4,
+          }}
+          onClick={globalStateAtomWithApi.openSidebar}
+        >
+          <MenuIcon />
+        </button>
+        <div
+          style={{
+            flex: 1,
+            fontSize: 18,
+            fontWeight: 500,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          <Toolbar>
-            <IconButton
-              size="large"
-              edge="start"
-              sx={{
+          {activeTerminal?.name || "Shell360"}
+        </div>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <button
+              type="button"
+              style={{
+                marginLeft: 8,
+                background: "none",
+                border: "none",
                 color: "inherit",
-                mr: 2,
+                cursor: "pointer",
+                padding: 4,
               }}
-              onClick={globalStateAtomWithApi.openSidebar}
             >
-              <Icon className="icon-menu" />
-            </IconButton>
-            <Typography
-              sx={{
-                flex: 1,
-              }}
-              variant="h6"
-            >
-              {activeTerminal?.name || "Shell360"}
-            </Typography>
-            <Dropdown menus={headerRightMenus}>
-              {({ onChangeOpen }) => (
-                <IconButton
-                  sx={{
-                    ml: 2,
-                    color: "inherit",
-                  }}
-                  edge="end"
-                  size="small"
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
-                >
-                  <Icon className="icon-more" />
-                </IconButton>
-              )}
-            </Dropdown>
-          </Toolbar>
-        </AppBar>
-      </ThemeProvider>
+              <MoreIcon />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+            {headerRightMenus.map((item) => (
+              <DropdownMenu.Item
+                key={item.value}
+                onSelect={() => item.onClick?.()}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      </div>
       {[...terminalsAtomWithApi.state.values()].map((item) => {
         const visible = match?.params.uuid === item.uuid;
         return (
           <SSHTerminal
             key={item.uuid}
-            sx={{
+            style={{
               display: visible ? "flex" : "none",
               flexGrow: 1,
               flexShrink: 0,
@@ -186,6 +161,6 @@ export default function Terminals() {
         onCancel={() => setAddKeyOpen(false)}
         onOk={() => setAddKeyOpen(false)}
       />
-    </Box>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
-import { Icon } from "@mui/material";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
 import { type MutableRefObject, useState } from "react";
+import { WarningCircleIcon } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
-
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
 
@@ -41,10 +40,8 @@ export default function useSftpActions({
           modal.confirm({
             title: "Warning",
             icon: (
-              <Icon
-                color="warning"
-                sx={{ fontSize: 32 }}
-                className="icon-warning-circle"
+              <WarningCircleIcon
+                style={{ fontSize: 32, color: "var(--amber-11, #d97706)" }}
               />
             ),
             content: `The file "${filename}" already exists. Continuing to upload will overwrite the corresponding file. Do you want to continue?`,

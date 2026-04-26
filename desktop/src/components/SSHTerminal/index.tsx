@@ -1,5 +1,4 @@
-import { Box, type SxProps, type Theme } from "@mui/material";
-import { useRef } from "react";
+import { useCallback, useEffect } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -7,29 +6,28 @@ import {
   useTerminal,
   XTerminal,
 } from "shared";
+import { useTerminalActiveId } from "@/atoms/terminalView.atom";
+import TerminalContextMenu from "@/components/TerminalContextMenu";
 import { copy } from "@/utils/clipboard";
 import openUrl from "@/utils/openUrl";
-
-import Sftp from "./Sftp";
+import styles from "./index.module.less";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
-  sx: SxProps<Theme>;
+  style?: React.CSSProperties;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
 };
 
 export default function SSHTerminal({
   item,
-  sx,
+  style,
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const {
     loading,
     error,
-    session,
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
@@ -41,56 +39,46 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose, onCopy: copy });
 
+  const [activeTerminalId] = useTerminalActiveId();
+
+  useEffect(() => {
+    if (activeTerminalId === item.uuid && terminal) {
+      terminal.focus();
+    }
+  }, [activeTerminalId, item.uuid, terminal]);
+
+  const handleRootMouseDown = useCallback(() => {
+    terminal?.focus();
+  }, [terminal]);
+
+  const showLoading = !terminal || loading || !!error;
+
   return (
-    <Box
-      ref={containerRef}
-      sx={[
-        {
-          position: "relative",
-          overflow: "hidden",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+    <div
+      className={styles.root}
+      style={style}
+      onMouseDown={handleRootMouseDown}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          right: 3,
-          bottom: 0,
-          left: 0,
-          pl: 3,
-          overflow: "hidden",
-          pointerEvents: loading || error ? "none" : "unset",
-          visibility: loading || error ? "hidden" : "visible",
-          ".xterm": {
-            width: "100%",
-            height: "100%",
-            "*::-webkit-scrollbar": {
-              width: 8,
-              height: 8,
-            },
-            ":hover *::-webkit-scrollbar-thumb": {
-              backgroundColor: "#7f7f7f",
-            },
-          },
-        }}
+      <div
+        className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`}
         data-paste="true"
       >
-        <XTerminal
-          fontFamily={item.host.terminalSettings?.fontFamily}
-          fontSize={item.host.terminalSettings?.fontSize}
-          theme={
-            TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
-          }
-          onReady={onTerminalReady}
-          onData={onTerminalData}
-          onBinary={onTerminalBinaryData}
-          onResize={onTerminalResize}
-          onOpenUrl={openUrl}
-        />
-      </Box>
-      {(!terminal || loading || error) && (
+        <TerminalContextMenu terminal={terminal}>
+          <XTerminal
+            fontFamily={item.host.terminalSettings?.fontFamily}
+            fontSize={item.host.terminalSettings?.fontSize}
+            theme={
+              TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
+            }
+            onReady={onTerminalReady}
+            onData={onTerminalData}
+            onBinary={onTerminalBinaryData}
+            onResize={onTerminalResize}
+            onOpenUrl={openUrl}
+          />
+        </TerminalContextMenu>
+      </div>
+      {showLoading && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
@@ -99,10 +87,7 @@ export default function SSHTerminal({
             width: "100%",
             height: "100%",
             position: "absolute",
-            top: "0",
-            right: "0",
-            bottom: "0",
-            left: "0",
+            inset: 0,
           }}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
@@ -111,9 +96,6 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && (
-        <Sftp containerRef={containerRef} session={session} />
-      )}
-    </Box>
+    </div>
   );
 }

@@ -1,21 +1,11 @@
-import {
-  Box,
-  Button,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  MenuItem,
-  Paper,
-  type SxProps,
-  TextField,
-  type Theme,
-} from "@mui/material";
+import { Button, IconButton, Select, Text } from "@radix-ui/themes";
 import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
+import { resolveSpacing } from "../../utils/style";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, DeleteIcon } from "../Icon";
+import styles from "./JumpHostIdsSelect.module.less";
 
 function getJumpHostName(
   hostMap: Map<string, Host>,
@@ -34,7 +24,7 @@ interface JumpHostIdsSelectProps {
   value: string[];
   onChange: (value: string[]) => void;
   hostId?: string;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
   error?: boolean;
   helperText?: string;
 }
@@ -98,79 +88,105 @@ export default function JumpHostIdsSelect({
     }
   };
 
+  const wrapperStyle = resolveSpacing(sx);
+
   return (
-    <Box sx={sx}>
+    <div className={styles.wrapper} style={wrapperStyle}>
       {value.length > 0 && (
-        <Paper variant="outlined" sx={{ mb: 2 }}>
-          <List dense>
+        <div className={styles.selectedListCard}>
+          <div className={styles.selectedList}>
             {value.map((item, index) => (
-              <ListItem
-                key={item}
-                secondaryAction={
-                  <Box>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                    >
-                      <Icon className="icon-arrow-up" />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === value.length - 1}
-                    >
-                      <Icon className="icon-arrow-down" />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleRemove(index)}
-                    >
-                      <Icon className="icon-delete" />
-                    </IconButton>
-                  </Box>
-                }
-              >
-                <ListItemText
-                  primary={getJumpHostName(hostsMap, item, index)}
-                  secondary={`Jump host #${index + 1}`}
-                />
-              </ListItem>
+              <div key={item} className={styles.selectedItem}>
+                <div className={styles.itemTextWrap}>
+                  <Text as="div" size="2" truncate>
+                    {getJumpHostName(hostsMap, item, index)}
+                  </Text>
+                  <Text
+                    as="div"
+                    size="1"
+                    color="gray"
+                  >{`Jump host #${index + 1}`}</Text>
+                </div>
+                <div className={styles.itemActions}>
+                  <IconButton
+                    type="button"
+                    variant="outline"
+                    color="gray"
+                    size="1"
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                  >
+                    <ArrowUpIcon />
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    variant="outline"
+                    color="gray"
+                    size="1"
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === value.length - 1}
+                  >
+                    <ArrowDownIcon />
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    variant="outline"
+                    color="gray"
+                    size="1"
+                    onClick={() => handleRemove(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </div>
+              </div>
             ))}
-          </List>
-        </Paper>
+          </div>
+        </div>
       )}
 
-      <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
-          label="Select jump host"
-          value={selectedHostId}
-          onChange={(e) => setSelectedHostId(e.target.value)}
-          disabled={availableHosts.length === 0}
-          error={error}
-          helperText={helperText}
-        >
-          {availableHosts.map((host) => (
-            <MenuItem key={host.id} value={host.id}>
-              {host.name || host.hostname}
-            </MenuItem>
-          ))}
-        </TextField>
+      <div className={styles.selectorRow}>
+        <div className={styles.selectorField}>
+          <Text
+            as="label"
+            size="2"
+            weight="medium"
+            className={styles.fieldLabel}
+          >
+            Select jump host
+          </Text>
+          <Select.Root
+            value={selectedHostId}
+            onValueChange={setSelectedHostId}
+            disabled={availableHosts.length === 0}
+          >
+            <Select.Trigger
+              style={{ width: "100%" }}
+              placeholder="Select jump host"
+            />
+            <Select.Content>
+              {availableHosts.map((host) => (
+                <Select.Item key={host.id} value={host.id}>
+                  {host.name || host.hostname}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+          {helperText && (
+            <Text size="1" color={error ? "red" : undefined}>
+              {helperText}
+            </Text>
+          )}
+        </div>
         <Button
-          sx={{ flexShrink: 0 }}
-          variant="outlined"
+          type="button"
+          variant="outline"
+          color="gray"
           onClick={handleAdd}
-          startIcon={<Icon className="icon-add" />}
         >
+          <AddIcon />
           Add
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

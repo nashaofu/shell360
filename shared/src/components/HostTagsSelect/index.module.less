@@ -1,0 +1,24 @@
+.menuLabel {
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radio,
+.radioChecked {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.radio {
+  border: 1px solid var(--gray-8);
+}
+
+.radioChecked {
+  border: 1px solid var(--accent-9);
+  background: radial-gradient(circle, var(--accent-9) 35%, transparent 35%);
+}

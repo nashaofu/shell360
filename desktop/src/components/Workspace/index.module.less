@@ -1,0 +1,247 @@
+.root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-workspace-bg, color-mix(in srgb, var(--color-background) 96%, var(--gray-2)));
+  z-index: 10;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: flex;
+}
+
+.dockview {
+  flex: 1;
+  min-height: 0;
+  background: var(--app-workspace-bg, var(--color-background));
+}
+
+.appDockview {
+  --dv-background-color: var(--app-workspace-bg, color-mix(in srgb, var(--color-background) 96%, var(--gray-2)));
+  --dv-group-view-background-color: var(--app-workspace-bg, var(--color-background));
+  --dv-tabs-and-actions-container-background-color: var(--app-status-bg, color-mix(in srgb, var(--color-panel) 96%, var(--gray-2)));
+  --dv-activegroup-visiblepanel-tab-background-color: color-mix(in srgb, var(--color-surface) 88%, var(--accent-a2));
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-visiblepanel-tab-background-color: color-mix(in srgb, var(--color-surface) 88%, var(--gray-a2));
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-activegroup-visiblepanel-tab-color: var(--gray-12);
+  --dv-activegroup-hiddenpanel-tab-color: var(--gray-11);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--gray-11);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--gray-10);
+  --dv-separator-border: color-mix(in srgb, var(--gray-a5) 78%, transparent);
+  --dv-paneview-active-outline-color: color-mix(in srgb, var(--accent-8) 74%, transparent);
+  --dv-tab-divider-color: transparent;
+  --dv-active-sash-color: var(--accent-8);
+  --dv-tabs-container-scrollbar-color: var(--gray-a6);
+  --dv-icon-hover-background-color: color-mix(in srgb, var(--gray-a4) 70%, transparent);
+  --dv-drag-over-background-color: var(--accent-a4);
+  --dv-drag-over-border-color: var(--accent-8);
+  --dv-tabs-and-actions-container-height: 34px;
+  --dv-tabs-and-actions-container-font-size: 11px;
+  --dv-tab-font-size: 11px;
+  --dv-tab-margin: 0;
+  --dv-tab-close-icon-size: 10px;
+
+  color: var(--gray-12);
+
+  :global(.dv-groupview) {
+    background: var(--app-workspace-bg, var(--color-background));
+  }
+
+  :global(.dv-groupview.dv-active-group > .dv-tabs-and-actions-container) {
+    box-shadow: none;
+  }
+
+  :global(.dv-tabs-and-actions-container) {
+    background: var(--app-status-bg, color-mix(in srgb, var(--color-panel) 96%, var(--gray-2)));
+    border-bottom: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 82%, transparent));
+    padding: 0;
+  }
+
+  :global(.dv-tabs-container),
+  :global(.dv-void-container),
+  :global(.dv-right-actions-container) {
+    background: transparent;
+  }
+
+  :global(.dv-tabs-container) {
+    gap: 0;
+    padding-top: 0;
+  }
+
+  :global(.dv-right-actions-container) {
+    min-width: 4px;
+  }
+
+  :global(.dv-tab) {
+    min-width: 118px;
+    max-width: 220px;
+    height: 100%;
+    margin: 0;
+    padding: 0 5px 0 10px;
+    border: none;
+    border-right: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 60%, transparent));
+    position: relative;
+    transition:
+      background-color 0.13s ease,
+      color 0.13s ease;
+  }
+
+  :global(.dv-tab::before) {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: transparent;
+  }
+
+  :global(.dv-tab .dv-default-tab) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  :global(
+    .dv-groupview:is(.dv-active-group, .dv-inactive-group)
+      > .dv-tabs-and-actions-container
+      .dv-tabs-container
+      > .dv-tab.dv-active-tab
+  ) {
+    background-color: var(--app-workspace-bg, var(--color-background)) !important;
+    color: var(--gray-12) !important;
+  }
+
+  :global(.dv-tabs-and-actions-container *),
+  :global(.dv-tabs-and-actions-container *:focus),
+  :global(.dv-tabs-and-actions-container *:focus-visible),
+  :global(.dv-tabs-and-actions-container *:focus-within),
+  :global(.dv-tabs-and-actions-container *:active) {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  :global(.dv-tab:focus)::after,
+  :global(.dv-tab:focus-within)::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  :global(
+    .dv-groupview.dv-active-group
+      > .dv-tabs-and-actions-container
+      .dv-tabs-container
+      > .dv-tab.dv-active-tab::before
+  ) {
+    background: var(--accent-9);
+  }
+
+  :global(
+    .dv-groupview:is(.dv-active-group, .dv-inactive-group)
+      > .dv-tabs-and-actions-container
+      .dv-tabs-container
+      > .dv-tab.dv-inactive-tab
+  ) {
+    background-color: color-mix(in srgb, var(--gray-a3) 38%, transparent) !important;
+    color: var(--gray-10) !important;
+  }
+
+  :global(
+    .dv-groupview:is(.dv-active-group, .dv-inactive-group)
+      > .dv-tabs-and-actions-container
+      .dv-tabs-container
+      > .dv-tab.dv-inactive-tab:hover
+  ) {
+    background-color: var(--app-hover-bg, color-mix(in srgb, var(--gray-a3) 56%, transparent)) !important;
+    color: var(--gray-12) !important;
+  }
+
+  :global(.dv-tab .dv-default-tab-content) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  :global(.dv-tab .dv-default-tab-action) {
+    width: 18px;
+    height: 18px;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 5px;
+    color: var(--gray-9);
+    opacity: 0.72;
+    transition:
+      background-color 0.13s ease,
+      color 0.13s ease,
+      opacity 0.13s ease;
+  }
+
+  :global(.dv-tab .dv-default-tab-action:hover) {
+    background: color-mix(in srgb, var(--gray-a4) 72%, transparent);
+    color: var(--gray-12);
+    opacity: 1;
+  }
+
+  :global(.dv-tab.dv-active-tab .dv-default-tab-action) {
+    color: var(--gray-10);
+    opacity: 0.86;
+  }
+
+  :global(.dv-tab .dv-svg) {
+    width: 9px;
+    height: 9px;
+  }
+
+  :global(.dv-content-container) {
+    background: var(--app-workspace-bg, var(--color-background));
+  }
+
+  :global(.dv-split-view-container.dv-separator-border .dv-view:not(:first-child)::before) {
+    background-color: var(--app-panel-border, color-mix(in srgb, var(--gray-a5) 72%, transparent));
+  }
+
+  :global(.dv-sash) {
+    transition: background-color 0.13s ease;
+  }
+
+  :global(.dv-sash:hover) {
+    background-color: color-mix(in srgb, var(--accent-a5) 52%, transparent);
+  }
+
+  :global(.dv-drop-target-anchor) {
+    outline: 1px solid color-mix(in srgb, var(--accent-8) 82%, transparent);
+    background: color-mix(in srgb, var(--accent-a3) 72%, transparent);
+  }
+
+  :global(.dv-tabs-overflow-container) {
+    border: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 82%, transparent));
+    border-radius: 6px;
+    background: var(--app-elevated-bg, var(--color-panel));
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--gray-a8) 14%, transparent);
+  }
+}
+
+.watermark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-8);
+  font-size: 13px;
+  user-select: none;
+}

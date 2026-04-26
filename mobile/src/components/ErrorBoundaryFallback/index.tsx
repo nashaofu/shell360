@@ -1,42 +1,9 @@
-import { Box, Button, styled, Typography } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { get } from "lodash-es";
 import { useCallback } from "react";
-
-const Eye = styled(Box)(({ theme }) => ({
-  width: 70,
-  height: 100,
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.palette.grey[800],
-  borderRadius: "50%",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-}));
-
-const Eyeball = styled(Box)(({ theme }) => ({
-  width: "50%",
-  height: "50%",
-  borderRadius: "50%",
-  backgroundColor: theme.palette.grey[800],
-  animation: "eye-move 1.6s infinite alternate",
-  "@keyframes eye-move": {
-    "0%": {
-      transform: "translate(50%)",
-    },
-    "10%": {
-      transform: "translate(50%)",
-    },
-    "90%": {
-      transform: "translate(-50%)",
-    },
-    "100%": {
-      transform: "translate(-50%)",
-    },
-  },
-}));
+import styles from "./index.module.less";
 
 type AbnormalProps = {
   error?: unknown;
@@ -63,90 +30,38 @@ export default function ErrorBoundaryFallback({
   }, []);
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        textAlign: "center",
-      }}
-    >
-      <Box
-        sx={{
-          width: 150,
-          mx: "auto",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Eye>
-            <Eyeball />
-          </Eye>
-          <Eye>
-            <Eyeball />
-          </Eye>
-        </Box>
-      </Box>
-      <Box
-        sx={{
-          mt: 4,
-        }}
-      >
-        <Typography variant="h3">Oops!</Typography>
-      </Box>
-      <Box
-        sx={{
-          maxHeight: 160,
-          my: 3,
-          whiteSpace: "wrap",
-          wordBreak: "break-all",
-          overflow: "auto",
-        }}
-      >
-        <Typography variant="body1">
-          {get(error, "message", String(error))}
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          maxWidth: 300,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-          mx: "auto",
-        }}
-      >
-        <Button
-          variant="contained"
-          size="large"
-          fullWidth
-          onClick={resetErrorBoundary}
-        >
+    <div className={styles.root}>
+      <div className={styles.eyesWrap}>
+        <div className={styles.eyes}>
+          <span className={styles.eye}>
+            <span className={styles.eyeball} />
+          </span>
+          <span className={styles.eye}>
+            <span className={styles.eyeball} />
+          </span>
+        </div>
+      </div>
+      <div className={styles.titleWrap}>
+        <h1 className={styles.title}>Oops!</h1>
+      </div>
+      <div className={styles.messageWrap}>
+        <p className={styles.message}>{get(error, "message", String(error))}</p>
+      </div>
+      <div className={styles.actions}>
+        <Button className={styles.actionButton} onClick={resetErrorBoundary}>
           Retry
         </Button>
-        <Button
-          variant="contained"
-          size="large"
-          color="error"
-          fullWidth
-          onClick={onReset}
-        >
+        <Button className={styles.actionButton} color="red" onClick={onReset}>
           Reset
         </Button>
         <Button
-          variant="contained"
-          size="large"
-          color="warning"
-          fullWidth
+          className={styles.actionButton}
+          color="amber"
           onClick={() => getCurrentWindow().close()}
         >
           Exit
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

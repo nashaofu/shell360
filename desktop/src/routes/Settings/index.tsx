@@ -1,216 +1,339 @@
 import {
-  Box,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "@mui/material";
+  Button,
+  Card,
+  Flex,
+  Heading,
+  RadioCards,
+  Spinner,
+  Switch,
+  Text,
+} from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
-import { useAtom } from "jotai";
+import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { modeAtom, ThemeMode } from "@/atom/themeAtom";
-import { useUpdateAtom } from "@/atom/updateAtom";
+import {
+  type Appearance,
+  FileIcon,
+  HostIcon,
+  KeyIcon,
+  LabelIcon,
+  useAppearance,
+} from "shared";
+import { changeCryptoEnable } from "tauri-plugin-data";
+import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
+import { useUpdateAtom } from "@/atoms/update.atom";
+import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
+import InitCrypto from "@/components/InitCrypto";
 import Page from "@/components/Page";
-import useExportData from "@/hooks/useExportData";
-import useImportData from "@/hooks/useImportData";
-import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
 import openUrl from "@/utils/openUrl";
+import styles from "./index.module.less";
 
-import CryptoSettings from "./CryptoSettings";
+type SettingSectionProps = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+};
+
+type SettingActionProps = {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  value?: ReactNode;
+  onClick?: () => void;
+  ctaLabel?: string;
+  disabled?: boolean;
+  tone?: "default" | "primary";
+  footer?: ReactNode;
+};
+
+const APPEARANCE_OPTIONS: Array<{
+  value: Appearance;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "inherit",
+    label: "Follow system",
+    hint: "Match the device theme automatically.",
+  },
+  { value: "light", label: "Light", hint: "Keep surfaces bright and clear." },
+  { value: "dark", label: "Dark", hint: "Reduce glare for long sessions." },
+];
+
+function SettingSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: SettingSectionProps) {
+  return (
+    <Card variant="surface">
+      <Flex direction="column" gap="4">
+        <Flex direction="column" gap="2">
+          <Text as="p" className={styles.sectionEyebrow}>
+            {eyebrow}
+          </Text>
+          <Heading size="4" className={styles.sectionTitle}>
+            {title}
+          </Heading>
+          <Text as="p" className={styles.sectionDescription}>
+            {description}
+          </Text>
+        </Flex>
+        <Flex direction="column" gap="3">
+          {children}
+        </Flex>
+      </Flex>
+    </Card>
+  );
+}
+
+function SettingAction({
+  icon,
+  title,
+  description,
+  value,
+  onClick,
+  ctaLabel = "Open",
+  disabled,
+  tone = "default",
+  footer,
+}: SettingActionProps) {
+  return (
+    <Card variant="surface">
+      <Flex direction="column" gap="2">
+        <Flex
+          align={{ initial: "start", sm: "center" }}
+          direction={{ initial: "column", sm: "row" }}
+          justify="between"
+          gap="4"
+        >
+          <div className={styles.actionMain}>
+            <span className={styles.actionIcon}>{icon}</span>
+            <div className={styles.actionText}>
+              <Text as="p" className={styles.actionTitle}>
+                {title}
+              </Text>
+              <Text as="p" className={styles.actionDescription}>
+                {description}
+              </Text>
+            </div>
+          </div>
+          <div className={styles.actionMeta}>
+            {value && typeof value === "string" ? (
+              <Text as="span" className={styles.actionValue}>
+                {value}
+              </Text>
+            ) : (
+              value
+            )}
+            {onClick && (
+              <Button
+                size="2"
+                variant={tone === "primary" ? "solid" : "soft"}
+                onClick={onClick}
+                disabled={disabled}
+              >
+                {ctaLabel}
+              </Button>
+            )}
+          </div>
+        </Flex>
+        {footer}
+      </Flex>
+    </Card>
+  );
+}
 
 export default function Settings() {
-  const [themeMode, setThemeMode] = useAtom(modeAtom);
-
-  const { checkUpdate, setOpenUpdateDialog } = useUpdateAtom();
   const [version, setVersion] = useState<string>();
-  const exportData = useExportData();
-  const importData = useImportData();
-  const modal = useModal();
-  const message = useMessage();
+  const [appearance, setAppearance] = useAppearance();
+  const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
+  const { hasUpdate, checking, checkUpdate, setOpenUpdateDialog } =
+    useUpdateAtom();
 
-  const onCheckUpdate = useCallback(async () => {
-    const update = await checkUpdate();
-    if (update?.available) {
-      setOpenUpdateDialog(true);
-    }
-  }, [checkUpdate, setOpenUpdateDialog]);
-
-  const onExportData = useCallback(async () => {
-    try {
-      const path = await exportData();
-      if (!path) {
-        return;
-      }
-      message.success({
-        message: "Export file successful",
-      });
-    } catch (err) {
-      message.error({
-        message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
-            Export failed:
-            {` ${JSON.stringify(err)}`}
-          </Box>
-        ),
-      });
-    }
-  }, [exportData, message]);
-
-  const onImportData = useCallback(async () => {
-    await new Promise<void>((resolve) => {
-      modal.confirm({
-        title: "Warning",
-        icon: (
-          <Icon
-            color="warning"
-            sx={{ fontSize: 32 }}
-            className="icon-warning-circle"
-          />
-        ),
-        content:
-          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
-        onOk: () => resolve(),
-      });
-    });
-
-    try {
-      const isSuccess = await importData();
-      if (!isSuccess) {
-        return;
-      }
-      message.success({
-        message: "Import file successful",
-      });
-    } catch (err) {
-      message.error({
-        message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
-            Import failed:
-            {` ${String(err)}`}
-          </Box>
-        ),
-      });
-    }
-  }, [importData, modal, message]);
+  const [checkingError, setCheckingError] = useState<string>();
+  const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
+  const [changeCryptoPasswordIsOpen, setChangeCryptoPasswordIsOpen] =
+    useState(false);
 
   useEffect(() => {
-    getVersion().then((ver) => {
-      setVersion(ver);
-    });
+    getVersion().then(setVersion);
   }, []);
 
+  const onCryptoEnableChange = useCallback((checked: boolean) => {
+    if (checked) {
+      setInitCryptoIsOpen(true);
+      return;
+    }
+    changeCryptoEnable({ cryptoEnable: false });
+  }, []);
+
+  const onCheckUpdate = useCallback(async () => {
+    if (hasUpdate) {
+      setOpenUpdateDialog(true);
+      return;
+    }
+    setCheckingError(undefined);
+    try {
+      const result = await checkUpdate();
+      if (result) {
+        setOpenUpdateDialog(true);
+      }
+    } catch (error) {
+      setCheckingError(String(error));
+    }
+  }, [checkUpdate, hasUpdate, setOpenUpdateDialog]);
+
+  const renderUpdateFooter = () => {
+    if (checking) {
+      return (
+        <Flex align="center" gap="2" className={styles.inlineNotice}>
+          <Spinner size="2" />
+          <Text as="span">Checking the latest version...</Text>
+        </Flex>
+      );
+    }
+    if (checkingError) {
+      return (
+        <Text as="p" className={styles.inlineNoticeError}>
+          {checkingError}
+        </Text>
+      );
+    }
+    if (!hasUpdate) {
+      return (
+        <Text as="p" className={styles.inlineNotice}>
+          No update is currently detected.
+        </Text>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Page title="Settings">
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
+    <div className={styles.pageWrap}>
+      <Page
+        eyebrow="Application"
+        title="Settings"
+        description="Adjust appearance, local security, and update behavior for the desktop workspace."
+        actions={
+          <Text as="span" className={styles.versionChip}>
+            {version ?? "--"}
+          </Text>
+        }
       >
-        <List>
-          <ListItem>
-            <ListItemText primary="Theme Mode" />
-            <ToggleButtonGroup
-              value={themeMode}
-              color="primary"
-              exclusive
-              size="small"
-              onChange={(_, val) => setThemeMode(val)}
+        <div className={styles.container}>
+          <div className={styles.layout}>
+            <SettingSection
+              eyebrow="Appearance"
+              title="Visual"
+              description="Choose how the desktop app should look."
             >
-              <ToggleButton value={ThemeMode.Auto}>
-                <Icon className="icon-settings-brightness" />
-                Auto
-              </ToggleButton>
-              <ToggleButton value={ThemeMode.Light}>
-                <Icon className="icon-light-mode" />
-                Light
-              </ToggleButton>
-              <ToggleButton value={ThemeMode.Dark}>
-                <Icon className="icon-dark-mode" />
-                Dark
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Export" />
-            <IconButton onClick={onExportData}>
-              <Icon className="icon-file-download" />
-            </IconButton>
-          </ListItem>
+              <RadioCards.Root
+                columns={{ initial: "1", sm: "3" }}
+                size="1"
+                value={appearance}
+                onValueChange={(value) => setAppearance(value as Appearance)}
+              >
+                {APPEARANCE_OPTIONS.map((option) => (
+                  <RadioCards.Item key={option.value} value={option.value}>
+                    <Flex direction="column" width="100%">
+                      <Text weight="bold">{option.label}</Text>
+                      <Text color="gray" size="1" truncate>
+                        {option.hint}
+                      </Text>
+                    </Flex>
+                  </RadioCards.Item>
+                ))}
+              </RadioCards.Root>
+            </SettingSection>
 
-          <ListItem>
-            <ListItemText primary="Import" />
-            <IconButton onClick={onImportData}>
-              <Icon className="icon-file-upload" />
-            </IconButton>
-          </ListItem>
-        </List>
-      </Paper>
-
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
-      >
-        <CryptoSettings />
-      </Paper>
-
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
-      >
-        <List>
-          <ListItem>
-            <ListItemText primary="Check Update" />
-            <IconButton onClick={onCheckUpdate}>
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Privacy Policy" />
-            <IconButton
-              onClick={() =>
-                openUrl(
-                  "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
-                )
-              }
+            <SettingSection
+              eyebrow="Security"
+              title="Data protection"
+              description="Manage local encryption and trusted hosts."
             >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="About" />
-            <IconButton
-              onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
+              <SettingAction
+                icon={<KeyIcon />}
+                title="Local encryption"
+                description="Protect saved application data on this device."
+                value={
+                  <Switch
+                    checked={cryptoEnable}
+                    onCheckedChange={onCryptoEnableChange}
+                  />
+                }
+              />
+
+              {cryptoEnable && (
+                <SettingAction
+                  icon={<KeyIcon />}
+                  title="Change encryption password"
+                  description="Update the password for encrypted local data."
+                  onClick={() => setChangeCryptoPasswordIsOpen(true)}
+                  ctaLabel="Change"
+                />
+              )}
+            </SettingSection>
+
+            <SettingSection
+              eyebrow="Application"
+              title="Updates and support"
+              description="Low-frequency actions and app information."
             >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Version" />
-            {version}
-          </ListItem>
-        </List>
-      </Paper>
-    </Page>
+              <SettingAction
+                icon={<LabelIcon />}
+                title="Check for updates"
+                description={
+                  hasUpdate
+                    ? "A new version is available."
+                    : "Look for a new release."
+                }
+                onClick={onCheckUpdate}
+                ctaLabel={hasUpdate ? "Open updater" : "Check now"}
+                value={checking ? "Checking..." : undefined}
+                disabled={!!checking}
+                tone="primary"
+                footer={renderUpdateFooter()}
+              />
+
+              <SettingAction
+                icon={<HostIcon />}
+                title="Project repository"
+                description="Open the GitHub repository."
+                onClick={() => openUrl("https://github.com/nashaofu/shell360")}
+                ctaLabel="Open"
+              />
+
+              <SettingAction
+                icon={<FileIcon />}
+                title="Documentation"
+                description="Open the project README."
+                onClick={() =>
+                  openUrl(
+                    "https://github.com/nashaofu/shell360/blob/master/README.md",
+                  )
+                }
+                ctaLabel="Read"
+              />
+            </SettingSection>
+          </div>
+        </div>
+
+        <InitCrypto
+          open={initCryptoIsOpen}
+          onCancel={() => setInitCryptoIsOpen(false)}
+          onOk={() => setInitCryptoIsOpen(false)}
+        />
+        <ChangeCryptoPassword
+          open={changeCryptoPasswordIsOpen}
+          onCancel={() => setChangeCryptoPasswordIsOpen(false)}
+          onOk={() => setChangeCryptoPasswordIsOpen(false)}
+        />
+      </Page>
+    </div>
   );
 }

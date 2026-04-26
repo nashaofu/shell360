@@ -1,16 +1,4 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Checkbox,
-  Link,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useState } from "react";
 import {
   type IapOffering,
@@ -20,7 +8,7 @@ import {
   iapRestore,
 } from "tauri-plugin-mobile";
 
-import { useRefreshCustomerInfoAtom } from "@/atom/iap";
+import { useRefreshCustomerInfoAtom } from "@/atoms/iap.atom";
 import useMessage from "@/hooks/useMessage";
 import openUrl from "@/utils/openUrl";
 
@@ -118,32 +106,34 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
 
   return (
     <>
-      <Box
-        sx={{
-          textAlign: "center",
-        }}
-      >
-        <Avatar
+      <div style={{ textAlign: "center" }}>
+        <img
           src={logo}
-          variant="rounded"
-          sx={{
+          alt="Shell360"
+          style={{
             width: 128,
             height: 128,
-            mr: "auto",
-            mb: 1.5,
-            ml: "auto",
+            margin: "0 auto 12px",
+            borderRadius: 16,
           }}
         />
-        <Typography variant="h5">Shell360</Typography>
-        <Box
-          sx={{
+        <h2 style={{ margin: 0 }}>Shell360</h2>
+        <div
+          style={{
             textAlign: "center",
-            gap: "0 4px",
+            display: "flex",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
-          <Link
-            sx={{
-              marginRight: 0.5,
+          <button
+            type="button"
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--accent-10)",
+              cursor: "pointer",
+              textDecoration: "underline",
             }}
             onClick={() =>
               openUrl(
@@ -152,74 +142,55 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
             }
           >
             Privacy Policy
-          </Link>
-          <Link
-            sx={{
-              marginLeft: 0.5,
+          </button>
+          <button
+            type="button"
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--accent-10)",
+              cursor: "pointer",
+              textDecoration: "underline",
             }}
             onClick={() =>
               openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
           >
             Terms of Use
-          </Link>
-        </Box>
-        <Typography
-          variant="subtitle1"
-          sx={{
+          </button>
+        </div>
+        <div
+          style={{
             textAlign: "left",
-            mt: 2,
+            marginTop: 16,
+            fontSize: 16,
+            fontWeight: 500,
           }}
         >
           Subscribe to unlock the following features
-        </Typography>
-        <Box
-          component="ol"
-          sx={{
+        </div>
+        <ol
+          style={{
             textAlign: "left",
-            pt: 0,
-            pr: 0,
-            pb: 0,
-            pl: 3,
-            mt: 0.5,
-            mr: 0,
-            mb: 0,
-            ml: 0,
+            padding: "0 0 0 24px",
+            margin: "8px 0 0",
           }}
         >
-          <Typography variant="body2" component="li">
+          <li style={{ fontSize: 14 }}>
             Unlimited creation of hosts(Default: 3 host)
-          </Typography>
-          <Typography
-            variant="body2"
-            component="li"
-            sx={{
-              mt: 0.5,
-            }}
-          >
+          </li>
+          <li style={{ fontSize: 14, marginTop: 4 }}>
             Unlimited creation of keys(Default: 1 key)
-          </Typography>
-          <Typography
-            variant="body2"
-            component="li"
-            sx={{
-              mt: 0.5,
-            }}
-          >
+          </li>
+          <li style={{ fontSize: 14, marginTop: 4 }}>
             Enable import of application configuration
-          </Typography>
-          <Typography
-            variant="body2"
-            component="li"
-            sx={{
-              mt: 0.5,
-            }}
-          >
+          </li>
+          <li style={{ fontSize: 14, marginTop: 4 }}>
             Enable export of application configuration
-          </Typography>
-        </Box>
-      </Box>
-      <List sx={{ mt: 1 }}>
+          </li>
+        </ol>
+      </div>
+      <div style={{ marginTop: 12 }}>
         {defaultOfferingAvailablePackages.map((item) => {
           const { storeProduct } = item;
           const price = storeProduct.localizedPriceString;
@@ -243,51 +214,58 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
           }
 
           return (
-            <ListItem key={item.identifier} disablePadding>
-              <ListItemButton
-                onClick={() => setSelectedPackageIdentifier(item.identifier)}
-                selected={selectedPackageIdentifier === item.identifier}
-                divider
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: "unset",
-                  }}
-                >
-                  <Checkbox
-                    edge="start"
-                    tabIndex={-1}
-                    disableRipple
-                    checked={selectedPackageIdentifier === item.identifier}
-                  />
-                </ListItemIcon>
-                <ListItemText primary={period} secondary={desc} />
-              </ListItemButton>
-            </ListItem>
+            <button
+              type="button"
+              key={item.identifier}
+              onClick={() => setSelectedPackageIdentifier(item.identifier)}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                border: "1px solid var(--gray-a6)",
+                borderRadius: "var(--radius-3)",
+                marginTop: 8,
+                padding: 12,
+                background:
+                  selectedPackageIdentifier === item.identifier
+                    ? "var(--accent-a3)"
+                    : "var(--color-panel-solid)",
+                cursor: "pointer",
+                color: "inherit",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <input
+                  type="radio"
+                  checked={selectedPackageIdentifier === item.identifier}
+                  readOnly
+                />
+                <div>
+                  <div style={{ fontWeight: 600 }}>{period}</div>
+                  <div style={{ fontSize: 13, color: "var(--gray-11)" }}>
+                    {desc}
+                  </div>
+                </div>
+              </div>
+            </button>
           );
         })}
-      </List>
-      <Box sx={{ mt: 3 }}>
+      </div>
+      <div style={{ marginTop: 24 }}>
         <Button
-          variant="contained"
-          fullWidth
-          color="success"
-          size="large"
+          style={{ width: "100%", height: 44 }}
+          color="green"
           onClick={onBuyPackage}
         >
           Continue
         </Button>
         <Button
-          sx={{ mt: 2 }}
-          variant="contained"
-          fullWidth
-          color="info"
-          size="large"
+          style={{ width: "100%", height: 44, marginTop: 12 }}
+          color="blue"
           onClick={onRestore}
         >
           Restore
         </Button>
-      </Box>
+      </div>
     </>
   );
 }

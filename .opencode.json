@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/schemas/config.json",
+  "env": {
+    "SHELL360_ROOT": "${workspaceRoot}"
+  },
+  "commands": {
+    "typecheck": {
+      "command": "pnpm --filter desktop run tsc",
+      "description": "Run TypeScript type checking on desktop"
+    },
+    "typecheck:all": {
+      "command": "pnpm run tsc"
+    },
+    "lint": {
+      "command": "pnpm run check"
+    },
+    "lint:fix": {
+      "command": "pnpm run check:fix"
+    },
+    "dev": {
+      "command": "pnpm --filter desktop run dev",
+      "description": "Start desktop dev server"
+    }
+  },
+  "rules": {
+    "noComments": "Do not add comments to code unless the logic is non-obvious",
+    "useThemeTokens": "Use CSS custom properties (Radix Theme tokens) instead of hardcoded colors",
+    "doubleQuotes": "Use double quotes for strings",
+    "iconsInShared": "All SVG icons go in shared/src/components/Icon/svgs/ with width='1em' height='1em' fill='currentColor' viewBox and xmlns",
+    "moduleCSS": "Use CSS Modules with .module.less extension for component styles",
+    "typescriptStrict": "Follow TypeScript strict mode, noUnusedLocals, noUnusedParameters"
+  }
+}

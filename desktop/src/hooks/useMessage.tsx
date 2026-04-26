@@ -1,39 +1,13 @@
-import {
-  type OptionsWithExtraProps,
-  useSnackbar,
-  type VariantType,
-} from "notistack";
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
+import { message as sharedMessage } from "shared";
+
+type MessageArg = { message: ReactNode };
 
 export default function useMessage() {
-  const { enqueueSnackbar } = useSnackbar();
-
-  const fns = useMemo(() => {
-    const implMessageFn =
-      (variant: VariantType) =>
-      ({
-        anchorOrigin = {
-          vertical: "top",
-          horizontal: "center",
-        },
-        ...props
-      }: Omit<OptionsWithExtraProps<VariantType>, "variant"> & {
-        message: ReactNode;
-      }) => {
-        enqueueSnackbar({
-          ...props,
-          anchorOrigin,
-          variant,
-        });
-      };
-
-    return {
-      info: implMessageFn("info"),
-      success: implMessageFn("success"),
-      error: implMessageFn("error"),
-      warning: implMessageFn("warning"),
-    };
-  }, [enqueueSnackbar]);
-
-  return fns;
+  return {
+    success: (arg: MessageArg) => sharedMessage.success(arg.message),
+    error: (arg: MessageArg) => sharedMessage.error(arg.message),
+    info: (arg: MessageArg) => sharedMessage.info(arg.message),
+    warning: (arg: MessageArg) => sharedMessage.warning(arg.message),
+  };
 }

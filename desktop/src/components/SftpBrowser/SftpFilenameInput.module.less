@@ -1,0 +1,54 @@
+.root {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--accent-8);
+  border-radius: 6px;
+  background: var(--color-surface);
+  transition: border-color 0.12s;
+}
+
+.root:focus-within {
+  border-color: var(--accent-9);
+  box-shadow: 0 0 0 1px var(--accent-8);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--gray-12);
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  gap: 1px;
+  padding-right: 2px;
+}
+
+.actionButton {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gray-10);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.actionButton:hover {
+  background: var(--gray-a4);
+  color: var(--gray-12);
+}

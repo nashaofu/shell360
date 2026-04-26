@@ -1,6 +1,6 @@
-import { Box, Button, Icon, OutlinedInput } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useState } from "react";
-import { useHosts, usePortForwardings } from "shared";
+import { AddIcon, useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
@@ -24,6 +24,25 @@ export default function PortForwardings() {
     [hosts],
   );
 
+  const filteredItems = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    if (!kw) {
+      return portForwardings;
+    }
+
+    return portForwardings.filter((item) => {
+      const host = hostsMap.get(item.hostId);
+      return [
+        item.name,
+        item.portForwardingType,
+        `${item.localAddress}:${item.localPort}`,
+        `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`,
+        host?.name,
+        host?.hostname,
+      ].some((value) => value?.toLowerCase().includes(kw));
+    });
+  }, [hostsMap, keyword, portForwardings]);
+
   const onAddPortForwardingClose = useCallback(() => {
     setIsOpenAddPortForwarding(false);
     setEditItem(undefined);
@@ -35,42 +54,34 @@ export default function PortForwardings() {
   }, []);
 
   return (
-    <Page title="Port forwardings">
-      <Box
-        sx={{
+    <Page title="Tunnels">
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            flexGrow: 1,
-            maxWidth: 380,
-            mr: 2,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Button
-          variant="contained"
-          sx={{
-            height: 40,
-          }}
-          startIcon={<Icon className="icon-add" />}
-          onClick={() => setIsOpenAddPortForwarding(true)}
-        >
+        </div>
+        <Button onClick={() => setIsOpenAddPortForwarding(true)}>
+          <AddIcon />
           Add
         </Button>
-      </Box>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -78,7 +89,7 @@ export default function PortForwardings() {
         }}
         itemWidth={360}
       >
-        {portForwardings.map((item) => (
+        {filteredItems.map((item) => (
           <PortForwardingItem
             key={item.id}
             item={item}
@@ -88,13 +99,16 @@ export default function PortForwardings() {
           />
         ))}
       </AutoRepeatGrid>
-      {!portForwardings.length && (
-        <Empty desc="There is no port forwarding yet, add it now.">
-          <Button
-            variant="contained"
-            onClick={() => setIsOpenAddPortForwarding(true)}
-          >
-            Add port forwarding
+      {!filteredItems.length && (
+        <Empty
+          desc={
+            portForwardings.length
+              ? "No tunnels match your search."
+              : "There is no tunnel yet, add it now."
+          }
+        >
+          <Button onClick={() => setIsOpenAddPortForwarding(true)}>
+            Add tunnel
           </Button>
         </Empty>
       )}
