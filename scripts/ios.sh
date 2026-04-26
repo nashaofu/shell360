@@ -14,6 +14,8 @@ echo "[INFO] Configuring Apple API key..."
 echo "$APPLE_API_KEY_TEXT" | openssl base64 -d -A -out "/tmp/apple_api_key.p8"
 export APPLE_API_KEY_PATH="/tmp/apple_api_key.p8"
 
+sudo xcode-select -s /Applications/Xcode_26.4.1.app
+
 # Prepare build directory
 echo "[INFO] Preparing build directory..."
 rm -rf build
