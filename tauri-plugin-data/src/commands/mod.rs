@@ -2,6 +2,7 @@ pub mod crypto;
 pub mod host;
 pub mod key;
 pub mod port_forwarding;
+pub mod sync;
 
 use tauri::{Runtime, State};
 
