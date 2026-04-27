@@ -14,3 +14,16 @@ pub fn get_db_path<R: Runtime>(app_handle: &AppHandle<R>) -> DataResult<PathBuf>
 
   Ok(path)
 }
+
+pub fn get_sync_doc_path<R: Runtime>(app_handle: &AppHandle<R>) -> DataResult<PathBuf> {
+  let path = app_handle.path().app_local_data_dir()?.join("sync_doc.bin");
+  Ok(path)
+}
+
+pub fn get_sync_state_path<R: Runtime>(app_handle: &AppHandle<R>) -> DataResult<PathBuf> {
+  let path = app_handle
+    .path()
+    .app_local_data_dir()?
+    .join("sync_state.json");
+  Ok(path)
+}

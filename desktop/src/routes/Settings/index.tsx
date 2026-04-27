@@ -22,6 +22,7 @@ import useModal from "@/hooks/useModal";
 import openUrl from "@/utils/openUrl";
 
 import CryptoSettings from "./CryptoSettings";
+import SyncSettings from "./SyncSettings";
 
 export default function Settings() {
   const [themeMode, setThemeMode] = useAtom(modeAtom);
@@ -169,6 +170,16 @@ export default function Settings() {
         }}
       >
         <CryptoSettings />
+      </Paper>
+
+      <Paper
+        sx={{
+          maxWidth: 560,
+          my: 2,
+          mx: "auto",
+        }}
+      >
+        <SyncSettings />
       </Paper>
 
       <Paper
