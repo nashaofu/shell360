@@ -89,14 +89,26 @@ impl SyncManager {
 
     let doc = if doc_path.exists() {
       let bytes = tokio::fs::read(&doc_path).await?;
-      AutoCommit::load(&bytes).unwrap_or_else(|_| Self::new_doc())
+      match AutoCommit::load(&bytes) {
+        Ok(doc) => doc,
+        Err(e) => {
+          eprintln!("[SyncManager] Failed to load automerge doc, starting fresh: {e}");
+          Self::new_doc()
+        }
+      }
     } else {
       Self::new_doc()
     };
 
     let state: SyncState = if state_path.exists() {
       let content = tokio::fs::read_to_string(&state_path).await?;
-      serde_json::from_str(&content).unwrap_or_default()
+      match serde_json::from_str(&content) {
+        Ok(s) => s,
+        Err(e) => {
+          eprintln!("[SyncManager] Failed to deserialize sync state, using defaults: {e}");
+          SyncState::default()
+        }
+      }
     } else {
       SyncState::default()
     };
@@ -151,7 +163,9 @@ impl SyncManager {
       let mut state = self.state.write().await;
       state.device_id = Some(id.clone());
     }
-    let _ = self.save_state().await;
+    if let Err(e) = self.save_state().await {
+      eprintln!("[SyncManager] Failed to persist new device id: {e}");
+    }
     id
   }
 
@@ -412,9 +426,17 @@ impl SyncManager {
   pub async fn apply_remote_changes(&self, raw_changes: Vec<Vec<u8>>) -> DataResult<()> {
     let mut doc = self.doc.write().await;
     for bytes in raw_changes {
-      let change = automerge::Change::try_from(bytes.as_slice())
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
-      doc.apply_changes(vec![change])?;
+      match automerge::Change::try_from(bytes.as_slice()) {
+        Ok(change) => {
+          if let Err(e) = doc.apply_changes(vec![change]) {
+            eprintln!("[SyncManager] Failed to apply remote change: {e}");
+          }
+        }
+        Err(e) => {
+          eprintln!("[SyncManager] Skipping invalid remote change bytes: {e}");
+          continue;
+        }
+      }
     }
     let heads_hex: Vec<String> = doc.get_heads().iter().map(|h| hex::encode(h.0)).collect();
     drop(doc);

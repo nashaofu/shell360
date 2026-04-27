@@ -142,17 +142,20 @@ pub async fn start_device_auth<R: Runtime>(
     .await?;
 
   let body: serde_json::Value = resp.json().await?;
+  let session_id = body
+    .get("session_id")
+    .and_then(|v| v.as_str())
+    .ok_or_else(|| DataError::NotFound)?
+    .to_string();
+  let authorize_url = body
+    .get("authorize_url")
+    .and_then(|v| v.as_str())
+    .ok_or_else(|| DataError::NotFound)?
+    .to_string();
+
   Ok(DeviceAuthSession {
-    session_id: body
-      .get("session_id")
-      .and_then(|v| v.as_str())
-      .unwrap_or("")
-      .to_string(),
-    authorize_url: body
-      .get("authorize_url")
-      .and_then(|v| v.as_str())
-      .unwrap_or("")
-      .to_string(),
+    session_id,
+    authorize_url,
   })
 }
 
@@ -222,7 +225,7 @@ pub async fn logout_sync(sync_manager: State<'_, SyncManager>) -> DataResult<()>
 #[tauri::command]
 pub async fn get_sync_status(sync_manager: State<'_, SyncManager>) -> DataResult<SyncStatus> {
   use std::sync::atomic::Ordering;
-  let pending = sync_manager.get_pending_changes().await.unwrap_or_default();
+  let pending = sync_manager.get_pending_changes().await?;
   Ok(SyncStatus {
     is_logged_in: sync_manager.is_logged_in().await,
     server_url: sync_manager.get_server_url().await,
