@@ -3,8 +3,8 @@ use std::{
   sync::atomic::{AtomicI64, Ordering},
 };
 
-use automerge::{AutoCommit, ObjType, ReadDoc, ScalarValue, ROOT};
 use automerge::transaction::Transactable;
+use automerge::{AutoCommit, ObjType, ROOT, ReadDoc, ScalarValue};
 use base64ct::{Base64, Encoding};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Runtime};
@@ -172,10 +172,13 @@ impl SyncManager {
   // ── Server URL & tokens ────────────────────────────────────────────────────
 
   pub async fn set_server_url(&self, url: Option<String>) {
-    let mut state = self.state.write().await;
-    state.server_url = url;
-    drop(state);
-    let _ = self.save_state().await;
+    {
+      let mut state = self.state.write().await;
+      state.server_url = url;
+    }
+    if let Err(e) = self.save_state().await {
+      eprintln!("[SyncManager] Failed to persist server URL: {e}");
+    }
   }
 
   pub async fn get_server_url(&self) -> Option<String> {
@@ -183,11 +186,14 @@ impl SyncManager {
   }
 
   pub async fn set_tokens(&self, access: Option<String>, refresh: Option<String>) {
-    let mut state = self.state.write().await;
-    state.access_token = access;
-    state.refresh_token = refresh;
-    drop(state);
-    let _ = self.save_state().await;
+    {
+      let mut state = self.state.write().await;
+      state.access_token = access;
+      state.refresh_token = refresh;
+    }
+    if let Err(e) = self.save_state().await {
+      eprintln!("[SyncManager] Failed to persist tokens: {e}");
+    }
   }
 
   pub async fn get_access_token(&self) -> Option<String> {
@@ -341,6 +347,8 @@ impl SyncManager {
           .json(&serde_json::json!({ "changes": payload }))
           .send()
           .await?;
+      } else {
+        return Err(DataError::SyncNotAuthenticated);
       }
     }
 
@@ -353,9 +361,10 @@ impl SyncManager {
         .map(|h| hex::encode(h.0))
         .collect::<Vec<_>>()
     };
-    let mut state = self.state.write().await;
-    state.server_heads = heads_hex;
-    drop(state);
+    {
+      let mut state = self.state.write().await;
+      state.server_heads = heads_hex;
+    }
     let _ = self.save_state().await;
 
     Ok(())
@@ -408,9 +417,10 @@ impl SyncManager {
 
     if let Some(current_seq) = body.get("current_seq").and_then(|v| v.as_i64()) {
       self.last_pull_seq.store(current_seq, Ordering::Relaxed);
-      let mut state = self.state.write().await;
-      state.last_pull_seq = current_seq;
-      drop(state);
+      {
+        let mut state = self.state.write().await;
+        state.last_pull_seq = current_seq;
+      }
       let _ = self.save_state().await;
     }
 
@@ -424,25 +434,31 @@ impl SyncManager {
   }
 
   pub async fn apply_remote_changes(&self, raw_changes: Vec<Vec<u8>>) -> DataResult<()> {
-    let mut doc = self.doc.write().await;
-    for bytes in raw_changes {
-      match automerge::Change::try_from(bytes.as_slice()) {
-        Ok(change) => {
-          if let Err(e) = doc.apply_changes(vec![change]) {
-            eprintln!("[SyncManager] Failed to apply remote change: {e}");
+    let valid_changes: Vec<automerge::Change> = raw_changes
+      .iter()
+      .filter_map(
+        |bytes| match automerge::Change::try_from(bytes.as_slice()) {
+          Ok(change) => Some(change),
+          Err(e) => {
+            eprintln!("[SyncManager] Skipping invalid remote change bytes: {e}");
+            None
           }
-        }
-        Err(e) => {
-          eprintln!("[SyncManager] Skipping invalid remote change bytes: {e}");
-          continue;
-        }
+        },
+      )
+      .collect();
+
+    let mut doc = self.doc.write().await;
+    if !valid_changes.is_empty() {
+      if let Err(e) = doc.apply_changes(valid_changes) {
+        eprintln!("[SyncManager] Failed to apply remote changes: {e}");
       }
     }
     let heads_hex: Vec<String> = doc.get_heads().iter().map(|h| hex::encode(h.0)).collect();
     drop(doc);
-    let mut state = self.state.write().await;
-    state.server_heads = heads_hex;
-    drop(state);
+    {
+      let mut state = self.state.write().await;
+      state.server_heads = heads_hex;
+    }
     let _ = self.save_doc().await;
     let _ = self.save_state().await;
     Ok(())

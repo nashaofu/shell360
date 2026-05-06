@@ -1,7 +1,7 @@
+use base64ct::Encoding;
 use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Runtime, State};
-use base64ct::Encoding;
 
 use crate::{
   crypto_manager::CryptoManager,
@@ -118,12 +118,7 @@ pub async fn start_device_auth<R: Runtime>(
   let device_id = sync_manager.get_or_create_device_id().await;
 
   let pkg = app_handle.package_info();
-  let app_version = pkg.version.to_string();
-  let app_name = pkg.name.clone();
-  let os_family = std::env::consts::FAMILY.to_string();
-  let os_fullname = std::env::consts::OS.to_string();
-  let device_type = "desktop".to_string();
-  let device_name = format!("{} ({})", os_fullname, app_name);
+  let device_name = format!("{} ({})", std::env::consts::OS, pkg.name);
 
   let resp = sync_manager
     .http_client
@@ -131,12 +126,12 @@ pub async fn start_device_auth<R: Runtime>(
     .json(&serde_json::json!({
       "device_id": device_id,
       "device_name": device_name,
-      "device_type": device_type,
-      "os_family": os_family,
-      "os_fullname": os_fullname,
+      "device_type": "desktop",
+      "os_family": std::env::consts::FAMILY,
+      "os_fullname": std::env::consts::OS,
       "os_version": std::env::consts::ARCH,
-      "app_name": app_name,
-      "app_version": app_version,
+      "app_name": pkg.name,
+      "app_version": pkg.version.to_string(),
     }))
     .send()
     .await?;
@@ -256,14 +251,19 @@ pub async fn trigger_sync_pull<R: Runtime>(
   let applied = raw_changes.len();
   let current_seq = sync_manager.last_pull_seq.load(Ordering::Relaxed);
 
-  let mut change_bytes_list: Vec<Vec<u8>> = Vec::new();
-  for change_val in &raw_changes {
-    if let Some(b64) = change_val.get("change").and_then(|v| v.as_str()) {
-      if let Ok(bytes) = base64ct::Base64::decode_vec(b64) {
-        change_bytes_list.push(bytes);
+  let change_bytes_list: Vec<Vec<u8>> = raw_changes
+    .iter()
+    .filter_map(|v| {
+      let b64 = v.get("change")?.as_str()?;
+      match base64ct::Base64::decode_vec(b64) {
+        Ok(bytes) => Some(bytes),
+        Err(e) => {
+          eprintln!("[sync] Failed to decode remote change (base64): {e}");
+          None
+        }
       }
-    }
-  }
+    })
+    .collect();
 
   if !change_bytes_list.is_empty() {
     sync_manager.apply_remote_changes(change_bytes_list).await?;
@@ -297,7 +297,11 @@ pub async fn get_oauth_providers(sync_manager: State<'_, SyncManager>) -> DataRe
       .map(|arr| {
         arr
           .iter()
-          .filter_map(|v| v.get("name").and_then(|n| n.as_str()).map(|s| s.to_string()))
+          .filter_map(|v| {
+            v.get("name")
+              .and_then(|n| n.as_str())
+              .map(|s| s.to_string())
+          })
           .collect()
       })
       .unwrap_or_default(),
@@ -305,9 +309,7 @@ pub async fn get_oauth_providers(sync_manager: State<'_, SyncManager>) -> DataRe
 }
 
 #[tauri::command]
-pub async fn get_sync_user_info(
-  sync_manager: State<'_, SyncManager>,
-) -> DataResult<SyncUserInfo> {
+pub async fn get_sync_user_info(sync_manager: State<'_, SyncManager>) -> DataResult<SyncUserInfo> {
   let server_url = sync_manager
     .get_server_url()
     .await
@@ -351,9 +353,7 @@ pub async fn get_sync_user_info(
 }
 
 #[tauri::command]
-pub async fn get_sync_devices(
-  sync_manager: State<'_, SyncManager>,
-) -> DataResult<Vec<SyncDevice>> {
+pub async fn get_sync_devices(sync_manager: State<'_, SyncManager>) -> DataResult<Vec<SyncDevice>> {
   let server_url = sync_manager
     .get_server_url()
     .await
