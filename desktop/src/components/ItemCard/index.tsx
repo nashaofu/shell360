@@ -1,5 +1,5 @@
-import { Box, Paper } from "@mui/material";
 import type { ReactNode } from "react";
+import styles from "./index.module.scss";
 
 type ItemCardProps = {
   icon: ReactNode;
@@ -20,83 +20,29 @@ export default function ItemCard({
   elevation,
   onDoubleClick,
 }: ItemCardProps) {
+  const cardClassName = [
+    styles.card,
+    variant === "elevation" ? styles.cardElevation : styles.cardOutlined,
+  ].join(" ");
+
   return (
-    <Paper
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: (theme) => theme.shape.borderRadius,
-        p: 1.5,
-        cursor: "pointer",
-      }}
-      variant={variant}
-      elevation={elevation}
+    <div
+      className={cardClassName}
+      style={
+        variant === "elevation" && elevation
+          ? {
+              boxShadow: `0 ${elevation * 2}px ${elevation * 6}px rgba(0, 0, 0, 0.16)`,
+            }
+          : undefined
+      }
       onDoubleClick={onDoubleClick}
     >
-      <Box
-        sx={{
-          width: 42,
-          height: 42,
-          display: "flex",
-          flexShrink: 0,
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 30,
-          borderRadius: 2,
-          color: (theme) => theme.palette.common.white,
-          bgcolor: (theme) => theme.palette.primary.dark,
-          overflow: "hidden",
-        }}
-      >
-        {icon}
-      </Box>
-      <Box
-        sx={{
-          flexGrow: 1,
-          flexShrink: 1,
-          overflow: "hidden",
-          userSelect: "text",
-          ml: 1.5,
-          mr: 1.5,
-        }}
-      >
-        <Box
-          sx={{
-            fontSize: 14,
-            fontWeight: 600,
-            wordBreak: "break-all",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {title}
-        </Box>
-        {desc && (
-          <Box
-            sx={{
-              fontSize: 12,
-              color: (theme) => theme.palette.grey[600],
-              wordBreak: "break-all",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {desc}
-          </Box>
-        )}
-      </Box>
-      {extra && (
-        <Box
-          sx={{
-            flexShrink: 0,
-          }}
-        >
-          {extra}
-        </Box>
-      )}
-    </Paper>
+      <div className={styles.iconWrap}>{icon}</div>
+      <div className={styles.content}>
+        <div className={styles.title}>{title}</div>
+        {desc && <div className={styles.desc}>{desc}</div>}
+      </div>
+      {extra && <div className={styles.extra}>{extra}</div>}
+    </div>
   );
 }

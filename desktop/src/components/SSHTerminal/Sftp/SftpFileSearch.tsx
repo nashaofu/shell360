@@ -1,11 +1,5 @@
-import {
-  Box,
-  ClickAwayListener,
-  Icon,
-  IconButton,
-  InputBase,
-} from "@mui/material";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import styles from "./SftpFileSearch.module.scss";
 
 type SftpFileSearchProps = {
   value: string;
@@ -18,9 +12,11 @@ export default function SftpFileSearch({
 }: SftpFileSearchProps) {
   const [isShow, setIsShow] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   const onShow = useCallback(() => {
     setIsShow(true);
-    inputRef.current?.focus();
+    requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
   const onHide = useCallback(() => {
@@ -31,34 +27,40 @@ export default function SftpFileSearch({
     setIsShow(false);
   }, [value]);
 
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!wrapperRef.current) {
+        return;
+      }
+
+      if (wrapperRef.current.contains(event.target as Node)) {
+        return;
+      }
+
+      onHide();
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+    };
+  }, [onHide]);
+
   return (
-    <ClickAwayListener onClickAway={onHide}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          maxWidth: 120,
-        }}
-      >
-        <IconButton onClick={onShow}>
-          <Icon className="icon-search" />
-        </IconButton>
-        <InputBase
-          inputRef={inputRef}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          sx={{
-            flex: 1,
-            width: isShow ? 100 : 0,
-            transitionProperty: "width",
-            transitionDuration: (theme) =>
-              `${theme.transitions.duration.short}ms`,
-            transitionTimingFunction: (theme) =>
-              theme.transitions.easing.easeInOut,
-          }}
-          placeholder="Filter"
-        />
-      </Box>
-    </ClickAwayListener>
+    <div ref={wrapperRef} className={styles.root}>
+      <button type="button" className={styles.searchButton} onClick={onShow}>
+        <span className="icon-search" />
+      </button>
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={
+          isShow ? `${styles.input} ${styles.inputShow}` : styles.input
+        }
+        placeholder="Filter"
+      />
+    </div>
   );
 }

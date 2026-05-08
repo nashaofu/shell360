@@ -1,0 +1,59 @@
+.nameRow {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.fileIcon {
+  padding-right: 10px;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.nameContent {
+  flex: 1;
+  overflow: hidden;
+}
+
+.renameWrapDesktop {
+  min-width: 160px;
+}
+
+.fileName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filePerms {
+  font-size: 12px;
+  color: var(--gray-10, #6b7280);
+}
+
+.optButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.optButton {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-10, #6b7280);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.optButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

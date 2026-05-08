@@ -1,8 +1,9 @@
-import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 import { Dropdown } from "@/components/Dropdown";
+import styles from "../styles.module.scss";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 
@@ -18,14 +19,7 @@ export default function UnknownKey({
         message={get(error, "message", String(error))}
       />
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
+      <div className={styles.actions}>
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
@@ -48,29 +42,23 @@ export default function UnknownKey({
           }}
         >
           {({ onChangeOpen }) => (
-            <ButtonGroup
-              sx={{
-                minWidth: 150,
-              }}
-              variant="contained"
-              color="warning"
-            >
+            <div className={styles.splitButtonGroup}>
               <Button
-                fullWidth
+                className={styles.mainSplitButton}
                 onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
               >
                 Continue
               </Button>
               <Button
-                size="small"
+                className={styles.moreButton}
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
-                <Icon className="icon-more" />
+                <span className="icon-more" />
               </Button>
-            </ButtonGroup>
+            </div>
           )}
         </Dropdown>
-      </Box>
+      </div>
     </>
   );
 }

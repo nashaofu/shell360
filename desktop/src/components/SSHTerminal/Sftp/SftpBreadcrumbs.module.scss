@@ -1,0 +1,73 @@
+.root {
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  min-width: 0;
+}
+
+.rootButton,
+.breadcrumbItem,
+.iconButton {
+  border: 0;
+  background: transparent;
+  color: var(--gray-12, #111827);
+  cursor: pointer;
+}
+
+.rootButton {
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.breadcrumbNode {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.separator {
+  color: var(--gray-9, #9ca3af);
+  margin: 0 4px;
+}
+
+.breadcrumbItem {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iconButton {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.editRoot {
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  flex: 1;
+}
+
+.editInput {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid var(--gray-7, #d1d5db);
+  border-radius: 8px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 14px;
+}

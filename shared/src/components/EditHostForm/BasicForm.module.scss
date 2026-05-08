@@ -1,0 +1,122 @@
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.formField {
+  margin-bottom: 12px;
+}
+
+.fieldLabel {
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.input,
+.inputBare {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--gray-7, #d1d5db);
+  border-radius: 8px;
+  padding: 0 10px;
+  color: var(--gray-12, #111827);
+  background: var(--color-background, #ffffff);
+  outline: 0;
+}
+
+.input:focus,
+.inputBare:focus {
+  border-color: var(--accent-9, #3b82f6);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
+}
+
+.inputWithIcon {
+  border: 1px solid var(--gray-7, #d1d5db);
+  border-radius: 8px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: var(--color-background, #fff);
+  color: var(--gray-11, #4b5563);
+}
+
+.inputWithIcon:focus-within {
+  border-color: var(--accent-9, #3b82f6);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
+}
+
+.inputBare {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0 0 0 8px;
+}
+
+.inputBare:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.fullWidthTrigger {
+  width: 100%;
+}
+
+.errorHint {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--red-11, #be123c);
+}
+
+.tagsWrap {
+  min-height: 36px;
+  border: 1px solid var(--gray-7, #d1d5db);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+}
+
+.tagChip {
+  height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  background: color-mix(
+    in srgb,
+    var(--gray-4, #e5e7eb) 70%,
+    var(--color-background, #fff)
+  );
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-11, #4b5563);
+  font-size: 12px;
+}
+
+.tagRemoveButton {
+  border: 0;
+  background: transparent;
+  color: var(--gray-10, #6b7280);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.tagInput {
+  flex: 1;
+  min-width: 120px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--gray-12, #111827);
+  height: 24px;
+}
+
+.formFieldInput {
+  margin-bottom: 0;
+}

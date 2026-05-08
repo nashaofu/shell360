@@ -1,5 +1,4 @@
-import type { SxProps, Theme } from "@mui/material";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export enum SftpTableOrder {
   Asc = "asc",
@@ -15,6 +14,6 @@ export type SftpTableCell<T extends Record<string, unknown>> = {
   width?: number | string;
   minWidth?: number | string;
   maxWidth?: number | string;
-  sx?: (isHeader: boolean) => SxProps<Theme>;
+  sx?: (isHeader: boolean) => CSSProperties;
   render: (item: T, index: number) => ReactNode;
 };

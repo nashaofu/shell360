@@ -53,6 +53,19 @@ export const modeAtom = atom(
   },
 );
 
+export const resolvedThemeModeAtom = atom<ThemeMode.Light | ThemeMode.Dark>(
+  (get) => {
+    const mode = get(modeAtom);
+    const prefersDarkMode = get(prefersDarkModeAtom);
+
+    if (mode === ThemeMode.Auto) {
+      return prefersDarkMode ? ThemeMode.Dark : ThemeMode.Light;
+    }
+
+    return mode;
+  },
+);
+
 export const themeAtom = atom((get) => {
   const mode = get(modeAtom);
   const prefersDarkMode = get(prefersDarkModeAtom);

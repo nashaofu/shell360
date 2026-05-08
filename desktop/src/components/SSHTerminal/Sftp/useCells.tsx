@@ -1,4 +1,3 @@
-import { Box, Icon, IconButton, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { useCallback } from "react";
 import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
@@ -6,6 +5,7 @@ import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 import type useModal from "@/hooks/useModal";
 import SftpFilenameInput from "./SftpFilenameInput";
 import type { SftpTableCell } from "./types";
+import styles from "./useCells.module.scss";
 
 type UseCellsOpts = {
   selectedFile?: SSHSftpFile;
@@ -92,64 +92,30 @@ export default function useCells({
         };
 
         return (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              cursor: "pointer",
-            }}
+          <div
+            className={styles.nameRow}
             title={item.name}
             onDoubleClick={() => onDoubleClickName(item)}
           >
-            <Box
-              sx={{
-                pr: 1.2,
-              }}
-            >
-              <Icon
-                className={icons[item.fileType] || "icon-file"}
-                fontSize="large"
-              ></Icon>
-            </Box>
-            <Box
-              sx={{
-                flex: 1,
-                overflow: "hidden",
-              }}
-            >
+            <span
+              className={`${styles.fileIcon} ${icons[item.fileType] || "icon-file"}`}
+            />
+            <div className={styles.nameContent}>
               {selectedFile?.path === item.path ? (
-                <Box
-                  sx={{
-                    minWidth: 160,
-                  }}
-                >
+                <div className={styles.renameWrapDesktop}>
                   <SftpFilenameInput
                     value={editingFilename}
                     onChange={onEditingFilenameChange}
                     onCancel={onRenameCancel}
                     onOk={onRenameOk}
                   ></SftpFilenameInput>
-                </Box>
+                </div>
               ) : (
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {item.name}
-                </Typography>
+                <div className={styles.fileName}>{item.name}</div>
               )}
-              <Typography variant="caption" color="textSecondary">
-                {item.permissions}
-              </Typography>
-            </Box>
-          </Box>
+              <div className={styles.filePerms}>{item.permissions}</div>
+            </div>
+          </div>
         );
       },
     },
@@ -202,41 +168,46 @@ export default function useCells({
           return {
             position: "sticky",
             right: 0,
-            borderLeft: (theme) => `1px solid ${theme.palette.divider}`,
+            borderLeft: "1px solid var(--gray-6, #d4d4d8)",
             boxShadow:
               "-2px 0 5px -3px rgba(0,0,0,0.2), -8px 0 8px -8px rgba(0,0,0,0.14), -7px 0 14px -3px rgba(0,0,0,0.12)",
+            backgroundColor: "var(--color-background, #fff)",
           };
         }
         return {
           position: "sticky",
           right: 0,
-          backgroundColor: (theme) => theme.palette.background.default,
+          backgroundColor: "var(--color-background, #fff)",
           backgroundImage: "var(--Paper-overlay)",
-          borderLeft: (theme) => `1px solid ${theme.palette.divider}`,
-          boxShadow: (theme) => theme.shadows[5],
+          borderLeft: "1px solid var(--gray-6, #d4d4d8)",
+          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.12)",
         };
       },
       render: (item: SSHSftpFile) => (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <IconButton
+        <div className={styles.optButtons}>
+          <button
+            type="button"
+            className={styles.optButton}
             disabled={item.fileType !== SSHSftpFileType.File}
             onClick={() => downloadFile(item)}
           >
-            <Icon className="icon-file-download"></Icon>
-          </IconButton>
-          <IconButton onClick={() => onRename(item)}>
-            <Icon className="icon-edit"></Icon>
-          </IconButton>
-          <IconButton onClick={() => onDelete(item)}>
-            <Icon className="icon-delete"></Icon>
-          </IconButton>
-        </Box>
+            <span className="icon-file-download" />
+          </button>
+          <button
+            type="button"
+            className={styles.optButton}
+            onClick={() => onRename(item)}
+          >
+            <span className="icon-edit" />
+          </button>
+          <button
+            type="button"
+            className={styles.optButton}
+            onClick={() => onDelete(item)}
+          >
+            <span className="icon-delete" />
+          </button>
+        </div>
       ),
     },
   ];

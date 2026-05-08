@@ -1,0 +1,79 @@
+.root {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.title {
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.description {
+  font-size: 12px;
+  user-select: text;
+  word-break: break-all;
+  color: var(--gray-11, #6b7280);
+}
+
+.progressWrap {
+  padding: 12px 0;
+}
+
+.progressBar {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
+}
+
+.progressBar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--accent-9, #3b82f6);
+  animation: progress-slide 1.1s ease-in-out infinite;
+}
+
+.progressError {
+  background: color-mix(in srgb, var(--red-9, #e11d48) 18%, transparent);
+}
+
+.progressError::before {
+  background: var(--red-9, #e11d48);
+}
+
+.errorText {
+  margin: 24px auto 40px;
+  font-size: 14px;
+  user-select: text;
+  word-break: break-all;
+  color: var(--red-11, #be123c);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.actionButton {
+  min-width: 150px;
+}
+
+@keyframes progress-slide {
+  from {
+    transform: translateX(-140%);
+  }
+
+  to {
+    transform: translateX(350%);
+  }
+}

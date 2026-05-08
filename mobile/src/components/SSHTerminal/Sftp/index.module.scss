@@ -1,0 +1,101 @@
+.openButton {
+  padding: 2px 8px;
+  line-height: 0;
+  border-radius: 8px;
+  border: 1px solid var(--gray-7, #d1d5db);
+  background: var(--color-background, #fff);
+  color: var(--gray-11, #4b5563);
+}
+
+.openButtonActive {
+  border-color: var(--accent-9, #3b82f6);
+  background: color-mix(
+    in srgb,
+    var(--accent-4, #dbeafe) 70%,
+    var(--color-background, #fff)
+  );
+  color: var(--accent-11, #1d4ed8);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: var(--color-background, #fff);
+}
+
+.modal {
+  width: 100%;
+  height: 100%;
+  background: var(--color-background, #fff);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  height: 44px;
+  padding: env(safe-area-inset-top) 12px 0;
+  border-bottom: 1px solid var(--gray-6, #d4d4d8);
+  display: flex;
+  align-items: center;
+}
+
+.modalTitle {
+  flex: 1;
+  font-weight: 600;
+}
+
+.iconButton {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gray-11, #4b5563);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--gray-6, #d4d4d8);
+}
+
+.tablePanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}

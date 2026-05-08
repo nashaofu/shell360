@@ -1,21 +1,10 @@
-import {
-  Box,
-  Button,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  MenuItem,
-  Paper,
-  type SxProps,
-  TextField,
-  type Theme,
-} from "@mui/material";
+import { Text } from "@radix-ui/themes";
+import { type ChangeEvent } from "react";
 import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
+import styles from "./JumpHostIdsSelect.module.scss";
 
 function getJumpHostName(
   hostMap: Map<string, Host>,
@@ -34,7 +23,7 @@ interface JumpHostIdsSelectProps {
   value: string[];
   onChange: (value: string[]) => void;
   hostId?: string;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
   error?: boolean;
   helperText?: string;
 }
@@ -98,79 +87,106 @@ export default function JumpHostIdsSelect({
     }
   };
 
+  const wrapperStyle =
+    sx && typeof sx === "object"
+      ? (sx as { mt?: number }).mt
+        ? { marginTop: `${(sx as { mt: number }).mt * 8}px` }
+        : undefined
+      : undefined;
+
+  const onHostSelectChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedHostId(event.target.value);
+  };
+
   return (
-    <Box sx={sx}>
+    <div className={styles.wrapper} style={wrapperStyle}>
       {value.length > 0 && (
-        <Paper variant="outlined" sx={{ mb: 2 }}>
-          <List dense>
+        <div className={styles.selectedListCard}>
+          <div className={styles.selectedList}>
             {value.map((item, index) => (
-              <ListItem
-                key={item}
-                secondaryAction={
-                  <Box>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                    >
-                      <Icon className="icon-arrow-up" />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === value.length - 1}
-                    >
-                      <Icon className="icon-arrow-down" />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleRemove(index)}
-                    >
-                      <Icon className="icon-delete" />
-                    </IconButton>
-                  </Box>
-                }
-              >
-                <ListItemText
-                  primary={getJumpHostName(hostsMap, item, index)}
-                  secondary={`Jump host #${index + 1}`}
-                />
-              </ListItem>
+              <div key={item} className={styles.selectedItem}>
+                <div className={styles.itemTextWrap}>
+                  <div className={styles.itemPrimary}>
+                    {getJumpHostName(hostsMap, item, index)}
+                  </div>
+                  <div
+                    className={styles.itemSecondary}
+                  >{`Jump host #${index + 1}`}</div>
+                </div>
+                <div className={styles.itemActions}>
+                  <button
+                    type="button"
+                    className={styles.iconButton}
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                  >
+                    <span className="icon-arrow-up" />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.iconButton}
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === value.length - 1}
+                  >
+                    <span className="icon-arrow-down" />
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.iconButton}
+                    onClick={() => handleRemove(index)}
+                  >
+                    <span className="icon-delete" />
+                  </button>
+                </div>
+              </div>
             ))}
-          </List>
-        </Paper>
+          </div>
+        </div>
       )}
 
-      <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
-          label="Select jump host"
-          value={selectedHostId}
-          onChange={(e) => setSelectedHostId(e.target.value)}
-          disabled={availableHosts.length === 0}
-          error={error}
-          helperText={helperText}
-        >
-          {availableHosts.map((host) => (
-            <MenuItem key={host.id} value={host.id}>
-              {host.name || host.hostname}
-            </MenuItem>
-          ))}
-        </TextField>
-        <Button
-          sx={{ flexShrink: 0 }}
-          variant="outlined"
-          onClick={handleAdd}
-          startIcon={<Icon className="icon-add" />}
-        >
+      <div className={styles.selectorRow}>
+        <div className={styles.selectorField}>
+          <Text
+            as="label"
+            size="2"
+            weight="medium"
+            className={styles.fieldLabel}
+          >
+            Select jump host
+          </Text>
+          <select
+            className={
+              error ? `${styles.select} ${styles.selectError}` : styles.select
+            }
+            value={selectedHostId}
+            onChange={onHostSelectChange}
+            disabled={availableHosts.length === 0}
+          >
+            <option value="" disabled>
+              Select jump host
+            </option>
+            {availableHosts.map((host) => (
+              <option key={host.id} value={host.id}>
+                {host.name || host.hostname}
+              </option>
+            ))}
+          </select>
+          {helperText && (
+            <Text
+              size="1"
+              className={
+                error ? `${styles.helper} ${styles.helperError}` : styles.helper
+              }
+            >
+              {helperText}
+            </Text>
+          )}
+        </div>
+        <button type="button" className={styles.addButton} onClick={handleAdd}>
+          <span className="icon-add" />
           Add
-        </Button>
-      </Box>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 }

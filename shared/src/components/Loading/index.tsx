@@ -1,14 +1,9 @@
-import {
-  alpha,
-  Box,
-  CircularProgress,
-  type SxProps,
-  type Theme,
-} from "@mui/material";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+
+import styles from "./index.module.scss";
 
 export type LoadingProps = {
-  sx?: SxProps<Theme>;
+  sx?: CSSProperties | Array<CSSProperties | undefined>;
   loading?: boolean;
   size?: string | number;
   progress?: number;
@@ -22,39 +17,26 @@ export function Loading({
   children,
   progress,
 }: LoadingProps) {
+  const rootStyle = Array.isArray(sx)
+    ? Object.assign({}, ...sx.filter(Boolean))
+    : sx;
+
+  const spinnerSize = typeof size === "number" ? `${size}px` : size;
+
   return (
-    <Box
-      sx={[
-        {
-          position: "relative",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
+    <div className={styles.root} style={rootStyle}>
       {children}
       {loading && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 100,
-            backgroundColor: (theme) =>
-              alpha(theme.palette.background.paper, 0.5),
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <CircularProgress size={size} />
+        <div className={styles.overlay}>
+          <span
+            className={styles.spinner}
+            style={{ width: spinnerSize, height: spinnerSize }}
+          />
           {progress !== undefined && (
-            <Box sx={{ mt: 3, fontWeight: "bold" }}>{progress}%</Box>
+            <div className={styles.progress}>{progress}%</div>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

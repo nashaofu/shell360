@@ -2,7 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { identify } from "shared";
 
-import "./styles/index.css";
+import "@radix-ui/themes/styles.css";
+import "./styles/index.scss";
 
 import App from "./App";
 

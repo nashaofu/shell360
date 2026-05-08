@@ -19,7 +19,7 @@
     "test": "rstest"
   },
   "dependencies": {
-    "@mui/material": "^7.3.5",
+    "@radix-ui/themes": "^3.2.1",
     "@skipperndt/plugin-machine-uid": "^0.1.2",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-fs": "^2.4.4",
@@ -46,6 +46,7 @@
     "@rslib/core": "^0.18.0",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^19.2.6",
+    "sass": "^1.93.2",
     "typescript": "^5.9.3",
     "@rstest/core": "^0.9.2"
   }

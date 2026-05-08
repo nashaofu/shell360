@@ -1,32 +1,41 @@
-import {
-  Box,
-  Divider,
-  MenuItem,
-  type SxProps,
-  TextField,
-  type Theme,
-  Typography,
-} from "@mui/material";
+import { Select, Text } from "@radix-ui/themes";
+import { type ChangeEvent } from "react";
 import { Controller } from "react-hook-form";
 
 import { TERMINAL_THEMES } from "../XTerminal/themes";
 
 import type { EditHostFormApi } from "./types";
+import styles from "./TerminalSettingsForm.module.scss";
 
 type TerminalSettingsFormProps = {
   formApi: EditHostFormApi;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
 };
 
 export default function TerminalSettingsForm({
   formApi,
   sx,
 }: TerminalSettingsFormProps) {
+  const wrapperStyle =
+    sx && typeof sx === "object"
+      ? (sx as { mb?: number }).mb
+        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
+        : undefined
+      : undefined;
+
+  const onInputChange =
+    (onChange: (value: string) => void) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    };
+
   return (
-    <Box sx={sx}>
-      <Divider sx={{ mb: 2 }}>
-        <Typography variant="subtitle1">Terminal Settings</Typography>
-      </Divider>
+    <section className={styles.section} style={wrapperStyle}>
+      <div className={styles.sectionTitleWrap}>
+        <Text size="3" weight="medium">
+          Terminal Settings
+        </Text>
+      </div>
 
       <Controller
         name="terminalSettings.fontFamily"
@@ -38,18 +47,27 @@ export default function TerminalSettingsForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Font family"
-            placeholder="Font family"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Font family
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Font family"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -75,19 +93,28 @@ export default function TerminalSettingsForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Font size"
-            placeholder="Font size"
-            type="number"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Font size
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Font size"
+              type="number"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -101,24 +128,39 @@ export default function TerminalSettingsForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            select
-            fullWidth
-            required
-            label="Theme"
-            placeholder="Theme"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            {TERMINAL_THEMES.map((item) => (
-              <MenuItem key={item.name} value={item.name}>
-                {item.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Theme
+            </Text>
+            <Select.Root
+              value={field.value || ""}
+              onValueChange={field.onChange}
+            >
+              <Select.Trigger
+                className={styles.fullWidthTrigger}
+                placeholder="Select theme"
+              />
+              <Select.Content>
+                {TERMINAL_THEMES.map((item) => (
+                  <Select.Item key={item.name} value={item.name}>
+                    {item.name}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
-    </Box>
+    </section>
   );
 }

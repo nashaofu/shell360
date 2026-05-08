@@ -1,7 +1,9 @@
-import { Button, type ButtonProps, styled } from "@mui/material";
-import type { ComponentType } from "react";
+import { Button } from "@radix-ui/themes";
+import { createElement, type ReactNode } from "react";
 import type { Host } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+
+import styles from "./styles.module.scss";
 
 export type ErrorProps = {
   host: Host;
@@ -14,8 +16,29 @@ export type ErrorProps = {
   onOpenAddKey: () => unknown;
 };
 
-export const StatusButton: ComponentType<ButtonProps> = styled(Button, {
-  name: "StatusButton",
-})(() => ({
-  minWidth: 150,
-}));
+type StatusButtonProps = {
+  variant?: "outlined" | "contained";
+  className?: string;
+  disabled?: boolean;
+  children: ReactNode;
+  onClick?: () => unknown;
+};
+
+export function StatusButton({
+  variant = "contained",
+  className,
+  disabled,
+  children,
+  onClick,
+}: StatusButtonProps) {
+  return createElement(
+    Button,
+    {
+      className: `${styles.statusButton}${className ? ` ${className}` : ""}`,
+      variant: variant === "outlined" ? "outline" : "solid",
+      disabled,
+      onClick,
+    },
+    children,
+  );
+}

@@ -1,17 +1,12 @@
-import {
-  Box,
-  Icon,
-  IconButton,
-  InputAdornment,
-  TextField,
-} from "@mui/material";
+import { Text } from "@radix-ui/themes";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
-import { useCallback } from "react";
+import { type ChangeEvent, useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import type { Key } from "tauri-plugin-data";
 
 import { TextFieldPassword } from "../TextFieldPassword";
+import styles from "./index.module.scss";
 
 export type EditKeyFormFields = Partial<Omit<Key, "id">>;
 
@@ -67,16 +62,20 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
     formApi.setValue("certificate", text);
   }, [formApi]);
 
+  const onInputChange =
+    (onChange: (value: string) => void) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    };
+
+  const onTextareaChange =
+    (onChange: (value: string) => void) =>
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(event.target.value);
+    };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-      }}
-      component="form"
-      noValidate
-      autoComplete="off"
-    >
+    <form className={styles.form} noValidate autoComplete="off">
       <Controller
         name="name"
         control={formApi.control}
@@ -95,18 +94,27 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Name"
-            placeholder="Name"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Name
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Name"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
       <Controller
@@ -119,102 +127,131 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Private key"
-            placeholder="Private key"
-            multiline
-            maxRows={8}
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={importPrivatekey}>
-                    <Icon className="icon-file-upload" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <div className={styles.fieldHeader}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Private key
+              </Text>
+              <button
+                type="button"
+                className={styles.importButton}
+                onClick={importPrivatekey}
+              >
+                <span className="icon-file-upload" />
+              </button>
+            </div>
+            <textarea
+              className={styles.textarea}
+              value={field.value || ""}
+              placeholder="Private key"
+              rows={6}
+              onChange={onTextareaChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
       <Controller
         name="publicKey"
         control={formApi.control}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Public key"
-            placeholder="Public key"
-            multiline
-            maxRows={8}
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={importPublicKey}>
-                    <Icon className="icon-file-upload" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <div className={styles.fieldHeader}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Public key
+              </Text>
+              <button
+                type="button"
+                className={styles.importButton}
+                onClick={importPublicKey}
+              >
+                <span className="icon-file-upload" />
+              </button>
+            </div>
+            <textarea
+              className={styles.textarea}
+              value={field.value || ""}
+              placeholder="Public key"
+              rows={6}
+              onChange={onTextareaChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
       <Controller
         name="passphrase"
         control={formApi.control}
         render={({ field, fieldState }) => (
-          <TextFieldPassword
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            fullWidth
-            label="Passphrase"
-            placeholder="Passphrase"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <TextFieldPassword
+              {...field}
+              sx={undefined}
+              className={styles.formFieldInput}
+              fullWidth
+              label="Passphrase"
+              placeholder="Passphrase"
+              error={fieldState.invalid}
+              helperText={fieldState.error?.message}
+            />
+          </div>
         )}
       />
       <Controller
         name="certificate"
         control={formApi.control}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Certificate"
-            placeholder="Certificate"
-            multiline
-            maxRows={8}
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={importCertificate}>
-                    <Icon className="icon-file-upload" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <div className={styles.fieldHeader}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Certificate
+              </Text>
+              <button
+                type="button"
+                className={styles.importButton}
+                onClick={importCertificate}
+              >
+                <span className="icon-file-upload" />
+              </button>
+            </div>
+            <textarea
+              className={styles.textarea}
+              value={field.value || ""}
+              placeholder="Certificate"
+              rows={6}
+              onChange={onTextareaChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
-    </Box>
+    </form>
   );
 }

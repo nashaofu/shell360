@@ -1,17 +1,3 @@
-import {
-  AppBar,
-  Box,
-  Dialog,
-  DialogContent,
-  Divider,
-  Icon,
-  IconButton,
-  Paper,
-  Table,
-  TableContainer,
-  Toolbar,
-  Typography,
-} from "@mui/material";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, Loading, useSftp } from "shared";
@@ -32,6 +18,7 @@ import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
+import styles from "./index.module.scss";
 
 type SftpProps = {
   session: SSHSession;
@@ -308,171 +295,120 @@ export default function Sftp({ session }: SftpProps) {
   return (
     <>
       {!initLoading && !initError && (
-        <Box
-          sx={{
-            py: 0.25,
-            px: 1,
-            lineHeight: 0,
-            borderRadius: 1,
-            border: "1px solid",
-            borderColor: (theme) =>
-              isOpen ? theme.palette.primary.main : theme.palette.divider,
-            backgroundColor: (theme) =>
-              isOpen
-                ? theme.palette.action.selected
-                : theme.palette.background.default,
-            color: (theme) =>
-              isOpen ? theme.palette.primary.main : theme.palette.text.primary,
-            ":active": {
-              borderColor: (theme) => theme.palette.primary.main,
-              backgroundColor: (theme) => theme.palette.action.hover,
-              color: (theme) => theme.palette.text.primary,
-            },
-          }}
+        <button
+          type="button"
+          className={
+            isOpen
+              ? `${styles.openButton} ${styles.openButtonActive}`
+              : styles.openButton
+          }
           onClick={() => setIsOpen(true)}
         >
-          <Icon className="icon-folder" />
-        </Box>
+          <span className="icon-folder" />
+        </button>
       )}
-      <Dialog
-        open={isOpen}
-        fullWidth
-        fullScreen
-        sx={{
-          ".MuiDialog-container": {
-            paddingTop: "env(safe-area-inset-top)",
-          },
-          ".MuiDialog-paper": {
-            maxWidth: 880,
-          },
-        }}
-      >
-        <AppBar position="static">
-          <Toolbar>
-            <Typography
-              sx={{
-                flex: 1,
-              }}
-              variant="h6"
-            >
-              SFTP
-            </Typography>
-            <IconButton
-              size="small"
-              edge="end"
-              sx={{
-                color: "inherit",
-                ml: 2,
-              }}
-              disabled={isLoading}
-              onClick={() => setIsOpen(false)}
-            >
-              <Icon className="icon-close" fontSize="small" />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-
-        <DialogContent
-          dividers
-          sx={{
-            p: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Loading
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-            loading={isLoading}
-            size={48}
-            progress={progress}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                p: 1,
-              }}
-            >
-              <SftpBreadcrumbs
-                dirname={dirname}
-                onClick={onSftpBreadcrumbsClick}
-                onNavigate={onNavigatePath}
-              ></SftpBreadcrumbs>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
+      {isOpen && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>SFTP</div>
+              <button
+                type="button"
+                className={styles.iconButton}
+                disabled={isLoading}
+                onClick={() => setIsOpen(false)}
               >
-                <SftpFileSearch
-                  value={keyword}
-                  onChange={setKeyword}
-                ></SftpFileSearch>
-                <IconButton disabled={uploadFileLoading} onClick={uploadFile}>
-                  <Icon className="icon-file-upload"></Icon>
-                </IconButton>
-                <Dropdown
-                  menus={actions}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
-                    <IconButton
-                      onClick={(event) => onChangeOpen(event.currentTarget)}
+                <span className="icon-close" />
+              </button>
+            </div>
+
+            <div className={styles.modalContent}>
+              <Loading
+                sx={{
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                }}
+                loading={isLoading}
+                size={48}
+                progress={progress}
+              >
+                <div className={styles.toolbar}>
+                  <SftpBreadcrumbs
+                    dirname={dirname}
+                    onClick={onSftpBreadcrumbsClick}
+                    onNavigate={onNavigatePath}
+                  ></SftpBreadcrumbs>
+                  <div className={styles.toolbarRight}>
+                    <SftpFileSearch
+                      value={keyword}
+                      onChange={setKeyword}
+                    ></SftpFileSearch>
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      disabled={uploadFileLoading}
+                      onClick={uploadFile}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
-                  )}
-                </Dropdown>
-              </Box>
-            </Box>
-            <Divider />
-            <Paper
-              sx={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
-              <TableContainer ref={tableContainerRef} sx={{ flex: 1 }}>
-                <Table stickyHeader>
-                  <SftpTableHead
-                    cells={cells}
-                    orderBy={orderBy}
-                    order={order}
-                    onSort={onSort}
-                  ></SftpTableHead>
-                  <SftpTableBody
-                    dataKey="name"
-                    data={data}
-                    cells={cells}
-                    isRoot={isRoot}
-                    createType={createType}
-                    creatingFilename={creatingFilename}
-                    onCreatingFilenameChange={onCreatingFilenameChange}
-                    onCreateCancel={onCreateCancel}
-                    onCreateOk={onCreateOk}
-                    onParentClick={onParentClick}
-                  ></SftpTableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Loading>
-        </DialogContent>
-      </Dialog>
+                      <span className="icon-file-upload" />
+                    </button>
+                    <Dropdown
+                      menus={actions}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                      }}
+                      transformOrigin={{
+                        vertical: "top",
+                        horizontal: "right",
+                      }}
+                    >
+                      {({ onChangeOpen }) => (
+                        <button
+                          type="button"
+                          className={styles.iconButton}
+                          onClick={(event) => onChangeOpen(event.currentTarget)}
+                        >
+                          <span className="icon-more" />
+                        </button>
+                      )}
+                    </Dropdown>
+                  </div>
+                </div>
+                <div className={styles.divider} />
+                <div className={styles.tablePanel}>
+                  <div
+                    ref={tableContainerRef}
+                    className={styles.tableContainer}
+                  >
+                    <table className={styles.table}>
+                      <SftpTableHead
+                        cells={cells}
+                        orderBy={orderBy}
+                        order={order}
+                        onSort={onSort}
+                      ></SftpTableHead>
+                      <SftpTableBody
+                        dataKey="name"
+                        data={data}
+                        cells={cells}
+                        isRoot={isRoot}
+                        createType={createType}
+                        creatingFilename={creatingFilename}
+                        onCreatingFilenameChange={onCreatingFilenameChange}
+                        onCreateCancel={onCreateCancel}
+                        onCreateOk={onCreateOk}
+                        onParentClick={onParentClick}
+                      ></SftpTableBody>
+                    </table>
+                  </div>
+                </div>
+              </Loading>
+            </div>
+          </div>
+        </div>
+      )}
       <FileEditorModal
         open={isEditorOpen}
         file={editingFile}

@@ -1,8 +1,10 @@
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Select, Text } from "@radix-ui/themes";
+import { type ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { PortForwardingType } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
+import styles from "./index.module.scss";
 
 export type PortForwardingFormFields = {
   name: string;
@@ -36,17 +38,16 @@ const PORT_FORWARDING_TYPES = [
 export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
   const portForwardingType = formApi.watch("portForwardingType");
   const { data: hosts } = useHosts();
+  const hostOptions = hosts ?? [];
+
+  const onInputChange =
+    (onChange: (value: string) => void) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-      }}
-      component="form"
-      noValidate
-      autoComplete="off"
-    >
+    <form className={styles.form} noValidate autoComplete="off">
       <Controller
         name="name"
         control={formApi.control}
@@ -66,18 +67,27 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         }}
         defaultValue=""
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="name"
-            placeholder="name"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Name
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Name"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
       <Controller
@@ -90,25 +100,34 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            required
-            fullWidth
-            label="Port forwarding type"
-            placeholder="Port forwarding type"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            {PORT_FORWARDING_TYPES.map((item) => (
-              <MenuItem key={item.value} value={item.value}>
-                {item.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Port forwarding type
+            </Text>
+            <Select.Root
+              value={field.value || PortForwardingType.Local}
+              onValueChange={(value) => field.onChange(value)}
+            >
+              <Select.Trigger className={styles.fullWidthTrigger} />
+              <Select.Content>
+                {PORT_FORWARDING_TYPES.map((item) => (
+                  <Select.Item key={item.value} value={item.value}>
+                    {item.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -122,25 +141,37 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            fullWidth
-            required
-            label="Host"
-            placeholder="Host"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            {hosts.map((item) => (
-              <MenuItem key={item.id} value={item.id}>
-                {item.name || `${item.hostname}:${item.port}`}
-              </MenuItem>
-            ))}
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Host
+            </Text>
+            <Select.Root
+              value={field.value || ""}
+              onValueChange={(value) => field.onChange(value)}
+            >
+              <Select.Trigger
+                className={styles.fullWidthTrigger}
+                placeholder="Select host"
+              />
+              <Select.Content>
+                {hostOptions.map((item) => (
+                  <Select.Item key={item.id} value={item.id}>
+                    {item.name || `${item.hostname}:${item.port}`}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -162,18 +193,27 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Local address"
-            placeholder="Local address"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Local address
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Local address"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -199,19 +239,28 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Local port"
-            placeholder="Local port"
-            type="number"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Local port
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value === undefined ? "" : field.value}
+              placeholder="Local port"
+              type="number"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -235,18 +284,27 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               },
             }}
             render={({ field, fieldState }) => (
-              <TextField
-                {...field}
-                sx={{
-                  mb: 3,
-                }}
-                required
-                fullWidth
-                label="Remote address"
-                placeholder="Remote address"
-                error={fieldState.invalid}
-                helperText={fieldState.error?.message}
-              />
+              <div className={styles.formField}>
+                <Text
+                  as="label"
+                  size="2"
+                  weight="medium"
+                  className={styles.fieldLabel}
+                >
+                  Remote address
+                </Text>
+                <input
+                  className={styles.input}
+                  value={field.value || ""}
+                  placeholder="Remote address"
+                  onChange={onInputChange(field.onChange)}
+                />
+                {fieldState.invalid && (
+                  <Text size="1" className={styles.errorHint}>
+                    {fieldState.error?.message}
+                  </Text>
+                )}
+              </div>
             )}
           />
 
@@ -272,23 +330,32 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               },
             }}
             render={({ field, fieldState }) => (
-              <TextField
-                {...field}
-                sx={{
-                  mb: 3,
-                }}
-                required
-                fullWidth
-                label="Remote port"
-                placeholder="Remote port"
-                type="number"
-                error={fieldState.invalid}
-                helperText={fieldState.error?.message}
-              />
+              <div className={styles.formField}>
+                <Text
+                  as="label"
+                  size="2"
+                  weight="medium"
+                  className={styles.fieldLabel}
+                >
+                  Remote port
+                </Text>
+                <input
+                  className={styles.input}
+                  value={field.value === undefined ? "" : field.value}
+                  placeholder="Remote port"
+                  type="number"
+                  onChange={onInputChange(field.onChange)}
+                />
+                {fieldState.invalid && (
+                  <Text size="1" className={styles.errorHint}>
+                    {fieldState.error?.message}
+                  </Text>
+                )}
+              </div>
             )}
           />
         </>
       )}
-    </Box>
+    </form>
   );
 }

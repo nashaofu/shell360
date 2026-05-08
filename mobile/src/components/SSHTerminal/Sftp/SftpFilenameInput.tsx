@@ -1,11 +1,5 @@
-import {
-  Button,
-  ButtonGroup,
-  Icon,
-  InputAdornment,
-  TextField,
-} from "@mui/material";
 import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
+import styles from "./SftpFilenameInput.module.scss";
 
 type SftpFilenameInputProps = {
   value?: string;
@@ -21,14 +15,14 @@ export default function SftpFilenameInput({
   onOk,
 }: SftpFilenameInputProps) {
   const onInputChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       onChange(e.target.value);
     },
     [onChange],
   );
 
   const onKeyUp = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
+    (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.code === "Enter") {
         onOk();
         return;
@@ -43,36 +37,31 @@ export default function SftpFilenameInput({
   );
 
   return (
-    <TextField
-      size="small"
-      fullWidth
-      value={value}
-      onChange={onInputChange}
-      onKeyUp={onKeyUp}
-      variant="outlined"
-      autoComplete="false"
-      autoFocus={true}
-      sx={{
-        ".MuiInputBase-root": {
-          paddingRight: 0,
-        },
-      }}
-      slotProps={{
-        input: {
-          endAdornment: (
-            <InputAdornment position="end">
-              <ButtonGroup variant="text" color="inherit">
-                <Button onClick={onCancel}>
-                  <Icon className="icon-close" />
-                </Button>
-                <Button onClick={onOk}>
-                  <Icon className="icon-check" />
-                </Button>
-              </ButtonGroup>
-            </InputAdornment>
-          ),
-        },
-      }}
-    />
+    <div className={styles.root}>
+      <input
+        className={styles.input}
+        value={value || ""}
+        onChange={onInputChange}
+        onKeyUp={onKeyUp}
+        autoComplete="off"
+        autoFocus
+      />
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.actionButton}
+          onClick={() => onCancel()}
+        >
+          <span className="icon-close" />
+        </button>
+        <button
+          type="button"
+          className={styles.actionButton}
+          onClick={() => onOk()}
+        >
+          <span className="icon-check" />
+        </button>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
-import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import styles from "./index.module.scss";
 
 type PageProps = {
   title: ReactNode;
@@ -8,20 +8,9 @@ type PageProps = {
 
 export default function Page({ title, children }: PageProps) {
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        px: 2,
-        pt: 0,
-        pb: 1,
-        overflowX: "hidden",
-        overflowY: "auto",
-      }}
-    >
-      <Typography variant="h5" fontWeight={500}>
-        {title}
-      </Typography>
+    <section className={styles.page}>
+      <h1 className={styles.title}>{title}</h1>
       {children}
-    </Box>
+    </section>
   );
 }

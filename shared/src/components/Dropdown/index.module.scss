@@ -1,0 +1,51 @@
+.root {
+  position: relative;
+  display: inline-block;
+}
+
+.menu {
+  min-width: 140px;
+  border: 1px solid var(--gray-6, #d4d4d8);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--color-background, #ffffff);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menuItem {
+  border: 0;
+  background: transparent;
+  min-height: 32px;
+  border-radius: 8px;
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--gray-12, #111827);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: color-mix(
+    in srgb,
+    var(--gray-4, #e5e7eb) 65%,
+    var(--color-background, #fff)
+  );
+}
+
+.menuItemSelected {
+  background: color-mix(
+    in srgb,
+    var(--accent-4, #dbeafe) 70%,
+    var(--color-background, #fff)
+  );
+}
+
+.menuItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

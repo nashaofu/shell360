@@ -9,6 +9,7 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
+    "@radix-ui/themes": "^3.2.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.8",
@@ -50,6 +51,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
+    "sass": "^1.93.2",
     "typescript": "^5.9.3"
   }
 }

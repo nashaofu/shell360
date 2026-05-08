@@ -1,0 +1,76 @@
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.formField {
+  margin-bottom: 12px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.fieldLabel {
+  display: inline-block;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--gray-7, #d1d5db);
+  border-radius: 8px;
+  color: var(--gray-12, #111827);
+  background: var(--color-background, #ffffff);
+  outline: 0;
+}
+
+.input {
+  height: 36px;
+  padding: 0 10px;
+}
+
+.textarea {
+  min-height: 100px;
+  padding: 8px 10px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--accent-9, #3b82f6);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
+}
+
+.importButton {
+  border: 1px solid var(--gray-7, #d1d5db);
+  background: var(--color-background, #ffffff);
+  color: var(--gray-11, #4b5563);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.importButton:hover {
+  border-color: var(--accent-9, #3b82f6);
+  color: var(--accent-11, #1d4ed8);
+}
+
+.errorHint {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--red-11, #be123c);
+}
+
+.formFieldInput {
+  margin-bottom: 0;
+}

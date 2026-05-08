@@ -1,0 +1,106 @@
+.triggerWrap {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+
+.triggerButton {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-9, #3b82f6);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  width: min(960px, 94vw);
+  height: 88vh;
+  background: var(--color-background, #fff);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  height: 44px;
+  border-bottom: 1px solid var(--gray-6, #d4d4d8);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+}
+
+.modalTitle {
+  flex: 1;
+  font-weight: 600;
+}
+
+.iconButton {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gray-11, #4b5563);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--gray-6, #d4d4d8);
+}
+
+.tablePanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}

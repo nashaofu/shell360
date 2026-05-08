@@ -1,17 +1,5 @@
-import {
-  Autocomplete,
-  Box,
-  Chip,
-  Icon,
-  InputAdornment,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  type SxProps,
-  TextField,
-  type Theme,
-} from "@mui/material";
-import { useMemo } from "react";
+import { Select, Text } from "@radix-ui/themes";
+import { type ChangeEvent, type KeyboardEvent, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
 
@@ -21,12 +9,15 @@ import { useKeys } from "@/hooks/useKeys";
 import { TextFieldPassword } from "../TextFieldPassword";
 import { TERMINAL_TYPES } from "./terminalTypes";
 import type { EditHostFormApi } from "./types";
+import styles from "./BasicForm.module.scss";
 
 type BasicFormProps = {
   formApi: EditHostFormApi;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
   onOpenAddKey: () => void;
 };
+
+const ADD_KEY_VALUE = "__ADD_KEY__";
 
 export default function BasicForm({
   formApi,
@@ -36,18 +27,57 @@ export default function BasicForm({
   const { data: hosts } = useHosts();
   const { data: keys } = useKeys();
   const authenticationMethod = formApi.watch("authenticationMethod");
+  const [tagInput, setTagInput] = useState("");
+
+  const wrapperStyle =
+    sx && typeof sx === "object"
+      ? (sx as { mb?: number }).mb
+        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
+        : undefined
+      : undefined;
 
   const tags = useMemo(() => {
-    return hosts.reduce<string[]>((acc, cur) => {
-      if (Array.isArray(cur.tags)) {
-        acc.push(...cur.tags);
+    const set = new Set<string>();
+    for (const host of hosts) {
+      if (Array.isArray(host.tags)) {
+        for (const tag of host.tags) {
+          if (tag?.trim()) {
+            set.add(tag.trim());
+          }
+        }
       }
-      return acc;
-    }, []);
+    }
+    return Array.from(set);
   }, [hosts]);
 
+  const onInputChange =
+    (onChange: (value: string) => void) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      onChange(event.target.value);
+    };
+
+  const onTagsInputKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+    values: string[],
+    onChange: (value: string[]) => void,
+  ) => {
+    if (event.key !== "Enter" && event.key !== ",") {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTag = tagInput.trim();
+    if (!nextTag || values.includes(nextTag)) {
+      setTagInput("");
+      return;
+    }
+
+    onChange([...values, nextTag]);
+    setTagInput("");
+  };
+
   return (
-    <Box sx={sx}>
+    <section className={styles.section} style={wrapperStyle}>
       <Controller
         name="name"
         control={formApi.control}
@@ -58,17 +88,27 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            fullWidth
-            label="Name"
-            placeholder="Name"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Name
+            </Text>
+            <input
+              className={styles.input}
+              value={field.value || ""}
+              placeholder="Name"
+              onChange={onInputChange(field.onChange)}
+            />
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -82,35 +122,57 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => {
+          const values = Array.isArray(field.value) ? field.value : [];
+
+          const onRemoveTag = (tag: string) => {
+            field.onChange(values.filter((item) => item !== tag));
+          };
+
           return (
-            <Autocomplete
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              onChange={(_, newValue) => field.onChange([...newValue])}
-              multiple
-              freeSolo
-              fullWidth
-              limitTags={3}
-              options={tags}
-              getOptionLabel={(option) => option}
-              renderValue={(values, getItemProps) =>
-                values.map((option, index) => {
-                  const { key, ...itemProps } = getItemProps({ index });
-                  return <Chip key={key} label={option} {...itemProps} />;
-                })
-              }
-              renderInput={(props) => (
-                <TextField
-                  {...props}
-                  label="Tags"
-                  placeholder="Tags"
-                  error={fieldState.invalid}
-                  helperText={fieldState.error?.message}
+            <div className={styles.formField}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Tags
+              </Text>
+              <div className={styles.tagsWrap}>
+                {values.map((tag) => (
+                  <span key={tag} className={styles.tagChip}>
+                    {tag}
+                    <button
+                      type="button"
+                      className={styles.tagRemoveButton}
+                      onClick={() => onRemoveTag(tag)}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+                <input
+                  className={styles.tagInput}
+                  value={tagInput}
+                  placeholder={values.length ? "" : "Type tag and press Enter"}
+                  list="host-tags-list"
+                  onChange={(event) => setTagInput(event.target.value)}
+                  onKeyDown={(event) =>
+                    onTagsInputKeyDown(event, values, field.onChange)
+                  }
                 />
+                <datalist id="host-tags-list">
+                  {tags.map((tag) => (
+                    <option key={tag} value={tag} />
+                  ))}
+                </datalist>
+              </div>
+              {fieldState.invalid && (
+                <Text size="1" className={styles.errorHint}>
+                  {fieldState.error?.message}
+                </Text>
               )}
-            />
+            </div>
           );
         }}
       />
@@ -133,25 +195,30 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Hostname"
-            placeholder="Hostname"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon className="icon-host" />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Hostname
+            </Text>
+            <div className={styles.inputWithIcon}>
+              <span className="icon-host" aria-hidden="true" />
+              <input
+                className={styles.inputBare}
+                value={field.value || ""}
+                placeholder="Hostname"
+                onChange={onInputChange(field.onChange)}
+              />
+            </div>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -177,26 +244,31 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Port"
-            placeholder="Port"
-            type="number"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon className="icon-number" />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Port
+            </Text>
+            <div className={styles.inputWithIcon}>
+              <span className="icon-number" aria-hidden="true" />
+              <input
+                className={styles.inputBare}
+                value={field.value || ""}
+                placeholder="Port"
+                type="number"
+                onChange={onInputChange(field.onChange)}
+              />
+            </div>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -218,25 +290,30 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            required
-            fullWidth
-            label="Username"
-            placeholder="Username"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Icon className="icon-user" />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Username
+            </Text>
+            <div className={styles.inputWithIcon}>
+              <span className="icon-user" aria-hidden="true" />
+              <input
+                className={styles.inputBare}
+                value={field.value || ""}
+                placeholder="Username"
+                onChange={onInputChange(field.onChange)}
+              />
+            </div>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -250,27 +327,41 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            required
-            fullWidth
-            label="Authentication method"
-            placeholder="Authentication method"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            <MenuItem value={AuthenticationMethod.Password}>Password</MenuItem>
-            <MenuItem value={AuthenticationMethod.PublicKey}>
-              PublicKey
-            </MenuItem>
-            <MenuItem value={AuthenticationMethod.Certificate}>
-              Certificate
-            </MenuItem>
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Authentication method
+            </Text>
+            <Select.Root
+              value={field.value || ""}
+              onValueChange={field.onChange}
+            >
+              <Select.Trigger
+                className={styles.fullWidthTrigger}
+                placeholder="Authentication method"
+              />
+              <Select.Content>
+                <Select.Item value={AuthenticationMethod.Password}>
+                  Password
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.PublicKey}>
+                  PublicKey
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.Certificate}>
+                  Certificate
+                </Select.Item>
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -285,17 +376,18 @@ export default function BasicForm({
             },
           }}
           render={({ field, fieldState }) => (
-            <TextFieldPassword
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              fullWidth
-              label="Password"
-              placeholder="Password"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            />
+            <div className={styles.formField}>
+              <TextFieldPassword
+                {...field}
+                sx={undefined}
+                className={styles.formFieldInput}
+                fullWidth
+                label="Password"
+                placeholder="Password"
+                error={fieldState.invalid}
+                helperText={fieldState.error?.message}
+              />
+            </div>
           )}
         />
       )}
@@ -312,31 +404,44 @@ export default function BasicForm({
             },
           }}
           render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              sx={{
-                mb: 3,
-              }}
-              select
-              fullWidth
-              required
-              label="Key"
-              placeholder="Key"
-              error={fieldState.invalid}
-              helperText={fieldState.error?.message}
-            >
-              <MenuItem value="" onClick={onOpenAddKey}>
-                <ListItemIcon>
-                  <Icon className="icon-add" />
-                </ListItemIcon>
-                <ListItemText>Add key</ListItemText>
-              </MenuItem>
-              {keys.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <div className={styles.formField}>
+              <Text
+                as="label"
+                size="2"
+                weight="medium"
+                className={styles.fieldLabel}
+              >
+                Key
+              </Text>
+              <Select.Root
+                value={field.value || ""}
+                onValueChange={(value) => {
+                  if (value === ADD_KEY_VALUE) {
+                    onOpenAddKey();
+                    return;
+                  }
+                  field.onChange(value);
+                }}
+              >
+                <Select.Trigger
+                  className={styles.fullWidthTrigger}
+                  placeholder="Key"
+                />
+                <Select.Content>
+                  <Select.Item value={ADD_KEY_VALUE}>+ Add key</Select.Item>
+                  {keys.map((item) => (
+                    <Select.Item key={item.id} value={item.id}>
+                      {item.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
+              {fieldState.invalid && (
+                <Text size="1" className={styles.errorHint}>
+                  {fieldState.error?.message}
+                </Text>
+              )}
+            </div>
           )}
         />
       )}
@@ -351,26 +456,30 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            fullWidth
-            label="Startup Command"
-            placeholder="Command to execute after connection (optional)"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Icon className="icon-code" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Startup Command
+            </Text>
+            <div className={styles.inputWithIcon}>
+              <span className="icon-code" aria-hidden="true" />
+              <input
+                className={styles.inputBare}
+                value={field.value || ""}
+                placeholder="Command to execute after connection (optional)"
+                onChange={onInputChange(field.onChange)}
+              />
+            </div>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
 
@@ -384,27 +493,40 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            sx={{
-              mb: 3,
-            }}
-            select
-            fullWidth
-            required
-            label="Terminal type"
-            placeholder="Terminal type"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-          >
-            {TERMINAL_TYPES.map((item) => (
-              <MenuItem key={item} value={item}>
-                {item}
-              </MenuItem>
-            ))}
-          </TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Terminal type
+            </Text>
+            <Select.Root
+              value={field.value || ""}
+              onValueChange={field.onChange}
+            >
+              <Select.Trigger
+                className={styles.fullWidthTrigger}
+                placeholder="Terminal type"
+              />
+              <Select.Content>
+                {TERMINAL_TYPES.map((item) => (
+                  <Select.Item key={item} value={item}>
+                    {item}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
+
       <Controller
         name="envs"
         control={formApi.control}
@@ -415,11 +537,11 @@ export default function BasicForm({
             }
             const envs = value.split(",");
             for (const env of envs) {
-              let [key, value] = env.split("=");
+              let [key, envValue] = env.split("=");
               key = key.trim();
-              value = value?.trim();
+              envValue = envValue?.trim();
 
-              if (!key || value === undefined) {
+              if (!key || envValue === undefined) {
                 return "Invalid environment variable format";
               }
             }
@@ -427,25 +549,32 @@ export default function BasicForm({
           },
         }}
         render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Environment variables"
-            placeholder="e.g. KEY1=VALUE1,KEY2=VALUE2"
-            error={fieldState.invalid}
-            helperText={fieldState.error?.message}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Icon className="icon-variable" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          ></TextField>
+          <div className={styles.formField}>
+            <Text
+              as="label"
+              size="2"
+              weight="medium"
+              className={styles.fieldLabel}
+            >
+              Environment variables
+            </Text>
+            <div className={styles.inputWithIcon}>
+              <span className="icon-variable" aria-hidden="true" />
+              <input
+                className={styles.inputBare}
+                value={field.value || ""}
+                placeholder="e.g. KEY1=VALUE1,KEY2=VALUE2"
+                onChange={onInputChange(field.onChange)}
+              />
+            </div>
+            {fieldState.invalid && (
+              <Text size="1" className={styles.errorHint}>
+                {fieldState.error?.message}
+              </Text>
+            )}
+          </div>
         )}
       />
-    </Box>
+    </section>
   );
 }

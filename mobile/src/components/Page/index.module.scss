@@ -1,0 +1,41 @@
+.header {
+  position: static;
+  padding-top: env(safe-area-inset-top);
+  background: var(--accent-9, #3b82f6);
+  color: #fff;
+}
+
+.toolbar {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.menuButton {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  margin-right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 8px 16px env(safe-area-inset-bottom);
+  overflow-x: hidden;
+  overflow-y: auto;
+}

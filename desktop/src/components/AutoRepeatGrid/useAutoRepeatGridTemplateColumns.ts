@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 export default function useAutoRepeatGridTemplateColumns(width: number) {
-  const gridElRef = useRef<HTMLElement>(null);
+  const gridElRef = useRef<HTMLDivElement>(null);
 
   const [gridTemplateColumns, setGridTemplateColumns] = useState(
     `repeat(auto-fill, ${width}px)`,

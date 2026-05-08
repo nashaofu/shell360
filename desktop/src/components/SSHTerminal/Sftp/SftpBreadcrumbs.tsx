@@ -1,12 +1,5 @@
-import {
-  Box,
-  Breadcrumbs,
-  Icon,
-  IconButton,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
+import { type KeyboardEvent, useCallback, useMemo, useState } from "react";
+import styles from "./SftpBreadcrumbs.module.scss";
 
 type SftpBreadcrumbsProps = {
   dirname?: string;
@@ -56,7 +49,7 @@ export default function SftpBreadcrumbs({
   }, [editPath, onClick, onNavigate]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
         handleConfirmEdit();
       } else if (e.key === "Escape") {
@@ -70,100 +63,84 @@ export default function SftpBreadcrumbs({
     const path = `/${dirs.slice(0, index + 1).join("/")}`;
     if (index < dirs.length - 1) {
       return (
-        <Typography
+        <button
+          type="button"
           // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一的
           key={item + index}
-          sx={{
-            cursor: "pointer",
-            color: "text.primary",
-          }}
+          className={styles.breadcrumbItem}
           onClick={() => onClick(path)}
         >
           {item}
-        </Typography>
+        </button>
       );
     } else {
       return (
-        <Typography
+        <button
+          type="button"
           // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一的
           key={item + index}
-          sx={{
-            color: "text.primary",
-            cursor: "pointer",
-          }}
+          className={styles.breadcrumbItem}
           onClick={() => onClick(path)}
         >
           {item}
-        </Typography>
+        </button>
       );
     }
   });
 
   if (isEditing) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          pr: 1,
-          flex: 1,
-        }}
-      >
-        <TextField
+      <div className={styles.editRoot}>
+        <input
+          className={styles.editInput}
           value={editPath}
           onChange={(e) => setEditPath(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
-          size="small"
           placeholder="Enter path..."
-          sx={{
-            flex: 1,
-            "& .MuiInputBase-root": {
-              fontFamily: "monospace",
-              fontSize: "14px",
-            },
-          }}
         />
-        <IconButton size="small" onClick={handleConfirmEdit} color="primary">
-          <Icon className="icon-success-circle" fontSize="small" />
-        </IconButton>
-        <IconButton size="small" onClick={handleCancelEdit}>
-          <Icon className="icon-close" fontSize="small" />
-        </IconButton>
-      </Box>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => handleConfirmEdit()}
+        >
+          <span className="icon-success-circle" />
+        </button>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={handleCancelEdit}
+        >
+          <span className="icon-close" />
+        </button>
+      </div>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        pr: 1,
-      }}
-    >
-      <Typography
-        sx={{
-          pl: 1,
-          pr: 1,
-          color: "text.primary",
-          cursor: "pointer",
-        }}
+    <div className={styles.root}>
+      <button
+        type="button"
+        className={styles.rootButton}
         onClick={() => onClick("/")}
       >
         /
-      </Typography>
-      <Box
-        onDoubleClick={handleStartEdit}
-        sx={{
-          cursor: "text",
-        }}
+      </button>
+      <div className={styles.breadcrumbs} onDoubleClick={handleStartEdit}>
+        {items.map((item, index) => (
+          <div key={index} className={styles.breadcrumbNode}>
+            {index > 0 && <span className={styles.separator}>/</span>}
+            {item}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className={styles.iconButton}
+        onClick={handleStartEdit}
       >
-        <Breadcrumbs>{items}</Breadcrumbs>
-      </Box>
-      <IconButton size="small" onClick={handleStartEdit} sx={{ ml: 0.5 }}>
-        <Icon className="icon-edit" fontSize="small" />
-      </IconButton>
-    </Box>
+        <span className="icon-edit" />
+      </button>
+    </div>
   );
 }

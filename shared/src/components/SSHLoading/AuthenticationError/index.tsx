@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -6,6 +6,7 @@ import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
 
 import { Dropdown } from "@/components/Dropdown";
 import { useHosts } from "@/hooks/useHosts";
+import styles from "../styles.module.scss";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 
@@ -102,17 +103,10 @@ export default function AuthenticationError({
   );
 
   return (
-    <Box component="form" noValidate autoComplete="off">
+    <form className={styles.authForm} noValidate autoComplete="off">
       <ErrorText title={errorInfo.title} message={errorInfo.message} />
       <AuthenticationForm formApi={formApi} onOpenAddKey={onOpenAddKey} />
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
+      <div className={styles.actions}>
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
@@ -136,15 +130,9 @@ export default function AuthenticationError({
           }}
         >
           {({ onChangeOpen }) => (
-            <ButtonGroup
-              sx={{
-                minWidth: 150,
-              }}
-              variant="contained"
-              color="primary"
-            >
+            <div className={styles.splitButtonGroup}>
               <Button
-                fullWidth
+                className={styles.mainSplitButton}
                 onClick={formApi.handleSubmit((values) =>
                   onContinue(values, false),
                 )}
@@ -152,15 +140,15 @@ export default function AuthenticationError({
                 Continue
               </Button>
               <Button
-                size="small"
+                className={styles.moreButton}
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
-                <Icon className="icon-more" />
+                <span className="icon-more" />
               </Button>
-            </ButtonGroup>
+            </div>
           )}
         </Dropdown>
-      </Box>
-    </Box>
+      </div>
+    </form>
   );
 }

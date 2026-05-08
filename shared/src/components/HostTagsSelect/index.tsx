@@ -1,10 +1,10 @@
-import { Box, Radio } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 import { v4 as uuidV4 } from "uuid";
 
 import { useHosts } from "@/hooks/useHosts";
 
 import { Dropdown } from "../Dropdown";
+import styles from "./index.module.scss";
 
 interface Tag {
   label: string;
@@ -66,12 +66,15 @@ export function HostTagsSelect({
   const tagsMenus = useMemo(() => {
     return tags.map((item) => ({
       label: (
-        <Box sx={{ minWidth: 120 }}>
-          <Radio size="small" checked={value === item.value} />
-          <Box component="span" sx={{ paddingLeft: 0.5 }}>
-            {item.label}
-          </Box>
-        </Box>
+        <span className={styles.menuLabel}>
+          <span
+            className={
+              value === item.value ? styles.radioChecked : styles.radio
+            }
+            aria-hidden="true"
+          />
+          <span className={styles.menuText}>{item.label}</span>
+        </span>
       ),
       value: String(item.value),
       selected: value === item.value,

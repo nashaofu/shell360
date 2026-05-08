@@ -1,46 +1,61 @@
-import {
-  Box,
-  Divider,
-  type SxProps,
-  type Theme,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { Text } from "@radix-ui/themes";
 import { Controller } from "react-hook-form";
 
 import JumpHostIdsSelect from "./JumpHostIdsSelect";
 import type { EditHostFormApi } from "./types";
+import styles from "./JumpHostsForm.module.scss";
 
 type JumpHostsFormProps = {
   formApi: EditHostFormApi;
-  sx?: SxProps<Theme>;
+  sx?: unknown;
 };
 
 export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
   const jumpHostEnabled = formApi.watch("jumpHostEnabled");
   const hostId = formApi.watch("id");
+  const wrapperStyle =
+    sx && typeof sx === "object"
+      ? (sx as { mb?: number }).mb
+        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
+        : undefined
+      : undefined;
 
   return (
-    <Box sx={sx}>
-      <Divider sx={{ mb: 2 }}>
-        <Typography variant="subtitle1">Jump Hosts</Typography>
-      </Divider>
+    <section className={styles.section} style={wrapperStyle}>
+      <div className={styles.sectionTitleWrap}>
+        <Text size="3" weight="medium">
+          Jump Hosts
+        </Text>
+      </div>
       <Controller
         name="jumpHostEnabled"
         control={formApi.control}
         render={({ field }) => {
           return (
-            <ToggleButtonGroup
-              {...field}
-              onChange={(_, value) => field.onChange(!!value)}
-              exclusive
-              size="small"
-              fullWidth
-            >
-              <ToggleButton value={false}>Disabled</ToggleButton>
-              <ToggleButton value={true}>Enabled</ToggleButton>
-            </ToggleButtonGroup>
+            <div className={styles.toggleGroup}>
+              <button
+                type="button"
+                className={
+                  !field.value
+                    ? `${styles.toggleButton} ${styles.toggleButtonActive}`
+                    : styles.toggleButton
+                }
+                onClick={() => field.onChange(false)}
+              >
+                Disabled
+              </button>
+              <button
+                type="button"
+                className={
+                  field.value
+                    ? `${styles.toggleButton} ${styles.toggleButtonActive}`
+                    : styles.toggleButton
+                }
+                onClick={() => field.onChange(true)}
+              >
+                Enabled
+              </button>
+            </div>
           );
         }}
       />
@@ -69,6 +84,6 @@ export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
           )}
         />
       )}
-    </Box>
+    </section>
   );
 }

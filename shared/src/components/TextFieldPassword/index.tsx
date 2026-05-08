@@ -1,26 +1,50 @@
 import {
-  Icon,
-  IconButton,
-  InputAdornment,
-  TextField,
-  type TextFieldProps,
-} from "@mui/material";
-import {
+  type ChangeEvent,
+  type FocusEvent,
   type ForwardedRef,
+  type KeyboardEvent,
   forwardRef,
   useCallback,
   useImperativeHandle,
   useRef,
   useState,
 } from "react";
+import { Text } from "@radix-ui/themes";
+import styles from "./index.module.scss";
 
-type PasswordInputProps = Omit<
-  TextFieldProps,
-  "inputRef" | "type" | "InputProps"
->;
+type PasswordInputProps = {
+  value?: string;
+  name?: string;
+  label?: string;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  error?: boolean;
+  helperText?: string;
+  className?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
+  onKeyUp?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  sx?: unknown;
+};
 
 export const TextFieldPassword = forwardRef(function TextFieldPassword(
-  props: PasswordInputProps,
+  {
+    value,
+    name,
+    label,
+    placeholder,
+    required,
+    disabled,
+    fullWidth,
+    error,
+    helperText,
+    className,
+    onChange,
+    onBlur,
+    onKeyUp,
+  }: PasswordInputProps,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   const [isVisible, setIsVisible] = useState(false);
@@ -47,29 +71,66 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
     () => inputRef.current,
   );
 
+  const rootClassName = [
+    styles.root,
+    fullWidth ? styles.fullWidth : "",
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <TextField
-      {...props}
-      inputRef={inputRef}
-      type={isVisible ? "text" : "password"}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Icon className="icon-lock" />
-          </InputAdornment>
-        ),
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton onClick={onVisibilityChange}>
-              {isVisible ? (
-                <Icon className="icon-visibility-off" />
-              ) : (
-                <Icon className="icon-visibility" />
-              )}
-            </IconButton>
-          </InputAdornment>
-        ),
-      }}
-    />
+    <div className={rootClassName}>
+      {label && (
+        <Text as="label" size="2" weight="medium" className={styles.label}>
+          {label}
+        </Text>
+      )}
+
+      <div
+        className={
+          error
+            ? `${styles.inputWrap} ${styles.inputWrapError}`
+            : styles.inputWrap
+        }
+      >
+        <span className={`${styles.icon} icon-lock`} aria-hidden="true" />
+        <input
+          ref={inputRef}
+          className={styles.input}
+          name={name}
+          value={value || ""}
+          type={isVisible ? "text" : "password"}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          onChange={onChange}
+          onBlur={onBlur}
+          onKeyUp={onKeyUp}
+        />
+        <button
+          type="button"
+          className={styles.visibilityButton}
+          onClick={onVisibilityChange}
+          aria-label={isVisible ? "Hide password" : "Show password"}
+        >
+          <span
+            className={isVisible ? "icon-visibility-off" : "icon-visibility"}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+
+      {helperText && (
+        <Text
+          size="1"
+          className={
+            error ? `${styles.helper} ${styles.helperError}` : styles.helper
+          }
+        >
+          {helperText}
+        </Text>
+      )}
+    </div>
   );
 });
