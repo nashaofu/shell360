@@ -1,11 +1,3 @@
-import {
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Switch,
-} from "@/mui";
 import { useAtomValue } from "jotai";
 import { type ChangeEvent, useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
@@ -56,20 +48,41 @@ export default function CryptoSettings() {
 
   return (
     <>
-      <List>
-        <ListItem>
-          <ListItemText primary="Crypto Enable" />
-          <Switch checked={cryptoEnable} onChange={onCryptoEnableChange} />
-        </ListItem>
+      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        <li
+          style={{ display: "flex", alignItems: "center", padding: "8px 16px" }}
+        >
+          <span style={{ flex: 1 }}>Crypto Enable</span>
+          <input
+            type="checkbox"
+            checked={cryptoEnable}
+            onChange={onCryptoEnableChange}
+          />
+        </li>
         {cryptoEnable && (
-          <ListItem>
-            <ListItemText primary="Change Crypto Password" />
-            <IconButton onClick={onChangeCryptoPassword}>
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
+          <li
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "8px 16px",
+            }}
+          >
+            <span style={{ flex: 1 }}>Change Crypto Password</span>
+            <button
+              type="button"
+              onClick={onChangeCryptoPassword}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "inherit",
+              }}
+            >
+              <span className="icon-arrow-right" />
+            </button>
+          </li>
         )}
-      </List>
+      </ul>
       <IniCrypto
         open={initCryptoIsOpen}
         onCancel={onInitCryptoCancel}

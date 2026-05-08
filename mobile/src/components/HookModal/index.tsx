@@ -1,33 +1,23 @@
-import {
-  Box,
-  Button,
-  type ButtonProps,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  type DialogContentProps,
-  type DialogProps,
-  DialogTitle,
-  ThemeProvider,
-} from "@/mui";
-import { useAtomValue } from "jotai";
-import type { ReactNode } from "react";
-
-import { themeAtom } from "@/atom/themeAtom";
+import { Button, Dialog, Flex } from "@radix-ui/themes";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 export type HookModalProps = {
   open: boolean;
   icon?: ReactNode;
   title?: ReactNode;
   content?: ReactNode;
-  DialogProps?: Omit<DialogProps, "open" | "onCancel">;
-  DialogContentProps?: Omit<DialogContentProps, "children">;
   hideCancel?: boolean;
   cancelText?: ReactNode;
-  CancelButtonProps?: Omit<ButtonProps, "children" | "onClick">;
+  CancelButtonProps?: Omit<
+    ComponentPropsWithoutRef<typeof Button>,
+    "children" | "onClick"
+  >;
   hideOk?: boolean;
   okText?: ReactNode;
-  OkButtonProps?: Omit<ButtonProps, "children" | "onClick">;
+  OkButtonProps?: Omit<
+    ComponentPropsWithoutRef<typeof Button>,
+    "children" | "onClick"
+  >;
   onCancel?: () => unknown;
   onOk?: () => unknown;
 };
@@ -37,8 +27,6 @@ export default function HookModal({
   icon,
   title,
   content,
-  DialogProps: HookDialogProps,
-  DialogContentProps: HookDialogContentProps,
   hideCancel,
   cancelText,
   CancelButtonProps,
@@ -48,54 +36,28 @@ export default function HookModal({
   onCancel,
   onOk,
 }: HookModalProps) {
-  const theme = useAtomValue(themeAtom);
-  const { maxWidth = "xs", ...dialogProps } = HookDialogProps || {};
-  const { sx, ...dialogContentProps } = HookDialogContentProps || {};
-
   return (
-    <ThemeProvider theme={theme}>
-      <Dialog
-        {...dialogProps}
-        maxWidth={maxWidth}
-        open={open}
-        onClose={onCancel}
-        sx={{
-          ".MuiDialog-container": {
-            paddingTop: "env(safe-area-inset-top)",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {icon && (
-            <Box
-              sx={{
-                mr: 1,
-              }}
-            >
-              {icon}
-            </Box>
-          )}
-          {title}
-        </DialogTitle>
-        <DialogContent
-          {...dialogContentProps}
-          sx={[
-            {
-              userSelect: "text",
-            },
-            ...(Array.isArray(sx) ? sx : [sx]),
-          ]}
-        >
-          {content}
-        </DialogContent>
-        <DialogActions>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onCancel?.();
+      }}
+    >
+      <Dialog.Content maxWidth="400px">
+        <Dialog.Title>
+          <Flex align="center" gap="2">
+            {icon}
+            {title}
+          </Flex>
+        </Dialog.Title>
+        {content && (
+          <Dialog.Description style={{ userSelect: "text" }}>
+            {content}
+          </Dialog.Description>
+        )}
+        <Flex gap="2" justify="end" mt="4">
           {!hideCancel && (
-            <Button {...CancelButtonProps} onClick={onCancel}>
+            <Button {...CancelButtonProps} variant="soft" onClick={onCancel}>
               {cancelText || "Cancel"}
             </Button>
           )}
@@ -104,8 +66,8 @@ export default function HookModal({
               {okText || "Ok"}
             </Button>
           )}
-        </DialogActions>
-      </Dialog>
-    </ThemeProvider>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

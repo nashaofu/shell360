@@ -1,4 +1,3 @@
-import { Box, type SxProps, type Theme } from "@/mui";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -13,14 +12,14 @@ import Sftp from "./Sftp";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
-  sx: SxProps<Theme>;
+  style?: React.CSSProperties;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
 };
 
 export default function SSHTerminal({
   item,
-  sx,
+  style,
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
@@ -40,37 +39,24 @@ export default function SSHTerminal({
   } = useTerminal({ item, onClose, onCopy: copy });
 
   return (
-    <Box
-      sx={[
-        {
-          position: "relative",
-          overflow: "hidden",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        ...style,
+      }}
     >
-      <Box
-        sx={{
+      <div
+        style={{
           position: "absolute",
           top: 0,
           right: 3,
           bottom: 0,
           left: 0,
-          pl: 3,
+          paddingLeft: 3,
           overflow: "hidden",
           pointerEvents: loading || error ? "none" : "unset",
           visibility: loading || error ? "hidden" : "visible",
-          ".xterm": {
-            width: "100%",
-            height: "100%",
-            "*::-webkit-scrollbar": {
-              width: 8,
-              height: 8,
-            },
-            ":hover *::-webkit-scrollbar-thumb": {
-              backgroundColor: "#7f7f7f",
-            },
-          },
         }}
         data-paste="true"
       >
@@ -86,7 +72,7 @@ export default function SSHTerminal({
           onResize={onTerminalResize}
           onOpenUrl={openUrl}
         />
-      </Box>
+      </div>
       {(!terminal || loading || error) && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
@@ -109,6 +95,6 @@ export default function SSHTerminal({
         />
       )}
       {!loading && !error && session && <Sftp session={session} />}
-    </Box>
+    </div>
   );
 }

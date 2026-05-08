@@ -1,7 +1,8 @@
-import { Menu, MenuItem } from "@/mui";
+import { createPortal } from "react-dom";
 import { useCallback, useState } from "react";
 
 import useContextmenu, { type ContextmenuState } from "./useContextmenu";
+import styles from "./index.module.less";
 
 export default function Contextmenu() {
   const [contextmenuState, setContextmenuState] = useState<ContextmenuState>({
@@ -25,38 +26,31 @@ export default function Contextmenu() {
     onCloseContextmenu,
   });
 
-  return (
-    <Menu
-      open={contextmenuState.open}
-      anchorReference="anchorPosition"
-      onClose={onCloseContextmenu}
-      anchorOrigin={{
-        vertical: "bottom",
-        horizontal: "left",
-      }}
-      transformOrigin={{
-        vertical: "top",
-        horizontal: "left",
-      }}
-      anchorPosition={{
-        left: contextmenuState.x,
-        top: contextmenuState.y,
-      }}
-      sx={{
-        "& .MuiPaper-root": {
-          minWidth: 200,
-        },
-      }}
-    >
-      {contextmenuState.menus.map((item) => (
-        <MenuItem
-          key={item.key}
-          disabled={item.disabled}
-          onClick={item.onClick}
-        >
-          {item.label}
-        </MenuItem>
-      ))}
-    </Menu>
+  if (!contextmenuState.open) return null;
+
+  return createPortal(
+    <>
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 9998 }}
+        onClick={onCloseContextmenu}
+      />
+      <div
+        className={styles.menu}
+        style={{ left: contextmenuState.x, top: contextmenuState.y }}
+      >
+        {contextmenuState.menus.map((item) => (
+          <button
+            type="button"
+            key={item.key}
+            className={styles.menuItem}
+            disabled={item.disabled}
+            onClick={item.onClick}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </>,
+    document.body,
   );
 }

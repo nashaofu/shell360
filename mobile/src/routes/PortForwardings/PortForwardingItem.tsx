@@ -1,11 +1,4 @@
-import {
-  Box,
-  Dialog,
-  Icon,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-} from "@/mui";
+import { createPortal } from "react-dom";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
 import {
@@ -106,10 +99,8 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <span className="icon-edit" style={{ marginRight: 8 }} />
+            Edit
           </>
         ),
         value: "Edit",
@@ -118,10 +109,8 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <span className="icon-delete" style={{ marginRight: 8 }} />
+            Delete
           </>
         ),
         value: "Delete",
@@ -130,7 +119,7 @@ export default function PortForwardingItem({
             title: "Delete Confirmation",
             content: `Are you sure to delete the port forwarding: ${item.name}?`,
             OkButtonProps: {
-              color: "warning",
+              color: "orange",
             },
             onOk: async () => {
               await deletePortForwarding(item);
@@ -225,7 +214,7 @@ export default function PortForwardingItem({
         title={title}
         desc={getPortForwardingDesc(item, hostsMap)}
         extra={
-          <Box onClick={(event) => event.stopPropagation()}>
+          <div onClick={(event) => event.stopPropagation()}>
             <Dropdown
               menus={menus}
               anchorOrigin={{
@@ -238,43 +227,63 @@ export default function PortForwardingItem({
               }}
             >
               {({ onChangeOpen }) => (
-                <IconButton
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: 4,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                   onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
-                  <Icon className="icon-more" />
-                </IconButton>
+                  <span className="icon-more" />
+                </button>
               )}
             </Dropdown>
-          </Box>
+          </div>
         }
         onClick={() => onOpenOrClosePortForwarding()}
       />
-      <Dialog
-        open={isLoading}
-        sx={{
-          zIndex: 100,
-        }}
-      >
-        {currentJumpHostChainItem ? (
-          <SSHLoading
-            host={currentJumpHostChainItem.host}
-            loading={currentJumpHostChainItem.loading}
-            error={currentJumpHostChainItem.error}
-            onReConnect={onReConnect}
-            onReAuth={onReAuth}
-            onRetry={onRetry}
-            onClose={onClose}
-            onOpenAddKey={onOpenAddKey}
-          />
-        ) : (
-          <PortForwardingLoading
-            portForwarding={item}
-            error={portForwardingsAtomWithApi.state.get(item.id)?.error}
-            onClose={onClose}
-            onRetry={onRetry}
-          />
+      {isLoading &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.5)",
+            }}
+          >
+            {currentJumpHostChainItem ? (
+              <SSHLoading
+                host={currentJumpHostChainItem.host}
+                loading={currentJumpHostChainItem.loading}
+                error={currentJumpHostChainItem.error}
+                onReConnect={onReConnect}
+                onReAuth={onReAuth}
+                onRetry={onRetry}
+                onClose={onClose}
+                onOpenAddKey={onOpenAddKey}
+              />
+            ) : (
+              <PortForwardingLoading
+                portForwarding={item}
+                error={portForwardingsAtomWithApi.state.get(item.id)?.error}
+                onClose={onClose}
+                onRetry={onRetry}
+              />
+            )}
+          </div>,
+          document.body,
         )}
-      </Dialog>
     </>
   );
 }

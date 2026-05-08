@@ -1,11 +1,3 @@
-import {
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Switch,
-} from "@/mui";
 import { useAtomValue } from "jotai";
 import { type ChangeEvent, useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
@@ -56,20 +48,50 @@ export default function CryptoSettings() {
 
   return (
     <>
-      <List>
-        <ListItem>
-          <ListItemText primary="Crypto Enable" />
-          <Switch checked={cryptoEnable} onChange={onCryptoEnableChange} />
-        </ListItem>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+        <li
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+            borderBottom: "1px solid var(--gray-a5)",
+          }}
+        >
+          <span>Crypto Enable</span>
+          <input
+            type="checkbox"
+            checked={cryptoEnable}
+            onChange={onCryptoEnableChange}
+          />
+        </li>
         {cryptoEnable && (
-          <ListItem>
-            <ListItemText primary="Change Crypto Password" />
-            <IconButton onClick={onChangeCryptoPassword}>
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
+          <li
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              minHeight: 56,
+              padding: "0 16px",
+            }}
+          >
+            <span>Change Crypto Password</span>
+            <button
+              type="button"
+              onClick={onChangeCryptoPassword}
+              style={{
+                background: "none",
+                border: "none",
+                color: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              <span className="icon-arrow-right" />
+            </button>
+          </li>
         )}
-      </List>
+      </ul>
       <IniCrypto
         open={initCryptoIsOpen}
         onCancel={onInitCryptoCancel}

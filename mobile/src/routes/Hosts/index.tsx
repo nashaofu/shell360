@@ -1,16 +1,5 @@
-import {
-  Box,
-  Button,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  OutlinedInput,
-} from "@/mui";
 import { get, omit } from "lodash-es";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -78,7 +67,7 @@ export default function Hosts() {
   );
 
   const onAddHostButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个host
+    // 没订阅时，最多只能创�?个host
     if (!isSubscription && hosts.length >= 3) {
       setOpen(true);
       return;
@@ -126,10 +115,8 @@ export default function Hosts() {
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <span className="icon-edit" style={{ marginRight: 8 }} />
+            Edit
           </>
         ),
         value: "Edit",
@@ -142,10 +129,8 @@ export default function Hosts() {
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-content-copy" />
-            </ListItemIcon>
-            <ListItemText>Copy</ListItemText>
+            <span className="icon-content-copy" style={{ marginRight: 8 }} />
+            Copy
           </>
         ),
         value: "Copy",
@@ -154,10 +139,8 @@ export default function Hosts() {
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <span className="icon-delete" style={{ marginRight: 8 }} />
+            Delete
           </>
         ),
         value: "Delete",
@@ -177,7 +160,7 @@ export default function Hosts() {
             title: "Delete Confirmation",
             content: `Are you sure to delete the host: ${hostname}?`,
             OkButtonProps: {
-              color: "warning",
+              color: "orange",
             },
             onOk: async () => {
               try {
@@ -205,102 +188,92 @@ export default function Hosts() {
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
             {({ onChangeOpen }) => {
               return (
-                <IconButton
-                  sx={(theme) => ({
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
                     color: "inherit",
-                    [theme.breakpoints.up("sm")]: {
-                      display: "none",
-                    },
-                  })}
-                  edge="end"
-                  size="small"
+                    cursor: "pointer",
+                    padding: 4,
+                  }}
                   onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
-                  <Icon className="icon-label" />
-                </IconButton>
+                  <span className="icon-label" />
+                </button>
               );
             }}
           </HostTagsSelect>
-          <IconButton
-            sx={(theme) => ({
+          <button
+            type="button"
+            style={{
+              background: "none",
+              border: "none",
               color: "inherit",
-              [theme.breakpoints.up("sm")]: {
-                display: "none",
-              },
-            })}
-            edge="end"
-            size="small"
+              cursor: "pointer",
+              padding: 4,
+            }}
             onClick={onAddHostButtonClick}
           >
-            <Icon className="icon-add" />
-          </IconButton>
+            <span className="icon-add" />
+          </button>
         </>
       }
     >
-      <Box
-        sx={{
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 600,
-            flexGrow: 1,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ maxWidth: 600, flexGrow: 1 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Box
-          sx={(theme) => ({
-            ml: 2,
-            [theme.breakpoints.down("sm")]: {
-              display: "none",
-            },
-          })}
-        >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+        </div>
+        <div style={{ marginLeft: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
               {({ onChangeOpen, label }) => (
-                <List component="nav" dense>
-                  <ListItem>
-                    <ListItemButton
-                      onClick={(event) => onChangeOpen(event.currentTarget)}
-                    >
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Icon className="icon-label" />
-                            <Box component="span" sx={{ paddingLeft: 0.5 }}>
-                              {label}
-                            </Box>
-                          </Box>
-                        }
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </List>
+                <button
+                  type="button"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    background: "none",
+                    border: "1px solid var(--gray-a6)",
+                    borderRadius: "var(--radius-2)",
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                    color: "inherit",
+                    height: 36,
+                  }}
+                  onClick={(event) => onChangeOpen(event.currentTarget)}
+                >
+                  <span className="icon-label" />
+                  {label}
+                </button>
               )}
             </HostTagsSelect>
-            <Button
-              variant="contained"
-              startIcon={<Icon className="icon-add" />}
-              onClick={onAddHostButtonClick}
-            >
+            <Button onClick={onAddHostButtonClick}>
+              <span className="icon-add" />
               Add host
             </Button>
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -310,11 +283,11 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<Icon className="icon-host" />}
+            icon={<span className="icon-host" />}
             title={getHostName(item)}
             desc={getHostDesc(item)}
             extra={
-              <Box onClick={(event) => event.stopPropagation()}>
+              <div onClick={(event) => event.stopPropagation()}>
                 <Dropdown
                   menus={menus}
                   anchorOrigin={{
@@ -327,17 +300,28 @@ export default function Hosts() {
                   }}
                 >
                   {({ onChangeOpen }) => (
-                    <IconButton
+                    <button
+                      type="button"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "inherit",
+                        padding: 4,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
                       onClick={(event) => {
                         selectedHostRef.current = item;
                         onChangeOpen(event.currentTarget);
                       }}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
+                      <span className="icon-more" />
+                    </button>
                   )}
                 </Dropdown>
-              </Box>
+              </div>
             }
             onClick={() => onOpenChannel(item)}
           />
@@ -346,9 +330,7 @@ export default function Hosts() {
 
       {!items.length && (
         <Empty desc="There is no host yet, add it now.">
-          <Button variant="contained" onClick={() => setIsOpenAddHost(true)}>
-            Add host
-          </Button>
+          <Button onClick={() => setIsOpenAddHost(true)}>Add host</Button>
         </Empty>
       )}
 

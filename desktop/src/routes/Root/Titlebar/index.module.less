@@ -1,0 +1,41 @@
+.titleBar {
+  height: var(--titlebar-height);
+  background: transparent;
+  color: inherit;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.dragRegion {
+  position: absolute;
+  inset: 0;
+}
+
+.winControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  z-index: 10;
+  app-region: no-drag;
+}
+
+.winBtn {
+  width: 36px;
+  height: var(--titlebar-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+
+  &:hover {
+    background-color: var(--titlebar-btn-hover);
+  }
+}

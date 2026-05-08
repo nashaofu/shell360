@@ -1,0 +1,101 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.panel {
+  width: 420px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--color-background);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+
+  @media (max-width: 580px) {
+    width: 100%;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  min-height: 56px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin-right: 16px;
+  border-radius: 50%;
+  color: inherit;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.12);
+  }
+
+  @media (min-width: 580px) {
+    display: none;
+  }
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 50%;
+  color: inherit;
+  margin-left: 16px;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.12);
+  }
+
+  @media (max-width: 580px) {
+    display: none;
+  }
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--gray-a6);
+}
+
+.body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 16px;
+}
+
+.footer {
+  padding: 16px;
+}

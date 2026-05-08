@@ -1,12 +1,3 @@
-import {
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-} from "@/mui";
 import { type MouseEvent, useCallback } from "react";
 import {
   matchPath,
@@ -15,6 +6,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
+import styles from "../Menus/index.module.less";
 
 type TerminalsProps = {
   expand?: boolean;
@@ -52,69 +44,35 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
   );
 
   return (
-    <List>
-      {[...terminalsAtomWithApi.state.values()].map((item) => (
-        <ListItem
-          key={item.uuid}
-          disablePadding
-          onClick={() => onListItemClick(item)}
-          title={item.name}
-        >
-          <ListItemButton
-            sx={{
-              justifyContent: expand ? "initial" : "center",
-            }}
-            selected={
-              !!matchPath(
-                {
-                  path: `/terminal/${item.uuid}`,
-                  end: true,
-                },
-                pathname,
-              )
-            }
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: "unset",
-                mr: expand ? 2 : 0,
-                justifyContent: expand ? "initial" : "center",
-              }}
+    <ul className={styles.list}>
+      {[...terminalsAtomWithApi.state.values()].map((item) => {
+        const isActive = !!matchPath(
+          { path: `/terminal/${item.uuid}`, end: true },
+          pathname,
+        );
+        return (
+          <li key={item.uuid} className={styles.item} title={item.name}>
+            <button
+              type="button"
+              className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
+              onClick={() => onListItemClick(item)}
             >
-              <Icon className="icon-terminal" />
-            </ListItemIcon>
-            {expand && (
-              <ListItemText
-                primary={item.name}
-                sx={{
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  ".MuiTypography-root": {
-                    display: "inline",
-                  },
-                }}
-              />
-            )}
-
-            {expand && (
-              <IconButton
-                size="small"
-                edge="end"
-                onClick={(event) => onListItemCloseClick(event, item)}
-                title="Close"
-              >
-                <Icon
-                  sx={{
-                    fontSize: 16,
-                  }}
-                  className="icon-close"
-                />
-              </IconButton>
-            )}
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
+              <span className={`${styles.itemIcon} icon-terminal`} />
+              {expand && <span className={styles.itemText}>{item.name}</span>}
+              {expand && (
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={(e) => onListItemCloseClick(e, item)}
+                  title="Close"
+                >
+                  <span className="icon-close" style={{ fontSize: 14 }} />
+                </button>
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

@@ -1,5 +1,5 @@
-import { Box, Button, Icon, OutlinedInput } from "@/mui";
 import { useCallback, useMemo, useState } from "react";
+import { Button } from "@radix-ui/themes";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
@@ -36,41 +36,33 @@ export default function PortForwardings() {
 
   return (
     <Page title="Port forwardings">
-      <Box
-        sx={{
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            flexGrow: 1,
-            maxWidth: 380,
-            mr: 2,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Button
-          variant="contained"
-          sx={{
-            height: 40,
-          }}
-          startIcon={<Icon className="icon-add" />}
-          onClick={() => setIsOpenAddPortForwarding(true)}
-        >
+        </div>
+        <Button onClick={() => setIsOpenAddPortForwarding(true)}>
+          <span className="icon-add" />
           Add
         </Button>
-      </Box>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -90,10 +82,7 @@ export default function PortForwardings() {
       </AutoRepeatGrid>
       {!portForwardings.length && (
         <Empty desc="There is no port forwarding yet, add it now.">
-          <Button
-            variant="contained"
-            onClick={() => setIsOpenAddPortForwarding(true)}
-          >
+          <Button onClick={() => setIsOpenAddPortForwarding(true)}>
             Add port forwarding
           </Button>
         </Empty>

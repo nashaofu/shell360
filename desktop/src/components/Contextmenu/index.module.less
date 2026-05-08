@@ -1,0 +1,34 @@
+.menu {
+  position: fixed;
+  z-index: 9999;
+  background: var(--color-panel-solid);
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-3);
+  box-shadow: var(--shadow-3);
+  min-width: 200px;
+  padding: 4px 0;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--gray-a3);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}

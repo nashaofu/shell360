@@ -61,7 +61,7 @@ export default function useCells({
         title: "Delete Confirmation",
         content: `Are you sure to delete ${row.name}?`,
         OkButtonProps: {
-          color: "warning",
+          color: "orange",
         },
         onOk: () => {
           if (row.fileType === SSHSftpFileType.Dir) {

@@ -1,14 +1,5 @@
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Icon,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  OutlinedInput,
-} from "@/mui";
 import { get } from "lodash-es";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
@@ -52,7 +43,7 @@ export default function Keys() {
   }, []);
 
   const onAddKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;
@@ -61,7 +52,7 @@ export default function Keys() {
   }, [isSubscription, keys.length, setOpen]);
 
   const onGenerateKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;
@@ -101,10 +92,8 @@ export default function Keys() {
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-edit" />
-            </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <span className="icon-edit" style={{ marginRight: 8 }} />
+            Edit
           </>
         ),
         value: "Edit",
@@ -117,10 +106,8 @@ export default function Keys() {
       {
         label: (
           <>
-            <ListItemIcon>
-              <Icon className="icon-delete" />
-            </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <span className="icon-delete" style={{ marginRight: 8 }} />
+            Delete
           </>
         ),
         value: "Delete",
@@ -136,7 +123,7 @@ export default function Keys() {
             title: "Delete Confirmation",
             content: `Are you sure to delete the key: ${deleteKeyName}?`,
             OkButtonProps: {
-              color: "warning",
+              color: "orange",
             },
             onOk: async () => {
               try {
@@ -163,75 +150,65 @@ export default function Keys() {
       headerRight={
         <Dropdown menus={headerRightMenus}>
           {({ onChangeOpen }) => (
-            <IconButton
-              sx={(theme) => ({
-                ml: 2,
+            <button
+              type="button"
+              style={{
+                marginLeft: 8,
+                background: "none",
+                border: "none",
                 color: "inherit",
-                [theme.breakpoints.up("sm")]: {
-                  display: "none",
-                },
-              })}
-              edge="end"
-              size="small"
+                cursor: "pointer",
+                padding: 4,
+              }}
               onClick={(event) => onChangeOpen(event.currentTarget)}
             >
-              <Icon className="icon-more" />
-            </IconButton>
+              <span className="icon-more" />
+            </button>
           )}
         </Dropdown>
       }
     >
-      <Box
-        sx={{
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 2,
+          margin: "16px 0",
         }}
       >
-        <Box
-          sx={{
-            maxWidth: 600,
-            flexGrow: 1,
-          }}
-        >
-          <OutlinedInput
+        <div style={{ maxWidth: 600, flexGrow: 1 }}>
+          <input
+            className="rt-reset rt-TextFieldInput"
             value={keyword}
-            fullWidth
-            size="small"
-            startAdornment={<Icon className="icon-search" />}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+            }}
             placeholder="Search..."
             onChange={(event) => setKeyword(event.target.value)}
           />
-        </Box>
-        <Box
-          sx={(theme) => ({
-            ml: 2,
-            [theme.breakpoints.down("sm")]: {
-              display: "none",
-            },
-          })}
-        >
+        </div>
+        <div style={{ marginLeft: 16 }}>
           <Dropdown menus={menus}>
             {({ onChangeOpen }) => (
-              <ButtonGroup variant="contained">
-                <Button
-                  startIcon={<Icon className="icon-add" />}
-                  onClick={onAddKeyButtonClick}
-                >
+              <div style={{ display: "flex", gap: 1 }}>
+                <Button onClick={onAddKeyButtonClick}>
+                  <span className="icon-add" />
                   Add key
                 </Button>
                 <Button
-                  size="small"
+                  variant="soft"
                   onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
-                  <Icon className="icon-more" />
+                  <span className="icon-more" />
                 </Button>
-              </ButtonGroup>
+              </div>
             )}
           </Dropdown>
-        </Box>
-      </Box>
+        </div>
+      </div>
       <AutoRepeatGrid
         sx={{
           gap: 2,
@@ -241,10 +218,10 @@ export default function Keys() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<Icon className="icon-key" />}
+            icon={<span className="icon-key" />}
             title={item.name}
             extra={
-              <Box onClick={(event) => event.stopPropagation()}>
+              <div onClick={(event) => event.stopPropagation()}>
                 <Dropdown
                   menus={itemMenus}
                   anchorOrigin={{
@@ -257,26 +234,35 @@ export default function Keys() {
                   }}
                 >
                   {({ onChangeOpen }) => (
-                    <IconButton
+                    <button
+                      type="button"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "inherit",
+                        padding: 4,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
                       onClick={(event) => {
                         selectedKeyRef.current = item;
                         onChangeOpen(event.currentTarget);
                       }}
                     >
-                      <Icon className="icon-more" />
-                    </IconButton>
+                      <span className="icon-more" />
+                    </button>
                   )}
                 </Dropdown>
-              </Box>
+              </div>
             }
           />
         ))}
       </AutoRepeatGrid>
       {!items.length && (
         <Empty desc="There is no key yet, add it now.">
-          <Button variant="contained" onClick={() => setIsOpenAddKey(true)}>
-            Add key
-          </Button>
+          <Button onClick={() => setIsOpenAddKey(true)}>Add key</Button>
         </Empty>
       )}
 

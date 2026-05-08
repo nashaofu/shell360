@@ -1,15 +1,5 @@
-import {
-  Box,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "@/mui";
 import { getVersion } from "@tauri-apps/api/app";
+import styles from "./index.module.less";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { modeAtom, ThemeMode } from "@/atom/themeAtom";
@@ -52,14 +42,10 @@ export default function Settings() {
     } catch (err) {
       message.error({
         message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
+          <span style={{ wordBreak: "break-all" }}>
             Export failed:
             {` ${JSON.stringify(err)}`}
-          </Box>
+          </span>
         ),
       });
     }
@@ -70,10 +56,9 @@ export default function Settings() {
       modal.confirm({
         title: "Warning",
         icon: (
-          <Icon
-            color="warning"
-            sx={{ fontSize: 32 }}
+          <span
             className="icon-warning-circle"
+            style={{ fontSize: 32, color: "var(--orange-9)" }}
           />
         ),
         content:
@@ -93,14 +78,10 @@ export default function Settings() {
     } catch (err) {
       message.error({
         message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
+          <span style={{ wordBreak: "break-all" }}>
             Import failed:
             {` ${String(err)}`}
-          </Box>
+          </span>
         ),
       });
     }
@@ -114,103 +95,107 @@ export default function Settings() {
 
   return (
     <Page title="Settings">
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
-      >
-        <List>
-          <ListItem>
-            <ListItemText primary="Theme Mode" />
-            <ToggleButtonGroup
-              value={themeMode}
-              color="primary"
-              exclusive
-              size="small"
-              onChange={(_, val) => setThemeMode(val)}
+      <div className={styles.paper}>
+        <ul className={styles.list}>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Theme Mode</span>
+            <div className={styles.themeGroup}>
+              {([ThemeMode.Auto, ThemeMode.Light, ThemeMode.Dark] as const).map(
+                (mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    className={`${styles.themeBtn}${themeMode === mode ? ` ${styles.active}` : ""}`}
+                    onClick={() => setThemeMode(mode)}
+                  >
+                    <span
+                      className={
+                        mode === ThemeMode.Auto
+                          ? "icon-settings-brightness"
+                          : mode === ThemeMode.Light
+                            ? "icon-light-mode"
+                            : "icon-dark-mode"
+                      }
+                    />
+                    {mode === ThemeMode.Auto
+                      ? "Auto"
+                      : mode === ThemeMode.Light
+                        ? "Light"
+                        : "Dark"}
+                  </button>
+                ),
+              )}
+            </div>
+          </li>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Export</span>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={onExportData}
             >
-              <ToggleButton value={ThemeMode.Auto}>
-                <Icon className="icon-settings-brightness" />
-                Auto
-              </ToggleButton>
-              <ToggleButton value={ThemeMode.Light}>
-                <Icon className="icon-light-mode" />
-                Light
-              </ToggleButton>
-              <ToggleButton value={ThemeMode.Dark}>
-                <Icon className="icon-dark-mode" />
-                Dark
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Export" />
-            <IconButton onClick={onExportData}>
-              <Icon className="icon-file-download" />
-            </IconButton>
-          </ListItem>
+              <span className="icon-file-download" />
+            </button>
+          </li>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Import</span>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={onImportData}
+            >
+              <span className="icon-file-upload" />
+            </button>
+          </li>
+        </ul>
+      </div>
 
-          <ListItem>
-            <ListItemText primary="Import" />
-            <IconButton onClick={onImportData}>
-              <Icon className="icon-file-upload" />
-            </IconButton>
-          </ListItem>
-        </List>
-      </Paper>
-
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
-      >
+      <div className={styles.paper}>
         <CryptoSettings />
-      </Paper>
+      </div>
 
-      <Paper
-        sx={{
-          maxWidth: 560,
-          my: 2,
-          mx: "auto",
-        }}
-      >
-        <List>
-          <ListItem>
-            <ListItemText primary="Check Update" />
-            <IconButton onClick={onCheckUpdate}>
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Privacy Policy" />
-            <IconButton
+      <div className={styles.paper}>
+        <ul className={styles.list}>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Check Update</span>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={onCheckUpdate}
+            >
+              <span className="icon-arrow-right" />
+            </button>
+          </li>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Privacy Policy</span>
+            <button
+              type="button"
+              className={styles.iconBtn}
               onClick={() =>
                 openUrl(
                   "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
                 )
               }
             >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="About" />
-            <IconButton
+              <span className="icon-arrow-right" />
+            </button>
+          </li>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>About</span>
+            <button
+              type="button"
+              className={styles.iconBtn}
               onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
             >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Version" />
+              <span className="icon-arrow-right" />
+            </button>
+          </li>
+          <li className={styles.listItem}>
+            <span className={styles.listItemText}>Version</span>
             {version}
-          </ListItem>
-        </List>
-      </Paper>
+          </li>
+        </ul>
+      </div>
     </Page>
   );
 }

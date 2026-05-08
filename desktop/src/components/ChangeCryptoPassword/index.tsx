@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@/mui";
+import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -64,15 +56,15 @@ export default function ChangeCryptoPassword({
   }, [open, formApi]);
 
   return (
-    <Dialog open={open}>
-      <DialogTitle>Change Crypto Password</DialogTitle>
-      <Loading loading={loading} size={32}>
-        <DialogContent>
-          <DialogContentText>
+    <Dialog.Root open={open}>
+      <Dialog.Content>
+        <Dialog.Title>Change Crypto Password</Dialog.Title>
+        <Loading loading={loading} size={32}>
+          <Dialog.Description>
             Please enter the encryption password to reset the key
-          </DialogContentText>
-          <Box component="form" noValidate autoComplete="off">
-            <Box sx={{ mt: 4 }}>
+          </Dialog.Description>
+          <form noValidate autoComplete="off">
+            <div style={{ marginTop: 16 }}>
               <Controller
                 name="oldPassword"
                 control={formApi.control}
@@ -102,8 +94,8 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               />
-            </Box>
-            <Box sx={{ mt: 4 }}>
+            </div>
+            <div style={{ marginTop: 16 }}>
               <Controller
                 name="password"
                 control={formApi.control}
@@ -133,8 +125,8 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               />
-            </Box>
-            <Box sx={{ mt: 4 }}>
+            </div>
+            <div style={{ marginTop: 16 }}>
               <Controller
                 name="confirmPassword"
                 control={formApi.control}
@@ -170,14 +162,16 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               ></Controller>
-            </Box>
-          </Box>
-          <DialogActions sx={{ pt: 4 }}>
-            <Button onClick={onCancel}>Cancel</Button>
+            </div>
+          </form>
+          <Flex gap="3" justify="end" mt="4">
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
             <Button onClick={formApi.handleSubmit(onSubmit)}>Submit</Button>
-          </DialogActions>
-        </DialogContent>
-      </Loading>
-    </Dialog>
+          </Flex>
+        </Loading>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

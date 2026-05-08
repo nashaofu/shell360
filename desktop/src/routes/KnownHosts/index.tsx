@@ -57,7 +57,7 @@ export default function KnownHosts() {
           </div>
         ),
         OkButtonProps: {
-          color: "warning",
+          color: "orange",
         },
         onOk: async () => {
           const knownHosts = await readKnownHost();

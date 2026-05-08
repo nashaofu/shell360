@@ -1,23 +1,16 @@
-import {
-  Avatar,
-  Box,
-  Divider,
-  Icon,
-  IconButton,
-  SwipeableDrawer,
-} from "@/mui";
 import { useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
 import { useGlobalStateAtomWithApi } from "@/atom/globalState";
 import overlay from "@/utils/overlay";
 import logo from "./logo.svg";
+import styles from "./index.module.less";
 import Menus from "./Menus";
 import Terminals from "./Terminals";
 
 export default function Sidebar() {
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
-
   const navigate = useNavigate();
 
   const goSettings = useCallback(() => {
@@ -40,70 +33,40 @@ export default function Sidebar() {
     globalStateAtomWithApi.closeSidebar,
   ]);
 
-  return (
-    <SwipeableDrawer
-      sx={{
-        width: 300,
-        "& .MuiDrawer-paper": {
-          width: 300,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        },
-      }}
-      open={globalStateAtomWithApi.isOpenSidebar}
-      anchor="left"
-      onClose={globalStateAtomWithApi.closeSidebar}
-      onOpen={globalStateAtomWithApi.openSidebar}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          py: 1,
-          mt: 2,
-          gap: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flex: 1,
-            alignItems: "center",
-          }}
-        >
-          <Avatar src={logo} alt="logo" />
-          <Box
-            sx={{
-              fontSize: 16,
-              pl: 1,
-            }}
+  if (!globalStateAtomWithApi.isOpenSidebar) return null;
+
+  return createPortal(
+    <>
+      <div
+        className={styles.overlay}
+        onClick={globalStateAtomWithApi.closeSidebar}
+      />
+      <div className={styles.panel}>
+        <div className={styles.header}>
+          <div className={styles.logoWrap}>
+            <img className={styles.avatar} src={logo} alt="logo" />
+            <span className={styles.logoText}>Shell360</span>
+          </div>
+          <button
+            type="button"
+            className={styles.settingsBtn}
+            onClick={goSettings}
           >
-            Shell360
-          </Box>
-        </Box>
-        <IconButton size="small" onClick={goSettings}>
-          <Icon className="icon-settings" />
-        </IconButton>
-      </Box>
+            <span className="icon-settings" />
+          </button>
+        </div>
 
-      <Divider />
+        <hr className={styles.divider} />
 
-      <Menus onClick={globalStateAtomWithApi.closeSidebar} />
+        <Menus onClick={globalStateAtomWithApi.closeSidebar} />
 
-      <Divider />
+        <hr className={styles.divider} />
 
-      <Box
-        sx={{
-          flex: 1,
-          overflow: "auto",
-        }}
-      >
-        <Terminals onClick={globalStateAtomWithApi.closeSidebar} />
-      </Box>
-    </SwipeableDrawer>
+        <div className={styles.scrollArea}>
+          <Terminals onClick={globalStateAtomWithApi.closeSidebar} />
+        </div>
+      </div>
+    </>,
+    document.body,
   );
 }

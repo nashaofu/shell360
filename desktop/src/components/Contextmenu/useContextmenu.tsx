@@ -1,4 +1,3 @@
-import { Icon, ListItemIcon, ListItemText } from "@/mui";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { type ReactNode, useEffect } from "react";
 
@@ -86,10 +85,8 @@ export default function useContextmenu({
           key: "Cut",
           label: (
             <>
-              <ListItemIcon>
-                <Icon className="icon-content-cut" />
-              </ListItemIcon>
-              <ListItemText>Cut</ListItemText>
+              <span className="icon-content-cut" />
+              Cut
             </>
           ),
           disabled: !selectText?.length || !cutEl,
@@ -103,10 +100,8 @@ export default function useContextmenu({
           key: "Copy",
           label: (
             <>
-              <ListItemIcon>
-                <Icon className="icon-content-copy" />
-              </ListItemIcon>
-              <ListItemText>Copy</ListItemText>
+              <span className="icon-content-copy" />
+              Copy
             </>
           ),
           disabled: !selectText?.length,
@@ -120,10 +115,8 @@ export default function useContextmenu({
           key: "Paste",
           label: (
             <>
-              <ListItemIcon>
-                <Icon className="icon-content-paste" />
-              </ListItemIcon>
-              <ListItemText>Paste</ListItemText>
+              <span className="icon-content-paste" />
+              Paste
             </>
           ),
           disabled: !data || !pasteEl,

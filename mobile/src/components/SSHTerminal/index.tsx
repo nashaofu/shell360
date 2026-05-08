@@ -1,5 +1,5 @@
-import { Box, Icon, type SxProps, type Theme } from "@/mui";
 import { useSize } from "ahooks";
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SSHLoading,
@@ -16,14 +16,14 @@ import Sftp from "./Sftp";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
-  sx: SxProps<Theme>;
+  style: CSSProperties;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
 };
 
 export default function SSHTerminal({
   item,
-  sx,
+  style,
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
@@ -42,7 +42,7 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose });
 
-  const footerRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
 
   const size = useSize(footerRef);
@@ -74,17 +74,9 @@ export default function SSHTerminal({
   }, [showVirtualKeyboard, terminal]);
 
   return (
-    <Box
-      sx={[
-        {
-          position: "relative",
-          overflow: "hidden",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
-      <Box
-        sx={{
+    <div style={{ position: "relative", overflow: "hidden", ...style }}>
+      <div
+        style={{
           position: "absolute",
           top: 0,
           right: 0,
@@ -93,18 +85,6 @@ export default function SSHTerminal({
           overflow: "hidden",
           pointerEvents: hasBlockingState ? "none" : "unset",
           visibility: hasBlockingState ? "hidden" : "visible",
-          ".xterm": {
-            width: "100%",
-            height: "100%",
-            p: 2,
-            "*::-webkit-scrollbar": {
-              width: 8,
-              height: 8,
-            },
-            ":hover *::-webkit-scrollbar-thumb": {
-              backgroundColor: "#7f7f7f",
-            },
-          },
         }}
         data-paste="true"
       >
@@ -118,7 +98,7 @@ export default function SSHTerminal({
           onResize={onTerminalResize}
           onOpenUrl={openUrl}
         />
-      </Box>
+      </div>
       {showLoadingMask && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
@@ -128,10 +108,10 @@ export default function SSHTerminal({
             width: "100%",
             height: "100%",
             position: "absolute",
-            top: "0",
-            right: "0",
-            bottom: "0",
-            left: "0",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
             zIndex: 10,
           }}
           onReConnect={onReConnect}
@@ -143,63 +123,47 @@ export default function SSHTerminal({
       )}
 
       {showFooter && (
-        <Box
+        <div
           ref={footerRef}
-          sx={{
+          style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
             paddingBottom: "env(safe-area-inset-bottom)",
-            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-            backgroundColor: (theme) =>
-              theme.palette.mode === "dark"
-                ? theme.palette.background.paper
-                : theme.palette.grey[300],
+            borderTop: "1px solid var(--gray-a6)",
+            backgroundColor: "var(--gray-3)",
           }}
         >
-          <Box
-            sx={{
+          <div
+            style={{
               display: "flex",
               justifyContent: "flex-end",
-              px: 1,
-              pt: 0.25,
-              pb: 0.1,
-              gap: 0.5,
+              padding: "2px 8px 1px",
+              gap: 4,
               fontSize: "0.75rem",
             }}
           >
             {session && <Sftp session={session} />}
-            <Box
-              sx={{
-                py: 0.25,
-                px: 1,
+            <div
+              style={{
+                padding: "2px 8px",
                 lineHeight: 0,
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: (theme) =>
-                  showVirtualKeyboard
-                    ? theme.palette.primary.main
-                    : theme.palette.divider,
-                backgroundColor: (theme) =>
-                  showVirtualKeyboard
-                    ? theme.palette.action.selected
-                    : theme.palette.background.default,
-                color: (theme) =>
-                  showVirtualKeyboard
-                    ? theme.palette.primary.main
-                    : theme.palette.text.primary,
-                ":active": {
-                  borderColor: (theme) => theme.palette.primary.main,
-                  backgroundColor: (theme) => theme.palette.action.hover,
-                  color: (theme) => theme.palette.text.primary,
-                },
+                borderRadius: "var(--radius-2)",
+                border: `1px solid ${showVirtualKeyboard ? "var(--accent-9)" : "var(--gray-a6)"}`,
+                backgroundColor: showVirtualKeyboard
+                  ? "var(--accent-a3)"
+                  : "var(--color-background)",
+                color: showVirtualKeyboard
+                  ? "var(--accent-9)"
+                  : "var(--gray-12)",
+                cursor: "pointer",
               }}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >
-              <Icon className="icon-keyboard" />
-            </Box>
-          </Box>
+              <span className="icon-keyboard" />
+            </div>
+          </div>
 
           {showVirtualKeyboard && (
             <VirtualKeyboard
@@ -209,8 +173,8 @@ export default function SSHTerminal({
               onInput={onVirtualKeyboardInput}
             />
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

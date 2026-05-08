@@ -1,15 +1,9 @@
-import {
-  Box,
-  Divider,
-  Drawer,
-  Icon,
-  IconButton,
-  Typography,
-} from "@/mui";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Loading } from "shared";
 
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
+import styles from "./index.module.less";
 
 type PageDrawerProps = {
   loading?: boolean;
@@ -28,70 +22,44 @@ export default function PageDrawer({
   footer,
   onCancel,
 }: PageDrawerProps) {
-  return (
-    <Drawer
-      open={open}
-      anchor="right"
-      sx={{
-        "& .MuiDrawer-paper": {
-          width: 420,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 2,
-          py: 1,
-          mt: `${TITLE_BAR_HEIGHT}px`,
-        }}
-      >
-        <Typography variant="h6">{title}</Typography>
-        {!loading && (
-          <IconButton size="small" onClick={onCancel}>
-            <Icon className="icon-arrow-right" />
-          </IconButton>
-        )}
-      </Box>
-      <Divider />
-      <Loading
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        loading={loading}
-        size={32}
-      >
-        <Box
+  if (!open) return null;
+
+  return createPortal(
+    <div className={styles.overlay} onClick={onCancel}>
+      <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.header} style={{ marginTop: TITLE_BAR_HEIGHT }}>
+          <h6 className={styles.title}>{title}</h6>
+          {!loading && (
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={onCancel}
+            >
+              <span className="icon-arrow-right" />
+            </button>
+          )}
+        </div>
+        <hr className={styles.divider} />
+        <Loading
           sx={{
             flexGrow: 1,
-            overflow: "auto",
-            px: 2,
-            py: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
           }}
+          loading={loading}
+          size={32}
         >
-          {children}
-        </Box>
-      </Loading>
-      {footer && (
-        <>
-          <Divider />
-          <Box
-            sx={{
-              p: 2,
-            }}
-          >
-            {footer}
-          </Box>
-        </>
-      )}
-    </Drawer>
+          <div className={styles.content}>{children}</div>
+        </Loading>
+        {footer && (
+          <>
+            <hr className={styles.divider} />
+            <div className={styles.footer}>{footer}</div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body,
   );
 }

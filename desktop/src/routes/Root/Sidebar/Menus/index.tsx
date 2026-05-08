@@ -1,35 +1,12 @@
-import {
-  Icon,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-} from "@/mui";
 import { useCallback } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
+import styles from "./index.module.less";
 
 const MENU_ITEMS = [
-  {
-    icon: "icon-host",
-    text: "Hosts",
-    to: "/",
-  },
-  {
-    icon: "icon-site-map",
-    text: "Port forwardings",
-    to: "/port-forwardings",
-  },
-  {
-    icon: "icon-key",
-    text: "Keys",
-    to: "/keys",
-  },
-  {
-    icon: "icon-fingerprint",
-    text: "Known hosts",
-    to: "/known-hosts",
-  },
+  { icon: "icon-host", text: "Hosts", to: "/" },
+  { icon: "icon-site-map", text: "Port forwardings", to: "/port-forwardings" },
+  { icon: "icon-key", text: "Keys", to: "/keys" },
+  { icon: "icon-fingerprint", text: "Known hosts", to: "/known-hosts" },
 ];
 
 type MenusProps = {
@@ -50,41 +27,22 @@ export default function Menus({ expand, onClick }: MenusProps) {
   );
 
   return (
-    <List>
-      {MENU_ITEMS.map((item) => (
-        <ListItem
-          key={item.to}
-          disablePadding
-          onClick={() => onListItemClick(item.to)}
-          title={item.text}
-        >
-          <ListItemButton
-            sx={{
-              justifyContent: expand ? "initial" : "center",
-            }}
-            selected={
-              !!matchPath(
-                {
-                  path: item.to,
-                  end: true,
-                },
-                pathname,
-              )
-            }
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: "unset",
-                mr: expand ? 2 : 0,
-                justifyContent: expand ? "initial" : "center",
-              }}
+    <ul className={styles.list}>
+      {MENU_ITEMS.map((item) => {
+        const isActive = !!matchPath({ path: item.to, end: true }, pathname);
+        return (
+          <li key={item.to} className={styles.item} title={item.text}>
+            <button
+              type="button"
+              className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
+              onClick={() => onListItemClick(item.to)}
             >
-              <Icon className={item.icon} />
-            </ListItemIcon>
-            {expand && <ListItemText primary={item.text} />}
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
+              <span className={`${styles.itemIcon} ${item.icon}`} />
+              {expand && <span className={styles.itemText}>{item.text}</span>}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

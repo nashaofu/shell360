@@ -39,7 +39,7 @@ export default function Terminals() {
         return (
           <SSHTerminal
             key={item.uuid}
-            sx={{
+            style={{
               display: visible ? "flex" : "none",
               flexGrow: 1,
               flexShrink: 0,

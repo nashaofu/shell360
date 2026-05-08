@@ -1,5 +1,5 @@
-import { Box, Button, ButtonGroup, Icon } from "@/mui";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@radix-ui/themes";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -190,44 +190,43 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         title={data ? "Edit host" : "Add host"}
         onCancel={onCancel}
         footer={
-          <Box
-            sx={{
+          <div
+            style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: 8,
             }}
           >
-            <Button
-              sx={{
-                width: "48%",
-              }}
-              variant="outlined"
-              onClick={onCancel}
-            >
+            <Button style={{ flex: 1 }} variant="outline" onClick={onCancel}>
               Cancel
             </Button>
 
-            <Dropdown
-              sx={{
-                width: "48%",
-              }}
-              menus={menus}
-            >
+            <Dropdown sx={{ width: "48%" }} menus={menus}>
               {({ onChangeOpen }) => (
-                <ButtonGroup fullWidth variant="contained">
-                  <Button fullWidth onClick={formApi.handleSubmit(onSave)}>
+                <div style={{ display: "flex", flex: 1 }}>
+                  <Button
+                    style={{
+                      flex: 1,
+                      borderRadius: "var(--radius-2) 0 0 var(--radius-2)",
+                    }}
+                    onClick={formApi.handleSubmit(onSave)}
+                  >
                     Save
                   </Button>
                   <Button
-                    fullWidth={false}
+                    style={{
+                      borderRadius: "0 var(--radius-2) var(--radius-2) 0",
+                      borderLeft: "1px solid var(--accent-a5)",
+                    }}
                     onClick={(event) => onChangeOpen(event.currentTarget)}
                   >
-                    <Icon className="icon-more" />
+                    <span className="icon-more" />
                   </Button>
-                </ButtonGroup>
+                </div>
               )}
             </Dropdown>
-          </Box>
+          </div>
         }
       >
         <EditHostForm

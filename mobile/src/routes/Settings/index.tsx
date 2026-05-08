@@ -1,15 +1,4 @@
-import {
-  Box,
-  Icon,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Select,
-} from "@/mui";
+import { SegmentedControl } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
@@ -28,22 +17,39 @@ function IOSIAP() {
   const [, setOpen] = useIsShowPaywallAtom();
 
   return (
-    <Paper
-      sx={{
+    <div
+      style={{
         maxWidth: 560,
-        my: 2,
-        mx: "auto",
+        margin: "16px auto",
+        border: "1px solid var(--gray-a5)",
+        borderRadius: "var(--radius-4)",
+        overflow: "hidden",
       }}
     >
-      <List>
-        <ListItem>
-          <ListItemText primary="Subscription" />
-          <IconButton onClick={() => setOpen(true)}>
-            <Icon className="icon-arrow-right" />
-          </IconButton>
-        </ListItem>
-      </List>
-    </Paper>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          minHeight: 56,
+          padding: "0 16px",
+        }}
+      >
+        <span>Subscription</span>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          <span className="icon-arrow-right" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -75,14 +81,10 @@ export default function Settings() {
     } catch (err) {
       message.error({
         message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
+          <div style={{ wordBreak: "break-all" }}>
             Export failed:
             {` ${JSON.stringify(err)}`}
-          </Box>
+          </div>
         ),
       });
     }
@@ -99,10 +101,9 @@ export default function Settings() {
       modal.confirm({
         title: "Warning",
         icon: (
-          <Icon
-            color="warning"
-            sx={{ fontSize: 32 }}
+          <span
             className="icon-warning-circle"
+            style={{ fontSize: 32, color: "var(--orange-9)" }}
           />
         ),
         content:
@@ -122,14 +123,10 @@ export default function Settings() {
     } catch (err) {
       message.error({
         message: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
+          <div style={{ wordBreak: "break-all" }}>
             Import failed:
             {` ${String(err)}`}
-          </Box>
+          </div>
         ),
       });
     }
@@ -143,126 +140,206 @@ export default function Settings() {
 
   return (
     <Page title="Settings">
-      <Paper
-        sx={{
+      <div
+        style={{
           maxWidth: 560,
-          my: 2,
-          mx: "auto",
+          margin: "16px auto",
+          border: "1px solid var(--gray-a5)",
+          borderRadius: "var(--radius-4)",
+          overflow: "hidden",
         }}
       >
-        <List>
-          <ListItem>
-            <ListItemText primary="Theme Mode" />
-            <Select
-              value={themeMode}
-              size="small"
-              inputProps={{
-                sx: {
-                  display: "flex",
-                  alignItems: "center",
-                  ".MuiListItemIcon-root": {
-                    minWidth: "unset",
-                  },
-                },
-              }}
-              onChange={(event) =>
-                setThemeMode(event.target.value as ThemeMode)
-              }
-            >
-              <MenuItem value={ThemeMode.Auto}>
-                <ListItemIcon>
-                  <Icon className="icon-settings-brightness" />
-                </ListItemIcon>
-                <ListItemText>Auto</ListItemText>
-              </MenuItem>
-              <MenuItem value={ThemeMode.Light}>
-                <ListItemIcon>
-                  <Icon className="icon-light-mode" />
-                </ListItemIcon>
-                <ListItemText>Light</ListItemText>
-              </MenuItem>
-              <MenuItem value={ThemeMode.Dark}>
-                <ListItemIcon>
-                  <Icon className="icon-dark-mode" />
-                </ListItemIcon>
-                <ListItemText>Dark</ListItemText>
-              </MenuItem>
-            </Select>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Export" />
-            <IconButton onClick={onExportData}>
-              <Icon className="icon-file-download" />
-            </IconButton>
-          </ListItem>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+            borderBottom: "1px solid var(--gray-a5)",
+          }}
+        >
+          <span>Theme Mode</span>
+          <SegmentedControl.Root
+            value={themeMode}
+            onValueChange={(value) => setThemeMode(value as ThemeMode)}
+          >
+            <SegmentedControl.Item value={ThemeMode.Auto}>
+              Auto
+            </SegmentedControl.Item>
+            <SegmentedControl.Item value={ThemeMode.Light}>
+              Light
+            </SegmentedControl.Item>
+            <SegmentedControl.Item value={ThemeMode.Dark}>
+              Dark
+            </SegmentedControl.Item>
+          </SegmentedControl.Root>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+            borderBottom: "1px solid var(--gray-a5)",
+          }}
+        >
+          <span>Export</span>
+          <button
+            type="button"
+            onClick={onExportData}
+            style={{
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <span className="icon-file-download" />
+          </button>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+          }}
+        >
+          <span>Import</span>
+          <button
+            type="button"
+            onClick={onImportData}
+            style={{
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <span className="icon-file-upload" />
+          </button>
+        </div>
+      </div>
 
-          <ListItem>
-            <ListItemText primary="Import" />
-            <IconButton onClick={onImportData}>
-              <Icon className="icon-file-upload" />
-            </IconButton>
-          </ListItem>
-        </List>
-      </Paper>
-
-      <Paper
-        sx={{
+      <div
+        style={{
           maxWidth: 560,
-          my: 2,
-          mx: "auto",
+          margin: "16px auto",
+          border: "1px solid var(--gray-a5)",
+          borderRadius: "var(--radius-4)",
+          overflow: "hidden",
         }}
       >
         <CryptoSettings />
-      </Paper>
+      </div>
 
-      <Paper
-        sx={{
+      <div
+        style={{
           maxWidth: 560,
-          my: 2,
-          mx: "auto",
+          margin: "16px auto",
+          border: "1px solid var(--gray-a5)",
+          borderRadius: "var(--radius-4)",
+          overflow: "hidden",
         }}
       >
-        <List>
-          <ListItem>
-            <ListItemText primary="Privacy Policy" />
-            <IconButton
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+            borderBottom: "1px solid var(--gray-a5)",
+          }}
+        >
+          <span>Privacy Policy</span>
+          <button
+            type="button"
+            onClick={() =>
+              openUrl(
+                "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
+              )
+            }
+            style={{
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <span className="icon-arrow-right" />
+          </button>
+        </div>
+        {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              minHeight: 56,
+              padding: "0 16px",
+              borderBottom: "1px solid var(--gray-a5)",
+            }}
+          >
+            <span>Terms of Use</span>
+            <button
+              type="button"
               onClick={() =>
                 openUrl(
-                  "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
+                  "http://www.apple.com/legal/itunes/appstore/dev/stdeula",
                 )
               }
+              style={{
+                background: "none",
+                border: "none",
+                color: "inherit",
+                cursor: "pointer",
+              }}
             >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
-            <ListItem>
-              <ListItemText primary="Terms of Use" />
-              <IconButton
-                onClick={() =>
-                  openUrl(
-                    "http://www.apple.com/legal/itunes/appstore/dev/stdeula",
-                  )
-                }
-              >
-                <Icon className="icon-arrow-right" />
-              </IconButton>
-            </ListItem>
-          )}
-          <ListItem>
-            <ListItemText primary="About" />
-            <IconButton
-              onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
-            >
-              <Icon className="icon-arrow-right" />
-            </IconButton>
-          </ListItem>
-          <ListItem>
-            <ListItemText primary="Version" />
-            {version}
-          </ListItem>
-        </List>
-      </Paper>
+              <span className="icon-arrow-right" />
+            </button>
+          </div>
+        )}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+            borderBottom: "1px solid var(--gray-a5)",
+          }}
+        >
+          <span>About</span>
+          <button
+            type="button"
+            onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <span className="icon-arrow-right" />
+          </button>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 56,
+            padding: "0 16px",
+          }}
+        >
+          <span>Version</span>
+          <span>{version}</span>
+        </div>
+      </div>
 
       {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <IOSIAP />}
     </Page>

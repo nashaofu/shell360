@@ -1,0 +1,40 @@
+.list {
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+}
+
+.item {
+  padding: 0;
+}
+
+.itemBtn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  gap: 16px;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.08);
+  }
+
+  &.active {
+    background: rgba(128, 128, 128, 0.16);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+}
+
+.itemText {
+  font-size: 1rem;
+}

@@ -1,4 +1,3 @@
-import { createTheme } from "@/mui";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
@@ -66,21 +65,27 @@ export const resolvedThemeModeAtom = atom<ThemeMode.Light | ThemeMode.Dark>(
   },
 );
 
+function getContrastText(bg: string): string {
+  const hex = bg.replace(/^#/, "");
+  if (hex.length < 6) return "#ffffff";
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 0.5 ? "rgba(0,0,0,0.87)" : "#ffffff";
+}
+
 export const themeAtom = atom((get) => {
-  const mode = get(modeAtom);
-  const prefersDarkMode = get(prefersDarkModeAtom);
-
-  if (mode === ThemeMode.Auto) {
-    return createTheme({
-      palette: {
-        mode: prefersDarkMode ? ThemeMode.Dark : ThemeMode.Light,
-      },
-    });
-  }
-
-  return createTheme({
+  const resolvedMode = get(resolvedThemeModeAtom);
+  const isDark = resolvedMode === ThemeMode.Dark;
+  const bgDefault = isDark ? "#121212" : "#ffffff";
+  return {
     palette: {
-      mode,
+      mode: resolvedMode,
+      background: {
+        default: bgDefault,
+      },
+      getContrastText,
     },
-  });
+  };
 });

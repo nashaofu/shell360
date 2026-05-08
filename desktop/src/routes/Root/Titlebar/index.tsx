@@ -1,17 +1,18 @@
-import { alpha, Box, styled, type Theme } from "@/mui";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useColorsAtomValue } from "@/atom/colorsAtom";
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
+import styles from "./index.module.less";
 
-const TitleBarButton = styled(Box)(() => ({
-  width: 36,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 14,
-  cursor: "pointer",
-}));
+function getContrastText(bg: string): string {
+  const hex = bg.replace(/^#/, "");
+  if (hex.length < 6) return "#ffffff";
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 0.5 ? "rgba(0,0,0,0.87)" : "#ffffff";
+}
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -29,18 +30,12 @@ export default function TitleBar() {
     getCurrentWindow().close();
   }, []);
 
-  const buttonSx = useMemo(() => {
-    const { bgColor } = colorsAtomValue;
-    const backgroundColor = ({ palette }: Theme) =>
-      alpha(palette.getContrastText(bgColor), 0.07);
-
-    return {
-      height: TITLE_BAR_HEIGHT,
-      "&:hover": {
-        backgroundColor,
-      },
-    };
-  }, [colorsAtomValue]);
+  const hoverBg = useMemo(() => {
+    const contrastText = getContrastText(colorsAtomValue.bgColor);
+    return contrastText === "#ffffff"
+      ? "rgba(255,255,255,0.07)"
+      : "rgba(0,0,0,0.07)";
+  }, [colorsAtomValue.bgColor]);
 
   useEffect(() => {
     getCurrentWindow().isMaximized().then(setIsMaximized);
@@ -55,54 +50,45 @@ export default function TitleBar() {
   }, []);
 
   return (
-    <Box
-      sx={{
+    <div
+      className={styles.titleBar}
+      style={{
         height: TITLE_BAR_HEIGHT,
-        bgcolor: "transparent",
         color: colorsAtomValue.titleBarColor,
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        position: "relative",
+        ["--titlebar-height" as string]: `${TITLE_BAR_HEIGHT}px`,
+        ["--titlebar-btn-hover" as string]: hoverBg,
       }}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-        }}
-        data-tauri-drag-region="true"
-      />
+      <div className={styles.dragRegion} data-tauri-drag-region="true" />
       {import.meta.env.TAURI_ENV_PLATFORM !== "darwin" && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            position: "relative",
-            zIndex: 10,
-            appRegion: "no-drag",
-          }}
-        >
-          <TitleBarButton sx={buttonSx} onClick={onClickMinimize}>
+        <div className={styles.winControls}>
+          <button
+            type="button"
+            className={styles.winBtn}
+            onClick={onClickMinimize}
+          >
             <span className="icon-window-minimize" />
-          </TitleBarButton>
-          <TitleBarButton sx={buttonSx} onClick={onClickToggleMaximize}>
+          </button>
+          <button
+            type="button"
+            className={styles.winBtn}
+            onClick={onClickToggleMaximize}
+          >
             {isMaximized ? (
               <span className="icon-window-restore" />
             ) : (
               <span className="icon-window-maximize" />
             )}
-          </TitleBarButton>
-          <TitleBarButton sx={buttonSx} onClick={onClickClose}>
+          </button>
+          <button
+            type="button"
+            className={styles.winBtn}
+            onClick={onClickClose}
+          >
             <span className="icon-window-close" />
-          </TitleBarButton>
-        </Box>
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
