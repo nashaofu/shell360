@@ -9,7 +9,6 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
-    "@fontsource/roboto": "^5.2.8",
     "@radix-ui/themes": "^3.2.1",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
