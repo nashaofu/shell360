@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -104,32 +104,23 @@ export default function AddPortForwarding({
       title={data ? "Edit port forwardings" : "Add port orwarding"}
       onCancel={onCancel}
       footer={
-        <Box
-          sx={{
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <Button
-            sx={{
-              width: "48%",
-            }}
-            variant="outlined"
-            onClick={onCancel}
-          >
+          <Button style={{ width: "48%" }} variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button
-            sx={{
-              width: "48%",
-            }}
-            variant="contained"
+            style={{ width: "48%" }}
             onClick={formApi.handleSubmit(onSave)}
           >
             Save
           </Button>
-        </Box>
+        </div>
       }
     >
       <PortForwardingForm formApi={formApi}></PortForwardingForm>

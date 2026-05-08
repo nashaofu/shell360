@@ -10,7 +10,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-} from "@mui/material";
+} from "@/mui";
 import { useCallback, useMemo, useState } from "react";
 import {
   type IapOffering,

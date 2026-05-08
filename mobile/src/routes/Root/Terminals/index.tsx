@@ -9,7 +9,7 @@ import {
   Toolbar,
   Typography,
   useTheme,
-} from "@mui/material";
+} from "@/mui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
 import {
@@ -104,7 +104,7 @@ export default function Terminals() {
     });
   }, [activeTerminal, globalTheme]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在terminalsAtomWithApi.state.size变化时执行
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only run when terminal count changes
   useEffect(() => {
     if (!terminalsAtomWithApi.state.size && match) {
       navigate("/", { replace: true });

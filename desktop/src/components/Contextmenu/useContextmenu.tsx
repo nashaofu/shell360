@@ -1,4 +1,4 @@
-import { Icon, ListItemIcon, ListItemText } from "@mui/material";
+import { Icon, ListItemIcon, ListItemText } from "@/mui";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { type ReactNode, useEffect } from "react";
 

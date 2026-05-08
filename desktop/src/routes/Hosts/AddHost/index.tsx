@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, Icon } from "@mui/material";
+import { Box, Button, ButtonGroup, Icon } from "@/mui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";

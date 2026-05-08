@@ -1,4 +1,4 @@
-import { Box, Button, Icon, OutlinedInput } from "@mui/material";
+import { Box, Button, Icon, OutlinedInput } from "@/mui";
 import { useCallback, useMemo, useState } from "react";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";

@@ -1,4 +1,4 @@
-import { alpha, Box, styled, type Theme } from "@mui/material";
+import { alpha, Box, styled, type Theme } from "@/mui";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useColorsAtomValue } from "@/atom/colorsAtom";

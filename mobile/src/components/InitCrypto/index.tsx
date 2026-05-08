@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from "@mui/material";
+} from "@/mui";
 import { useRequest } from "ahooks";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";

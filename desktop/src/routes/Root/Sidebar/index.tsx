@@ -9,12 +9,11 @@ import {
   IconButton,
   ThemeProvider,
   useTheme,
-} from "@mui/material";
-import { lightGreen } from "@mui/material/colors";
+} from "@/mui";
+import { lightGreen } from "@/mui/colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
 import Logo from "./Logo";
 import Menus from "./Menus";
 import Terminals from "./Terminals";
@@ -117,8 +116,7 @@ export default function Sidebar() {
               display: "flex",
               flexDirection: expand ? "row" : "column",
               alignItems: "center",
-              // 顶部 TitleBar 的高度
-              mt: `${TITLE_BAR_HEIGHT}px`,
+              // 顶部 TitleBar 的高�?              mt: `${TITLE_BAR_HEIGHT}px`,
               px: 2,
               py: 1,
               gap: 1,

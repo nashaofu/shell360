@@ -9,7 +9,7 @@ import {
   MenuItem,
   Paper,
   Select,
-} from "@mui/material";
+} from "@/mui";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
@@ -58,7 +58,7 @@ export default function Settings() {
   const [, setOpen] = useIsShowPaywallAtom();
 
   const onExportData = useCallback(async () => {
-    // 没订阅时，不能导出
+    // Export requires subscription.
     if (!isSubscription) {
       setOpen(true);
       return;
@@ -89,7 +89,7 @@ export default function Settings() {
   }, [exportData, isSubscription, message, setOpen]);
 
   const onImportData = useCallback(async () => {
-    // 没订阅时，不能导出
+    // Import requires subscription.
     if (!isSubscription) {
       setOpen(true);
       return;

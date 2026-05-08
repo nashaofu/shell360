@@ -1,5 +1,3 @@
-import { ThemeProvider } from "@emotion/react";
-import { CssBaseline } from "@mui/material";
 import { Theme } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import { SnackbarProvider } from "notistack";
@@ -7,7 +5,7 @@ import { lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useModalsAtomValue } from "./atom/modalsAtom";
-import { resolvedThemeModeAtom, ThemeMode, themeAtom } from "./atom/themeAtom";
+import { resolvedThemeModeAtom, ThemeMode } from "./atom/themeAtom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
 import Root from "./routes/Root";
@@ -54,7 +52,6 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  const theme = useAtomValue(themeAtom);
   const resolvedThemeMode = useAtomValue(resolvedThemeModeAtom);
   const modalsAtomValue = useModalsAtomValue();
 
@@ -78,16 +75,12 @@ export default function App() {
         panelBackground="translucent"
         radius="medium"
       >
-        <ThemeProvider theme={theme}>
-          <CssBaseline enableColorScheme>
-            <div className={styles.appShell}>
-              <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-                <RouterProvider router={router} />
-                {modalsAtomValue.map((item) => item.element)}
-              </ErrorBoundary>
-            </div>
-          </CssBaseline>
-        </ThemeProvider>
+        <div className={styles.appShell}>
+          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+            <RouterProvider router={router} />
+            {modalsAtomValue.map((item) => item.element)}
+          </ErrorBoundary>
+        </div>
       </Theme>
     </SnackbarProvider>
   );

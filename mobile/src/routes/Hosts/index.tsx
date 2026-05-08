@@ -9,7 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
   OutlinedInput,
-} from "@mui/material";
+} from "@/mui";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -78,7 +78,7 @@ export default function Hosts() {
   );
 
   const onAddHostButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个host
+    // 没订阅时，最多只能创�?个host
     if (!isSubscription && hosts.length >= 3) {
       setOpen(true);
       return;

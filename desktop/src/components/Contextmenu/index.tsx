@@ -1,4 +1,4 @@
-import { Menu, MenuItem } from "@mui/material";
+import { Menu, MenuItem } from "@/mui";
 import { useCallback, useState } from "react";
 
 import useContextmenu, { type ContextmenuState } from "./useContextmenu";

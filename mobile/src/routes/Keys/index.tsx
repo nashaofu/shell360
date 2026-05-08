@@ -7,7 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   OutlinedInput,
-} from "@mui/material";
+} from "@/mui";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";
@@ -52,7 +52,7 @@ export default function Keys() {
   }, []);
 
   const onAddKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;
@@ -61,7 +61,7 @@ export default function Keys() {
   }, [isSubscription, keys.length, setOpen]);
 
   const onGenerateKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创建1个key
+    // 没订阅时，最多只能创�?个key
     if (!isSubscription && keys.length >= 1) {
       setOpen(true);
       return;

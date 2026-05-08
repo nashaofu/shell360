@@ -5,7 +5,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-} from "@mui/material";
+} from "@/mui";
 import { useCallback } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";

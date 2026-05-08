@@ -6,7 +6,7 @@ import {
   IconButton,
   Toolbar,
   Typography,
-} from "@mui/material";
+} from "@/mui";
 import { type ReactNode, useEffect } from "react";
 import { Loading } from "shared";
 

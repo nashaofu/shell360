@@ -5,7 +5,7 @@ import {
   Icon,
   IconButton,
   SwipeableDrawer,
-} from "@mui/material";
+} from "@/mui";
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 

@@ -1,9 +1,9 @@
-import { Box, CircularProgress } from "@mui/material";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 
 import { authAtom } from "@/atom/authAtom";
 import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
+import styles from "./index.module.scss";
 
 import UnlockCrypto from "./UnlockCrypto";
 
@@ -17,20 +17,9 @@ export default function Auth({ children }: AuthProps) {
 
   if (cryptoIsEnable === undefined) {
     return (
-      <Box
-        sx={{
-          height: "100%",
-          flexGrow: 1,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
-        <CircularProgress size={52} />
-      </Box>
+      <div className={styles.authLoading}>
+        <span className={styles.spinner} />
+      </div>
     );
   }
 

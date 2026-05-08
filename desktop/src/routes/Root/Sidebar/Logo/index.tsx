@@ -1,4 +1,4 @@
-import { Avatar, Box } from "@mui/material";
+import { Avatar, Box } from "@/mui";
 
 import { useUpdateAtom } from "@/atom/updateAtom";
 

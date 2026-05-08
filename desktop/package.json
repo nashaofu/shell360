@@ -9,11 +9,8 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
-    "@radix-ui/themes": "^3.2.1",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.8",
-    "@mui/material": "^7.3.5",
+    "@radix-ui/themes": "^3.2.1",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "@tauri-apps/plugin-dialog": "^2.4.2",

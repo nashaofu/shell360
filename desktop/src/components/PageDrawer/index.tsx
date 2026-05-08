@@ -5,7 +5,7 @@ import {
   Icon,
   IconButton,
   Typography,
-} from "@mui/material";
+} from "@/mui";
 import type { ReactNode } from "react";
 import { Loading } from "shared";
 

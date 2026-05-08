@@ -1,4 +1,3 @@
-import { Box, Icon, IconButton } from "@mui/material";
 import {
   BaseDirectory,
   readTextFile,
@@ -10,6 +9,7 @@ import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
 import useModal from "@/hooks/useModal";
+import styles from "./index.module.scss";
 
 async function readKnownHost() {
   const data = await readTextFile("./known_hosts", {
@@ -51,14 +51,10 @@ export default function KnownHosts() {
       modal.confirm({
         title: "Delete Confirmation",
         content: (
-          <Box
-            sx={{
-              wordBreak: "break-all",
-            }}
-          >
+          <div className={styles.confirmContent}>
             Are you sure to delete the known host:
             {knownHostContent}?
-          </Box>
+          </div>
         ),
         OkButtonProps: {
           color: "warning",
@@ -100,13 +96,17 @@ export default function KnownHosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<Icon className="icon-fingerprint" />}
+            icon={<span className="icon-fingerprint" />}
             title={item.host}
             desc={item.type}
             extra={
-              <IconButton onClick={(event) => onDelete(event, item)}>
-                <Icon className="icon-delete" />
-              </IconButton>
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={(event) => onDelete(event, item)}
+              >
+                <span className="icon-delete" />
+              </button>
             }
           />
         ))}

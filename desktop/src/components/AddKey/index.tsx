@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { EditKeyForm, type EditKeyFormFields, useKeys } from "shared";
@@ -71,33 +71,24 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       title={data ? "Edit key" : "Add key"}
       onCancel={onCancel}
       footer={
-        <Box
-          sx={{
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <Button
-            sx={{
-              width: "48%",
-            }}
-            variant="outlined"
-            onClick={onCancel}
-          >
+          <Button style={{ width: "48%" }} variant="outline" onClick={onCancel}>
             Cancel
           </Button>
 
           <Button
-            sx={{
-              width: "48%",
-            }}
-            variant="contained"
+            style={{ width: "48%" }}
             onClick={formApi.handleSubmit(onSave)}
           >
             Save
           </Button>
-        </Box>
+        </div>
       }
     >
       <EditKeyForm formApi={formApi} />

@@ -1,4 +1,3 @@
-import { CssBaseline, ThemeProvider } from "@mui/material";
 import { Theme } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import { SnackbarProvider } from "notistack";
@@ -9,7 +8,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useModalsAtomValue } from "@/atom/modalsAtom";
 import ErrorBoundaryFallback from "@/components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "@/components/RouterErrorBoundary";
-import { resolvedThemeModeAtom, ThemeMode, themeAtom } from "./atom/themeAtom";
+import { resolvedThemeModeAtom, ThemeMode } from "./atom/themeAtom";
 import { useAutoCheckUpdate } from "./atom/updateAtom";
 import Contextmenu from "./components/Contextmenu";
 import UpdateDialog from "./components/UpdateDialog";
@@ -57,7 +56,6 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  const theme = useAtomValue(themeAtom);
   const resolvedThemeMode = useAtomValue(resolvedThemeModeAtom);
   const modalsAtomValue = useModalsAtomValue();
   useAutoCheckUpdate();
@@ -75,18 +73,14 @@ export default function App() {
         panelBackground="translucent"
         radius="medium"
       >
-        <ThemeProvider theme={theme}>
-          <CssBaseline enableColorScheme>
-            <div className={styles.appShell}>
-              <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-                <RouterProvider router={router} />
-                <Contextmenu />
-                <UpdateDialog />
-                {modalsAtomValue.map((item) => item.element)}
-              </ErrorBoundary>
-            </div>
-          </CssBaseline>
-        </ThemeProvider>
+        <div className={styles.appShell}>
+          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+            <RouterProvider router={router} />
+            <Contextmenu />
+            <UpdateDialog />
+            {modalsAtomValue.map((item) => item.element)}
+          </ErrorBoundary>
+        </div>
       </Theme>
     </SnackbarProvider>
   );

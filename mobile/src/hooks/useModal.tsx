@@ -1,4 +1,3 @@
-import { Icon } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { v4 as uuidV4 } from "uuid";
 import { useModalsAtomWithApi } from "@/atom/modalsAtom";
@@ -9,6 +8,10 @@ type HookConfigWithoutCancel = Omit<
   HookConfig,
   "cancelText" | "CancelButtonProps"
 >;
+
+function createStatusIcon(name: string, color: string) {
+  return <span className={name} style={{ fontSize: 32, color }} />;
+}
 
 export default function useModal() {
   const [open, setOpen] = useState(false);
@@ -27,13 +30,9 @@ export default function useModal() {
         setOpen(true);
         setModalProps({
           ...props,
-          icon: icon || (
-            <Icon
-              color="info"
-              sx={{ fontSize: 32 }}
-              className="icon-info-circle"
-            />
-          ),
+          icon:
+            icon ||
+            createStatusIcon("icon-info-circle", "var(--blue-11, #2563eb)"),
           hideCancel: true,
           onOk: async () => {
             await onOk?.();
@@ -45,13 +44,9 @@ export default function useModal() {
         setOpen(true);
         setModalProps({
           ...props,
-          icon: icon || (
-            <Icon
-              color="success"
-              sx={{ fontSize: 32 }}
-              className="icon-success-circle"
-            />
-          ),
+          icon:
+            icon ||
+            createStatusIcon("icon-success-circle", "var(--green-11, #15803d)"),
           hideCancel: true,
           onOk: async () => {
             await onOk?.();
@@ -63,13 +58,9 @@ export default function useModal() {
         setOpen(true);
         setModalProps({
           ...props,
-          icon: icon || (
-            <Icon
-              color="error"
-              sx={{ fontSize: 32 }}
-              className="icon-error-circle"
-            />
-          ),
+          icon:
+            icon ||
+            createStatusIcon("icon-error-circle", "var(--red-11, #b91c1c)"),
           hideCancel: true,
           onOk: async () => {
             await onOk?.();
@@ -81,13 +72,9 @@ export default function useModal() {
         setOpen(true);
         setModalProps({
           ...props,
-          icon: icon || (
-            <Icon
-              color="warning"
-              sx={{ fontSize: 32 }}
-              className="icon-warning-circle"
-            />
-          ),
+          icon:
+            icon ||
+            createStatusIcon("icon-warning-circle", "var(--amber-11, #b45309)"),
           hideCancel: true,
           onOk: async () => {
             await onOk?.();

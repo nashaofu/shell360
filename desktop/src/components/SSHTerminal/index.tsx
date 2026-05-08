@@ -1,5 +1,4 @@
-import { Box, type SxProps, type Theme } from "@mui/material";
-import { useRef } from "react";
+import { Box, type SxProps, type Theme } from "@/mui";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -25,7 +24,6 @@ export default function SSHTerminal({
   onClose,
   onOpenAddKey,
 }: SSHTerminalProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const {
     loading,
     error,
@@ -43,7 +41,6 @@ export default function SSHTerminal({
 
   return (
     <Box
-      ref={containerRef}
       sx={[
         {
           position: "relative",
@@ -111,9 +108,7 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && (
-        <Sftp containerRef={containerRef} session={session} />
-      )}
+      {!loading && !error && session && <Sftp session={session} />}
     </Box>
   );
 }

@@ -5,7 +5,7 @@ import {
   IconButton,
   ListItemIcon,
   ListItemText,
-} from "@mui/material";
+} from "@/mui";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
 import {

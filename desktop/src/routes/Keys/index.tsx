@@ -7,7 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   OutlinedInput,
-} from "@mui/material";
+} from "@/mui";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";

@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material";
+import { createTheme } from "@/mui";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 

@@ -7,7 +7,7 @@ import {
   DialogContentText,
   DialogTitle,
   LinearProgress,
-} from "@mui/material";
+} from "@/mui";
 import { useMemo } from "react";
 
 import { useUpdateAtom } from "@/atom/updateAtom";
@@ -44,13 +44,13 @@ export default function UpdateDialog() {
           <DialogContentText>
             The update has been downloaded successfully.
             <br />
-            Click <b>“Install”</b> to apply the new version.
+            Click <b>"Install"</b> to apply the new version.
           </DialogContentText>
         ) : (
           <DialogContentText>
             A new version of the application is available.
             <br />
-            Click <b>“Download”</b> to start the update process.
+            Click <b>"Download"</b> to start the update process.
           </DialogContentText>
         )}
       </DialogContent>

@@ -8,7 +8,7 @@ import {
   Paper,
   ToggleButton,
   ToggleButtonGroup,
-} from "@mui/material";
+} from "@/mui";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";

@@ -9,7 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
   OutlinedInput,
-} from "@mui/material";
+} from "@/mui";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";

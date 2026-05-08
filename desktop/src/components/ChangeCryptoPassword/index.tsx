@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from "@mui/material";
+} from "@/mui";
 import { useRequest } from "ahooks";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";

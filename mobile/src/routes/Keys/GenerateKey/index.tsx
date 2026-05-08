@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -83,39 +83,32 @@ export default function GenerateKey({
       title="Generate key"
       onCancel={onCancel}
       footer={
-        <Box
-          sx={{
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <Loading
-            loading={loading}
-            sx={{
-              width: "48%",
-            }}
-          >
-            <Button fullWidth variant="outlined" onClick={onCancel}>
+          <Loading loading={loading} sx={{ width: "48%" }}>
+            <Button
+              style={{ width: "100%" }}
+              variant="outline"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           </Loading>
 
-          <Loading
-            loading={loading}
-            sx={{
-              width: "48%",
-            }}
-          >
+          <Loading loading={loading} sx={{ width: "48%" }}>
             <Button
-              fullWidth
-              variant="contained"
+              style={{ width: "100%" }}
               onClick={formApi.handleSubmit(onGenerate)}
             >
               Generate
             </Button>
           </Loading>
-        </Box>
+        </div>
       }
     >
       <GenerateKeyForm formApi={formApi} />

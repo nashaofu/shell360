@@ -6,7 +6,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-} from "@mui/material";
+} from "@/mui";
 import { type MouseEvent, useCallback } from "react";
 import {
   matchPath,

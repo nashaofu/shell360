@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { useAtomValue } from "jotai";
 import { Suspense, useLayoutEffect, useMemo } from "react";
 import { Outlet, useMatch } from "react-router-dom";
@@ -13,6 +12,7 @@ import {
 import { useColorsAtomWithApi } from "@/atom/colorsAtom";
 import { themeAtom } from "@/atom/themeAtom";
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
+import styles from "./index.module.scss";
 
 import Sidebar from "../Sidebar";
 import Terminals from "../Terminals";
@@ -59,52 +59,31 @@ export default function Content() {
   return (
     <>
       <Sidebar />
-      <Box
-        sx={{
-          flexGrow: 1,
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-          mt: `${TITLE_BAR_HEIGHT}px`,
-        }}
+      <div
+        className={styles.contentRoot}
+        style={{ marginTop: `${TITLE_BAR_HEIGHT}px` }}
       >
-        <Box
-          sx={{
-            display: !isShowTerminal ? "flex" : "none",
-            flexDirection: "column",
-            /**
-             * 绝对定位，保证子元素不会超出容器
-             * 可以尝试去掉定位，并改为flex布局
-             * 然后当Keys页面卡片内容比较长时
-             * 页面会一直抖动，且页面宽度会不断增长
-             */
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            overflow: "hidden",
-          }}
+        <div
+          className={
+            !isShowTerminal
+              ? styles.pageLayer
+              : `${styles.pageLayer} ${styles.hidden}`
+          }
         >
           <Suspense>
             <Outlet />
           </Suspense>
-        </Box>
-        <Box
-          sx={{
-            display: isShowTerminal ? "flex" : "none",
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            overflow: "hidden",
-          }}
+        </div>
+        <div
+          className={
+            isShowTerminal
+              ? styles.terminalLayer
+              : `${styles.terminalLayer} ${styles.hidden}`
+          }
         >
           <Terminals />
-        </Box>
-      </Box>
+        </div>
+      </div>
     </>
   );
 }

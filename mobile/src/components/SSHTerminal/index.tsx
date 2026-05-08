@@ -1,4 +1,4 @@
-import { Box, Icon, type SxProps, type Theme } from "@mui/material";
+import { Box, Icon, type SxProps, type Theme } from "@/mui";
 import { useSize } from "ahooks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

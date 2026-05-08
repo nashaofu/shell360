@@ -9,7 +9,7 @@ import {
   type DialogProps,
   DialogTitle,
   ThemeProvider,
-} from "@mui/material";
+} from "@/mui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 

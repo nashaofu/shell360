@@ -11,7 +11,7 @@ import {
   ThemeProvider,
   Toolbar,
   Typography,
-} from "@mui/material";
+} from "@/mui";
 import dayjs from "dayjs";
 import { useAtomValue } from "jotai";
 import { get } from "lodash-es";

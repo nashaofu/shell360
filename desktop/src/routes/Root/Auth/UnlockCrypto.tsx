@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Button } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { type KeyboardEvent, useCallback, useState } from "react";
 import { Loading, TextFieldPassword } from "shared";
@@ -6,6 +6,7 @@ import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
 
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
+import styles from "./index.module.scss";
 
 export default function UnlockVault() {
   const [password, setPassword] = useState("");
@@ -37,7 +38,7 @@ export default function UnlockVault() {
     async () => {
       const isContinue = await new Promise((resolve) => {
         modal.confirm({
-          title: <Box>Warning</Box>,
+          title: <span>Warning</span>,
           content:
             "All application data will be reset soon, whether to continue",
           onOk: () => {
@@ -68,27 +69,13 @@ export default function UnlockVault() {
   const loading = loadCryptoLoading || resetLoading;
 
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Box
-        sx={{
-          width: 340,
-        }}
-      >
+    <div className={styles.root}>
+      <div className={styles.panel}>
         <Loading loading={loading} size={48}>
-          <Typography variant="h6" align="center">
+          <h2 className={styles.title}>
             Enter your password to unlock application data
-          </Typography>
-          <Box sx={{ mt: 6 }}>
+          </h2>
+          <div className={styles.passwordWrap}>
             <TextFieldPassword
               fullWidth
               placeholder="Please enter the password"
@@ -96,32 +83,21 @@ export default function UnlockVault() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyUp={onEnter}
             ></TextFieldPassword>
-          </Box>
-          <Grid
-            sx={{
-              mt: 3,
-            }}
-            container
-            spacing={2}
-          >
-            <Grid size={6}>
-              <Button fullWidth variant="contained" onClick={onUnlock}>
-                Unlock
-              </Button>
-            </Grid>
-            <Grid size={6}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="error"
-                onClick={onReset}
-              >
-                Reset APP
-              </Button>
-            </Grid>
-          </Grid>
+          </div>
+          <div className={styles.actions}>
+            <Button className={styles.actionButton} onClick={onUnlock}>
+              Unlock
+            </Button>
+            <Button
+              className={styles.actionButton}
+              color="red"
+              onClick={onReset}
+            >
+              Reset APP
+            </Button>
+          </div>
         </Loading>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
