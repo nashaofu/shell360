@@ -4,7 +4,7 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { PortForwardingType } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 export type PortForwardingFormFields = {
   name: string;

@@ -5,7 +5,7 @@ import { Controller } from "react-hook-form";
 import { TERMINAL_THEMES } from "../XTerminal/themes";
 
 import type { EditHostFormApi } from "./types";
-import styles from "./TerminalSettingsForm.module.scss";
+import styles from "./TerminalSettingsForm.module.less";
 
 type TerminalSettingsFormProps = {
   formApi: EditHostFormApi;

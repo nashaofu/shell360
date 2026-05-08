@@ -3,7 +3,7 @@ import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 import { Dropdown } from "@/components/Dropdown";
-import styles from "../styles.module.scss";
+import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 

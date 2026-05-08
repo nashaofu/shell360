@@ -18,7 +18,7 @@ import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 type SftpProps = {
   session: SSHSession;

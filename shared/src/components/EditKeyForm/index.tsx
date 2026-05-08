@@ -6,7 +6,7 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import type { Key } from "tauri-plugin-data";
 
 import { TextFieldPassword } from "../TextFieldPassword";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 export type EditKeyFormFields = Partial<Omit<Key, "id">>;
 

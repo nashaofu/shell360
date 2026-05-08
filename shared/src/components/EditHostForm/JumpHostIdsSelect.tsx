@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
-import styles from "./JumpHostIdsSelect.module.scss";
+import styles from "./JumpHostIdsSelect.module.less";
 
 function getJumpHostName(
   hostMap: Map<string, Host>,

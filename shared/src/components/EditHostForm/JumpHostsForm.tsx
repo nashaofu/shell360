@@ -3,7 +3,7 @@ import { Controller } from "react-hook-form";
 
 import JumpHostIdsSelect from "./JumpHostIdsSelect";
 import type { EditHostFormApi } from "./types";
-import styles from "./JumpHostsForm.module.scss";
+import styles from "./JumpHostsForm.module.less";
 
 type JumpHostsFormProps = {
   formApi: EditHostFormApi;

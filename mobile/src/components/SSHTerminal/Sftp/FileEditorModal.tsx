@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { SSHSftpFile } from "tauri-plugin-ssh";
 
 import useMessage from "@/hooks/useMessage";
-import styles from "./FileEditorModal.module.scss";
+import styles from "./FileEditorModal.module.less";
 
 type FileEditorModalProps = {
   open: boolean;

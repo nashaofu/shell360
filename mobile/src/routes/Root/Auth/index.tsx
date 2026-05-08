@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { authAtom } from "@/atom/authAtom";
 import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 import UnlockCrypto from "./UnlockCrypto";
 

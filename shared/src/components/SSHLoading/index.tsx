@@ -7,7 +7,7 @@ import { Loading } from "../Loading";
 import AuthenticationError from "./AuthenticationError";
 import type { ErrorProps } from "./common";
 import DefaultError from "./DefaultError";
-import styles from "./styles.module.scss";
+import styles from "./styles.module.less";
 import UnknownKey from "./UnknownKey";
 
 const STATUS_BUTTONS = {

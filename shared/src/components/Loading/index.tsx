@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 export type LoadingProps = {
   sx?: CSSProperties | Array<CSSProperties | undefined>;

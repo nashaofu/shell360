@@ -2,7 +2,7 @@ import BasicForm from "./BasicForm";
 import JumpHostsForm from "./JumpHostsForm";
 import TerminalSettingsForm from "./TerminalSettingsForm";
 import type { EditHostFormApi } from "./types";
-import styles from "./EditHostForm.module.scss";
+import styles from "./EditHostForm.module.less";
 
 export type EditHostFormProps = {
   formApi: EditHostFormApi;

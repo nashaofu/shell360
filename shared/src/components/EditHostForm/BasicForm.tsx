@@ -9,7 +9,7 @@ import { useKeys } from "@/hooks/useKeys";
 import { TextFieldPassword } from "../TextFieldPassword";
 import { TERMINAL_TYPES } from "./terminalTypes";
 import type { EditHostFormApi } from "./types";
-import styles from "./BasicForm.module.scss";
+import styles from "./BasicForm.module.less";
 
 type BasicFormProps = {
   formApi: EditHostFormApi;

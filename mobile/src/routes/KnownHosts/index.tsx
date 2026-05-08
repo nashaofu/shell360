@@ -9,7 +9,7 @@ import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
 import useModal from "@/hooks/useModal";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 async function readKnownHost() {
   const data = await readTextFile("./known_hosts", {

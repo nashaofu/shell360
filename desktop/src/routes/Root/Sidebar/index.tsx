@@ -13,6 +13,7 @@ import {
 import { lightGreen } from "@/mui/colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
 
 import Logo from "./Logo";
 import Menus from "./Menus";
@@ -116,7 +117,7 @@ export default function Sidebar() {
               display: "flex",
               flexDirection: expand ? "row" : "column",
               alignItems: "center",
-              // 顶部 TitleBar 的高�?              mt: `${TITLE_BAR_HEIGHT}px`,
+              mt: `${TITLE_BAR_HEIGHT}px`,
               px: 2,
               py: 1,
               gap: 1,

@@ -12,7 +12,7 @@ import {
 import { useColorsAtomWithApi } from "@/atom/colorsAtom";
 import { themeAtom } from "@/atom/themeAtom";
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 import Sidebar from "../Sidebar";
 import Terminals from "../Terminals";

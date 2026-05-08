@@ -6,7 +6,7 @@ import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
 
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 export default function UnlockVault() {
   const [password, setPassword] = useState("");

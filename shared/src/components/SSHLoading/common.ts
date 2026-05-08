@@ -3,7 +3,7 @@ import { createElement, type ReactNode } from "react";
 import type { Host } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
-import styles from "./styles.module.scss";
+import styles from "./styles.module.less";
 
 export type ErrorProps = {
   host: Host;

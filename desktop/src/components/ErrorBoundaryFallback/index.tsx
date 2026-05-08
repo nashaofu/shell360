@@ -3,7 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { get } from "lodash-es";
 import { useCallback } from "react";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 type AbnormalProps = {
   error?: unknown;

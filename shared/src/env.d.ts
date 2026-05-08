@@ -1,8 +1,7 @@
 declare module "*.css";
 declare module "*.less";
-declare module "*.scss";
 
-declare module "*.module.scss" {
+declare module "*.module.less" {
   const classes: Record<string, string>;
   export default classes;
 }

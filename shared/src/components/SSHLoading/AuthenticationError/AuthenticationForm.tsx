@@ -4,7 +4,7 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
 
 import { useKeys } from "@/hooks/useKeys";
-import styles from "../styles.module.scss";
+import styles from "../styles.module.less";
 
 export type AuthenticationFormFields = {
   username?: string;

@@ -17,6 +17,13 @@ interface RsbuildTypeOptions {
   strictImportMetaEnv: true;
 }
 
+declare module "*.less";
+
+declare module "*.module.less" {
+  const classes: Record<string, string>;
+  export default classes;
+}
+
 interface Window {
   umami: {
     track: {

@@ -9,7 +9,7 @@ import { resolvedThemeModeAtom, ThemeMode } from "./atom/themeAtom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
 import Root from "./routes/Root";
-import styles from "./styles/App.module.scss";
+import styles from "./styles/App.module.less";
 
 const router = createBrowserRouter([
   {

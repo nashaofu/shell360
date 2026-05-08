@@ -6,7 +6,7 @@ import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
 
 import { Dropdown } from "@/components/Dropdown";
 import { useHosts } from "@/hooks/useHosts";
-import styles from "../styles.module.scss";
+import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 

@@ -4,7 +4,7 @@ import { v4 as uuidV4 } from "uuid";
 import { useHosts } from "@/hooks/useHosts";
 
 import { Dropdown } from "../Dropdown";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 interface Tag {
   label: string;

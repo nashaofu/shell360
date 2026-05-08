@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { identify } from "shared";
 
 import "@radix-ui/themes/styles.css";
-import "./styles/index.scss";
+import "./styles/index.less";
 
 import App from "./App";
 

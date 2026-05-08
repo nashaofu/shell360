@@ -13,7 +13,7 @@ import { useAutoCheckUpdate } from "./atom/updateAtom";
 import Contextmenu from "./components/Contextmenu";
 import UpdateDialog from "./components/UpdateDialog";
 import Root from "./routes/Root";
-import styles from "./styles/App.module.scss";
+import styles from "./styles/App.module.less";
 
 const router = createBrowserRouter([
   {

@@ -3,7 +3,7 @@ import { type ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { TextFieldPassword } from "../TextFieldPassword";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 enum Algorithm {
   Ed25519 = "Ed25519",

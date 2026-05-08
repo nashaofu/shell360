@@ -1,5 +1,5 @@
 import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
-import styles from "./SftpFilenameInput.module.scss";
+import styles from "./SftpFilenameInput.module.less";
 
 type SftpFilenameInputProps = {
   value?: string;

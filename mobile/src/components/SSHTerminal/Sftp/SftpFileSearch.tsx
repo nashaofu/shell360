@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import styles from "./SftpFileSearch.module.scss";
+import styles from "./SftpFileSearch.module.less";
 
 type SftpFileSearchProps = {
   value: string;

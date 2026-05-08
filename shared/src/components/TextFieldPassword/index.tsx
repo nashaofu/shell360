@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { Text } from "@radix-ui/themes";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 type PasswordInputProps = {
   value?: string;

@@ -1,6 +1,6 @@
 import { useColorsAtomWithApi } from "@/atom/colorsAtom";
 import { TITLE_BAR_Z_INDEX } from "@/constants/titleBar";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 import Auth from "./Auth";
 import Content from "./Content";
 import TitleBar from "./Titlebar";

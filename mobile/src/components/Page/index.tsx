@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { useGlobalStateAtomWithApi } from "@/atom/globalState";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 type PageProps = {
   title: ReactNode;

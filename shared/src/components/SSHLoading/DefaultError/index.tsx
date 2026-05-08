@@ -1,6 +1,6 @@
 import { get } from "lodash-es";
 
-import styles from "../styles.module.scss";
+import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 

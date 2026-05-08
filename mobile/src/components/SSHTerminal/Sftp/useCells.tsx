@@ -5,7 +5,7 @@ import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 import type useModal from "@/hooks/useModal";
 import SftpFilenameInput from "./SftpFilenameInput";
 import type { SftpTableCell } from "./types";
-import styles from "./useCells.module.scss";
+import styles from "./useCells.module.less";
 
 type UseCellsOpts = {
   selectedFile?: SSHSftpFile;

@@ -5,7 +5,7 @@ import type { PortForwarding } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { getPortForwardingDesc } from "@/utils/portForwarding";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 export type PortForwardingLoadingProps = {
   portForwarding: PortForwarding;

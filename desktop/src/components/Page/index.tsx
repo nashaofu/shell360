@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./index.module.scss";
+import styles from "./index.module.less";
 
 type PageProps = {
   title: ReactNode;
