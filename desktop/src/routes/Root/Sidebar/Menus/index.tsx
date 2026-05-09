@@ -27,20 +27,19 @@ export default function Menus({ expand, onClick }: MenusProps) {
   );
 
   return (
-    <ul className={styles.list}>
+    <ul className={styles.menus}>
       {MENU_ITEMS.map((item) => {
         const isActive = !!matchPath({ path: item.to, end: true }, pathname);
         return (
-          <li key={item.to} className={styles.item} title={item.text}>
-            <button
-              type="button"
-              className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
-              onClick={() => onListItemClick(item.to)}
-            >
-              <span className={`${styles.itemIcon} ${item.icon}`} />
-              {expand && <span className={styles.itemText}>{item.text}</span>}
-            </button>
-          </li>
+          <div
+            key={item.to}
+            className={`${styles.menu}${isActive ? ` ${styles.active}` : ""}`}
+            onClick={() => onListItemClick(item.to)}
+            title={item.text}
+          >
+            <span className={`${styles.menuIcon} ${item.icon}`} />
+            {expand && <span className={styles.menuText}>{item.text}</span>}
+          </div>
         );
       })}
     </ul>

@@ -2,6 +2,8 @@ import { useAtomValue } from "jotai";
 import { Suspense, useLayoutEffect, useMemo } from "react";
 import { Outlet, useMatch } from "react-router-dom";
 import {
+  APP_BACKGROUND_COLOR,
+  getContrastTextColor,
   TERMINAL_THEMES,
   TERMINAL_THEMES_MAP,
   useHosts,
@@ -10,7 +12,7 @@ import {
   useTerminalsAtomValue,
 } from "shared";
 import { useColorsAtomWithApi } from "@/atom/colorsAtom";
-import { themeAtom } from "@/atom/themeAtom";
+import { resolvedThemeModeAtom, ThemeMode } from "@/atom/themeAtom";
 import { TITLE_BAR_HEIGHT } from "@/constants/titleBar";
 import styles from "./index.module.less";
 
@@ -23,7 +25,7 @@ export default function Content() {
   const terminals = useTerminalsAtomValue();
   const colorsAtomWithApi = useColorsAtomWithApi();
 
-  const themeValue = useAtomValue(themeAtom);
+  const resolvedThemeMode = useAtomValue(resolvedThemeModeAtom);
 
   useHosts();
   useKeys();
@@ -35,7 +37,11 @@ export default function Content() {
   );
 
   useLayoutEffect(() => {
-    const defaultBackground = themeValue.palette.background.default;
+    const defaultBackground =
+      resolvedThemeMode === ThemeMode.Dark
+        ? APP_BACKGROUND_COLOR.dark
+        : APP_BACKGROUND_COLOR.light;
+
     const theme =
       TERMINAL_THEMES_MAP.get(
         activeTerminal?.host.terminalSettings?.theme as string,
@@ -52,9 +58,9 @@ export default function Content() {
 
     colorsAtomWithApi.setColors({
       bgColor,
-      titleBarColor: themeValue.palette.getContrastText(bgColor),
+      titleBarColor: getContrastTextColor(bgColor),
     });
-  }, [themeValue.palette, activeTerminal, colorsAtomWithApi.setColors]);
+  }, [resolvedThemeMode, activeTerminal, colorsAtomWithApi.setColors]);
 
   return (
     <>

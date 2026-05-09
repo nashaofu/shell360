@@ -6,7 +6,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
-import styles from "../Menus/index.module.less";
+import styles from "./index.module.less";
 
 type TerminalsProps = {
   expand?: boolean;
@@ -28,7 +28,7 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
   );
 
   const onListItemCloseClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>, item: TerminalAtom) => {
+    (event: MouseEvent<HTMLDivElement>, item: TerminalAtom) => {
       event.stopPropagation();
       const [, map] = terminalsAtomWithApi.delete(item.uuid);
       if (match?.params.uuid === item.uuid) {
@@ -44,35 +44,33 @@ export default function Terminals({ expand, onClick }: TerminalsProps) {
   );
 
   return (
-    <ul className={styles.list}>
+    <div className={styles.terminals}>
       {[...terminalsAtomWithApi.state.values()].map((item) => {
         const isActive = !!matchPath(
           { path: `/terminal/${item.uuid}`, end: true },
           pathname,
         );
         return (
-          <li key={item.uuid} className={styles.item} title={item.name}>
-            <button
-              type="button"
-              className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
-              onClick={() => onListItemClick(item)}
-            >
-              <span className={`${styles.itemIcon} icon-terminal`} />
-              {expand && <span className={styles.itemText}>{item.name}</span>}
-              {expand && (
-                <button
-                  type="button"
-                  className={styles.closeBtn}
-                  onClick={(e) => onListItemCloseClick(e, item)}
-                  title="Close"
-                >
-                  <span className="icon-close" style={{ fontSize: 14 }} />
-                </button>
-              )}
-            </button>
-          </li>
+          <div
+            key={item.uuid}
+            className={`${styles.terminal}${isActive ? ` ${styles.active}` : ""}`}
+            title={item.name}
+            onClick={() => onListItemClick(item)}
+          >
+            <span className={`${styles.terminalIcon} icon-terminal`} />
+            {expand && <span className={styles.terminalText}>{item.name}</span>}
+            {expand && (
+              <div
+                className={styles.terminalClose}
+                onClick={(e) => onListItemCloseClick(e, item)}
+                title="Close"
+              >
+                <span className="icon-close" />
+              </div>
+            )}
+          </div>
         );
       })}
-    </ul>
+    </div>
   );
 }

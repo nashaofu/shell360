@@ -1,7 +1,12 @@
+@bg-color: #2c2c2c;
+@text-color: #ffffff;
+@bg-color-hover: rgba(255, 255, 255, 0.08);
+
 .sidebar {
-  background: #2c2c2c;
-  color: #fff;
+  background-color: @bg-color;
+  color: @text-color;
   height: 100%;
+  width: 240px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -17,39 +22,34 @@
 }
 
 .settingsBtn {
-  background: none;
-  border: none;
   cursor: pointer;
-  color: #fff;
   display: flex;
   align-items: center;
   padding: 4px;
   border-radius: 4px;
   flex-shrink: 0;
+  font-size: 24px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background-color: @bg-color-hover;
   }
 }
 
 .divider {
   margin: 0;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(@text-color, 0.12);
 }
 
 .scrollArea {
   flex: 1;
-  overflow: auto;
 }
 
 .expandBtn {
-  width: 100%;
   flex-shrink: 0;
   background: none;
   border: none;
   cursor: pointer;
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,12 +57,6 @@
   font-size: 18px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background-color: @bg-color-hover;
   }
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1199;
 }
