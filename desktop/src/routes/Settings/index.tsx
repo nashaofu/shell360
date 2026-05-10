@@ -1,91 +1,135 @@
+import { Box, Button, Flex, Spinner, Switch, Text } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
-import styles from "./index.module.less";
-import { useAtom } from "jotai";
+import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { modeAtom, ThemeMode } from "@/atom/themeAtom";
+import { type Appearance, useAppearance } from "shared";
+import { changeCryptoEnable } from "tauri-plugin-data";
+import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
 import { useUpdateAtom } from "@/atom/updateAtom";
+import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
+import IniCrypto from "@/components/InitCrypto";
 import Page from "@/components/Page";
-import useExportData from "@/hooks/useExportData";
-import useImportData from "@/hooks/useImportData";
-import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
 import openUrl from "@/utils/openUrl";
+import styles from "./index.module.less";
 
-import CryptoSettings from "./CryptoSettings";
+type SettingSectionProps = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+};
+
+type SettingActionProps = {
+  icon: string;
+  title: string;
+  description: string;
+  value?: string;
+  onClick?: () => void;
+  ctaLabel?: string;
+  disabled?: boolean;
+  tone?: "default" | "primary";
+};
+
+const APPEARANCE_OPTIONS: Array<{
+  value: Appearance;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "inherit",
+    label: "Follow system",
+    hint: "Match the device theme automatically.",
+  },
+  {
+    value: "light",
+    label: "Light",
+    hint: "Keep surfaces bright and clear.",
+  },
+  {
+    value: "dark",
+    label: "Dark",
+    hint: "Reduce glare for long sessions.",
+  },
+];
+
+function SettingSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: SettingSectionProps) {
+  return (
+    <section className={styles.sectionCard}>
+      <div className={styles.sectionIntro}>
+        <Text as="p" className={styles.sectionEyebrow}>
+          {eyebrow}
+        </Text>
+        <h2 className={styles.sectionTitle}>{title}</h2>
+        <Text as="p" className={styles.sectionDescription}>
+          {description}
+        </Text>
+      </div>
+      <div className={styles.sectionBody}>{children}</div>
+    </section>
+  );
+}
+
+function SettingAction({
+  icon,
+  title,
+  description,
+  value,
+  onClick,
+  ctaLabel = "Open",
+  disabled,
+  tone = "default",
+}: SettingActionProps) {
+  return (
+    <div className={styles.actionRow}>
+      <div className={styles.actionMain}>
+        <span className={`${styles.actionIcon} ${icon}`} />
+        <div className={styles.actionText}>
+          <Text as="p" className={styles.actionTitle}>
+            {title}
+          </Text>
+          <Text as="p" className={styles.actionDescription}>
+            {description}
+          </Text>
+        </div>
+      </div>
+      <div className={styles.actionMeta}>
+        {value && (
+          <Text as="span" className={styles.actionValue}>
+            {value}
+          </Text>
+        )}
+        {onClick && (
+          <Button
+            size="2"
+            variant={tone === "primary" ? "solid" : "soft"}
+            onClick={onClick}
+            disabled={disabled}
+          >
+            {ctaLabel}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Settings() {
-  const [themeMode, setThemeMode] = useAtom(modeAtom);
-
-  const { checkUpdate, setOpenUpdateDialog } = useUpdateAtom();
   const [version, setVersion] = useState<string>();
-  const exportData = useExportData();
-  const importData = useImportData();
-  const modal = useModal();
-  const message = useMessage();
+  const [appearance, setAppearance] = useAppearance();
+  const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
+  const { update, checking, checkUpdate, setOpenUpdateDialog } =
+    useUpdateAtom();
 
-  const onCheckUpdate = useCallback(async () => {
-    const update = await checkUpdate();
-    if (update?.available) {
-      setOpenUpdateDialog(true);
-    }
-  }, [checkUpdate, setOpenUpdateDialog]);
-
-  const onExportData = useCallback(async () => {
-    try {
-      const path = await exportData();
-      if (!path) {
-        return;
-      }
-      message.success({
-        message: "Export file successful",
-      });
-    } catch (err) {
-      message.error({
-        message: (
-          <span style={{ wordBreak: "break-all" }}>
-            Export failed:
-            {` ${JSON.stringify(err)}`}
-          </span>
-        ),
-      });
-    }
-  }, [exportData, message]);
-
-  const onImportData = useCallback(async () => {
-    await new Promise<void>((resolve) => {
-      modal.confirm({
-        title: "Warning",
-        icon: (
-          <span
-            className="icon-warning-circle"
-            style={{ fontSize: 32, color: "var(--orange-9)" }}
-          />
-        ),
-        content:
-          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
-        onOk: () => resolve(),
-      });
-    });
-
-    try {
-      const isSuccess = await importData();
-      if (!isSuccess) {
-        return;
-      }
-      message.success({
-        message: "Import file successful",
-      });
-    } catch (err) {
-      message.error({
-        message: (
-          <span style={{ wordBreak: "break-all" }}>
-            Import failed:
-            {` ${String(err)}`}
-          </span>
-        ),
-      });
-    }
-  }, [importData, modal, message]);
+  const [checkingError, setCheckingError] = useState<string>();
+  const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
+  const [changeCryptoPasswordIsOpen, setChangeCryptoPasswordIsOpen] =
+    useState(false);
 
   useEffect(() => {
     getVersion().then((ver) => {
@@ -93,109 +137,186 @@ export default function Settings() {
     });
   }, []);
 
+  const onCryptoEnableChange = useCallback((checked: boolean) => {
+    if (checked) {
+      setInitCryptoIsOpen(true);
+      return;
+    }
+
+    changeCryptoEnable({
+      cryptoEnable: false,
+    });
+  }, []);
+
+  const onCheckUpdate = useCallback(async () => {
+    setCheckingError(undefined);
+
+    try {
+      const result = await checkUpdate();
+      if (result) {
+        setOpenUpdateDialog(true);
+      }
+    } catch (error) {
+      setCheckingError(String(error));
+    }
+  }, [checkUpdate, setOpenUpdateDialog]);
+
   return (
     <Page title="Settings">
-      <div className={styles.paper}>
-        <ul className={styles.list}>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Theme Mode</span>
-            <div className={styles.themeGroup}>
-              {([ThemeMode.Auto, ThemeMode.Light, ThemeMode.Dark] as const).map(
-                (mode) => (
+      <Box className={styles.container}>
+        <section className={styles.hero}>
+          <div className={styles.heroMain}>
+            <Text as="p" className={styles.heroEyebrow}>
+              Shell360 Settings
+            </Text>
+            <h2 className={styles.heroTitle}>Desktop preferences</h2>
+            <Text as="p" className={styles.heroDescription}>
+              Adjust appearance, local security, and update behavior in one
+              place.
+            </Text>
+          </div>
+          <div className={styles.heroMeta}>
+            <Text as="span" className={styles.heroMetaItem}>
+              {version ?? "--"}
+            </Text>
+          </div>
+        </section>
+
+        <div className={styles.layout}>
+          <SettingSection
+            eyebrow="Appearance"
+            title="Visual"
+            description="Choose how the desktop app should look."
+          >
+            <div className={styles.themeGrid}>
+              {APPEARANCE_OPTIONS.map((option) => {
+                const active = option.value === appearance;
+
+                return (
                   <button
-                    key={mode}
+                    key={option.value}
                     type="button"
-                    className={`${styles.themeBtn}${themeMode === mode ? ` ${styles.active}` : ""}`}
-                    onClick={() => setThemeMode(mode)}
+                    className={`${styles.themeOption}${active ? ` ${styles.themeOptionActive}` : ""}`}
+                    onClick={() => setAppearance(option.value)}
                   >
-                    <span
-                      className={
-                        mode === ThemeMode.Auto
-                          ? "icon-settings-brightness"
-                          : mode === ThemeMode.Light
-                            ? "icon-light-mode"
-                            : "icon-dark-mode"
-                      }
-                    />
-                    {mode === ThemeMode.Auto
-                      ? "Auto"
-                      : mode === ThemeMode.Light
-                        ? "Light"
-                        : "Dark"}
+                    <span className={styles.themeText}>
+                      <span className={styles.themeLabel}>{option.label}</span>
+                      <span className={styles.themeHint}>{option.hint}</span>
+                    </span>
+                    <span className={styles.themeState}>
+                      {active ? "Current" : ""}
+                    </span>
                   </button>
-                ),
+                );
+              })}
+            </div>
+          </SettingSection>
+
+          <SettingSection
+            eyebrow="Security"
+            title="Data protection"
+            description="Manage local encryption and trusted hosts."
+          >
+            <div className={styles.securityPanel}>
+              <div className={styles.securityHighlight}>
+                <div>
+                  <Text as="p" className={styles.highlightTitle}>
+                    Local encryption
+                  </Text>
+                  <Text as="p" className={styles.highlightDescription}>
+                    Protect saved application data on this device.
+                  </Text>
+                </div>
+                <Switch
+                  checked={cryptoEnable}
+                  onCheckedChange={onCryptoEnableChange}
+                />
+              </div>
+
+              {cryptoEnable && (
+                <SettingAction
+                  icon="icon-key"
+                  title="Change encryption password"
+                  description="Update the password for encrypted local data."
+                  onClick={() => setChangeCryptoPasswordIsOpen(true)}
+                  ctaLabel="Change"
+                />
               )}
             </div>
-          </li>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Export</span>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={onExportData}
-            >
-              <span className="icon-file-download" />
-            </button>
-          </li>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Import</span>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={onImportData}
-            >
-              <span className="icon-file-upload" />
-            </button>
-          </li>
-        </ul>
-      </div>
+          </SettingSection>
 
-      <div className={styles.paper}>
-        <CryptoSettings />
-      </div>
+          <SettingSection
+            eyebrow="Application"
+            title="Updates and support"
+            description="Low-frequency actions and app information."
+          >
+            <div className={styles.stackGroup}>
+              <SettingAction
+                icon="icon-label"
+                title="Check for updates"
+                description={
+                  update
+                    ? "A new version is available."
+                    : "Look for a new release."
+                }
+                onClick={onCheckUpdate}
+                ctaLabel={update ? "Open updater" : "Check now"}
+                value={checking ? "Checking..." : undefined}
+                disabled={!!checking}
+                tone="primary"
+              />
 
-      <div className={styles.paper}>
-        <ul className={styles.list}>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Check Update</span>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={onCheckUpdate}
-            >
-              <span className="icon-arrow-right" />
-            </button>
-          </li>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Privacy Policy</span>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() =>
-                openUrl(
-                  "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
-                )
-              }
-            >
-              <span className="icon-arrow-right" />
-            </button>
-          </li>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>About</span>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
-            >
-              <span className="icon-arrow-right" />
-            </button>
-          </li>
-          <li className={styles.listItem}>
-            <span className={styles.listItemText}>Version</span>
-            {version}
-          </li>
-        </ul>
-      </div>
+              {checking && (
+                <Flex align="center" gap="2" className={styles.inlineNotice}>
+                  <Spinner size="2" />
+                  <Text as="span">Checking the latest version...</Text>
+                </Flex>
+              )}
+
+              {!checking && !update && !checkingError && (
+                <Text as="p" className={styles.inlineNotice}>
+                  No update is currently detected.
+                </Text>
+              )}
+
+              {!!checkingError && (
+                <Text as="p" className={styles.inlineNoticeError}>
+                  {checkingError}
+                </Text>
+              )}
+              <SettingAction
+                icon="icon-host"
+                title="Project repository"
+                description="Open the GitHub repository."
+                onClick={() => openUrl("https://github.com/nashaofu/shell360")}
+                ctaLabel="Open"
+              />
+              <SettingAction
+                icon="icon-file"
+                title="Documentation"
+                description="Open the project README."
+                onClick={() =>
+                  openUrl(
+                    "https://github.com/nashaofu/shell360/blob/master/README.md",
+                  )
+                }
+                ctaLabel="Read"
+              />
+            </div>
+          </SettingSection>
+        </div>
+      </Box>
+
+      <IniCrypto
+        open={initCryptoIsOpen}
+        onCancel={() => setInitCryptoIsOpen(false)}
+        onOk={() => setInitCryptoIsOpen(false)}
+      />
+      <ChangeCryptoPassword
+        open={changeCryptoPasswordIsOpen}
+        onCancel={() => setChangeCryptoPasswordIsOpen(false)}
+        onOk={() => setChangeCryptoPasswordIsOpen(false)}
+      />
     </Page>
   );
 }

@@ -1,6 +1,5 @@
-:root {
-  color-scheme: light dark;
-}
+@import "@radix-ui/themes/styles.css";
+@import "./vars.css";
 
 *::-webkit-scrollbar {
   width: 6px;
@@ -27,11 +26,8 @@ body,
   height: 100%;
   overflow: hidden;
   user-select: none;
-}
-
-body {
   margin: 0;
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding: 0;
 }
 
 input {

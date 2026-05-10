@@ -15,9 +15,8 @@
     "declaration": true,
     "declarationDir": "dist",
     "emitDeclarationOnly": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],

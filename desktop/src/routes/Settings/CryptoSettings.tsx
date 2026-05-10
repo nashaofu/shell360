@@ -1,27 +1,26 @@
+import { Button, Flex, Switch, Text } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
-import { type ChangeEvent, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import IniCrypto from "@/components/InitCrypto";
+import styles from "./index.module.less";
 
 export default function CryptoSettings() {
   const cryptoEnable = useAtomValue(cryptoIsEnableAtom);
 
   const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
 
-  const onCryptoEnableChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.target.checked) {
-        setInitCryptoIsOpen(true);
-      } else {
-        changeCryptoEnable({
-          cryptoEnable: false,
-        });
-      }
-    },
-    [],
-  );
+  const onCryptoEnableChange = useCallback((checked: boolean) => {
+    if (checked) {
+      setInitCryptoIsOpen(true);
+    } else {
+      changeCryptoEnable({
+        cryptoEnable: false,
+      });
+    }
+  }, []);
 
   const onInitCryptoCancel = useCallback(() => {
     setInitCryptoIsOpen(false);
@@ -48,41 +47,33 @@ export default function CryptoSettings() {
 
   return (
     <>
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        <li
-          style={{ display: "flex", alignItems: "center", padding: "8px 16px" }}
-        >
-          <span style={{ flex: 1 }}>Crypto Enable</span>
-          <input
-            type="checkbox"
-            checked={cryptoEnable}
-            onChange={onCryptoEnableChange}
-          />
-        </li>
-        {cryptoEnable && (
-          <li
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px 16px",
-            }}
+      <Flex align="center" justify="between" className={styles.cryptoRow}>
+        <Flex as="span" align="center" className={styles.rowLeft}>
+          <span className={`${styles.themeIcon} icon-lock`} />
+          <Text as="span" className={styles.rowText}>
+            Enable encryption
+          </Text>
+        </Flex>
+        <Switch checked={cryptoEnable} onCheckedChange={onCryptoEnableChange} />
+      </Flex>
+      {cryptoEnable && (
+        <Flex align="center" justify="between" className={styles.cryptoRow}>
+          <Flex as="span" align="center" className={styles.rowLeft}>
+            <span className={`${styles.themeIcon} icon-key`} />
+            <Text as="span" className={styles.rowText}>
+              Change encryption password
+            </Text>
+          </Flex>
+          <Button
+            type="button"
+            variant="ghost"
+            color="gray"
+            onClick={onChangeCryptoPassword}
           >
-            <span style={{ flex: 1 }}>Change Crypto Password</span>
-            <button
-              type="button"
-              onClick={onChangeCryptoPassword}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "inherit",
-              }}
-            >
-              <span className="icon-arrow-right" />
-            </button>
-          </li>
-        )}
-      </ul>
+            <span className="icon-arrow-right" />
+          </Button>
+        </Flex>
+      )}
       <IniCrypto
         open={initCryptoIsOpen}
         onCancel={onInitCryptoCancel}

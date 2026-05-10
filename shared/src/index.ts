@@ -1,6 +1,7 @@
 import "./styles/index.less";
 
 // atoms
+export * from "./atoms/appearanceAtom";
 export * from "./atoms/portForwardingsAtom";
 export * from "./atoms/terminalsAtom";
 // components

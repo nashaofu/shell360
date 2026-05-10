@@ -4,9 +4,8 @@
     "lib": ["DOM", "ES2020"],
     "jsx": "react-jsx",
     "noImplicitAny": false,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
