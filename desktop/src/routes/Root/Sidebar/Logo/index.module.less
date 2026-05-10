@@ -1,50 +1,56 @@
 .logoWrap {
   display: flex;
-  flex: 1;
   align-items: center;
+  justify-content: center;
 }
 
 .avatarWrap {
   position: relative;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gray-a5);
+  background: color-mix(in srgb, var(--gray-3) 82%, transparent);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
   object-fit: cover;
 }
 
 .badge {
   position: absolute;
-  top: 14%;
-  right: 14%;
+  top: 0;
+  right: 0;
   z-index: 1;
   background: var(--green-9);
   color: var(--green-1);
-  font-size: 12px;
-  border-radius: 10px;
+  font-size: 10px;
+  border-radius: 0;
   cursor: pointer;
-  transform: scale(0.92) translate3d(50%, -50%, 0);
+  transform: translate3d(50%, -50%, 0);
   transform-origin: 100% 0%;
   white-space: nowrap;
 }
 
 .badgeDot {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   padding: 0;
 }
 
 .badgeFull {
-  height: 20px;
-  padding: 0 6px;
+  height: 16px;
+  padding: 0 4px;
   display: flex;
   align-items: center;
 }
 
 .logoText {
-  font-size: 16px;
-  padding-left: 8px;
+  font-size: 13px;
+  padding-left: 5px;
 }

@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
 import { Button } from "@radix-ui/themes";
+import { useCallback, useMemo, useState } from "react";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
@@ -35,7 +35,11 @@ export default function PortForwardings() {
   }, []);
 
   return (
-    <Page title="Port forwardings">
+    <Page
+      eyebrow="Network"
+      title="Tunnels"
+      description="Create and reuse local, remote, and dynamic forwarding rules alongside the hosts they depend on."
+    >
       <div
         style={{
           display: "flex",

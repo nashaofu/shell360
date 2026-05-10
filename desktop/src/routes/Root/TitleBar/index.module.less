@@ -5,12 +5,26 @@
   left: 0;
   z-index: var(--title-bar-z-index);
   height: var(--title-bar-height);
+  display: flex;
+  align-items: stretch;
   background-color: var(--title-bar-bg-color);
+  border-bottom: 1px solid var(--gray-a4);
 }
 
-.dragRegion {
-  position: absolute;
-  inset: 0;
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding-left: 72px;
+  padding-right: 108px;
+}
+
+.darwin .content {
+  padding-right: 12px;
+  padding-left: 72px;
 }
 
 .winControls {
@@ -20,7 +34,7 @@
   right: 0;
   bottom: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   flex-direction: row;
   flex-wrap: nowrap;
 }
@@ -31,11 +45,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  border-radius: 0;
+  font-size: 11px;
   cursor: pointer;
   color: var(--gray-12);
+  transition: background-color 0.16s ease;
 
   &:hover {
-    background-color:var(--gray-a4);
+    background-color: var(--gray-a4);
   }
+}
+
+.winControlsBtns:last-child:hover {
+  background-color: color-mix(in srgb, var(--red-9) 86%, transparent);
+  color: white;
 }

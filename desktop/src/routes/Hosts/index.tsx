@@ -1,5 +1,5 @@
-import { get, omit } from "lodash-es";
 import { Button } from "@radix-ui/themes";
+import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -164,7 +164,11 @@ export default function Hosts() {
   );
 
   return (
-    <Page title="Hosts">
+    <Page
+      eyebrow="Connections"
+      title="Hosts"
+      description="Manage saved SSH endpoints, filter by tags, and open new terminal sessions without leaving the workspace."
+    >
       <div
         style={{
           display: "flex",

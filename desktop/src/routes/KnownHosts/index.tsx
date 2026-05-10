@@ -85,7 +85,11 @@ export default function KnownHosts() {
   }, []);
 
   return (
-    <Page title="Known hosts">
+    <Page
+      eyebrow="Trust"
+      title="Known hosts"
+      description="Review trusted fingerprints recorded on this device and remove stale entries when remote hosts change."
+    >
       <AutoRepeatGrid
         sx={{
           gap: 2,

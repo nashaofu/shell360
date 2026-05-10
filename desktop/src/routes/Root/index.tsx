@@ -1,14 +1,17 @@
-import { Flex } from "@radix-ui/themes";
-import Content from "./Content";
+import AppShell from "./AppShell";
+import styles from "./index.module.less";
+import NavRail from "./NavRail";
 import TitleBar from "./TitleBar";
+import TopBar from "./TopBar";
+import Workspace from "./Workspace";
 
 export default function Root() {
   return (
-    <>
-      <TitleBar />
-      <Flex direction="row" width="100%" height="100%">
-        <Content></Content>
-      </Flex>
-    </>
+    <div className={styles.root}>
+      <TitleBar>
+        <TopBar />
+      </TitleBar>
+      <AppShell navRail={<NavRail />} workspace={<Workspace />} />
+    </div>
   );
 }

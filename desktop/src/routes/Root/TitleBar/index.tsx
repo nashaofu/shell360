@@ -1,9 +1,15 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./index.module.less";
 
-export default function TitleBar() {
+type TitleBarProps = {
+  children?: ReactNode;
+};
+
+export default function TitleBar({ children }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
+  const isDarwin = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
 
   const onClickMinimize = useCallback(() => {
     getCurrentWindow().minimize();
@@ -30,9 +36,9 @@ export default function TitleBar() {
   }, []);
 
   return (
-    <div className={styles.titleBar}>
-      <div className={styles.dragRegion} data-tauri-drag-region="true" />
-      {import.meta.env.TAURI_ENV_PLATFORM !== "darwin" && (
+    <div className={`${styles.titleBar}${isDarwin ? ` ${styles.darwin}` : ""}`}>
+      {children && <div className={styles.content}>{children}</div>}
+      {!isDarwin && (
         <div className={styles.winControls}>
           <div className={styles.winControlsBtns} onClick={onClickMinimize}>
             <span className="icon-window-minimize" />

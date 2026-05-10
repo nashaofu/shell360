@@ -3,8 +3,9 @@ import { useMatch, useNavigate } from "react-router-dom";
 import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
+import styles from "./index.module.less";
 
-export default function Terminals() {
+export default function ActiveTerminalView() {
   const match = useMatch("/terminal/:uuid");
   const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
@@ -25,15 +26,14 @@ export default function Terminals() {
     [match?.params.uuid, navigate, terminalsAtomWithApi],
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅在terminalsAtomWithApi.state.size变化时执行
   useEffect(() => {
     if (!terminalsAtomWithApi.state.size && match) {
       navigate("/", { replace: true });
     }
-  }, [terminalsAtomWithApi.state.size, navigate]);
+  }, [match, navigate, terminalsAtomWithApi.state.size]);
 
   return (
-    <>
+    <div className={styles.activeTerminalView}>
       {[...terminalsAtomWithApi.state.values()].map((item) => {
         const visible = match?.params.uuid === item.uuid;
         return (
@@ -55,6 +55,6 @@ export default function Terminals() {
         onCancel={() => setAddKeyOpen(false)}
         onOk={() => setAddKeyOpen(false)}
       />
-    </>
+    </div>
   );
 }

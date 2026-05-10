@@ -1,5 +1,5 @@
-import { get } from "lodash-es";
 import { Button } from "@radix-ui/themes";
+import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
@@ -112,7 +112,11 @@ export default function Keys() {
   );
 
   return (
-    <Page title="Keys">
+    <Page
+      eyebrow="Identity"
+      title="Keys"
+      description="Store and maintain SSH identities used across saved hosts, tunnels, and authentication prompts."
+    >
       <div
         style={{
           display: "flex",

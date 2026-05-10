@@ -1,4 +1,11 @@
-import { Box, Button, Flex, Spinner, Switch, Text } from "@radix-ui/themes";
+import {
+  Button,
+  Flex,
+  RadioCards,
+  Spinner,
+  Switch,
+  Text,
+} from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
@@ -162,54 +169,42 @@ export default function Settings() {
   }, [checkUpdate, setOpenUpdateDialog]);
 
   return (
-    <Page title="Settings">
-      <Box className={styles.container}>
-        <section className={styles.hero}>
-          <div className={styles.heroMain}>
-            <Text as="p" className={styles.heroEyebrow}>
-              Shell360 Settings
-            </Text>
-            <h2 className={styles.heroTitle}>Desktop preferences</h2>
-            <Text as="p" className={styles.heroDescription}>
-              Adjust appearance, local security, and update behavior in one
-              place.
-            </Text>
-          </div>
-          <div className={styles.heroMeta}>
-            <Text as="span" className={styles.heroMetaItem}>
-              {version ?? "--"}
-            </Text>
-          </div>
-        </section>
-
+    <Page
+      eyebrow="Application"
+      title="Settings"
+      description="Adjust appearance, local security, and update behavior for the desktop workspace."
+      actions={
+        <Text as="span" className={styles.versionChip}>
+          {version ?? "--"}
+        </Text>
+      }
+    >
+      <div className={styles.container}>
         <div className={styles.layout}>
           <SettingSection
             eyebrow="Appearance"
             title="Visual"
             description="Choose how the desktop app should look."
           >
-            <div className={styles.themeGrid}>
+            <RadioCards.Root
+              columns={{ initial: "1", sm: "3" }}
+              size="1"
+              value={appearance}
+              onValueChange={(value) => setAppearance(value as Appearance)}
+            >
               {APPEARANCE_OPTIONS.map((option) => {
-                const active = option.value === appearance;
-
                 return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`${styles.themeOption}${active ? ` ${styles.themeOptionActive}` : ""}`}
-                    onClick={() => setAppearance(option.value)}
-                  >
-                    <span className={styles.themeText}>
-                      <span className={styles.themeLabel}>{option.label}</span>
-                      <span className={styles.themeHint}>{option.hint}</span>
-                    </span>
-                    <span className={styles.themeState}>
-                      {active ? "Current" : ""}
-                    </span>
-                  </button>
+                  <RadioCards.Item key={option.value} value={option.value}>
+                    <Flex direction="column" width="100%">
+                      <Text weight="bold">{option.label}</Text>
+                      <Text color="gray" size="1" truncate>
+                        {option.hint}
+                      </Text>
+                    </Flex>
+                  </RadioCards.Item>
                 );
               })}
-            </div>
+            </RadioCards.Root>
           </SettingSection>
 
           <SettingSection
@@ -305,7 +300,7 @@ export default function Settings() {
             </div>
           </SettingSection>
         </div>
-      </Box>
+      </div>
 
       <IniCrypto
         open={initCryptoIsOpen}

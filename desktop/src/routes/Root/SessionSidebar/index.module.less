@@ -1,0 +1,181 @@
+.sessionSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 16px 16px;
+  border-right: 1px solid var(--gray-a4);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gray-2) 96%, transparent), transparent 22%),
+    color-mix(in srgb, var(--gray-1) 88%, transparent);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  color: var(--gray-10);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  margin: 4px 0 0;
+  color: var(--gray-12);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.newButton,
+.shortcutButton {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--indigo-9);
+  color: white;
+  cursor: pointer;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gray-11);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gray-a4);
+  color: var(--gray-11);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sessionItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--gray-a4);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--gray-1) 76%, transparent);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sessionItem:hover {
+  background: color-mix(in srgb, var(--gray-2) 82%, transparent);
+}
+
+.active {
+  border-color: var(--indigo-a6);
+  background: color-mix(in srgb, var(--indigo-a3) 50%, var(--gray-1));
+}
+
+.statusDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green-9);
+  box-shadow: 0 0 0 4px var(--green-a3);
+}
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name,
+.meta,
+.shortcutTitle,
+.shortcutDesc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name {
+  white-space: nowrap;
+  color: var(--gray-12);
+  font-weight: 600;
+}
+
+.meta {
+  color: var(--gray-10);
+  font-size: 12px;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  color: var(--gray-10);
+}
+
+.close:hover {
+  background: var(--gray-a4);
+  color: var(--gray-12);
+}
+
+.empty {
+  padding: 16px;
+  border: 1px dashed var(--gray-a5);
+  border-radius: 16px;
+  color: var(--gray-10);
+  font-size: 13px;
+}
+
+.shortcutCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--gray-a4);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--indigo-a3) 45%, transparent), transparent 60%),
+    color-mix(in srgb, var(--gray-1) 80%, transparent);
+}
+
+.shortcutTitle {
+  color: var(--gray-12);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shortcutDesc {
+  color: var(--gray-10);
+  font-size: 13px;
+}
+
+.shortcutButton {
+  align-self: flex-start;
+}
