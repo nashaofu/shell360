@@ -169,149 +169,153 @@ export default function Settings() {
   }, [checkUpdate, setOpenUpdateDialog]);
 
   return (
-    <Page
-      eyebrow="Application"
-      title="Settings"
-      description="Adjust appearance, local security, and update behavior for the desktop workspace."
-      actions={
-        <Text as="span" className={styles.versionChip}>
-          {version ?? "--"}
-        </Text>
-      }
-    >
-      <div className={styles.container}>
-        <div className={styles.layout}>
-          <SettingSection
-            eyebrow="Appearance"
-            title="Visual"
-            description="Choose how the desktop app should look."
-          >
-            <RadioCards.Root
-              columns={{ initial: "1", sm: "3" }}
-              size="1"
-              value={appearance}
-              onValueChange={(value) => setAppearance(value as Appearance)}
+    <div className={styles.pageWrap}>
+      <Page
+        eyebrow="Application"
+        title="Settings"
+        description="Adjust appearance, local security, and update behavior for the desktop workspace."
+        actions={
+          <Text as="span" className={styles.versionChip}>
+            {version ?? "--"}
+          </Text>
+        }
+      >
+        <div className={styles.container}>
+          <div className={styles.layout}>
+            <SettingSection
+              eyebrow="Appearance"
+              title="Visual"
+              description="Choose how the desktop app should look."
             >
-              {APPEARANCE_OPTIONS.map((option) => {
-                return (
-                  <RadioCards.Item key={option.value} value={option.value}>
-                    <Flex direction="column" width="100%">
-                      <Text weight="bold">{option.label}</Text>
-                      <Text color="gray" size="1" truncate>
-                        {option.hint}
-                      </Text>
-                    </Flex>
-                  </RadioCards.Item>
-                );
-              })}
-            </RadioCards.Root>
-          </SettingSection>
+              <RadioCards.Root
+                columns={{ initial: "1", sm: "3" }}
+                size="1"
+                value={appearance}
+                onValueChange={(value) => setAppearance(value as Appearance)}
+              >
+                {APPEARANCE_OPTIONS.map((option) => {
+                  return (
+                    <RadioCards.Item key={option.value} value={option.value}>
+                      <Flex direction="column" width="100%">
+                        <Text weight="bold">{option.label}</Text>
+                        <Text color="gray" size="1" truncate>
+                          {option.hint}
+                        </Text>
+                      </Flex>
+                    </RadioCards.Item>
+                  );
+                })}
+              </RadioCards.Root>
+            </SettingSection>
 
-          <SettingSection
-            eyebrow="Security"
-            title="Data protection"
-            description="Manage local encryption and trusted hosts."
-          >
-            <div className={styles.securityPanel}>
-              <div className={styles.securityHighlight}>
-                <div>
-                  <Text as="p" className={styles.highlightTitle}>
-                    Local encryption
-                  </Text>
-                  <Text as="p" className={styles.highlightDescription}>
-                    Protect saved application data on this device.
-                  </Text>
+            <SettingSection
+              eyebrow="Security"
+              title="Data protection"
+              description="Manage local encryption and trusted hosts."
+            >
+              <div className={styles.securityPanel}>
+                <div className={styles.securityHighlight}>
+                  <div>
+                    <Text as="p" className={styles.highlightTitle}>
+                      Local encryption
+                    </Text>
+                    <Text as="p" className={styles.highlightDescription}>
+                      Protect saved application data on this device.
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={cryptoEnable}
+                    onCheckedChange={onCryptoEnableChange}
+                  />
                 </div>
-                <Switch
-                  checked={cryptoEnable}
-                  onCheckedChange={onCryptoEnableChange}
+
+                {cryptoEnable && (
+                  <SettingAction
+                    icon="icon-key"
+                    title="Change encryption password"
+                    description="Update the password for encrypted local data."
+                    onClick={() => setChangeCryptoPasswordIsOpen(true)}
+                    ctaLabel="Change"
+                  />
+                )}
+              </div>
+            </SettingSection>
+
+            <SettingSection
+              eyebrow="Application"
+              title="Updates and support"
+              description="Low-frequency actions and app information."
+            >
+              <div className={styles.stackGroup}>
+                <SettingAction
+                  icon="icon-label"
+                  title="Check for updates"
+                  description={
+                    update
+                      ? "A new version is available."
+                      : "Look for a new release."
+                  }
+                  onClick={onCheckUpdate}
+                  ctaLabel={update ? "Open updater" : "Check now"}
+                  value={checking ? "Checking..." : undefined}
+                  disabled={!!checking}
+                  tone="primary"
+                />
+
+                {checking && (
+                  <Flex align="center" gap="2" className={styles.inlineNotice}>
+                    <Spinner size="2" />
+                    <Text as="span">Checking the latest version...</Text>
+                  </Flex>
+                )}
+
+                {!checking && !update && !checkingError && (
+                  <Text as="p" className={styles.inlineNotice}>
+                    No update is currently detected.
+                  </Text>
+                )}
+
+                {!!checkingError && (
+                  <Text as="p" className={styles.inlineNoticeError}>
+                    {checkingError}
+                  </Text>
+                )}
+                <SettingAction
+                  icon="icon-host"
+                  title="Project repository"
+                  description="Open the GitHub repository."
+                  onClick={() =>
+                    openUrl("https://github.com/nashaofu/shell360")
+                  }
+                  ctaLabel="Open"
+                />
+                <SettingAction
+                  icon="icon-file"
+                  title="Documentation"
+                  description="Open the project README."
+                  onClick={() =>
+                    openUrl(
+                      "https://github.com/nashaofu/shell360/blob/master/README.md",
+                    )
+                  }
+                  ctaLabel="Read"
                 />
               </div>
-
-              {cryptoEnable && (
-                <SettingAction
-                  icon="icon-key"
-                  title="Change encryption password"
-                  description="Update the password for encrypted local data."
-                  onClick={() => setChangeCryptoPasswordIsOpen(true)}
-                  ctaLabel="Change"
-                />
-              )}
-            </div>
-          </SettingSection>
-
-          <SettingSection
-            eyebrow="Application"
-            title="Updates and support"
-            description="Low-frequency actions and app information."
-          >
-            <div className={styles.stackGroup}>
-              <SettingAction
-                icon="icon-label"
-                title="Check for updates"
-                description={
-                  update
-                    ? "A new version is available."
-                    : "Look for a new release."
-                }
-                onClick={onCheckUpdate}
-                ctaLabel={update ? "Open updater" : "Check now"}
-                value={checking ? "Checking..." : undefined}
-                disabled={!!checking}
-                tone="primary"
-              />
-
-              {checking && (
-                <Flex align="center" gap="2" className={styles.inlineNotice}>
-                  <Spinner size="2" />
-                  <Text as="span">Checking the latest version...</Text>
-                </Flex>
-              )}
-
-              {!checking && !update && !checkingError && (
-                <Text as="p" className={styles.inlineNotice}>
-                  No update is currently detected.
-                </Text>
-              )}
-
-              {!!checkingError && (
-                <Text as="p" className={styles.inlineNoticeError}>
-                  {checkingError}
-                </Text>
-              )}
-              <SettingAction
-                icon="icon-host"
-                title="Project repository"
-                description="Open the GitHub repository."
-                onClick={() => openUrl("https://github.com/nashaofu/shell360")}
-                ctaLabel="Open"
-              />
-              <SettingAction
-                icon="icon-file"
-                title="Documentation"
-                description="Open the project README."
-                onClick={() =>
-                  openUrl(
-                    "https://github.com/nashaofu/shell360/blob/master/README.md",
-                  )
-                }
-                ctaLabel="Read"
-              />
-            </div>
-          </SettingSection>
+            </SettingSection>
+          </div>
         </div>
-      </div>
 
-      <IniCrypto
-        open={initCryptoIsOpen}
-        onCancel={() => setInitCryptoIsOpen(false)}
-        onOk={() => setInitCryptoIsOpen(false)}
-      />
-      <ChangeCryptoPassword
-        open={changeCryptoPasswordIsOpen}
-        onCancel={() => setChangeCryptoPasswordIsOpen(false)}
-        onOk={() => setChangeCryptoPasswordIsOpen(false)}
-      />
-    </Page>
+        <IniCrypto
+          open={initCryptoIsOpen}
+          onCancel={() => setInitCryptoIsOpen(false)}
+          onOk={() => setInitCryptoIsOpen(false)}
+        />
+        <ChangeCryptoPassword
+          open={changeCryptoPasswordIsOpen}
+          onCancel={() => setChangeCryptoPasswordIsOpen(false)}
+          onOk={() => setChangeCryptoPasswordIsOpen(false)}
+        />
+      </Page>
+    </div>
   );
 }

@@ -37,7 +37,7 @@ export default function PortForwardings() {
   return (
     <Page
       eyebrow="Network"
-      title="Tunnels"
+      title="Port Forwardings"
       description="Create and reuse local, remote, and dynamic forwarding rules alongside the hosts they depend on."
     >
       <div

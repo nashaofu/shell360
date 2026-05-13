@@ -1,17 +1,18 @@
+import { Outlet } from "react-router-dom";
 import AppShell from "./AppShell";
+import Auth from "./Auth";
 import styles from "./index.module.less";
-import NavRail from "./NavRail";
 import TitleBar from "./TitleBar";
-import TopBar from "./TopBar";
-import Workspace from "./Workspace";
 
 export default function Root() {
   return (
     <div className={styles.root}>
-      <TitleBar>
-        <TopBar />
-      </TitleBar>
-      <AppShell navRail={<NavRail />} workspace={<Workspace />} />
+      <TitleBar />
+      <AppShell>
+        <Auth>
+          <Outlet />
+        </Auth>
+      </AppShell>
     </div>
   );
 }

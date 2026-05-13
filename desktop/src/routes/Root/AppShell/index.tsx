@@ -1,15 +1,21 @@
+import { Flex } from "@radix-ui/themes";
+import type { ReactNode } from "react";
+import NavRail from "../NavRail";
 import styles from "./index.module.less";
 
 type AppShellProps = {
-  navRail: React.ReactNode;
-  workspace: React.ReactNode;
+  children: ReactNode;
 };
 
-export default function AppShell({ navRail, workspace }: AppShellProps) {
+export default function AppShell({ children }: AppShellProps) {
   return (
-    <div className={styles.appShell}>
-      {navRail}
-      {workspace}
-    </div>
+    <Flex className={styles.appShell}>
+      <NavRail />
+      <main className={styles.workspace}>
+        <div className={styles.workspaceScroll}>
+          <div className={styles.workspaceInner}>{children}</div>
+        </div>
+      </main>
+    </Flex>
   );
 }
