@@ -1,28 +1,54 @@
-.formField {
-  margin-top: 16px;
+.sectionTitle {
+  letter-spacing: 0.02em;
 }
 
-.progressWrap {
-  margin: 0 16px;
+.metaText {
+  font-variant-numeric: tabular-nums;
 }
 
-.progressBar {
-  width: 100%;
-  height: 4px;
-  background: var(--gray-a4);
-  border-radius: 2px;
-  overflow: hidden;
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
 
-  .progressFill {
-    height: 100%;
-    background: var(--accent-9);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-  }
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--gray-a2);
+}
+
+.notesBox {
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--gray-a2);
 }
 
 .errorText {
-  padding: 4px 0;
-  font-size: 12px;
-  color: var(--red-9);
+  word-break: break-word;
+}
+
+.actionRow {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionRow {
+    justify-content: stretch;
+
+    :global(.rt-Button) {
+      flex: 1;
+    }
+  }
 }

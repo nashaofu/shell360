@@ -17,7 +17,7 @@
 .eye {
   width: 70px;
   height: 100px;
-  border: 1px solid var(--gray-11, #374151);
+  border: 1px solid var(--gray-a7);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -28,8 +28,7 @@
   width: 50%;
   height: 50%;
   border-radius: 50%;
-  background-color: var(--gray-11, #374151);
-  animation: eye-move 1.6s infinite alternate;
+  background-color: var(--gray-11);
 }
 
 .titleWrap {
@@ -66,22 +65,4 @@
 
 .actionButton {
   width: 100%;
-}
-
-@keyframes eye-move {
-  0% {
-    transform: translateX(50%);
-  }
-
-  10% {
-    transform: translateX(50%);
-  }
-
-  90% {
-    transform: translateX(-50%);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
 }

@@ -6,16 +6,6 @@
   justify-content: center;
 }
 
-.spinner {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 3px solid
-    color-mix(in srgb, var(--accent-9, #3b82f6) 20%, transparent);
-  border-top-color: var(--accent-9, #3b82f6);
-  animation: auth-spin 0.8s linear infinite;
-}
-
 .root {
   flex-grow: 1;
   flex-shrink: 0;
@@ -50,10 +40,4 @@
 
 .actionButton {
   width: 100%;
-}
-
-@keyframes auth-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

@@ -17,7 +17,7 @@
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: #7f7f7f;
+  background: var(--gray-a8);
 }
 
 html,

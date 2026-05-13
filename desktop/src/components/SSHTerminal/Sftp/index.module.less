@@ -9,18 +9,17 @@
   height: 48px;
   border: 0;
   border-radius: 50%;
-  background: var(--accent-9, #3b82f6);
-  color: #fff;
+  background: var(--accent-9);
+  color: var(--accent-contrast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--black-a6);
   z-index: 1500;
   display: flex;
   align-items: center;
@@ -30,16 +29,17 @@
 .modal {
   width: min(960px, 94vw);
   height: 88vh;
-  background: var(--color-background, #fff);
+  background: var(--color-panel);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--gray-a5);
 }
 
 .modalHeader {
   height: 44px;
-  border-bottom: 1px solid var(--gray-6, #d4d4d8);
+  border-bottom: 1px solid var(--gray-a5);
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -56,7 +56,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--gray-11, #4b5563);
+  color: var(--gray-11);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +84,7 @@
 
 .divider {
   height: 1px;
-  background: var(--gray-6, #d4d4d8);
+  background: var(--gray-a5);
 }
 
 .tablePanel {

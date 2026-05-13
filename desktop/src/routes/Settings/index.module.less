@@ -12,10 +12,9 @@
 }
 
 .versionChip {
-  padding: 6px 10px;
+  padding: 4px 10px;
   border: 1px solid var(--gray-a5);
-  border-radius: 999px;
-  background: var(--gray-a2);
+  border-radius: var(--radius-full);
   font-size: 12px;
   color: var(--gray-10);
 }
@@ -30,10 +29,6 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--gray-a5);
-  border-radius: 14px;
-  background: var(--color-panel-solid);
 }
 
 .sectionIntro {
@@ -48,7 +43,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--indigo-10);
+  color: var(--gray-10);
 }
 
 .sectionTitle {
@@ -79,14 +74,25 @@
 
 .securityHighlight,
 .actionRow {
+  padding: 14px;
+}
+
+.actionLayout {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 16px;
+}
+
+.securityHighlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
   border: 1px solid var(--gray-a5);
   border-radius: 12px;
-  background: var(--gray-a2);
+  background: var(--color-panel);
 }
 
 .highlightTitle,
@@ -120,8 +126,8 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  border-radius: 10px;
-  background: var(--gray-a4);
+  border-radius: 8px;
+  background: var(--gray-a3);
   color: var(--gray-11);
   font-size: 14px;
 }
@@ -158,18 +164,13 @@
 }
 
 @media (max-width: 720px) {
-  .sectionCard {
-    padding: 18px;
-  }
-
   .securityHighlight,
-  .actionRow,
-  .themeOption {
+  .actionRow {
     padding: 14px;
   }
 
   .securityHighlight,
-  .actionRow {
+  .actionLayout {
     align-items: flex-start;
     flex-direction: column;
   }

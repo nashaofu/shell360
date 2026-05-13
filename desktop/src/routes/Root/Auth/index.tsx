@@ -1,3 +1,4 @@
+import { Spinner } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 
@@ -18,7 +19,7 @@ export default function Auth({ children }: AuthProps) {
   if (cryptoIsEnable === undefined) {
     return (
       <div className={styles.authLoading}>
-        <span className={styles.spinner} />
+        <Spinner size="3" />
       </div>
     );
   }

@@ -168,19 +168,15 @@ export default function useCells({
           return {
             position: "sticky",
             right: 0,
-            borderLeft: "1px solid var(--gray-6, #d4d4d8)",
-            boxShadow:
-              "-2px 0 5px -3px rgba(0,0,0,0.2), -8px 0 8px -8px rgba(0,0,0,0.14), -7px 0 14px -3px rgba(0,0,0,0.12)",
-            backgroundColor: "var(--color-background, #fff)",
+            borderLeft: "1px solid var(--gray-a5)",
+            backgroundColor: "var(--color-panel)",
           };
         }
         return {
           position: "sticky",
           right: 0,
-          backgroundColor: "var(--color-background, #fff)",
-          backgroundImage: "var(--Paper-overlay)",
-          borderLeft: "1px solid var(--gray-6, #d4d4d8)",
-          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.12)",
+          backgroundColor: "var(--color-panel)",
+          borderLeft: "1px solid var(--gray-a5)",
         };
       },
       render: (item: SSHSftpFile) => (

@@ -1,10 +1,10 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
-import { useLatest } from "ahooks";
-import { atom, useAtom } from "jotai";
+import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect } from "react";
 
 export type UpdateAtom = {
+  hasUpdate: boolean;
   openUpdateDialog: boolean;
   checking?: Promise<Update | null>;
   update: Update | null;
@@ -15,6 +15,7 @@ export type UpdateAtom = {
 };
 
 export const updateAtom = atom<UpdateAtom>({
+  hasUpdate: false,
   openUpdateDialog: false,
   checking: undefined,
   update: null,
@@ -24,43 +25,67 @@ export const updateAtom = atom<UpdateAtom>({
   downloaded: undefined,
 });
 
-export function useCheckUpdate() {
-  const [state, setState] = useAtom(updateAtom);
+let activeChecking: Promise<Update | null> | undefined;
 
-  const stateRef = useLatest(state);
+export function useCheckUpdate() {
+  const setState = useSetAtom(updateAtom);
+  const store = useStore();
 
   const checkUpdate = useCallback(async () => {
-    if (stateRef.current.checking) {
-      return stateRef.current.checking;
+    if (activeChecking) {
+      return activeChecking;
     }
 
-    try {
-      const checking = check();
-      stateRef.current = {
-        ...stateRef.current,
+    const currentState = store.get(updateAtom);
+    if (currentState.checking) {
+      activeChecking = currentState.checking;
+      return currentState.checking;
+    }
+
+    const checking = check();
+    activeChecking = checking;
+
+    setState((prev) => {
+      if (prev.checking) {
+        return prev;
+      }
+
+      return {
+        ...prev,
         checking,
       };
-      setState(stateRef.current);
+    });
+
+    try {
       const update = await checking;
 
-      stateRef.current = {
-        ...stateRef.current,
-        checking: undefined,
+      setState((prev) => ({
+        ...prev,
+        checking: prev.checking === checking ? undefined : prev.checking,
+        hasUpdate: !!update,
         update,
-      };
-      setState(stateRef.current);
+      }));
+
+      if (activeChecking === checking) {
+        activeChecking = undefined;
+      }
 
       return update;
     } catch (err) {
-      stateRef.current = {
-        ...stateRef.current,
-        checking: undefined,
+      setState((prev) => ({
+        ...prev,
+        checking: prev.checking === checking ? undefined : prev.checking,
+        hasUpdate: false,
         update: null,
-      };
-      setState(stateRef.current);
+      }));
+
+      if (activeChecking === checking) {
+        activeChecking = undefined;
+      }
+
       throw err;
     }
-  }, [setState, stateRef]);
+  }, [setState, store]);
 
   return checkUpdate;
 }
@@ -70,19 +95,19 @@ let timer: number | undefined;
 export function useAutoCheckUpdate() {
   const checkUpdate = useCheckUpdate();
   useEffect(() => {
-    const autoCheck = async () => {
+    const autoCheckUpdate = async () => {
       let update: Update | null = null;
       try {
         update = await checkUpdate();
       } finally {
         clearTimeout(timer);
         if (!update) {
-          timer = window.setTimeout(() => autoCheck(), 1000 * 60 * 3);
+          timer = window.setTimeout(() => autoCheckUpdate(), 1000 * 60 * 3);
         }
       }
     };
 
-    autoCheck();
+    autoCheckUpdate();
 
     return () => {
       clearTimeout(timer);
@@ -91,86 +116,78 @@ export function useAutoCheckUpdate() {
 }
 
 export function useUpdateAtom() {
-  const [state, setState] = useAtom(updateAtom);
+  const state = useAtomValue(updateAtom);
+  const setState = useSetAtom(updateAtom);
+  const store = useStore();
   const checkUpdate = useCheckUpdate();
-
-  const stateRef = useLatest(state);
-  const update = state.update;
 
   const setOpenUpdateDialog = useCallback(
     (openUpdateDialog: boolean) => {
-      stateRef.current = {
-        ...stateRef.current,
+      setState((prev) => ({
+        ...prev,
         openUpdateDialog,
-      };
-      setState(stateRef.current);
+      }));
     },
-    [setState, stateRef],
+    [setState],
   );
 
   const download = useCallback(async () => {
-    const { update } = stateRef.current;
+    const update = store.get(updateAtom).update;
     if (!update) {
       return;
     }
 
     try {
-      stateRef.current = {
-        ...stateRef.current,
+      setState((prev) => ({
+        ...prev,
         isDownloading: true,
         error: undefined,
         total: 0,
         downloaded: 0,
-      };
-      setState(stateRef.current);
+      }));
 
       await update.download((event) => {
         if (event.event === "Started") {
-          stateRef.current = {
-            ...stateRef.current,
+          setState((prev) => ({
+            ...prev,
             total: event.data.contentLength,
             downloaded: 0,
-          };
-          setState(stateRef.current);
+          }));
         } else if (event.event === "Progress") {
-          stateRef.current = {
-            ...stateRef.current,
-            downloaded:
-              event.data.chunkLength + (stateRef.current.downloaded || 0),
-          };
-          setState(stateRef.current);
+          setState((prev) => ({
+            ...prev,
+            downloaded: event.data.chunkLength + (prev.downloaded || 0),
+          }));
         } else if (event.event === "Finished") {
-          stateRef.current = {
-            ...stateRef.current,
-            downloaded: stateRef.current.total,
-          };
-          setState(stateRef.current);
+          setState((prev) => ({
+            ...prev,
+            downloaded: prev.total,
+          }));
         }
       });
 
-      stateRef.current = {
-        ...stateRef.current,
+      setState((prev) => ({
+        ...prev,
         isDownloading: false,
         error: undefined,
-      };
-      setState(stateRef.current);
+      }));
     } catch (err) {
-      stateRef.current = {
-        ...stateRef.current,
+      setState((prev) => ({
+        ...prev,
         isDownloading: false,
         error: err,
-      };
-      setState(stateRef.current);
+      }));
     }
-  }, [setState, stateRef]);
+  }, [setState, store]);
 
   const install = useCallback(() => {
+    const update = store.get(updateAtom).update;
     update?.install().finally(() => {
       if (import.meta.env.TAURI_ENV_PLATFORM === "darwin") {
         relaunch();
       }
     });
-  }, [update]);
+  }, [store]);
 
   return {
     ...state,

@@ -2,9 +2,10 @@ import { Theme } from "@radix-ui/themes";
 import { lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useAppearanceValue } from "shared";
+import { useAutoCheckUpdate } from "@/atom/updateAtom";
 import RouterErrorBoundary from "@/components/RouterErrorBoundary";
+import UpdateDialog from "@/components/UpdateDialog";
 import Root from "../routes/Root";
-
 import styles from "./index.module.less";
 
 const router = createBrowserRouter([
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
 
 export default function App() {
   const appearance = useAppearanceValue();
+  useAutoCheckUpdate();
 
   return (
     <Theme
@@ -62,6 +64,7 @@ export default function App() {
       scaling="100%"
     >
       <RouterProvider router={router} />
+      <UpdateDialog />
     </Theme>
   );
 }

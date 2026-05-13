@@ -1,6 +1,8 @@
 import {
   Button,
+  Card,
   Flex,
+  Heading,
   RadioCards,
   Spinner,
   Switch,
@@ -67,18 +69,20 @@ function SettingSection({
   children,
 }: SettingSectionProps) {
   return (
-    <section className={styles.sectionCard}>
+    <Card variant="surface" className={styles.sectionCard}>
       <div className={styles.sectionIntro}>
         <Text as="p" className={styles.sectionEyebrow}>
           {eyebrow}
         </Text>
-        <h2 className={styles.sectionTitle}>{title}</h2>
+        <Heading size="4" className={styles.sectionTitle}>
+          {title}
+        </Heading>
         <Text as="p" className={styles.sectionDescription}>
           {description}
         </Text>
       </div>
       <div className={styles.sectionBody}>{children}</div>
-    </section>
+    </Card>
   );
 }
 
@@ -93,36 +97,38 @@ function SettingAction({
   tone = "default",
 }: SettingActionProps) {
   return (
-    <div className={styles.actionRow}>
-      <div className={styles.actionMain}>
-        <span className={`${styles.actionIcon} ${icon}`} />
-        <div className={styles.actionText}>
-          <Text as="p" className={styles.actionTitle}>
-            {title}
-          </Text>
-          <Text as="p" className={styles.actionDescription}>
-            {description}
-          </Text>
+    <Card variant="surface" className={styles.actionRow}>
+      <Flex align="center" justify="between" gap="4" className={styles.actionLayout}>
+        <div className={styles.actionMain}>
+          <span className={`${styles.actionIcon} ${icon}`} />
+          <div className={styles.actionText}>
+            <Text as="p" className={styles.actionTitle}>
+              {title}
+            </Text>
+            <Text as="p" className={styles.actionDescription}>
+              {description}
+            </Text>
+          </div>
         </div>
-      </div>
-      <div className={styles.actionMeta}>
-        {value && (
-          <Text as="span" className={styles.actionValue}>
-            {value}
-          </Text>
-        )}
-        {onClick && (
-          <Button
-            size="2"
-            variant={tone === "primary" ? "solid" : "soft"}
-            onClick={onClick}
-            disabled={disabled}
-          >
-            {ctaLabel}
-          </Button>
-        )}
-      </div>
-    </div>
+        <div className={styles.actionMeta}>
+          {value && (
+            <Text as="span" className={styles.actionValue}>
+              {value}
+            </Text>
+          )}
+          {onClick && (
+            <Button
+              size="2"
+              variant={tone === "primary" ? "solid" : "soft"}
+              onClick={onClick}
+              disabled={disabled}
+            >
+              {ctaLabel}
+            </Button>
+          )}
+        </div>
+      </Flex>
+    </Card>
   );
 }
 
@@ -130,7 +136,7 @@ export default function Settings() {
   const [version, setVersion] = useState<string>();
   const [appearance, setAppearance] = useAppearance();
   const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
-  const { update, checking, checkUpdate, setOpenUpdateDialog } =
+  const { hasUpdate, checking, checkUpdate, setOpenUpdateDialog } =
     useUpdateAtom();
 
   const [checkingError, setCheckingError] = useState<string>();
@@ -156,6 +162,11 @@ export default function Settings() {
   }, []);
 
   const onCheckUpdate = useCallback(async () => {
+    if (hasUpdate) {
+      setOpenUpdateDialog(true);
+      return;
+    }
+
     setCheckingError(undefined);
 
     try {
@@ -166,7 +177,7 @@ export default function Settings() {
     } catch (error) {
       setCheckingError(String(error));
     }
-  }, [checkUpdate, setOpenUpdateDialog]);
+  }, [checkUpdate, hasUpdate, setOpenUpdateDialog]);
 
   return (
     <div className={styles.pageWrap}>
@@ -251,12 +262,12 @@ export default function Settings() {
                   icon="icon-label"
                   title="Check for updates"
                   description={
-                    update
+                    hasUpdate
                       ? "A new version is available."
                       : "Look for a new release."
                   }
                   onClick={onCheckUpdate}
-                  ctaLabel={update ? "Open updater" : "Check now"}
+                  ctaLabel={hasUpdate ? "Open updater" : "Check now"}
                   value={checking ? "Checking..." : undefined}
                   disabled={!!checking}
                   tone="primary"
@@ -269,7 +280,7 @@ export default function Settings() {
                   </Flex>
                 )}
 
-                {!checking && !update && !checkingError && (
+                {!checking && !hasUpdate && !checkingError && (
                   <Text as="p" className={styles.inlineNotice}>
                     No update is currently detected.
                   </Text>

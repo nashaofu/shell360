@@ -1,3 +1,4 @@
+import { Flex, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 import styles from "./index.module.less";
 
@@ -8,14 +9,14 @@ type EmptyProps = {
 
 export default function Empty({ desc, children }: EmptyProps) {
   return (
-    <div className={styles.root}>
+    <Flex className={styles.root} direction="column" align="center" gap="3">
       <span className={`icon-empty ${styles.icon}`} aria-hidden="true" />
       {!!desc && (
-        <div className={styles.descWrap}>
-          <p className={styles.desc}>{desc}</p>
-        </div>
+        <Text size="2" color="gray" className={styles.desc}>
+          {desc}
+        </Text>
       )}
       {!!children && <div className={styles.childrenWrap}>{children}</div>}
-    </div>
+    </Flex>
   );
 }

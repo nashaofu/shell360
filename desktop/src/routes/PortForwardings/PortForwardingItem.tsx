@@ -1,6 +1,6 @@
 import { useMemoizedFn } from "ahooks";
-import { createPortal } from "react-dom";
 import { useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
   Dropdown,
@@ -257,7 +257,7 @@ export default function PortForwardingItem({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "rgba(0,0,0,0.5)",
+              background: "var(--black-a7)",
             }}
           >
             {currentJumpHostChainItem ? (

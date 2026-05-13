@@ -42,7 +42,7 @@ export default function useSftpActions({
             icon: (
               <span
                 className="icon-warning-circle"
-                style={{ fontSize: 32, color: "var(--amber-11, #d97706)" }}
+                style={{ fontSize: 32, color: "var(--amber-11)" }}
               />
             ),
             content: `The file "${filename}" already exists. Continuing to upload will overwrite the corresponding file. Do you want to continue?`,

@@ -1,3 +1,4 @@
+import { IconButton } from "@radix-ui/themes";
 import {
   BaseDirectory,
   readTextFile,
@@ -104,13 +105,14 @@ export default function KnownHosts() {
             title={item.host}
             desc={item.type}
             extra={
-              <button
-                type="button"
-                className={styles.deleteButton}
+              <IconButton
+                size="1"
+                variant="ghost"
+                color="gray"
                 onClick={(event) => onDelete(event, item)}
               >
                 <span className="icon-delete" />
-              </button>
+              </IconButton>
             }
           />
         ))}

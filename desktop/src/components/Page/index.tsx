@@ -1,3 +1,4 @@
+import { Card, Flex, Heading, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 import styles from "./index.module.less";
 
@@ -18,14 +19,24 @@ export default function Page({
 }: PageProps) {
   return (
     <section className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerMain}>
-          {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
-          <h1 className={styles.title}>{title}</h1>
-          {description && <p className={styles.description}>{description}</p>}
-        </div>
-        {actions && <div className={styles.actions}>{actions}</div>}
-      </header>
+      <Card variant="surface">
+        <Flex className={styles.header} align="start" justify="between" gap="4">
+          <Flex className={styles.headerMain} direction="column" gap="2">
+            {eyebrow && (
+              <Text size="1" color="gray" className={styles.eyebrow}>
+                {eyebrow}
+              </Text>
+            )}
+            <Heading size="7">{title}</Heading>
+            {description && (
+              <Text size="2" color="gray">
+                {description}
+              </Text>
+            )}
+          </Flex>
+          {actions && <Flex className={styles.actions}>{actions}</Flex>}
+        </Flex>
+      </Card>
       <div className={styles.body}>{children}</div>
     </section>
   );

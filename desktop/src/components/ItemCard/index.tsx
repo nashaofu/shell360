@@ -1,3 +1,4 @@
+import { Card, Flex, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 import styles from "./index.module.less";
 
@@ -22,27 +23,40 @@ export default function ItemCard({
 }: ItemCardProps) {
   const cardClassName = [
     styles.card,
-    variant === "elevation" ? styles.cardElevation : styles.cardOutlined,
+    variant === "elevation" ? styles.cardElevation : "",
   ].join(" ");
 
   return (
-    <div
+    <Card
       className={cardClassName}
+      variant={variant === "outlined" ? "surface" : "classic"}
       style={
         variant === "elevation" && elevation
           ? {
-              boxShadow: `0 ${elevation * 2}px ${elevation * 6}px rgba(0, 0, 0, 0.16)`,
+              boxShadow: `var(--shadow-${Math.min(Math.max(elevation, 1), 6)})`,
             }
           : undefined
       }
       onDoubleClick={onDoubleClick}
     >
-      <div className={styles.iconWrap}>{icon}</div>
-      <div className={styles.content}>
-        <div className={styles.title}>{title}</div>
-        {desc && <div className={styles.desc}>{desc}</div>}
-      </div>
-      {extra && <div className={styles.extra}>{extra}</div>}
-    </div>
+      <Flex align="center" justify="between" gap="3">
+        <Flex align="center" gap="3" className={styles.contentWrap}>
+          <Flex className={styles.iconWrap} align="center" justify="center">
+            {icon}
+          </Flex>
+          <div className={styles.content}>
+            <Text as="div" weight="medium" className={styles.title}>
+              {title}
+            </Text>
+            {desc && (
+              <Text as="div" size="2" color="gray" className={styles.desc}>
+                {desc}
+              </Text>
+            )}
+          </div>
+        </Flex>
+        {extra && <div className={styles.extra}>{extra}</div>}
+      </Flex>
+    </Card>
   );
 }
