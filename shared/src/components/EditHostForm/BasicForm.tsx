@@ -1,4 +1,4 @@
-import { Select, Text, TextField } from "@radix-ui/themes";
+import { IconButton, Select, Text, TextField } from "@radix-ui/themes";
 import { type ChangeEvent, type KeyboardEvent, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
@@ -103,7 +103,11 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             />
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -141,13 +145,16 @@ export default function BasicForm({
                 {values.map((tag) => (
                   <span key={tag} className={styles.tagChip}>
                     {tag}
-                    <button
+                    <IconButton
                       type="button"
-                      className={styles.tagRemoveButton}
+                      variant="ghost"
+                      color="gray"
+                      size="1"
                       onClick={() => onRemoveTag(tag)}
+                      aria-label="Remove tag"
                     >
-                      x
-                    </button>
+                      ×
+                    </IconButton>
                   </span>
                 ))}
                 <input
@@ -167,7 +174,11 @@ export default function BasicForm({
                 </datalist>
               </div>
               {fieldState.invalid && (
-                <Text size="1" className={styles.errorHint}>
+                <Text
+                  size="1"
+                  color="red"
+                  style={{ display: "block", marginTop: 4 }}
+                >
                   {fieldState.error?.message}
                 </Text>
               )}
@@ -213,7 +224,11 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -263,7 +278,11 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -308,7 +327,11 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -356,7 +379,11 @@ export default function BasicForm({
               </Select.Content>
             </Select.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -378,8 +405,6 @@ export default function BasicForm({
             <div className={styles.formField}>
               <TextFieldPassword
                 {...field}
-                sx={undefined}
-                className={styles.formFieldInput}
                 fullWidth
                 label="Password"
                 placeholder="Password"
@@ -433,7 +458,11 @@ export default function BasicForm({
                 </Select.Content>
               </Select.Root>
               {fieldState.invalid && (
-                <Text size="1" className={styles.errorHint}>
+                <Text
+                  size="1"
+                  color="red"
+                  style={{ display: "block", marginTop: 4 }}
+                >
                   {fieldState.error?.message}
                 </Text>
               )}
@@ -471,7 +500,11 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -515,7 +548,11 @@ export default function BasicForm({
               </Select.Content>
             </Select.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}
@@ -564,7 +601,11 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text size="1" className={styles.errorHint}>
+              <Text
+                size="1"
+                color="red"
+                style={{ display: "block", marginTop: 4 }}
+              >
                 {fieldState.error?.message}
               </Text>
             )}

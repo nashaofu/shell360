@@ -101,12 +101,14 @@ export default function JumpHostIdsSelect({
             {value.map((item, index) => (
               <div key={item} className={styles.selectedItem}>
                 <div className={styles.itemTextWrap}>
-                  <div className={styles.itemPrimary}>
+                  <Text as="div" size="2" truncate>
                     {getJumpHostName(hostsMap, item, index)}
-                  </div>
-                  <div
-                    className={styles.itemSecondary}
-                  >{`Jump host #${index + 1}`}</div>
+                  </Text>
+                  <Text
+                    as="div"
+                    size="1"
+                    color="gray"
+                  >{`Jump host #${index + 1}`}</Text>
                 </div>
                 <div className={styles.itemActions}>
                   <IconButton
