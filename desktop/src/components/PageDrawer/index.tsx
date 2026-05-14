@@ -1,3 +1,4 @@
+import { Heading, IconButton, Separator } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Loading } from "shared";
@@ -28,18 +29,21 @@ export default function PageDrawer({
     <div className={styles.overlay} onClick={onCancel}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header} style={{ marginTop: TITLE_BAR_HEIGHT }}>
-          <h6 className={styles.title}>{title}</h6>
+          <Heading size="4" weight="medium">
+            {title}
+          </Heading>
           {!loading && (
-            <button
+            <IconButton
               type="button"
-              className={styles.closeBtn}
+              variant="ghost"
+              color="gray"
               onClick={onCancel}
             >
               <span className="icon-arrow-right" />
-            </button>
+            </IconButton>
           )}
         </div>
-        <hr className={styles.divider} />
+        <Separator size="4" />
         <Loading
           sx={{
             flexGrow: 1,
@@ -54,7 +58,7 @@ export default function PageDrawer({
         </Loading>
         {footer && (
           <>
-            <hr className={styles.divider} />
+            <Separator size="4" />
             <div className={styles.footer}>{footer}</div>
           </>
         )}

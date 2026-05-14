@@ -3,9 +3,9 @@ import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 import { Dropdown } from "@/components/Dropdown";
-import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
+import styles from "../styles.module.less";
 
 export default function UnknownKey({
   error,
@@ -44,13 +44,23 @@ export default function UnknownKey({
           {({ onChangeOpen }) => (
             <div className={styles.splitButtonGroup}>
               <Button
-                className={styles.mainSplitButton}
+                style={{ flex: 1, minWidth: 0 }}
                 onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
               >
                 Continue
               </Button>
               <Button
-                className={styles.moreButton}
+                style={{
+                  width: 34,
+                  minWidth: 34,
+                  padding: 0,
+                  justifyContent: "center",
+               
+                  width: 34,
+                  minWidth: 34,
+                  padding: 0,
+                  justifyContent: "center",
+                }}
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-more" />

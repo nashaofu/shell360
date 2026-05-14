@@ -1,5 +1,4 @@
-import { Text } from "@radix-ui/themes";
-import { type ChangeEvent } from "react";
+import { Button, IconButton, Select, Text } from "@radix-ui/themes";
 import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
@@ -94,10 +93,6 @@ export default function JumpHostIdsSelect({
         : undefined
       : undefined;
 
-  const onHostSelectChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setSelectedHostId(event.target.value);
-  };
-
   return (
     <div className={styles.wrapper} style={wrapperStyle}>
       {value.length > 0 && (
@@ -114,29 +109,35 @@ export default function JumpHostIdsSelect({
                   >{`Jump host #${index + 1}`}</div>
                 </div>
                 <div className={styles.itemActions}>
-                  <button
+                  <IconButton
                     type="button"
-                    className={styles.iconButton}
+                    variant="outline"
+                    color="gray"
+                    size="1"
                     onClick={() => handleMoveUp(index)}
                     disabled={index === 0}
                   >
                     <span className="icon-arrow-up" />
-                  </button>
-                  <button
+                  </IconButton>
+                  <IconButton
                     type="button"
-                    className={styles.iconButton}
+                    variant="outline"
+                    color="gray"
+                    size="1"
                     onClick={() => handleMoveDown(index)}
                     disabled={index === value.length - 1}
                   >
                     <span className="icon-arrow-down" />
-                  </button>
-                  <button
+                  </IconButton>
+                  <IconButton
                     type="button"
-                    className={styles.iconButton}
+                    variant="outline"
+                    color="gray"
+                    size="1"
                     onClick={() => handleRemove(index)}
                   >
                     <span className="icon-delete" />
-                  </button>
+                  </IconButton>
                 </div>
               </div>
             ))}
@@ -154,38 +155,38 @@ export default function JumpHostIdsSelect({
           >
             Select jump host
           </Text>
-          <select
-            className={
-              error ? `${styles.select} ${styles.selectError}` : styles.select
-            }
+          <Select.Root
             value={selectedHostId}
-            onChange={onHostSelectChange}
+            onValueChange={setSelectedHostId}
             disabled={availableHosts.length === 0}
           >
-            <option value="" disabled>
-              Select jump host
-            </option>
-            {availableHosts.map((host) => (
-              <option key={host.id} value={host.id}>
-                {host.name || host.hostname}
-              </option>
-            ))}
-          </select>
+            <Select.Trigger
+              style={{ width: "100%" }}
+              placeholder="Select jump host"
+            />
+            <Select.Content>
+              {availableHosts.map((host) => (
+                <Select.Item key={host.id} value={host.id}>
+                  {host.name || host.hostname}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
           {helperText && (
-            <Text
-              size="1"
-              className={
-                error ? `${styles.helper} ${styles.helperError}` : styles.helper
-              }
-            >
+            <Text size="1" color={error ? "red" : undefined}>
               {helperText}
             </Text>
           )}
         </div>
-        <button type="button" className={styles.addButton} onClick={handleAdd}>
+        <Button
+          type="button"
+          variant="outline"
+          color="gray"
+          onClick={handleAdd}
+        >
           <span className="icon-add" />
           Add
-        </button>
+        </Button>
       </div>
     </div>
   );

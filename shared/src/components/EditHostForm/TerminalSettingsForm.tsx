@@ -1,11 +1,10 @@
-import { Select, Text } from "@radix-ui/themes";
-import { type ChangeEvent } from "react";
+import { Select, Text, TextField } from "@radix-ui/themes";
+import type { ChangeEvent } from "react";
 import { Controller } from "react-hook-form";
 
 import { TERMINAL_THEMES } from "../XTerminal/themes";
-
-import type { EditHostFormApi } from "./types";
 import styles from "./TerminalSettingsForm.module.less";
+import type { EditHostFormApi } from "./types";
 
 type TerminalSettingsFormProps = {
   formApi: EditHostFormApi;
@@ -56,8 +55,7 @@ export default function TerminalSettingsForm({
             >
               Font family
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Font family"
               onChange={onInputChange(field.onChange)}
@@ -102,8 +100,7 @@ export default function TerminalSettingsForm({
             >
               Font size
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Font size"
               type="number"
@@ -142,7 +139,7 @@ export default function TerminalSettingsForm({
               onValueChange={field.onChange}
             >
               <Select.Trigger
-                className={styles.fullWidthTrigger}
+                style={{ width: "100%" }}
                 placeholder="Select theme"
               />
               <Select.Content>

@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Flex, TextField } from "@radix-ui/themes";
 import { useCallback, useMemo, useState } from "react";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
@@ -40,33 +40,18 @@ export default function PortForwardings() {
       title="Port Forwardings"
       description="Create and reuse local, remote, and dynamic forwarding rules alongside the hosts they depend on."
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
-          <input
-            className="rt-reset rt-TextFieldInput"
-            value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
+      <Flex align="center" justify="between" my="4" gap="3">
+        <TextField.Root
+          style={{ flexGrow: 1, maxWidth: 380 }}
+          value={keyword}
+          placeholder="Search..."
+          onChange={(event) => setKeyword(event.target.value)}
+        />
         <Button onClick={() => setIsOpenAddPortForwarding(true)}>
           <span className="icon-add" />
           Add
         </Button>
-      </div>
+      </Flex>
       <AutoRepeatGrid
         sx={{
           gap: 2,

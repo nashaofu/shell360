@@ -6,64 +6,12 @@
 
 .fullWidth {
   width: 100%;
+
+  :global(.rt-TextFieldRoot) {
+    width: 100%;
+  }
 }
 
 .label {
   display: inline-block;
-}
-
-.inputWrap {
-  height: 36px;
-  border: 1px solid var(--gray-7, #d1d5db);
-  border-radius: 8px;
-  background: var(--color-background, #ffffff);
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-}
-
-.inputWrapError {
-  border-color: var(--red-9, #e11d48);
-}
-
-.inputWrap:focus-within {
-  border-color: var(--accent-9, #3b82f6);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
-}
-
-.icon {
-  display: inline-flex;
-  color: var(--gray-10, #6b7280);
-  margin-right: 6px;
-}
-
-.input {
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--gray-12, #111827);
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-}
-
-.visibilityButton {
-  width: 24px;
-  height: 24px;
-  border: 0;
-  background: transparent;
-  color: var(--gray-10, #6b7280);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.helper {
-  color: var(--gray-10, #6b7280);
-}
-
-.helperError {
-  color: var(--red-11, #be123c);
 }

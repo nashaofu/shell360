@@ -1,5 +1,5 @@
-import { Select, Text } from "@radix-ui/themes";
-import { type ChangeEvent } from "react";
+import { Select, Text, TextField } from "@radix-ui/themes";
+import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { PortForwardingType } from "tauri-plugin-data";
 
@@ -76,8 +76,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
             >
               Name
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Name"
               onChange={onInputChange(field.onChange)}
@@ -113,7 +112,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               value={field.value || PortForwardingType.Local}
               onValueChange={(value) => field.onChange(value)}
             >
-              <Select.Trigger className={styles.fullWidthTrigger} />
+              <Select.Trigger style={{ width: "100%" }} />
               <Select.Content>
                 {PORT_FORWARDING_TYPES.map((item) => (
                   <Select.Item key={item.value} value={item.value}>
@@ -155,7 +154,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               onValueChange={(value) => field.onChange(value)}
             >
               <Select.Trigger
-                className={styles.fullWidthTrigger}
+                style={{ width: "100%" }}
                 placeholder="Select host"
               />
               <Select.Content>
@@ -202,8 +201,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
             >
               Local address
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Local address"
               onChange={onInputChange(field.onChange)}
@@ -248,8 +246,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
             >
               Local port
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value === undefined ? "" : field.value}
               placeholder="Local port"
               type="number"
@@ -293,8 +290,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
                 >
                   Remote address
                 </Text>
-                <input
-                  className={styles.input}
+                <TextField.Root
                   value={field.value || ""}
                   placeholder="Remote address"
                   onChange={onInputChange(field.onChange)}
@@ -339,8 +335,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
                 >
                   Remote port
                 </Text>
-                <input
-                  className={styles.input}
+                <TextField.Root
                   value={field.value === undefined ? "" : field.value}
                   placeholder="Remote port"
                   type="number"

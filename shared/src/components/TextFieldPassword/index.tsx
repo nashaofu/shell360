@@ -1,15 +1,13 @@
+import { IconButton, Text, TextField } from "@radix-ui/themes";
 import {
   type ChangeEvent,
   type FocusEvent,
   type ForwardedRef,
-  type KeyboardEvent,
   forwardRef,
+  type KeyboardEvent,
   useCallback,
-  useImperativeHandle,
-  useRef,
   useState,
 } from "react";
-import { Text } from "@radix-ui/themes";
 import styles from "./index.module.less";
 
 type PasswordInputProps = {
@@ -48,28 +46,10 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   const [isVisible, setIsVisible] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const onVisibilityChange = useCallback(() => {
-    const selectionStart = inputRef.current?.selectionStart ?? null;
-    const selectionEnd = inputRef.current?.selectionEnd ?? null;
-    const selectionDirection =
-      inputRef.current?.selectionDirection ?? undefined;
     setIsVisible((val) => !val);
-
-    requestAnimationFrame(() => {
-      inputRef?.current?.setSelectionRange(
-        selectionStart,
-        selectionEnd,
-        selectionDirection,
-      );
-    });
   }, []);
-
-  useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(
-    ref,
-    () => inputRef.current,
-  );
 
   const rootClassName = [
     styles.root,
@@ -87,47 +67,41 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
         </Text>
       )}
 
-      <div
-        className={
-          error
-            ? `${styles.inputWrap} ${styles.inputWrapError}`
-            : styles.inputWrap
-        }
+      <TextField.Root
+        ref={ref}
+        type={isVisible ? "text" : "password"}
+        name={name}
+        value={value || ""}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        onChange={onChange}
+        onBlur={onBlur}
+        onKeyUp={onKeyUp}
+        color={error ? "red" : undefined}
       >
-        <span className={`${styles.icon} icon-lock`} aria-hidden="true" />
-        <input
-          ref={inputRef}
-          className={styles.input}
-          name={name}
-          value={value || ""}
-          type={isVisible ? "text" : "password"}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          onChange={onChange}
-          onBlur={onBlur}
-          onKeyUp={onKeyUp}
-        />
-        <button
-          type="button"
-          className={styles.visibilityButton}
-          onClick={onVisibilityChange}
-          aria-label={isVisible ? "Hide password" : "Show password"}
-        >
-          <span
-            className={isVisible ? "icon-visibility-off" : "icon-visibility"}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
+        <TextField.Slot>
+          <span className="icon-lock" aria-hidden="true" />
+        </TextField.Slot>
+        <TextField.Slot side="right">
+          <IconButton
+            type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
+            onClick={onVisibilityChange}
+            aria-label={isVisible ? "Hide password" : "Show password"}
+          >
+            <span
+              className={isVisible ? "icon-visibility-off" : "icon-visibility"}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </TextField.Slot>
+      </TextField.Root>
 
       {helperText && (
-        <Text
-          size="1"
-          className={
-            error ? `${styles.helper} ${styles.helperError}` : styles.helper
-          }
-        >
+        <Text size="1" color={error ? "red" : "gray"}>
           {helperText}
         </Text>
       )}

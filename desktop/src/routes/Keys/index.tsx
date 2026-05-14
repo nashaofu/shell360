@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Flex, TextField } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";
@@ -117,31 +117,16 @@ export default function Keys() {
       title="Keys"
       description="Store and maintain SSH identities used across saved hosts, tunnels, and authentication prompts."
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
-          <input
-            className="rt-reset rt-TextFieldInput"
-            value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
+      <Flex align="center" justify="between" my="4" gap="3">
+        <TextField.Root
+          style={{ flexGrow: 1, maxWidth: 380 }}
+          value={keyword}
+          placeholder="Search..."
+          onChange={(event) => setKeyword(event.target.value)}
+        />
         <Dropdown menus={menus}>
           {({ onChangeOpen }) => (
-            <div style={{ display: "flex", gap: 1 }}>
+            <Flex gap="1">
               <Button onClick={() => setIsOpenAddKey(true)}>
                 <span className="icon-add" />
                 Add key
@@ -152,10 +137,10 @@ export default function Keys() {
               >
                 <span className="icon-more" />
               </Button>
-            </div>
+            </Flex>
           )}
         </Dropdown>
-      </div>
+      </Flex>
       <AutoRepeatGrid
         sx={{
           gap: 2,

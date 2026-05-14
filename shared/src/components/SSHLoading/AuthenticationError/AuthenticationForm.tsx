@@ -1,9 +1,10 @@
 import { Select, Text } from "@radix-ui/themes";
-import { type ChangeEvent, useState } from "react";
+import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
 
 import { useKeys } from "@/hooks/useKeys";
+import { TextFieldPassword } from "../../TextFieldPassword";
 import styles from "../styles.module.less";
 
 export type AuthenticationFormFields = {
@@ -19,47 +20,6 @@ export type AuthenticationFormProps = {
 };
 
 const ADD_KEY_VALUE = "__add_key__";
-
-type PasswordFieldProps = {
-  value?: string;
-  error?: boolean;
-  placeholder?: string;
-  onChange?: (value: string) => void;
-};
-
-function PasswordField({ value, placeholder, onChange }: PasswordFieldProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange?.(event.target.value);
-  };
-
-  return (
-    <div className={styles.passwordInputRoot}>
-      <span className={styles.passwordSlot}>
-        <span className="icon-lock" />
-      </span>
-      <input
-        className={styles.passwordInput}
-        value={value || ""}
-        type={isVisible ? "text" : "password"}
-        placeholder={placeholder}
-        onChange={onInputChange}
-      />
-      <span className={styles.passwordSlot}>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={() => setIsVisible((v) => !v)}
-        >
-          <span
-            className={isVisible ? "icon-visibility-off" : "icon-visibility"}
-          />
-        </button>
-      </span>
-    </div>
-  );
-}
 
 export function AuthenticationForm({
   formApi,
@@ -94,7 +54,7 @@ export function AuthenticationForm({
               value={field.value || AuthenticationMethod.Password}
               onValueChange={(value) => field.onChange(value)}
             >
-              <Select.Trigger className={styles.fullWidthTrigger} />
+              <Select.Trigger style={{ width: "100%" }} />
               <Select.Content>
                 <Select.Item value={AuthenticationMethod.Password}>
                   Password
@@ -136,11 +96,13 @@ export function AuthenticationForm({
               >
                 Password
               </Text>
-              <PasswordField
-                value={field.value}
+              <TextFieldPassword
+                value={field.value || ""}
                 error={fieldState.invalid}
                 placeholder="Password"
-                onChange={field.onChange}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  field.onChange(e.target.value)
+                }
               />
               {fieldState.invalid && (
                 <Text size="1" className={styles.errorHint}>
@@ -185,7 +147,7 @@ export function AuthenticationForm({
                 }}
               >
                 <Select.Trigger
-                  className={styles.fullWidthTrigger}
+                  style={{ width: "100%" }}
                   placeholder="Select key"
                 />
                 <Select.Content>

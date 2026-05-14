@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Heading } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { type KeyboardEvent, useCallback, useState } from "react";
 import { Loading, TextFieldPassword } from "shared";
@@ -72,9 +72,9 @@ export default function UnlockVault() {
     <div className={styles.root}>
       <div className={styles.panel}>
         <Loading loading={loading} size={48}>
-          <h2 className={styles.title}>
+          <Heading size="5" align="center">
             Enter your password to unlock application data
-          </h2>
+          </Heading>
           <div className={styles.passwordWrap}>
             <TextFieldPassword
               fullWidth
@@ -85,14 +85,10 @@ export default function UnlockVault() {
             ></TextFieldPassword>
           </div>
           <div className={styles.actions}>
-            <Button className={styles.actionButton} onClick={onUnlock}>
+            <Button style={{ width: "100%" }} onClick={onUnlock}>
               Unlock
             </Button>
-            <Button
-              className={styles.actionButton}
-              color="red"
-              onClick={onReset}
-            >
+            <Button style={{ width: "100%" }} color="red" onClick={onReset}>
               Reset APP
             </Button>
           </div>

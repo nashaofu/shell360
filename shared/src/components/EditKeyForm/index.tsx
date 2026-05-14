@@ -1,4 +1,4 @@
-import { Text } from "@radix-ui/themes";
+import { IconButton, Text, TextArea, TextField } from "@radix-ui/themes";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { type ChangeEvent, useCallback } from "react";
@@ -103,8 +103,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
             >
               Name
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Name"
               onChange={onInputChange(field.onChange)}
@@ -137,16 +136,16 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
               >
                 Private key
               </Text>
-              <button
+              <IconButton
                 type="button"
-                className={styles.importButton}
+                variant="outline"
+                color="gray"
                 onClick={importPrivatekey}
               >
                 <span className="icon-file-upload" />
-              </button>
+              </IconButton>
             </div>
-            <textarea
-              className={styles.textarea}
+            <TextArea
               value={field.value || ""}
               placeholder="Private key"
               rows={6}
@@ -174,16 +173,16 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
               >
                 Public key
               </Text>
-              <button
+              <IconButton
                 type="button"
-                className={styles.importButton}
+                variant="outline"
+                color="gray"
                 onClick={importPublicKey}
               >
                 <span className="icon-file-upload" />
-              </button>
+              </IconButton>
             </div>
-            <textarea
-              className={styles.textarea}
+            <TextArea
               value={field.value || ""}
               placeholder="Public key"
               rows={6}
@@ -229,16 +228,16 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
               >
                 Certificate
               </Text>
-              <button
+              <IconButton
                 type="button"
-                className={styles.importButton}
+                variant="outline"
+                color="gray"
                 onClick={importCertificate}
               >
                 <span className="icon-file-upload" />
-              </button>
+              </IconButton>
             </div>
-            <textarea
-              className={styles.textarea}
+            <TextArea
               value={field.value || ""}
               placeholder="Certificate"
               rows={6}

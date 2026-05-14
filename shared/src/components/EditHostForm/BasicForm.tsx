@@ -1,4 +1,4 @@
-import { Select, Text } from "@radix-ui/themes";
+import { Select, Text, TextField } from "@radix-ui/themes";
 import { type ChangeEvent, type KeyboardEvent, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
@@ -7,9 +7,9 @@ import { useHosts } from "@/hooks/useHosts";
 import { useKeys } from "@/hooks/useKeys";
 
 import { TextFieldPassword } from "../TextFieldPassword";
+import styles from "./BasicForm.module.less";
 import { TERMINAL_TYPES } from "./terminalTypes";
 import type { EditHostFormApi } from "./types";
-import styles from "./BasicForm.module.less";
 
 type BasicFormProps = {
   formApi: EditHostFormApi;
@@ -97,8 +97,7 @@ export default function BasicForm({
             >
               Name
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Name"
               onChange={onInputChange(field.onChange)}
@@ -204,15 +203,15 @@ export default function BasicForm({
             >
               Hostname
             </Text>
-            <div className={styles.inputWithIcon}>
-              <span className="icon-host" aria-hidden="true" />
-              <input
-                className={styles.inputBare}
-                value={field.value || ""}
-                placeholder="Hostname"
-                onChange={onInputChange(field.onChange)}
-              />
-            </div>
+            <TextField.Root
+              value={field.value || ""}
+              placeholder="Hostname"
+              onChange={onInputChange(field.onChange)}
+            >
+              <TextField.Slot>
+                <span className="icon-host" aria-hidden="true" />
+              </TextField.Slot>
+            </TextField.Root>
             {fieldState.invalid && (
               <Text size="1" className={styles.errorHint}>
                 {fieldState.error?.message}
@@ -253,16 +252,16 @@ export default function BasicForm({
             >
               Port
             </Text>
-            <div className={styles.inputWithIcon}>
-              <span className="icon-number" aria-hidden="true" />
-              <input
-                className={styles.inputBare}
-                value={field.value || ""}
-                placeholder="Port"
-                type="number"
-                onChange={onInputChange(field.onChange)}
-              />
-            </div>
+            <TextField.Root
+              value={field.value || ""}
+              placeholder="Port"
+              type="number"
+              onChange={onInputChange(field.onChange)}
+            >
+              <TextField.Slot>
+                <span className="icon-number" aria-hidden="true" />
+              </TextField.Slot>
+            </TextField.Root>
             {fieldState.invalid && (
               <Text size="1" className={styles.errorHint}>
                 {fieldState.error?.message}
@@ -299,15 +298,15 @@ export default function BasicForm({
             >
               Username
             </Text>
-            <div className={styles.inputWithIcon}>
-              <span className="icon-user" aria-hidden="true" />
-              <input
-                className={styles.inputBare}
-                value={field.value || ""}
-                placeholder="Username"
-                onChange={onInputChange(field.onChange)}
-              />
-            </div>
+            <TextField.Root
+              value={field.value || ""}
+              placeholder="Username"
+              onChange={onInputChange(field.onChange)}
+            >
+              <TextField.Slot>
+                <span className="icon-user" aria-hidden="true" />
+              </TextField.Slot>
+            </TextField.Root>
             {fieldState.invalid && (
               <Text size="1" className={styles.errorHint}>
                 {fieldState.error?.message}
@@ -341,7 +340,7 @@ export default function BasicForm({
               onValueChange={field.onChange}
             >
               <Select.Trigger
-                className={styles.fullWidthTrigger}
+                style={{ width: "100%" }}
                 placeholder="Authentication method"
               />
               <Select.Content>
@@ -423,10 +422,7 @@ export default function BasicForm({
                   field.onChange(value);
                 }}
               >
-                <Select.Trigger
-                  className={styles.fullWidthTrigger}
-                  placeholder="Key"
-                />
+                <Select.Trigger style={{ width: "100%" }} placeholder="Key" />
                 <Select.Content>
                   <Select.Item value={ADD_KEY_VALUE}>+ Add key</Select.Item>
                   {keys.map((item) => (
@@ -465,15 +461,15 @@ export default function BasicForm({
             >
               Startup Command
             </Text>
-            <div className={styles.inputWithIcon}>
-              <span className="icon-code" aria-hidden="true" />
-              <input
-                className={styles.inputBare}
-                value={field.value || ""}
-                placeholder="Command to execute after connection (optional)"
-                onChange={onInputChange(field.onChange)}
-              />
-            </div>
+            <TextField.Root
+              value={field.value || ""}
+              placeholder="Command to execute after connection (optional)"
+              onChange={onInputChange(field.onChange)}
+            >
+              <TextField.Slot>
+                <span className="icon-code" aria-hidden="true" />
+              </TextField.Slot>
+            </TextField.Root>
             {fieldState.invalid && (
               <Text size="1" className={styles.errorHint}>
                 {fieldState.error?.message}
@@ -507,7 +503,7 @@ export default function BasicForm({
               onValueChange={field.onChange}
             >
               <Select.Trigger
-                className={styles.fullWidthTrigger}
+                style={{ width: "100%" }}
                 placeholder="Terminal type"
               />
               <Select.Content>
@@ -558,15 +554,15 @@ export default function BasicForm({
             >
               Environment variables
             </Text>
-            <div className={styles.inputWithIcon}>
-              <span className="icon-variable" aria-hidden="true" />
-              <input
-                className={styles.inputBare}
-                value={field.value || ""}
-                placeholder="e.g. KEY1=VALUE1,KEY2=VALUE2"
-                onChange={onInputChange(field.onChange)}
-              />
-            </div>
+            <TextField.Root
+              value={field.value || ""}
+              placeholder="e.g. KEY1=VALUE1,KEY2=VALUE2"
+              onChange={onInputChange(field.onChange)}
+            >
+              <TextField.Slot>
+                <span className="icon-variable" aria-hidden="true" />
+              </TextField.Slot>
+            </TextField.Root>
             {fieldState.invalid && (
               <Text size="1" className={styles.errorHint}>
                 {fieldState.error?.message}

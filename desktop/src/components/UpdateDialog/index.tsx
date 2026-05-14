@@ -1,10 +1,12 @@
 import {
   Badge,
+  Box,
   Button,
   Callout,
   Card,
   Dialog,
   Flex,
+  Grid,
   Progress,
   Text,
 } from "@radix-ui/themes";
@@ -114,12 +116,7 @@ export default function UpdateDialog() {
     <Dialog.Root open={openUpdateDialog}>
       <Dialog.Content>
         <Flex direction="column" gap="4">
-          <Flex
-            className={styles.titleRow}
-            align="center"
-            justify="between"
-            gap="3"
-          >
+          <Flex align="center" justify="between" gap="3">
             <Dialog.Title>
               {isDownloadSuccess ? "Update Ready" : "New Version Available"}
             </Dialog.Title>
@@ -141,58 +138,72 @@ export default function UpdateDialog() {
 
           <Card variant="surface">
             <Flex direction="column" gap="2">
-              <Text size="1" color="gray" className={styles.sectionTitle}>
+              <Text size="1" color="gray">
                 Version details
               </Text>
-              <div className={styles.infoGrid}>
-                <Flex direction="column" gap="1" className={styles.infoItem}>
+              <Grid columns={{ initial: "1", sm: "3" }} gap="2">
+                <Box
+                  p="3"
+                  style={{
+                    background: "var(--gray-a2)",
+                    borderRadius: "var(--radius-3)",
+                  }}
+                >
                   <Text size="1" color="gray">
                     Current
                   </Text>
-                  <Text size="2" weight="medium" className={styles.metaText}>
+                  <Text as="p" size="2" weight="medium">
                     {currentVersion}
                   </Text>
-                </Flex>
-                <Flex direction="column" gap="1" className={styles.infoItem}>
+                </Box>
+                <Box
+                  p="3"
+                  style={{
+                    background: "var(--gray-a2)",
+                    borderRadius: "var(--radius-3)",
+                  }}
+                >
                   <Text size="1" color="gray">
                     Latest
                   </Text>
-                  <Text size="2" weight="medium" className={styles.metaText}>
+                  <Text as="p" size="2" weight="medium">
                     {nextVersion}
                   </Text>
-                </Flex>
-                <Flex direction="column" gap="1" className={styles.infoItem}>
+                </Box>
+                <Box
+                  p="3"
+                  style={{
+                    background: "var(--gray-a2)",
+                    borderRadius: "var(--radius-3)",
+                  }}
+                >
                   <Text size="1" color="gray">
                     Published
                   </Text>
-                  <Text size="2" weight="medium" className={styles.metaText}>
+                  <Text as="p" size="2" weight="medium">
                     {publishedAt}
                   </Text>
-                </Flex>
-              </div>
+                </Box>
+              </Grid>
             </Flex>
           </Card>
 
           {shouldShowProgress && (
             <Card variant="surface">
               <Flex direction="column" gap="2">
-                <Text size="1" color="gray" className={styles.sectionTitle}>
+                <Text size="1" color="gray">
                   Download progress
                 </Text>
-                <Flex
-                  align="center"
-                  justify="between"
-                  className={styles.metaText}
-                >
+                <Flex align="center" justify="between">
                   <Text size="1" color="gray">
                     {progressLabel}
                   </Text>
-                  <Text size="1" weight="medium" className={styles.metaText}>
+                  <Text size="1" weight="medium">
                     {progress}%
                   </Text>
                 </Flex>
                 <Progress value={progress} max={100} />
-                <Text size="1" color="gray" className={styles.metaText}>
+                <Text size="1" color="gray">
                   {downloadedText}
                 </Text>
               </Flex>
@@ -201,7 +212,7 @@ export default function UpdateDialog() {
 
           <Card variant="surface">
             <Flex direction="column" gap="2">
-              <Text size="1" color="gray" className={styles.sectionTitle}>
+              <Text size="1" color="gray">
                 Release notes
               </Text>
               <div className={styles.notesBox}>{releaseNotes}</div>
@@ -210,13 +221,13 @@ export default function UpdateDialog() {
 
           {!!error && (
             <Callout.Root color="red" role="alert">
-              <Callout.Text className={styles.errorText}>
+              <Callout.Text style={{ wordBreak: "break-word" }}>
                 {String(error)}
               </Callout.Text>
             </Callout.Root>
           )}
 
-          <Flex className={styles.actionRow} justify="end" gap="3" pt="1">
+          <Flex justify="end" gap="3" pt="1" wrap="wrap">
             <Button
               variant="outline"
               disabled={isDownloading}

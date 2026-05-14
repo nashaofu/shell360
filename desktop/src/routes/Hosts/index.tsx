@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Flex, TextField } from "@radix-ui/themes";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -169,58 +169,33 @@ export default function Hosts() {
       title="Hosts"
       description="Manage saved SSH endpoints, filter by tags, and open new terminal sessions without leaving the workspace."
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
-          <input
-            className="rt-reset rt-TextFieldInput"
-            value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <Flex align="center" justify="between" my="4" gap="3">
+        <TextField.Root
+          style={{ flexGrow: 1, maxWidth: 380 }}
+          value={keyword}
+          placeholder="Search..."
+          onChange={(event) => setKeyword(event.target.value)}
+        />
+        <Flex align="center" gap="2">
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
             {({ onChangeOpen, label }) => (
-              <button
+              <Button
                 type="button"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  background: "none",
-                  border: "1px solid var(--gray-a6)",
-                  borderRadius: "var(--radius-2)",
-                  padding: "4px 10px",
-                  cursor: "pointer",
-                  color: "inherit",
-                  height: 36,
-                }}
+                variant="outline"
+                color="gray"
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-label" />
                 {label}
-              </button>
+              </Button>
             )}
           </HostTagsSelect>
           <Button onClick={() => setIsOpenAddHost(true)}>
             <span className="icon-add" />
             Add host
           </Button>
-        </div>
-      </div>
+        </Flex>
+      </Flex>
       <AutoRepeatGrid
         sx={{
           gap: 2,

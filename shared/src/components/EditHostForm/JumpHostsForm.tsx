@@ -1,9 +1,9 @@
-import { Text } from "@radix-ui/themes";
+import { SegmentedControl, Text } from "@radix-ui/themes";
 import { Controller } from "react-hook-form";
 
 import JumpHostIdsSelect from "./JumpHostIdsSelect";
-import type { EditHostFormApi } from "./types";
 import styles from "./JumpHostsForm.module.less";
+import type { EditHostFormApi } from "./types";
 
 type JumpHostsFormProps = {
   formApi: EditHostFormApi;
@@ -32,30 +32,21 @@ export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
         control={formApi.control}
         render={({ field }) => {
           return (
-            <div className={styles.toggleGroup}>
-              <button
-                type="button"
-                className={
-                  !field.value
-                    ? `${styles.toggleButton} ${styles.toggleButtonActive}`
-                    : styles.toggleButton
-                }
-                onClick={() => field.onChange(false)}
-              >
+            <SegmentedControl.Root
+              value={field.value ? "true" : "false"}
+              onValueChange={(v) => field.onChange(v === "true")}
+            >
+              <SegmentedControl.Item value="false">
                 Disabled
-              </button>
-              <button
-                type="button"
-                className={
-                  field.value
-                    ? `${styles.toggleButton} ${styles.toggleButtonActive}`
-                    : styles.toggleButton
-                }
-                onClick={() => field.onChange(true)}
-              >
+              </SegmentedControl.Item>
+              <SegmentedControl.Item value="true">
                 Enabled
-              </button>
-            </div>
+              
+              </SegmentedControl.Item>
+              <SegmentedControl.Item value="true">
+                Enabled
+              </SegmentedControl.Item>
+            </SegmentedControl.Root>
           );
         }}
       />

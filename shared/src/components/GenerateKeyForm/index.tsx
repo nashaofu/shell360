@@ -1,5 +1,5 @@
-import { Select, Text } from "@radix-ui/themes";
-import { type ChangeEvent } from "react";
+import { Select, Text, TextField } from "@radix-ui/themes";
+import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { TextFieldPassword } from "../TextFieldPassword";
@@ -103,8 +103,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
             >
               Name
             </Text>
-            <input
-              className={styles.input}
+            <TextField.Root
               value={field.value || ""}
               placeholder="Name"
               onChange={onInputChange(field.onChange)}
@@ -141,7 +140,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
               onValueChange={(value) => field.onChange(value)}
             >
               <Select.Trigger
-                className={styles.fullWidthTrigger}
+                style={{ width: "100%" }}
                 placeholder="Select algorithm"
               />
               <Select.Content>
@@ -185,7 +184,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
                 onValueChange={(value) => field.onChange(Number(value))}
               >
                 <Select.Trigger
-                  className={styles.fullWidthTrigger}
+                  style={{ width: "100%" }}
                   placeholder="Select bit size"
                 />
                 <Select.Content>
@@ -230,7 +229,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
                 onValueChange={(value) => field.onChange(value)}
               >
                 <Select.Trigger
-                  className={styles.fullWidthTrigger}
+                  style={{ width: "100%" }}
                   placeholder="Select curve"
                 />
                 <Select.Content>

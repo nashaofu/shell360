@@ -3,8 +3,6 @@ import { createElement, type ReactNode } from "react";
 import type { Host } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
-import styles from "./styles.module.less";
-
 export type ErrorProps = {
   host: Host;
   loading?: boolean;
@@ -18,7 +16,6 @@ export type ErrorProps = {
 
 type StatusButtonProps = {
   variant?: "outlined" | "contained";
-  className?: string;
   disabled?: boolean;
   children: ReactNode;
   onClick?: () => unknown;
@@ -26,7 +23,6 @@ type StatusButtonProps = {
 
 export function StatusButton({
   variant = "contained",
-  className,
   disabled,
   children,
   onClick,
@@ -34,7 +30,7 @@ export function StatusButton({
   return createElement(
     Button,
     {
-      className: `${styles.statusButton}${className ? ` ${className}` : ""}`,
+      style: { minWidth: 150 },
       variant: variant === "outlined" ? "outline" : "solid",
       disabled,
       onClick,

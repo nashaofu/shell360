@@ -6,9 +6,9 @@ import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
 
 import { Dropdown } from "@/components/Dropdown";
 import { useHosts } from "@/hooks/useHosts";
-import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
+import styles from "../styles.module.less";
 
 import {
   AuthenticationForm,
@@ -132,7 +132,7 @@ export default function AuthenticationError({
           {({ onChangeOpen }) => (
             <div className={styles.splitButtonGroup}>
               <Button
-                className={styles.mainSplitButton}
+                style={{ flex: 1, minWidth: 0 }}
                 onClick={formApi.handleSubmit((values) =>
                   onContinue(values, false),
                 )}
@@ -140,7 +140,17 @@ export default function AuthenticationError({
                 Continue
               </Button>
               <Button
-                className={styles.moreButton}
+                style={{
+                  width: 34,
+                  minWidth: 34,
+                  padding: 0,
+                  justifyContent: "center",
+               
+                  width: 34,
+                  minWidth: 34,
+                  padding: 0,
+                  justifyContent: "center",
+                }}
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-more" />
