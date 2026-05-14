@@ -69,19 +69,23 @@ function SettingSection({
   children,
 }: SettingSectionProps) {
   return (
-    <Card variant="surface" className={styles.sectionCard}>
-      <div className={styles.sectionIntro}>
-        <Text as="p" className={styles.sectionEyebrow}>
-          {eyebrow}
-        </Text>
-        <Heading size="4" className={styles.sectionTitle}>
-          {title}
-        </Heading>
-        <Text as="p" className={styles.sectionDescription}>
-          {description}
-        </Text>
-      </div>
-      <div className={styles.sectionBody}>{children}</div>
+    <Card variant="surface">
+      <Flex direction="column" gap="4">
+        <Flex direction="column" gap="2">
+          <Text as="p" className={styles.sectionEyebrow}>
+            {eyebrow}
+          </Text>
+          <Heading size="4" className={styles.sectionTitle}>
+            {title}
+          </Heading>
+          <Text as="p" className={styles.sectionDescription}>
+            {description}
+          </Text>
+        </Flex>
+        <Flex direction="column" gap="3">
+          {children}
+        </Flex>
+      </Flex>
     </Card>
   );
 }
@@ -97,8 +101,13 @@ function SettingAction({
   tone = "default",
 }: SettingActionProps) {
   return (
-    <Card variant="surface" className={styles.actionRow}>
-      <Flex align="center" justify="between" gap="4" className={styles.actionLayout}>
+    <Card variant="surface">
+      <Flex
+        align={{ initial: "start", sm: "center" }}
+        direction={{ initial: "column", sm: "row" }}
+        justify="between"
+        gap="4"
+      >
         <div className={styles.actionMain}>
           <span className={`${styles.actionIcon} ${icon}`} />
           <div className={styles.actionText}>
@@ -225,20 +234,27 @@ export default function Settings() {
               description="Manage local encryption and trusted hosts."
             >
               <div className={styles.securityPanel}>
-                <div className={styles.securityHighlight}>
-                  <div>
-                    <Text as="p" className={styles.highlightTitle}>
-                      Local encryption
-                    </Text>
-                    <Text as="p" className={styles.highlightDescription}>
-                      Protect saved application data on this device.
-                    </Text>
-                  </div>
-                  <Switch
-                    checked={cryptoEnable}
-                    onCheckedChange={onCryptoEnableChange}
-                  />
-                </div>
+                <Card variant="surface">
+                  <Flex
+                    align={{ initial: "start", sm: "center" }}
+                    direction={{ initial: "column", sm: "row" }}
+                    justify="between"
+                    gap="4"
+                  >
+                    <Flex direction="column" gap="1">
+                      <Text as="p" className={styles.highlightTitle}>
+                        Local encryption
+                      </Text>
+                      <Text as="p" className={styles.highlightDescription}>
+                        Protect saved application data on this device.
+                      </Text>
+                    </Flex>
+                    <Switch
+                      checked={cryptoEnable}
+                      onCheckedChange={onCryptoEnableChange}
+                    />
+                  </Flex>
+                </Card>
 
                 {cryptoEnable && (
                   <SettingAction

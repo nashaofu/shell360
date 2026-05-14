@@ -1,4 +1,4 @@
-import { Button, Flex, TextField } from "@radix-ui/themes";
+import { Button, Flex, IconButton, TextField } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, useKeys } from "shared";
@@ -165,25 +165,17 @@ export default function Keys() {
                 }}
               >
                 {({ onChangeOpen }) => (
-                  <button
+                  <IconButton
                     type="button"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "inherit",
-                      padding: 4,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
+                    variant="ghost"
+                    color="gray"
                     onClick={(event) => {
                       selectedKeyRef.current = item;
                       onChangeOpen(event.currentTarget);
                     }}
                   >
                     <span className="icon-more" />
-                  </button>
+                  </IconButton>
                 )}
               </Dropdown>
             }

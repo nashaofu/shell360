@@ -64,7 +64,7 @@ export default function ChangeCryptoPassword({
             Please enter the encryption password to reset the key
           </Dialog.Description>
           <form noValidate autoComplete="off">
-            <div style={{ marginTop: 16 }}>
+            <Flex direction="column" gap="4" mt="4">
               <Controller
                 name="oldPassword"
                 control={formApi.control}
@@ -94,8 +94,6 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               />
-            </div>
-            <div style={{ marginTop: 16 }}>
               <Controller
                 name="password"
                 control={formApi.control}
@@ -125,8 +123,6 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               />
-            </div>
-            <div style={{ marginTop: 16 }}>
               <Controller
                 name="confirmPassword"
                 control={formApi.control}
@@ -162,7 +158,7 @@ export default function ChangeCryptoPassword({
                   ></TextFieldPassword>
                 )}
               ></Controller>
-            </div>
+            </Flex>
           </form>
           <Flex gap="3" justify="end" mt="4">
             <Button variant="outline" onClick={onCancel}>

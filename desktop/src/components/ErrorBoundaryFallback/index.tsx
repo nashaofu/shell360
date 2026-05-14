@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { get } from "lodash-es";
@@ -47,21 +47,21 @@ export default function ErrorBoundaryFallback({
       <div className={styles.messageWrap}>
         <p className={styles.message}>{get(error, "message", String(error))}</p>
       </div>
-      <div className={styles.actions}>
-        <Button className={styles.actionButton} onClick={resetErrorBoundary}>
+      <Flex align="center" justify="center" gap="3" style={{ maxWidth: 420, margin: "0 auto" }}>
+        <Button style={{ flex: 1 }} onClick={resetErrorBoundary}>
           Retry
         </Button>
-        <Button className={styles.actionButton} color="red" onClick={onReset}>
+        <Button style={{ flex: 1 }} color="red" onClick={onReset}>
           Reset
         </Button>
         <Button
-          className={styles.actionButton}
+          style={{ flex: 1 }}
           color="amber"
           onClick={() => getCurrentWindow().close()}
         >
           Exit
         </Button>
-      </div>
+      </Flex>
     </div>
   );
 }

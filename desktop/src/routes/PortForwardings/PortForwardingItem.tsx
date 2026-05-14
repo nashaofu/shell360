@@ -1,3 +1,4 @@
+import { IconButton } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -226,22 +227,14 @@ export default function PortForwardingItem({
             }}
           >
             {({ onChangeOpen }) => (
-              <button
+              <IconButton
                 type="button"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "inherit",
-                  padding: 4,
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                }}
+                variant="ghost"
+                color="gray"
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-more" />
-              </button>
+              </IconButton>
             )}
           </Dropdown>
         }

@@ -106,7 +106,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -177,7 +178,8 @@ export default function BasicForm({
                 <Text
                   size="1"
                   color="red"
-                  style={{ display: "block", marginTop: 4 }}
+                  as="p"
+                  mt="1"
                 >
                   {fieldState.error?.message}
                 </Text>
@@ -227,7 +229,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -281,7 +284,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -330,7 +334,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -382,7 +387,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -461,7 +467,8 @@ export default function BasicForm({
                 <Text
                   size="1"
                   color="red"
-                  style={{ display: "block", marginTop: 4 }}
+                  as="p"
+                  mt="1"
                 >
                   {fieldState.error?.message}
                 </Text>
@@ -503,7 +510,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -551,7 +559,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>
@@ -604,7 +613,8 @@ export default function BasicForm({
               <Text
                 size="1"
                 color="red"
-                style={{ display: "block", marginTop: 4 }}
+                as="p"
+                mt="1"
               >
                 {fieldState.error?.message}
               </Text>

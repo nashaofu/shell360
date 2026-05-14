@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -190,43 +190,30 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         title={data ? "Edit host" : "Add host"}
         onCancel={onCancel}
         footer={
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
+          <Flex align="center" gap="2">
             <Button style={{ flex: 1 }} variant="outline" onClick={onCancel}>
               Cancel
             </Button>
 
-            <Dropdown sx={{ width: "48%" }} menus={menus}>
+            <Dropdown menus={menus}>
               {({ onChangeOpen }) => (
-                <div style={{ display: "flex", flex: 1 }}>
+                <Flex style={{ flex: 1 }} gap="1">
                   <Button
-                    style={{
-                      flex: 1,
-                      borderRadius: "var(--radius-2) 0 0 var(--radius-2)",
-                    }}
+                    style={{ flex: 1 }}
                     onClick={formApi.handleSubmit(onSave)}
                   >
                     Save
                   </Button>
                   <Button
-                    style={{
-                      borderRadius: "0 var(--radius-2) var(--radius-2) 0",
-                      borderLeft: "1px solid var(--accent-a5)",
-                    }}
+                    variant="soft"
                     onClick={(event) => onChangeOpen(event.currentTarget)}
                   >
                     <span className="icon-more" />
                   </Button>
-                </div>
+                </Flex>
               )}
             </Dropdown>
-          </div>
+          </Flex>
         }
       >
         <EditHostForm

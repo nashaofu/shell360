@@ -57,9 +57,10 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
           <Dialog.Description>
             Set an encrypted password to protect application data
           </Dialog.Description>
-          <form noValidate autoComplete="off" style={{ marginTop: 24 }}>
-            <Controller
-              name="password"
+          <form noValidate autoComplete="off">
+            <Flex direction="column" gap="4" mt="5">
+              <Controller
+                name="password"
               control={formApi.control}
               rules={{
                 required: {
@@ -87,7 +88,6 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
                 ></TextFieldPassword>
               )}
             />
-            <div style={{ marginTop: 16 }}>
               <Controller
                 name="confirmPassword"
                 control={formApi.control}
@@ -123,7 +123,7 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
                   ></TextFieldPassword>
                 )}
               ></Controller>
-            </div>
+            </Flex>
           </form>
           <Flex gap="3" justify="end" mt="4">
             <Button variant="outline" onClick={onCancel}>

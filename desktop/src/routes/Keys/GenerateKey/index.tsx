@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -83,14 +83,8 @@ export default function GenerateKey({
       title="Generate key"
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Loading loading={loading} sx={{ width: "48%" }}>
+        <Flex gap="3">
+          <Loading loading={loading} sx={{ flex: 1 }}>
             <Button
               style={{ width: "100%" }}
               variant="outline"
@@ -100,7 +94,7 @@ export default function GenerateKey({
             </Button>
           </Loading>
 
-          <Loading loading={loading} sx={{ width: "48%" }}>
+          <Loading loading={loading} sx={{ flex: 1 }}>
             <Button
               style={{ width: "100%" }}
               onClick={formApi.handleSubmit(onGenerate)}
@@ -108,7 +102,7 @@ export default function GenerateKey({
               Generate
             </Button>
           </Loading>
-        </div>
+        </Flex>
       }
     >
       <GenerateKeyForm formApi={formApi} />
