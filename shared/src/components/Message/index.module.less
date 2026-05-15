@@ -21,12 +21,13 @@
   line-height: 1.5;
   color: var(--gray-12, #111827);
   background: var(--color-panel-solid, #ffffff);
-  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
   pointer-events: auto;
   animation: msg-slide-in 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-  white-space: nowrap;
   max-width: 480px;
-  white-space: normal;
   word-break: break-word;
 }
 
@@ -46,7 +47,6 @@
   flex: 1;
 }
 
-// Type-specific colors
 .success .icon {
   color: var(--green-9, #16a34a);
 }
@@ -67,7 +67,6 @@
   color: var(--accent-9, #3b82f6);
 }
 
-// Loading spinner
 .spin {
   display: inline-block;
   width: 14px;
@@ -84,6 +83,7 @@
     opacity: 0;
     transform: translateY(-12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

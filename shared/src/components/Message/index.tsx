@@ -20,7 +20,7 @@ export interface MessageItem {
 }
 
 export interface MessageOptions {
-  /** Auto-close duration in ms. 0 = no auto close. Default: 3000 */
+  /** Auto-close duration in ms. 0 = never auto-close. Default: 3000 */
   duration?: number;
   onClose?: () => void;
 }
@@ -31,9 +31,7 @@ const listeners: Set<Listener> = new Set();
 let currentItems: MessageItem[] = [];
 
 function notify() {
-  for (const l of listeners) {
-    l([...currentItems]);
-  }
+  for (const l of listeners) l([...currentItems]);
 }
 
 function addItem(item: MessageItem) {
@@ -46,24 +44,22 @@ function removeItem(id: string) {
   notify();
 }
 
-// ---------- lazy root ----------
+// ---------- lazy standalone root ----------
 let rootContainer: HTMLDivElement | null = null;
-let reactRoot: ReturnType<typeof createRoot> | null = null;
 
 function ensureRoot() {
   if (rootContainer) return;
   rootContainer = document.createElement("div");
   rootContainer.setAttribute("data-shell360-message", "true");
   document.body.appendChild(rootContainer);
-  reactRoot = createRoot(rootContainer);
-  reactRoot.render(
+  createRoot(rootContainer).render(
     <StrictMode>
       <MessageList />
     </StrictMode>,
   );
 }
 
-// ---------- MessageList (internal) ----------
+// ---------- MessageList ----------
 const ICON_MAP: Record<MessageType, string> = {
   success: "✓",
   error: "✕",
@@ -102,7 +98,7 @@ function MessageList() {
   );
 }
 
-// ---------- MessageNotice (internal) ----------
+// ---------- MessageNotice ----------
 interface MessageNoticeProps {
   item: MessageItem;
   onClose: () => void;
@@ -121,7 +117,9 @@ function MessageNotice({ item, onClose }: MessageNoticeProps) {
       role="alert"
       aria-live="polite"
     >
-      <span className={`${styles.icon} ${item.type === "loading" ? styles.spin : ""}`}>
+      <span
+        className={`${styles.icon} ${item.type === "loading" ? styles.spin : ""}`}
+      >
         {ICON_MAP[item.type]}
       </span>
       <span className={styles.content}>{item.content}</span>
@@ -131,9 +129,8 @@ function MessageNotice({ item, onClose }: MessageNoticeProps) {
 
 // ---------- MessageProvider ----------
 /**
- * Optional React provider. When used, messages are rendered inside your
- * existing React tree (shares theme context). If omitted, messages are
- * rendered into a standalone root appended to document.body.
+ * Optional provider — renders messages inside the React tree so they inherit
+ * the Radix Theme context. If omitted, messages fall back to a standalone root.
  */
 export function MessageProvider({ children }: { children?: ReactNode }) {
   const [items, dispatch] = useReducer(
@@ -180,20 +177,14 @@ function open(
   content: ReactNode,
   options?: MessageOptions,
 ): () => void {
-  // Lazily mount standalone root if no MessageProvider is active
-  if (listeners.size === 0) {
-    ensureRoot();
-  }
+  if (listeners.size === 0) ensureRoot();
 
   const id = genId();
   const { duration = 3000, onClose } = options ?? {};
 
   addItem({ id, type, content, duration, onClose });
 
-  return () => {
-    onClose?.();
-    removeItem(id);
-  };
+  return () => removeItem(id);
 }
 
 export const message = {
