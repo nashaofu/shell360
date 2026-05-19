@@ -5,6 +5,7 @@ import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
+import { useFileTransfersActions } from "@/atoms/fileTransfersAtom";
 
 type UseSftpActionsOpts = {
   dirname?: string;
@@ -22,6 +23,7 @@ export default function useSftpActions({
   refreshDir,
 }: UseSftpActionsOpts) {
   const [progress, setProgress] = useState(0);
+  const { startTransfer, finishTransfer } = useFileTransfersActions();
 
   const { loading: uploadFileLoading, run: uploadFile } = useRequest(
     async () => {
@@ -55,13 +57,18 @@ export default function useSftpActions({
           return true;
         }
       }
-      await sftpRef.current?.sftpUploadFile({
-        localFilename: file,
-        remoteFilename: filename,
-        onProgress: ({ progress, total }) => {
-          setProgress(Math.round((progress / total) * 100));
-        },
-      });
+      startTransfer();
+      try {
+        await sftpRef.current?.sftpUploadFile({
+          localFilename: file,
+          remoteFilename: filename,
+          onProgress: ({ progress, total }) => {
+            setProgress(Math.round((progress / total) * 100));
+          },
+        });
+      } finally {
+        finishTransfer();
+      }
 
       return false;
     },
@@ -93,13 +100,18 @@ export default function useSftpActions({
         return true;
       }
 
-      await sftpRef.current?.sftpDownloadFile({
-        localFilename: file,
-        remoteFilename: path,
-        onProgress: ({ progress, total }) => {
-          setProgress(Math.round((progress / total) * 100));
-        },
-      });
+      startTransfer();
+      try {
+        await sftpRef.current?.sftpDownloadFile({
+          localFilename: file,
+          remoteFilename: path,
+          onProgress: ({ progress, total }) => {
+            setProgress(Math.round((progress / total) * 100));
+          },
+        });
+      } finally {
+        finishTransfer();
+      }
 
       return false;
     },

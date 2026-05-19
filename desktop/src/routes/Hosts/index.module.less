@@ -1,0 +1,186 @@
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.group + .group {
+  margin-top: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.listView {
+  padding-bottom: 8px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-a5);
+  border-radius: 9px;
+  background: var(--color-panel-solid, var(--gray-1));
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--gray-a7);
+    background: var(--gray-a2);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--gray-12) 16%, transparent);
+  }
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cardInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addr {
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--gray-9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--gray-10);
+}
+
+.statusTextActive {
+  color: var(--green-11);
+}
+
+.statusTextIdle {
+  color: var(--gray-10);
+}
+
+.auxMeta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gray-10);
+  font-size: 9.5px;
+}
+
+.auxMetaIcon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.connectBtn {
+  flex: 1;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-9) 30%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent-9) 10%, transparent);
+  color: var(--accent-11);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.13s ease,
+    border-color 0.13s ease;
+}
+
+.connectBtn:hover {
+  background: color-mix(in srgb, var(--accent-9) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent-9) 50%, transparent);
+}
+
+.moreBtn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gray-9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.moreBtn:hover {
+  background: var(--gray-a3);
+  border-color: var(--gray-a5);
+  color: var(--gray-12);
+}
+
+.listName {
+  font-weight: 500;
+  color: var(--gray-12);
+}
+
+.listAddr {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 10px;
+  color: var(--gray-9);
+}
+
+.listStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+}
+
+.listMeta {
+  font-size: 10px;
+  color: var(--gray-9);
+}

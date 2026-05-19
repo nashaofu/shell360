@@ -103,12 +103,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             />
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -175,12 +170,7 @@ export default function BasicForm({
                 </datalist>
               </div>
               {fieldState.invalid && (
-                <Text
-                  size="1"
-                  color="red"
-                  as="p"
-                  mt="1"
-                >
+                <Text size="1" color="red" as="p" mt="1">
                   {fieldState.error?.message}
                 </Text>
               )}
@@ -226,12 +216,7 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -281,12 +266,7 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -331,12 +311,7 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -384,12 +359,7 @@ export default function BasicForm({
               </Select.Content>
             </Select.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -464,12 +434,7 @@ export default function BasicForm({
                 </Select.Content>
               </Select.Root>
               {fieldState.invalid && (
-                <Text
-                  size="1"
-                  color="red"
-                  as="p"
-                  mt="1"
-                >
+                <Text size="1" color="red" as="p" mt="1">
                   {fieldState.error?.message}
                 </Text>
               )}
@@ -507,12 +472,7 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -556,12 +516,7 @@ export default function BasicForm({
               </Select.Content>
             </Select.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}
@@ -610,12 +565,7 @@ export default function BasicForm({
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
-              <Text
-                size="1"
-                color="red"
-                as="p"
-                mt="1"
-              >
+              <Text size="1" color="red" as="p" mt="1">
                 {fieldState.error?.message}
               </Text>
             )}

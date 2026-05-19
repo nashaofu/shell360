@@ -13,7 +13,7 @@ import {
 import dayjs from "dayjs";
 import { useMemo } from "react";
 
-import { useUpdateAtom } from "@/atom/updateAtom";
+import { useUpdateAtom } from "@/atoms/updateAtom";
 import styles from "./index.module.less";
 
 type UpdateInfoLike = Record<string, unknown>;

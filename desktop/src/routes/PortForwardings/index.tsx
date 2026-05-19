@@ -1,18 +1,17 @@
-import { Button, Flex, TextField } from "@radix-ui/themes";
+import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
-import Page from "@/components/Page";
+import panel from "@/routes/panel.module.less";
 
 import AddPortForwarding from "./AddPortForwarding";
 import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
-  const { data: hosts } = useHosts();
-  const { data: portForwardings } = usePortForwardings();
+  const { data: hosts = [] } = useHosts();
+  const { data: portForwardings = [] } = usePortForwardings();
 
   const [keyword, setKeyword] = useState("");
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
@@ -34,48 +33,113 @@ export default function PortForwardings() {
     setIsOpenAddPortForwarding(true);
   }, []);
 
+  const filteredItems = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+
+    if (!kw) {
+      return portForwardings;
+    }
+
+    return portForwardings.filter((item) => {
+      const host = hostsMap.get(item.hostId);
+      return (
+        item.name.toLowerCase().includes(kw) ||
+        item.portForwardingType.toLowerCase().includes(kw) ||
+        `${item.localAddress}:${item.localPort}`.toLowerCase().includes(kw) ||
+        `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`
+          .toLowerCase()
+          .includes(kw) ||
+        host?.name?.toLowerCase().includes(kw) ||
+        host?.hostname.toLowerCase().includes(kw)
+      );
+    });
+  }, [hostsMap, keyword, portForwardings]);
+
   return (
-    <Page
-      eyebrow="Network"
-      title="Port Forwardings"
-      description="Create and reuse local, remote, and dynamic forwarding rules alongside the hosts they depend on."
-    >
-      <Flex align="center" justify="between" my="4" gap="3">
-        <TextField.Root
-          style={{ flexGrow: 1, maxWidth: 380 }}
-          value={keyword}
-          placeholder="Search..."
-          onChange={(event) => setKeyword(event.target.value)}
-        />
-        <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-          <span className="icon-add" />
-          Add
-        </Button>
-      </Flex>
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-          mt: 2,
-        }}
-        itemWidth={360}
-      >
-        {portForwardings.map((item) => (
-          <PortForwardingItem
-            key={item.id}
-            item={item}
-            hostsMap={hostsMap}
-            onEdit={() => onEdit(item)}
-            onOpenAddKey={() => setAddKeyOpen(true)}
-          />
-        ))}
-      </AutoRepeatGrid>
-      {!portForwardings.length && (
-        <Empty desc="There is no port forwarding yet, add it now.">
-          <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-            Add port forwarding
-          </Button>
-        </Empty>
-      )}
+    <>
+      <section className={panel.page}>
+        <div className={panel.toolbar}>
+          <span className={panel.title}>Port Forwardings</span>
+          <label className={panel.search}>
+            <svg
+              className={panel.searchIcon}
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="6"
+                cy="6"
+                r="4"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              />
+              <path
+                d="M9.5 9.5L13 13"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+            <input
+              className={panel.searchInput}
+              value={keyword}
+              placeholder="Filter rules..."
+              onChange={(event) => setKeyword(event.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className={clsx(panel.button, panel.buttonPrimary)}
+            onClick={() => setIsOpenAddPortForwarding(true)}
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+            New Rule
+          </button>
+        </div>
+        <div className={panel.content}>
+          {filteredItems.length ? (
+            <div className={panel.tableWrap}>
+              <table className={panel.table}>
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }} />
+                    <th>Label</th>
+                    <th>Local Port</th>
+                    <th>Remote</th>
+                    <th>Server</th>
+                    <th>Status</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <PortForwardingItem
+                      key={item.id}
+                      item={item}
+                      hostsMap={hostsMap}
+                      onEdit={() => onEdit(item)}
+                      onOpenAddKey={() => setAddKeyOpen(true)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Empty desc="There is no port forwarding yet, add it now.">
+              <button
+                type="button"
+                className={clsx(panel.button, panel.buttonPrimary)}
+                onClick={() => setIsOpenAddPortForwarding(true)}
+              >
+                New Rule
+              </button>
+            </Empty>
+          )}
+        </div>
+      </section>
 
       <AddPortForwarding
         open={isOpenAddPortForwarding}
@@ -89,6 +153,6 @@ export default function PortForwardings() {
         onCancel={() => setAddKeyOpen(false)}
         onOk={() => setAddKeyOpen(false)}
       />
-    </Page>
+    </>
   );
 }

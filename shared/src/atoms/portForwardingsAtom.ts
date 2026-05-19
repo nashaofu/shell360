@@ -1,5 +1,5 @@
 import { useLatest, useMemoizedFn } from "ahooks";
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef } from "react";
 import {
   closePortForwarding,
@@ -235,4 +235,8 @@ export function usePortForwardingsAtomWithApi() {
     update: updatePortForwarding,
     delete: deletePortForwarding,
   };
+}
+
+export function usePortForwardingsAtomValue() {
+  return useAtomValue(portForwardingsAtom);
 }

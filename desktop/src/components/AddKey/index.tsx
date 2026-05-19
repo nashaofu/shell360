@@ -76,10 +76,7 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
             Cancel
           </Button>
 
-          <Button
-            style={{ flex: 1 }}
-            onClick={formApi.handleSubmit(onSave)}
-          >
+          <Button style={{ flex: 1 }} onClick={formApi.handleSubmit(onSave)}>
             Save
           </Button>
         </Flex>

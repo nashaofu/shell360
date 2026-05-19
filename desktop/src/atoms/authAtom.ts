@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import { checkIsAuthed, onAuthedChange } from "tauri-plugin-data";
 
-export const authAtom = atom(false);
+export const authAtom = atom<boolean>();
 
 authAtom.onMount = (setAtom) => {
   checkIsAuthed().then((isAuthed) => {

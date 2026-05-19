@@ -4,7 +4,7 @@ import { identify } from "shared";
 
 import "./styles/index.css";
 
-import App from "./App";
+import App from "./app";
 
 identify();
 

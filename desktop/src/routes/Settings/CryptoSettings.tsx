@@ -2,9 +2,9 @@ import { Button, Flex, Switch, Text } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import { useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
-import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
+import { cryptoIsEnableAtom } from "@/atoms/cryptoAtom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
-import IniCrypto from "@/components/InitCrypto";
+import InitCrypto from "@/components/InitCrypto";
 import styles from "./index.module.less";
 
 export default function CryptoSettings() {
@@ -74,11 +74,11 @@ export default function CryptoSettings() {
           </Button>
         </Flex>
       )}
-      <IniCrypto
+      <InitCrypto
         open={initCryptoIsOpen}
         onCancel={onInitCryptoCancel}
         onOk={onInitCryptoOk}
-      ></IniCrypto>
+      ></InitCrypto>
       <ChangeCryptoPassword
         open={changeCryptoPasswordIsOpen}
         onCancel={onChangeCryptoPasswordCancel}

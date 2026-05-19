@@ -14,10 +14,10 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { type Appearance, useAppearance } from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
-import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
-import { useUpdateAtom } from "@/atom/updateAtom";
+import { cryptoIsEnableAtom } from "@/atoms/cryptoAtom";
+import { useUpdateAtom } from "@/atoms/updateAtom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
-import IniCrypto from "@/components/InitCrypto";
+import InitCrypto from "@/components/InitCrypto";
 import Page from "@/components/Page";
 import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
@@ -332,7 +332,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <IniCrypto
+        <InitCrypto
           open={initCryptoIsOpen}
           onCancel={() => setInitCryptoIsOpen(false)}
           onOk={() => setInitCryptoIsOpen(false)}

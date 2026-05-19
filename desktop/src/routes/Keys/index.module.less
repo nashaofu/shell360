@@ -1,0 +1,103 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-a5);
+  border-radius: 8px;
+  background: var(--color-panel-solid, var(--gray-1));
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+}
+
+.card:hover {
+  border-color: var(--gray-a7);
+  background: var(--gray-a2);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-9) 12%, transparent);
+  color: var(--accent-11);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stateBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--green-9) 12%, transparent);
+  color: var(--green-11);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.preview {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 10px;
+  color: var(--gray-10);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10.5px;
+  color: var(--gray-10);
+}
+
+.metaActive {
+  color: var(--green-11);
+}
+
+.metaIdle {
+  color: var(--amber-11);
+}
+
+.actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

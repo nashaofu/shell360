@@ -1,5 +1,7 @@
 :root {
-  --title-bar-height: 36px;
+  --title-bar-height: 44px;
+  --sessions-sidebar-width: 220px;
+  --status-bar-height: 24px;
   --title-bar-bg-color: transparent;
   --title-bar-z-index: 4000;
 }

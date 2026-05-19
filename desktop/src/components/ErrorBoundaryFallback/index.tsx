@@ -47,7 +47,12 @@ export default function ErrorBoundaryFallback({
       <div className={styles.messageWrap}>
         <p className={styles.message}>{get(error, "message", String(error))}</p>
       </div>
-      <Flex align="center" justify="center" gap="3" style={{ maxWidth: 420, margin: "0 auto" }}>
+      <Flex
+        align="center"
+        justify="center"
+        gap="3"
+        style={{ maxWidth: 420, margin: "0 auto" }}
+      >
         <Button style={{ flex: 1 }} onClick={resetErrorBoundary}>
           Retry
         </Button>

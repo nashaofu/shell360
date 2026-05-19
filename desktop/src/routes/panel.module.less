@@ -1,0 +1,318 @@
+.page {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  height: 52px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--gray-a4);
+  background: var(--color-panel-solid, var(--gray-1));
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.search {
+  min-width: 160px;
+  width: 220px;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--gray-a5);
+  border-radius: 6px;
+  background: var(--gray-a2);
+  color: var(--gray-9);
+  box-sizing: border-box;
+  flex-shrink: 1;
+}
+
+.searchIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--gray-12);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--gray-9);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gray-10);
+}
+
+.sectionCount {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--gray-9);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--gray-a5);
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray-10);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--gray-a3);
+  vertical-align: middle;
+  font-size: 11.5px;
+  color: var(--gray-11);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: var(--gray-a2);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.statusActive {
+  background: var(--green-9);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--green-9) 45%, transparent);
+}
+
+.statusIdle {
+  background: var(--gray-8);
+}
+
+.statusFailed {
+  background: var(--red-9);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--red-9) 40%, transparent);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.button {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-a5);
+  border-radius: 6px;
+  background: var(--gray-a3);
+  color: var(--gray-12);
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition:
+    background 0.13s ease,
+    border-color 0.13s ease,
+    color 0.13s ease;
+}
+
+.button:hover {
+  background: var(--gray-a4);
+  border-color: var(--gray-a7);
+}
+
+.buttonPrimary {
+  background: color-mix(in srgb, var(--accent-9) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent-9) 35%, transparent);
+  color: var(--accent-11);
+}
+
+.buttonPrimary:hover {
+  background: color-mix(in srgb, var(--accent-9) 22%, transparent);
+  border-color: color-mix(in srgb, var(--accent-9) 42%, transparent);
+}
+
+.buttonDanger {
+  color: var(--red-11);
+}
+
+.buttonDanger:hover {
+  background: color-mix(in srgb, var(--red-9) 12%, transparent);
+  border-color: color-mix(in srgb, var(--red-9) 24%, transparent);
+}
+
+.toggleGroup {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--gray-a5);
+  border-radius: 6px;
+}
+
+.toggleButton {
+  width: 28px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.toggleButton:hover {
+  background: var(--gray-a3);
+  color: var(--gray-12);
+}
+
+.toggleButtonActive {
+  background: var(--gray-a4);
+  color: var(--gray-12);
+}
+
+.tagAccent {
+  background: color-mix(in srgb, var(--accent-9) 14%, transparent);
+  color: var(--accent-11);
+}
+
+.tagProd {
+  background: color-mix(in srgb, var(--red-9) 14%, transparent);
+  color: var(--red-11);
+}
+
+.tagStaging {
+  background: color-mix(in srgb, var(--amber-9) 18%, transparent);
+  color: var(--amber-11);
+}
+
+.tagLocal {
+  background: color-mix(in srgb, var(--green-9) 14%, transparent);
+  color: var(--green-11);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gray-10);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.actionButton:hover {
+  background: var(--gray-a3);
+  border-color: var(--gray-a5);
+  color: var(--gray-12);
+}
+
+.dangerButton:hover {
+  background: color-mix(in srgb, var(--red-9) 12%, transparent);
+  border-color: color-mix(in srgb, var(--red-9) 24%, transparent);
+  color: var(--red-11);
+}
+
+.mono {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    padding: 12px 16px;
+    height: auto;
+    min-height: 52px;
+    flex-wrap: wrap;
+  }
+
+  .title {
+    width: 100%;
+    flex: none;
+  }
+
+  .search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .content {
+    padding: 16px;
+  }
+}

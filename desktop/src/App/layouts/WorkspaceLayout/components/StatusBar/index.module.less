@@ -1,0 +1,87 @@
+.statusBar {
+  height: var(--status-bar-height, 28px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: var(--gray-2);
+  border-top: 1px solid var(--gray-a4);
+  position: relative;
+  z-index: 20;
+  font-size: 10px;
+  color: var(--gray-9);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.chip {
+  height: var(--status-bar-height, 28px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-10);
+  cursor: default;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  span[class^="icon-"] {
+    font-size: 11px;
+    color: var(--gray-9);
+  }
+
+  &:hover {
+    background: var(--gray-a3);
+    color: var(--gray-11);
+  }
+}
+
+.badge {
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-family: monospace;
+  background: var(--gray-a3);
+  color: var(--gray-10);
+  line-height: 1.4;
+}
+
+.badgeAccent {
+  background: var(--accent-a3);
+  color: var(--accent-11);
+}
+
+.badgeGreen {
+  background: var(--green-a3);
+  color: var(--green-11);
+}
+
+.badgeGray {
+  background: var(--gray-a3);
+  color: var(--gray-10);
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background: var(--gray-a5);
+  margin: 0 3px;
+  flex-shrink: 0;
+}

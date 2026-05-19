@@ -3,12 +3,11 @@ import { useRequest } from "ahooks";
 import { type KeyboardEvent, useCallback, useState } from "react";
 import { Loading, TextFieldPassword } from "shared";
 import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
-
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import styles from "./index.module.less";
 
-export default function UnlockVault() {
+export default function Unlock() {
   const [password, setPassword] = useState("");
   const message = useMessage();
   const modal = useModal();

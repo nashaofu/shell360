@@ -6,13 +6,13 @@ import { changeCryptoEnable } from "tauri-plugin-data";
 
 import useMessage from "@/hooks/useMessage";
 
-interface IniCryptoProps {
+interface InitCryptoProps {
   open: boolean;
   onCancel: () => unknown;
   onOk: () => unknown;
 }
 
-export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
+export default function InitCrypto({ open, onCancel, onOk }: InitCryptoProps) {
   const message = useMessage();
   const formApi = useForm({
     defaultValues: {
@@ -61,33 +61,33 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
             <Flex direction="column" gap="4" mt="5">
               <Controller
                 name="password"
-              control={formApi.control}
-              rules={{
-                required: {
-                  value: true,
-                  message: "Please enter password",
-                },
-                minLength: {
-                  value: 8,
-                  message: "Please enter at least 8 characters",
-                },
-                maxLength: {
-                  value: 128,
-                  message: "Please enter no more than 128 characters",
-                },
-              }}
-              render={({ field, fieldState }) => (
-                <TextFieldPassword
-                  {...field}
-                  required
-                  fullWidth
-                  label="Password"
-                  placeholder="Password"
-                  error={fieldState.invalid}
-                  helperText={fieldState.error?.message}
-                ></TextFieldPassword>
-              )}
-            />
+                control={formApi.control}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "Please enter password",
+                  },
+                  minLength: {
+                    value: 8,
+                    message: "Please enter at least 8 characters",
+                  },
+                  maxLength: {
+                    value: 128,
+                    message: "Please enter no more than 128 characters",
+                  },
+                }}
+                render={({ field, fieldState }) => (
+                  <TextFieldPassword
+                    {...field}
+                    required
+                    fullWidth
+                    label="Password"
+                    placeholder="Password"
+                    error={fieldState.invalid}
+                    helperText={fieldState.error?.message}
+                  ></TextFieldPassword>
+                )}
+              />
               <Controller
                 name="confirmPassword"
                 control={formApi.control}

@@ -1,8 +1,6 @@
-import { Avatar } from "@radix-ui/themes";
 import clsx from "clsx";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import styles from "./index.module.less";
-import logo from "./logo.svg";
 
 type NavItem = {
   icon: string;
@@ -77,20 +75,17 @@ function NavSection({
 export default function NavRail() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const isDarwin = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
   const onNavigate = (to: string) => navigate(to, { replace: true });
 
   return (
-    <aside className={clsx(styles.navRail, isDarwin && styles.macos)}>
-      <div className={styles.brand} title="Shell360">
-        <Avatar src={logo} fallback="Shell360" />
-      </div>
+    <aside className={styles.navRail}>
       <NavSection
         items={NAV_ITEMS}
         className={styles.navList}
         pathname={pathname}
         onNavigate={onNavigate}
       />
+      <div className={styles.navSpacer} />
       <NavSection
         items={BOTTOM_ITEMS}
         className={styles.navBottom}
