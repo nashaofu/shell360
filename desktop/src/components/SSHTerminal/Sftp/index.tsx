@@ -49,41 +49,39 @@ type SftpButtonPosition = {
   y: number;
 };
 
+const getInitialButtonPosition = (): SftpButtonPosition | null => {
+  const savedPosition = localStorage.getItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
+  if (!savedPosition) {
+    return null;
+  }
+
+  try {
+    const parsedPosition = JSON.parse(
+      savedPosition,
+    ) as Partial<SftpButtonPosition>;
+    if (
+      typeof parsedPosition.x !== "number" ||
+      typeof parsedPosition.y !== "number"
+    ) {
+      throw new Error("Invalid button position");
+    }
+
+    return {
+      x: parsedPosition.x,
+      y: parsedPosition.y,
+    };
+  } catch {
+    localStorage.removeItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
+    return null;
+  }
+};
+
 type SftpProps = {
   containerRef: RefObject<HTMLDivElement | null>;
   session: SSHSession;
 };
 
 export default function Sftp({ containerRef, session }: SftpProps) {
-  const getInitialButtonPosition = () => {
-    const savedPosition = localStorage.getItem(
-      SFTP_BUTTON_POSITION_STORAGE_KEY,
-    );
-    if (!savedPosition) {
-      return null;
-    }
-
-    try {
-      const parsedPosition = JSON.parse(
-        savedPosition,
-      ) as Partial<SftpButtonPosition>;
-      if (
-        typeof parsedPosition.x !== "number" ||
-        typeof parsedPosition.y !== "number"
-      ) {
-        throw new Error("Invalid button position");
-      }
-
-      return {
-        x: parsedPosition.x,
-        y: parsedPosition.y,
-      };
-    } catch {
-      localStorage.removeItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
-      return null;
-    }
-  };
-
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -513,6 +511,14 @@ export default function Sftp({ containerRef, session }: SftpProps) {
     [clampButtonPosition],
   );
 
+  const onButtonClick = useCallback(() => {
+    if (suppressButtonClickRef.current) {
+      suppressButtonClickRef.current = false;
+      return;
+    }
+    setIsOpen(true);
+  }, []);
+
   return (
     <>
       {!initLoading && !initError && (
@@ -539,13 +545,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
             sx={{
               touchAction: "none",
             }}
-            onClick={() => {
-              if (suppressButtonClickRef.current) {
-                suppressButtonClickRef.current = false;
-                return;
-              }
-              setIsOpen(true);
-            }}
+            onClick={onButtonClick}
             onPointerCancel={(event) => stopDraggingButton(event, false)}
             onPointerDown={onButtonPointerDown}
             onPointerMove={onButtonPointerMove}
