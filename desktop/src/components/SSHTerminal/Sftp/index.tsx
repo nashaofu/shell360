@@ -11,8 +11,16 @@ import {
   Table,
   TableContainer,
 } from "@mui/material";
-import { useRequest } from "ahooks";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useRequest, useSize } from "ahooks";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Dropdown, Loading, useSftp } from "shared";
 import {
   type SSHSession,
@@ -32,13 +40,31 @@ import useCreate, { CreateType } from "./useCreate";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
 
+const SFTP_BUTTON_MARGIN = 10;
+const SFTP_BUTTON_POSITION_STORAGE_KEY = "desktop.sftp.button.position";
+
+type SftpButtonPosition = {
+  x: number;
+  y: number;
+};
+
 type SftpProps = {
+  containerRef: RefObject<HTMLDivElement | null>;
   session: SSHSession;
 };
 
-export default function Sftp({ session }: SftpProps) {
+export default function Sftp({ containerRef, session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const suppressButtonClickRef = useRef(false);
+  const dragStateRef = useRef<{
+    hasMoved: boolean;
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startPosition: SftpButtonPosition;
+  } | null>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
   const [order, setOrder] = useState<SftpTableOrder>(SftpTableOrder.Asc);
@@ -47,7 +73,12 @@ export default function Sftp({ session }: SftpProps) {
   const [keyword, setKeyword] = useState("");
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDraggingButton, setIsDraggingButton] = useState(false);
+  const [buttonPosition, setButtonPosition] =
+    useState<SftpButtonPosition | null>(null);
   const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
+  const containerSize = useSize(containerRef);
+  const buttonSize = useSize(buttonRef);
 
   const {
     sftpRef,
@@ -304,17 +335,216 @@ export default function Sftp({ session }: SftpProps) {
     removeFileLoading ||
     createLoading;
 
+  const clampButtonPosition = useCallback(
+    (position: SftpButtonPosition) => {
+      if (!containerSize || !buttonSize) {
+        return position;
+      }
+
+      const maxX = Math.max(
+        SFTP_BUTTON_MARGIN,
+        containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
+      );
+      const maxY = Math.max(
+        SFTP_BUTTON_MARGIN,
+        containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
+      );
+
+      return {
+        x: Math.min(Math.max(position.x, SFTP_BUTTON_MARGIN), maxX),
+        y: Math.min(Math.max(position.y, SFTP_BUTTON_MARGIN), maxY),
+      };
+    },
+    [buttonSize, containerSize],
+  );
+
+  const getDefaultButtonPosition = useCallback(() => {
+    if (!containerSize || !buttonSize) {
+      return null;
+    }
+
+    return clampButtonPosition({
+      x: containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
+      y: containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
+    });
+  }, [buttonSize, clampButtonPosition, containerSize]);
+
+  useEffect(() => {
+    if (!containerSize || !buttonSize) {
+      return;
+    }
+
+    if (buttonPosition) {
+      const nextPosition = clampButtonPosition(buttonPosition);
+      if (
+        nextPosition.x !== buttonPosition.x ||
+        nextPosition.y !== buttonPosition.y
+      ) {
+        setButtonPosition(nextPosition);
+      }
+      return;
+    }
+
+    const savedPosition = localStorage.getItem(
+      SFTP_BUTTON_POSITION_STORAGE_KEY,
+    );
+    if (!savedPosition) {
+      setButtonPosition(getDefaultButtonPosition());
+      return;
+    }
+
+    try {
+      const parsedPosition = JSON.parse(
+        savedPosition,
+      ) as Partial<SftpButtonPosition>;
+      if (
+        typeof parsedPosition.x !== "number" ||
+        typeof parsedPosition.y !== "number"
+      ) {
+        throw new Error("Invalid button position");
+      }
+      setButtonPosition(
+        clampButtonPosition({
+          x: parsedPosition.x,
+          y: parsedPosition.y,
+        }),
+      );
+    } catch {
+      localStorage.removeItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
+      setButtonPosition(getDefaultButtonPosition());
+    }
+  }, [
+    buttonPosition,
+    buttonSize,
+    clampButtonPosition,
+    containerSize,
+    getDefaultButtonPosition,
+  ]);
+
+  useEffect(() => {
+    if (!buttonPosition) {
+      return;
+    }
+
+    localStorage.setItem(
+      SFTP_BUTTON_POSITION_STORAGE_KEY,
+      JSON.stringify(buttonPosition),
+    );
+  }, [buttonPosition]);
+
+  const stopDraggingButton = useCallback(
+    (
+      event: ReactPointerEvent<HTMLButtonElement>,
+      openDialogWhenNotDragged: boolean,
+    ) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+
+      dragStateRef.current = null;
+      setIsDraggingButton(false);
+
+      if (dragState.hasMoved) {
+        suppressButtonClickRef.current = true;
+      }
+
+      if (openDialogWhenNotDragged && !dragState.hasMoved) {
+        setIsOpen(true);
+      }
+    },
+    [],
+  );
+
+  const onButtonPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0 || !buttonPosition) {
+        return;
+      }
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      dragStateRef.current = {
+        hasMoved: false,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startPosition: buttonPosition,
+      };
+      setIsDraggingButton(true);
+    },
+    [buttonPosition],
+  );
+
+  const onButtonPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      const deltaX = event.clientX - dragState.startClientX;
+      const deltaY = event.clientY - dragState.startClientY;
+
+      if (
+        !dragState.hasMoved &&
+        (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)
+      ) {
+        dragState.hasMoved = true;
+      }
+
+      setButtonPosition(
+        clampButtonPosition({
+          x: dragState.startPosition.x + deltaX,
+          y: dragState.startPosition.y + deltaY,
+        }),
+      );
+    },
+    [clampButtonPosition],
+  );
+
   return (
     <>
       {!initLoading && !initError && (
         <Box
           sx={{
             position: "absolute",
-            right: 10,
-            bottom: 10,
+            top: buttonPosition?.y,
+            left: buttonPosition?.x,
+            right: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
+            bottom: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
+            zIndex: 1,
+            opacity: isDraggingButton || isOpen ? 1 : 0.85,
+            cursor: isDraggingButton ? "grabbing" : "grab",
+            transition: isDraggingButton ? "none" : "opacity 0.2s ease",
+            "&:hover": {
+              opacity: 1,
+            },
           }}
         >
-          <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
+          <Fab
+            ref={buttonRef}
+            color="primary"
+            size="medium"
+            sx={{
+              touchAction: "none",
+            }}
+            onClick={() => {
+              if (suppressButtonClickRef.current) {
+                suppressButtonClickRef.current = false;
+                return;
+              }
+              setIsOpen(true);
+            }}
+            onPointerCancel={(event) => stopDraggingButton(event, false)}
+            onPointerDown={onButtonPointerDown}
+            onPointerMove={onButtonPointerMove}
+            onPointerUp={(event) => stopDraggingButton(event, true)}
+          >
             <Icon className="icon-folder" />
           </Fab>
         </Box>
