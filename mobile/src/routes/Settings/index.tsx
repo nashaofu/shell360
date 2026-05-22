@@ -1,7 +1,7 @@
-import { SegmentedControl } from "@radix-ui/themes";
+import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
 import { ThemeMode, themeModeAtom } from "@/atom/themeAtom";
 import Page from "@/components/Page";
@@ -13,43 +13,59 @@ import openUrl from "@/utils/openUrl";
 
 import CryptoSettings from "./CryptoSettings";
 
+const sectionStyle: CSSProperties = {
+  maxWidth: 560,
+  margin: "16px auto",
+};
+
+const rowStyle: CSSProperties = {
+  minHeight: 56,
+  padding: "0 16px",
+};
+
+const rowBorderStyle: CSSProperties = {
+  borderBottom: "1px solid var(--gray-a5)",
+};
+
+type SettingsActionRowProps = {
+  label: string;
+  iconClassName: string;
+  onClick: () => void;
+  bordered?: boolean;
+};
+
+function SettingsActionRow({
+  label,
+  iconClassName,
+  onClick,
+  bordered = true,
+}: SettingsActionRowProps) {
+  return (
+    <Flex
+      align="center"
+      justify="between"
+      style={bordered ? { ...rowStyle, ...rowBorderStyle } : rowStyle}
+    >
+      <Text size="2">{label}</Text>
+      <Button type="button" variant="ghost" color="gray" onClick={onClick}>
+        <span className={iconClassName} />
+      </Button>
+    </Flex>
+  );
+}
+
 function IOSIAP() {
   const [, setOpen] = useIsShowPaywallAtom();
 
   return (
-    <div
-      style={{
-        maxWidth: 560,
-        margin: "16px auto",
-        border: "1px solid var(--gray-a5)",
-        borderRadius: "var(--radius-4)",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          minHeight: 56,
-          padding: "0 16px",
-        }}
-      >
-        <span>Subscription</span>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          style={{
-            background: "none",
-            border: "none",
-            color: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          <span className="icon-arrow-right" />
-        </button>
-      </div>
-    </div>
+    <Card size="2" style={sectionStyle}>
+      <SettingsActionRow
+        label="Subscription"
+        iconClassName="icon-arrow-right"
+        onClick={() => setOpen(true)}
+        bordered={false}
+      />
+    </Card>
   );
 }
 
@@ -140,26 +156,13 @@ export default function Settings() {
 
   return (
     <Page title="Settings">
-      <div
-        style={{
-          maxWidth: 560,
-          margin: "16px auto",
-          border: "1px solid var(--gray-a5)",
-          borderRadius: "var(--radius-4)",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-            borderBottom: "1px solid var(--gray-a5)",
-          }}
+      <Card size="2" style={sectionStyle}>
+        <Flex
+          align="center"
+          justify="between"
+          style={{ ...rowStyle, ...rowBorderStyle }}
         >
-          <span>Theme Mode</span>
+          <Text size="2">Theme Mode</Text>
           <SegmentedControl.Root
             value={themeMode}
             onValueChange={(value) => setThemeMode(value as ThemeMode)}
@@ -174,172 +177,55 @@ export default function Settings() {
               Dark
             </SegmentedControl.Item>
           </SegmentedControl.Root>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-            borderBottom: "1px solid var(--gray-a5)",
-          }}
-        >
-          <span>Export</span>
-          <button
-            type="button"
-            onClick={onExportData}
-            style={{
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            <span className="icon-file-download" />
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-          }}
-        >
-          <span>Import</span>
-          <button
-            type="button"
-            onClick={onImportData}
-            style={{
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            <span className="icon-file-upload" />
-          </button>
-        </div>
-      </div>
+        </Flex>
+        <SettingsActionRow
+          label="Export"
+          iconClassName="icon-file-download"
+          onClick={onExportData}
+        />
+        <SettingsActionRow
+          label="Import"
+          iconClassName="icon-file-upload"
+          onClick={onImportData}
+          bordered={false}
+        />
+      </Card>
 
-      <div
-        style={{
-          maxWidth: 560,
-          margin: "16px auto",
-          border: "1px solid var(--gray-a5)",
-          borderRadius: "var(--radius-4)",
-          overflow: "hidden",
-        }}
-      >
+      <Card size="2" style={sectionStyle}>
         <CryptoSettings />
-      </div>
+      </Card>
 
-      <div
-        style={{
-          maxWidth: 560,
-          margin: "16px auto",
-          border: "1px solid var(--gray-a5)",
-          borderRadius: "var(--radius-4)",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-            borderBottom: "1px solid var(--gray-a5)",
-          }}
-        >
-          <span>Privacy Policy</span>
-          <button
-            type="button"
-            onClick={() =>
-              openUrl(
-                "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
-              )
-            }
-            style={{
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            <span className="icon-arrow-right" />
-          </button>
-        </div>
+      <Card size="2" style={sectionStyle}>
+        <SettingsActionRow
+          label="Privacy Policy"
+          iconClassName="icon-arrow-right"
+          onClick={() =>
+            openUrl(
+              "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
+            )
+          }
+        />
         {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              minHeight: 56,
-              padding: "0 16px",
-              borderBottom: "1px solid var(--gray-a5)",
-            }}
-          >
-            <span>Terms of Use</span>
-            <button
-              type="button"
-              onClick={() =>
-                openUrl(
-                  "http://www.apple.com/legal/itunes/appstore/dev/stdeula",
-                )
-              }
-              style={{
-                background: "none",
-                border: "none",
-                color: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              <span className="icon-arrow-right" />
-            </button>
-          </div>
+          <SettingsActionRow
+            label="Terms of Use"
+            iconClassName="icon-arrow-right"
+            onClick={() =>
+              openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
+            }
+          />
         )}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-            borderBottom: "1px solid var(--gray-a5)",
-          }}
-        >
-          <span>About</span>
-          <button
-            type="button"
-            onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
-            style={{
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            <span className="icon-arrow-right" />
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 56,
-            padding: "0 16px",
-          }}
-        >
-          <span>Version</span>
-          <span>{version}</span>
-        </div>
-      </div>
+        <SettingsActionRow
+          label="About"
+          iconClassName="icon-arrow-right"
+          onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
+        />
+        <Flex align="center" justify="between" style={rowStyle}>
+          <Text size="2">Version</Text>
+          <Text size="2" color="gray">
+            {version}
+          </Text>
+        </Flex>
+      </Card>
 
       {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <IOSIAP />}
     </Page>

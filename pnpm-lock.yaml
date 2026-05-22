@@ -74,6 +74,9 @@ importers:
       ahooks:
         specifier: ^3.9.6
         version: 3.9.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -338,6 +341,9 @@ importers:
       '@types/react':
         specifier: ^19.2.6
         version: 19.2.6
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.6)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

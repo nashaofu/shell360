@@ -5,7 +5,7 @@ import { lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useModalsAtomValue } from "./atom/modalsAtom";
-import { resolvedThemeModeAtom, ThemeMode } from "./atom/themeAtom";
+import { themeAtom } from "./atom/themeAtom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
 import Root from "./routes/Root";
@@ -52,7 +52,7 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  const resolvedThemeMode = useAtomValue(resolvedThemeModeAtom);
+  const theme = useAtomValue(themeAtom);
   const modalsAtomValue = useModalsAtomValue();
 
   return (
@@ -64,17 +64,7 @@ export default function App() {
         root: "notistack-snackbar-root",
       }}
     >
-      <Theme
-        appearance={
-          resolvedThemeMode === ThemeMode.Dark
-            ? ThemeMode.Dark
-            : ThemeMode.Light
-        }
-        accentColor="blue"
-        grayColor="sand"
-        panelBackground="translucent"
-        radius="medium"
-      >
+      <Theme {...theme}>
         <div className={styles.appShell}>
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
             <RouterProvider router={router} />

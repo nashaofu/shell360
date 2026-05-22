@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { usePortForwardingsAtomValue, useTerminalsAtomValue } from "shared";
-import { useFileTransfersCount } from "@/atoms/fileTransfersAtom";
+import { useFileTransfersCount } from "@/app/model/fileTransfersAtom";
 import styles from "./index.module.less";
 
 export default function StatusBar() {

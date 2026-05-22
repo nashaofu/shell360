@@ -1,0 +1,72 @@
+import { lazy } from "react";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import RequireLocked from "@/app/guards/RequireLocked";
+import RequireUnlock from "@/app/guards/RequireUnlock";
+import AuthLayout from "@/app/layouts/AuthLayout";
+import WorkspaceLayout from "@/app/layouts/WorkspaceLayout";
+import RouterErrorBoundary from "@/app/routes/RouterErrorBoundary";
+
+const router = createBrowserRouter([
+  {
+    Component: () => (
+      <RequireUnlock>
+        <WorkspaceLayout />
+      </RequireUnlock>
+    ),
+    ErrorBoundary: RouterErrorBoundary,
+    children: [
+      {
+        path: "/",
+        Component: lazy(() => import("@/pages/Hosts")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
+        path: "/terminal/:uuid",
+        Component: lazy(() => import("@/pages/Terminal")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
+        path: "/port-forwardings",
+        Component: lazy(() => import("@/pages/PortForwardings")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
+        path: "/keys",
+        Component: lazy(() => import("@/pages/Keys")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
+        path: "/known-hosts",
+        Component: lazy(() => import("@/pages/KnownHosts")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
+        path: "/settings",
+        Component: lazy(() => import("@/pages/Settings")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+    ],
+  },
+  {
+    Component: () => (
+      <RequireLocked>
+        <AuthLayout />
+      </RequireLocked>
+    ),
+    ErrorBoundary: RouterErrorBoundary,
+    children: [
+      {
+        path: "/unlock",
+        Component: lazy(() => import("@/pages/Unlock")),
+        ErrorBoundary: RouterErrorBoundary,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+    ErrorBoundary: RouterErrorBoundary,
+  },
+]);
+
+export default router;

@@ -1,11 +1,6 @@
-import {
-  type ReactNode,
-  useState,
-  useEffect,
-  StrictMode,
-} from "react";
-import { createRoot } from "react-dom/client";
 import { Button, Dialog, Flex } from "@radix-ui/themes";
+import { type ReactNode, StrictMode, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
 
 export type ModalConfig = {
   title?: ReactNode;
@@ -148,7 +143,7 @@ function ModalInstance({ config }: { config: InternalConfig }) {
       >
         {config.title && <Dialog.Title>{config.title}</Dialog.Title>}
         {config.content !== undefined && (
-          <Dialog.Description asChild>
+          <Dialog.Description>
             <div>{config.content}</div>
           </Dialog.Description>
         )}

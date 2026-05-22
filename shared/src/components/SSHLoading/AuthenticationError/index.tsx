@@ -145,11 +145,6 @@ export default function AuthenticationError({
                   minWidth: 34,
                   padding: 0,
                   justifyContent: "center",
-               
-                  width: 34,
-                  minWidth: 34,
-                  padding: 0,
-                  justifyContent: "center",
                 }}
                 onClick={(event) => onChangeOpen(event.currentTarget)}
               >

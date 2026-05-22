@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import { useAtomValue } from "jotai";
 import { get } from "lodash-es";
 import { useEffect, useMemo, useState } from "react";
 import { Loading } from "shared";
@@ -10,12 +9,10 @@ import {
   useLoadableCustomerInfoAtom,
   useLoadableOfferingsAtomValue,
 } from "@/atom/iap";
-import { themeAtom } from "@/atom/themeAtom";
 
 import Buy from "./Buy";
 
 export default function Subscription() {
-  useAtomValue(themeAtom);
   const isSubscription = useIsSubscription();
   const [open, setOpen] = useIsShowPaywallAtom();
   const loadableOfferingsAtomValue = useLoadableOfferingsAtomValue();

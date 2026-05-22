@@ -1,12 +1,6 @@
-import {
-  type ReactNode,
-  useEffect,
-  useReducer,
-  createPortal,
-  StrictMode,
-} from "react";
+import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
-
+import { type ReactNode, StrictMode, useEffect, useReducer } from "react";
 import styles from "./index.module.less";
 
 export type MessageType = "success" | "error" | "info" | "warning" | "loading";
@@ -25,13 +19,12 @@ export interface MessageOptions {
   onClose?: () => void;
 }
 
-// ---------- event bus ----------
 type Listener = (items: MessageItem[]) => void;
 const listeners: Set<Listener> = new Set();
 let currentItems: MessageItem[] = [];
 
 function notify() {
-  for (const l of listeners) l([...currentItems]);
+  for (const listener of listeners) listener([...currentItems]);
 }
 
 function addItem(item: MessageItem) {
@@ -40,15 +33,15 @@ function addItem(item: MessageItem) {
 }
 
 function removeItem(id: string) {
-  currentItems = currentItems.filter((m) => m.id !== id);
+  currentItems = currentItems.filter((item) => item.id !== id);
   notify();
 }
 
-// ---------- lazy standalone root ----------
 let rootContainer: HTMLDivElement | null = null;
 
 function ensureRoot() {
   if (rootContainer) return;
+
   rootContainer = document.createElement("div");
   rootContainer.setAttribute("data-shell360-message", "true");
   document.body.appendChild(rootContainer);
@@ -59,12 +52,11 @@ function ensureRoot() {
   );
 }
 
-// ---------- MessageList ----------
 const ICON_MAP: Record<MessageType, string> = {
-  success: "✓",
-  error: "✕",
-  info: "ℹ",
-  warning: "⚠",
+  success: "OK",
+  error: "!",
+  info: "i",
+  warning: "!",
   loading: "",
 };
 
@@ -98,7 +90,6 @@ function MessageList() {
   );
 }
 
-// ---------- MessageNotice ----------
 interface MessageNoticeProps {
   item: MessageItem;
   onClose: () => void;
@@ -127,9 +118,8 @@ function MessageNotice({ item, onClose }: MessageNoticeProps) {
   );
 }
 
-// ---------- MessageProvider ----------
 /**
- * Optional provider — renders messages inside the React tree so they inherit
+ * Optional provider renders messages inside the React tree so they inherit
  * the Radix Theme context. If omitted, messages fall back to a standalone root.
  */
 export function MessageProvider({ children }: { children?: ReactNode }) {
@@ -168,7 +158,6 @@ export function MessageProvider({ children }: { children?: ReactNode }) {
   );
 }
 
-// ---------- imperative API ----------
 let idCounter = 0;
 const genId = () => `msg-${Date.now()}-${++idCounter}`;
 
