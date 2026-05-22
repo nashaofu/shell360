@@ -55,6 +55,35 @@ type SftpProps = {
 };
 
 export default function Sftp({ containerRef, session }: SftpProps) {
+  const getInitialButtonPosition = () => {
+    const savedPosition = localStorage.getItem(
+      SFTP_BUTTON_POSITION_STORAGE_KEY,
+    );
+    if (!savedPosition) {
+      return null;
+    }
+
+    try {
+      const parsedPosition = JSON.parse(
+        savedPosition,
+      ) as Partial<SftpButtonPosition>;
+      if (
+        typeof parsedPosition.x !== "number" ||
+        typeof parsedPosition.y !== "number"
+      ) {
+        throw new Error("Invalid button position");
+      }
+
+      return {
+        x: parsedPosition.x,
+        y: parsedPosition.y,
+      };
+    } catch {
+      localStorage.removeItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
+      return null;
+    }
+  };
+
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -76,7 +105,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDraggingButton, setIsDraggingButton] = useState(false);
   const [buttonPosition, setButtonPosition] =
-    useState<SftpButtonPosition | null>(null);
+    useState<SftpButtonPosition | null>(getInitialButtonPosition);
   const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
   const containerSize = useSize(containerRef);
   const buttonSize = useSize(buttonRef);
@@ -375,47 +404,22 @@ export default function Sftp({ containerRef, session }: SftpProps) {
       return;
     }
 
-    if (buttonPosition) {
-      const nextPosition = clampButtonPosition(buttonPosition);
-      if (
-        nextPosition.x !== buttonPosition.x ||
-        nextPosition.y !== buttonPosition.y
-      ) {
-        setButtonPosition(nextPosition);
+    setButtonPosition((currentPosition) => {
+      if (!currentPosition) {
+        return getDefaultButtonPosition();
       }
-      return;
-    }
 
-    const savedPosition = localStorage.getItem(
-      SFTP_BUTTON_POSITION_STORAGE_KEY,
-    );
-    if (!savedPosition) {
-      setButtonPosition(getDefaultButtonPosition());
-      return;
-    }
-
-    try {
-      const parsedPosition = JSON.parse(
-        savedPosition,
-      ) as Partial<SftpButtonPosition>;
+      const nextPosition = clampButtonPosition(currentPosition);
       if (
-        typeof parsedPosition.x !== "number" ||
-        typeof parsedPosition.y !== "number"
+        nextPosition.x === currentPosition.x &&
+        nextPosition.y === currentPosition.y
       ) {
-        throw new Error("Invalid button position");
+        return currentPosition;
       }
-      setButtonPosition(
-        clampButtonPosition({
-          x: parsedPosition.x,
-          y: parsedPosition.y,
-        }),
-      );
-    } catch {
-      localStorage.removeItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
-      setButtonPosition(getDefaultButtonPosition());
-    }
+
+      return nextPosition;
+    });
   }, [
-    buttonPosition,
     buttonSize,
     clampButtonPosition,
     containerSize,
