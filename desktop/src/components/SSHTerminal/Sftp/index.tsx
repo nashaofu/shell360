@@ -43,6 +43,7 @@ import useSftpActions from "./useSftpActions";
 const SFTP_BUTTON_MARGIN = 10;
 const SFTP_BUTTON_POSITION_STORAGE_KEY = "desktop.sftp.button.position";
 const SFTP_BUTTON_DRAG_THRESHOLD = 3;
+const SFTP_BUTTON_DEFAULT_OPACITY = 0.85;
 
 type SftpButtonPosition = {
   x: number;
@@ -530,7 +531,8 @@ export default function Sftp({ containerRef, session }: SftpProps) {
             right: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
             bottom: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
             zIndex: 1,
-            opacity: isDraggingButton || isOpen ? 1 : 0.85,
+            opacity:
+              isDraggingButton || isOpen ? 1 : SFTP_BUTTON_DEFAULT_OPACITY,
             cursor: isDraggingButton ? "grabbing" : "grab",
             transition: isDraggingButton ? "none" : "opacity 0.2s ease",
             "&:hover": {
@@ -542,9 +544,6 @@ export default function Sftp({ containerRef, session }: SftpProps) {
             ref={buttonRef}
             color="primary"
             size="medium"
-            sx={{
-              touchAction: "none",
-            }}
             onClick={onButtonClick}
             onPointerCancel={(event) => stopDraggingButton(event, false)}
             onPointerDown={onButtonPointerDown}
