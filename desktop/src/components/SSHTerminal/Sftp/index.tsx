@@ -42,6 +42,7 @@ import useSftpActions from "./useSftpActions";
 
 const SFTP_BUTTON_MARGIN = 10;
 const SFTP_BUTTON_POSITION_STORAGE_KEY = "desktop.sftp.button.position";
+const SFTP_BUTTON_DRAG_THRESHOLD = 3;
 
 type SftpButtonPosition = {
   x: number;
@@ -492,7 +493,8 @@ export default function Sftp({ containerRef, session }: SftpProps) {
 
       if (
         !dragState.hasMoved &&
-        (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)
+        (Math.abs(deltaX) > SFTP_BUTTON_DRAG_THRESHOLD ||
+          Math.abs(deltaY) > SFTP_BUTTON_DRAG_THRESHOLD)
       ) {
         dragState.hasMoved = true;
       }
