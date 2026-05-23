@@ -5,5 +5,3 @@ packages:
   - tauri-plugin-mobile
   - tauri-plugin-ssh
   - tauri-plugin-data
-allowBuilds:
-  core-js: set this to true or false
