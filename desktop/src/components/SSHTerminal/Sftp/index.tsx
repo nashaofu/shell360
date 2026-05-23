@@ -12,7 +12,7 @@ import {
   TableContainer,
 } from "@mui/material";
 import { useRequest } from "ahooks";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { type RefObject, useCallback, useMemo, useRef, useState } from "react";
 import { Dropdown, Loading, useSftp } from "shared";
 import {
   type SSHSession,
@@ -31,14 +31,21 @@ import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
+import { useSftpButtonDrag } from "./useSftpButtonDrag";
+
+const SFTP_BUTTON_MARGIN = 10;
+const SFTP_BUTTON_POSITION_STORAGE_KEY = "desktop.sftp.button.position";
+const SFTP_BUTTON_DEFAULT_OPACITY = 0.85;
 
 type SftpProps = {
+  containerRef: RefObject<HTMLDivElement | null>;
   session: SSHSession;
 };
 
-export default function Sftp({ session }: SftpProps) {
+export default function Sftp({ containerRef, session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
   const [order, setOrder] = useState<SftpTableOrder>(SftpTableOrder.Asc);
@@ -48,6 +55,21 @@ export default function Sftp({ session }: SftpProps) {
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
+  const {
+    buttonPosition,
+    isDraggingButton,
+    onButtonClick,
+    onButtonPointerCancel,
+    onButtonPointerDown,
+    onButtonPointerMove,
+    onButtonPointerUp,
+  } = useSftpButtonDrag({
+    containerRef,
+    buttonRef,
+    storageKey: SFTP_BUTTON_POSITION_STORAGE_KEY,
+    margin: SFTP_BUTTON_MARGIN,
+    dragThreshold: 6,
+  });
 
   const {
     sftpRef,
@@ -310,11 +332,33 @@ export default function Sftp({ session }: SftpProps) {
         <Box
           sx={{
             position: "absolute",
-            right: 10,
-            bottom: 10,
+            top: buttonPosition?.y,
+            left: buttonPosition?.x,
+            right: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
+            bottom: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
+            zIndex: 1200,
+            opacity:
+              isDraggingButton || isOpen ? 1 : SFTP_BUTTON_DEFAULT_OPACITY,
+            cursor: isDraggingButton ? "grabbing" : "grab",
+            pointerEvents: "auto",
+            touchAction: "none",
+            userSelect: "none",
+            transition: isDraggingButton ? "none" : "opacity 0.2s ease",
+            "&:hover": {
+              opacity: 1,
+            },
           }}
         >
-          <Fab color="primary" onClick={() => setIsOpen(true)} size="medium">
+          <Fab
+            ref={buttonRef}
+            color="primary"
+            size="medium"
+            onClick={onButtonClick}
+            onPointerCancel={onButtonPointerCancel}
+            onPointerDown={onButtonPointerDown}
+            onPointerMove={onButtonPointerMove}
+            onPointerUp={onButtonPointerUp}
+          >
             <Icon className="icon-folder" />
           </Fab>
         </Box>
