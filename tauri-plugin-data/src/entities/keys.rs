@@ -8,6 +8,7 @@ use super::hosts;
 pub struct Model {
   #[sea_orm(primary_key)]
   pub id: i64,
+  pub uuid: String,
   pub name: String,
   #[sea_orm(column_type = "Blob")]
   pub private_key: Vec<u8>,

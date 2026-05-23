@@ -20,9 +20,11 @@ pub enum PortForwardingType {
 pub struct Model {
   #[sea_orm(primary_key)]
   pub id: i64,
+  pub uuid: String,
   pub name: String,
   pub port_forwarding_type: PortForwardingType,
   pub host_id: i64,
+  pub host_uuid: String,
   #[sea_orm(column_type = "Blob")]
   pub local_address: Vec<u8>,
   pub local_port: i32,

@@ -72,22 +72,22 @@ impl Deref for Envs {
 
 #[derive(Clone, Debug, FromJsonQueryResult, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JumpHostIds(Vec<i64>);
+pub struct JumpHostIds(Vec<String>);
 
-impl From<Vec<i64>> for JumpHostIds {
-  fn from(value: Vec<i64>) -> Self {
+impl From<Vec<String>> for JumpHostIds {
+  fn from(value: Vec<String>) -> Self {
     Self(value)
   }
 }
 
-impl From<JumpHostIds> for Vec<i64> {
+impl From<JumpHostIds> for Vec<String> {
   fn from(val: JumpHostIds) -> Self {
     val.0
   }
 }
 
 impl Deref for JumpHostIds {
-  type Target = Vec<i64>;
+  type Target = Vec<String>;
   fn deref(&self) -> &Self::Target {
     &self.0
   }
@@ -106,6 +106,7 @@ pub struct TerminalSettings {
 pub struct Model {
   #[sea_orm(primary_key)]
   pub id: i64,
+  pub uuid: String,
   pub name: Option<String>,
   pub tags: Option<Tags>,
   #[sea_orm(column_type = "Blob")]
@@ -117,6 +118,7 @@ pub struct Model {
   #[sea_orm(column_type = "Blob", nullable)]
   pub password: Option<Vec<u8>>,
   pub key_id: Option<i64>,
+  pub key_uuid: Option<String>,
   pub startup_command: Option<String>,
   pub terminal_type: Option<String>,
   pub envs: Option<Envs>,

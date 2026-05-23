@@ -2,6 +2,7 @@ mod m20250601_000001_create_table;
 mod m20251021_000001_alter_table;
 mod m20251024_000001_alter_table;
 mod m20251027_000001_alter_table;
+mod m20260101_000001_add_uuid;
 
 pub use sea_orm_migration::prelude::*;
 
@@ -15,6 +16,7 @@ impl MigratorTrait for Migrator {
       Box::new(m20251021_000001_alter_table::Migration),
       Box::new(m20251024_000001_alter_table::Migration),
       Box::new(m20251027_000001_alter_table::Migration),
+      Box::new(m20260101_000001_add_uuid::Migration),
     ]
   }
 }

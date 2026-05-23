@@ -4,6 +4,7 @@ mod data_manager;
 mod entities;
 mod error;
 mod migration;
+mod sync_manager;
 mod utils;
 
 use tauri::{
@@ -12,10 +13,11 @@ use tauri::{
 };
 
 use crate::{
-  commands::{crypto, host, key, port_forwarding},
+  commands::{crypto, host, key, port_forwarding, sync},
   crypto_manager::CryptoManager,
   data_manager::DataManager,
   error::DataError,
+  sync_manager::SyncManager,
 };
 
 /// Initializes the plugin.
@@ -46,6 +48,21 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
       port_forwarding::add_port_forwarding,
       port_forwarding::update_port_forwarding,
       port_forwarding::delete_port_forwarding,
+      sync::get_sync_config,
+      sync::set_sync_config,
+      sync::get_sync_auth_state,
+      sync::start_device_auth,
+      sync::poll_device_auth,
+      sync::logout_sync,
+      sync::get_sync_status,
+      sync::trigger_sync_push,
+      sync::trigger_sync_pull,
+      sync::get_oauth_providers,
+      sync::get_sync_user_info,
+      sync::get_sync_devices,
+      sync::revoke_sync_device,
+      sync::initial_sync_push,
+      sync::rebuild_from_doc,
     ])
     .setup(|app, _api| {
       async_runtime::block_on(async {
@@ -56,6 +73,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
         let data_manager = DataManager::init(&app_handle).await?;
         app_handle.manage(data_manager);
+
+        let sync_manager = SyncManager::init(&app_handle).await?;
+        app_handle.manage(sync_manager);
 
         Ok::<(), DataError>(())
       })?;

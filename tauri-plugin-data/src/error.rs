@@ -51,6 +51,21 @@ pub enum DataError {
 
   #[error("Migration vault config error")]
   MigrationVaultConfigError,
+
+  #[error(transparent)]
+  AutomergeError(#[from] automerge::AutomergeError),
+
+  #[error(transparent)]
+  ReqwestError(#[from] reqwest::Error),
+
+  #[error("Sync not configured: server URL is not set")]
+  SyncNotConfigured,
+
+  #[error("Not authenticated with sync server")]
+  SyncNotAuthenticated,
+
+  #[error("Entity not found")]
+  NotFound,
 }
 
 pub type DataResult<T> = Result<T, DataError>;

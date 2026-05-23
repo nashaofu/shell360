@@ -1,7 +1,6 @@
 use futures::future::try_join_all;
 use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
-use serde_with::{DisplayFromStr, serde_as};
 use tauri::{AppHandle, Runtime, State};
 
 use crate::{
@@ -10,6 +9,7 @@ use crate::{
   data_manager::DataManager,
   entities,
   error::{DataError, DataResult},
+  sync_manager::{KeySyncRecord, SyncManager},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,12 +84,13 @@ impl ModelConvert for KeyBase {
   }
 }
 
-#[serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Key {
-  #[serde_as(as = "DisplayFromStr")]
-  pub id: i64,
+  pub id: String,
+  /// Internal SQLite row id — not serialized to/from frontend
+  #[serde(skip, default)]
+  pub internal_id: i64,
   #[serde(flatten)]
   pub base: KeyBase,
 }
@@ -103,7 +104,8 @@ impl ModelConvert for Key {
     model: Self::Model,
   ) -> DataResult<Key> {
     Ok(Key {
-      id: model.id,
+      id: model.uuid.clone(),
+      internal_id: model.id,
       base: KeyBase::from_model(crypto_manager, model).await?,
     })
   }
@@ -113,8 +115,10 @@ impl ModelConvert for Key {
     crypto_manager: &State<'_, CryptoManager<R>>,
   ) -> DataResult<Self::ActiveModel> {
     let mut active_model = self.base.into_active_model(crypto_manager).await?;
-    active_model.id = ActiveValue::unchanged(self.id);
-
+    if self.internal_id > 0 {
+      active_model.id = ActiveValue::Unchanged(self.internal_id);
+      active_model.uuid = ActiveValue::Unchanged(self.id.clone());
+    }
     Ok(active_model)
   }
 }
@@ -142,15 +146,30 @@ pub async fn add_key<R: Runtime>(
   _app_handle: AppHandle<R>,
   crypto_manager: State<'_, CryptoManager<R>>,
   data_manager: State<'_, DataManager>,
+  sync_manager: State<'_, SyncManager>,
   key: KeyBase,
 ) -> DataResult<Key> {
-  let model = key
-    .into_active_model(&crypto_manager)
-    .await?
-    .insert(&data_manager.database_connection)
-    .await?;
+  let db = &data_manager.database_connection;
+  let new_uuid = uuid::Uuid::new_v4().to_string();
 
-  Key::from_model(&crypto_manager, model).await
+  let mut active_model = key.into_active_model(&crypto_manager).await?;
+  active_model.uuid = ActiveValue::Set(new_uuid.clone());
+  let model = active_model.insert(db).await?;
+  let result = Key::from_model(&crypto_manager, model.clone()).await?;
+
+  let record = KeySyncRecord {
+    uuid: new_uuid,
+    name: key.name.clone(),
+    private_key: key.private_key.clone(),
+    public_key: key.public_key.clone(),
+    passphrase: key.passphrase.clone(),
+    certificate: key.certificate.clone(),
+  };
+  if let Ok(changes) = sync_manager.upsert_key(record).await {
+    let _ = sync_manager.push_changes_to_server(changes).await;
+  }
+
+  Ok(result)
 }
 
 #[tauri::command]
@@ -158,22 +177,56 @@ pub async fn update_key<R: Runtime>(
   _app_handle: AppHandle<R>,
   crypto_manager: State<'_, CryptoManager<R>>,
   data_manager: State<'_, DataManager>,
+  sync_manager: State<'_, SyncManager>,
   key: Key,
 ) -> DataResult<Key> {
-  let model = key
-    .into_active_model(&crypto_manager)
-    .await?
-    .update(&data_manager.database_connection)
-    .await?;
+  let db = &data_manager.database_connection;
 
-  Key::from_model(&crypto_manager, model).await
+  let existing = entities::keys::Entity::find()
+    .filter(entities::keys::Column::Uuid.eq(&key.id))
+    .one(db)
+    .await?
+    .ok_or(DataError::NotFound)?;
+
+  let mut active_model = key.base.into_active_model(&crypto_manager).await?;
+  active_model.id = ActiveValue::Unchanged(existing.id);
+  active_model.uuid = ActiveValue::Unchanged(key.id.clone());
+  let model = active_model.update(db).await?;
+  let result = Key::from_model(&crypto_manager, model).await?;
+
+  let record = KeySyncRecord {
+    uuid: key.id.clone(),
+    name: key.base.name.clone(),
+    private_key: key.base.private_key.clone(),
+    public_key: key.base.public_key.clone(),
+    passphrase: key.base.passphrase.clone(),
+    certificate: key.base.certificate.clone(),
+  };
+  if let Ok(changes) = sync_manager.upsert_key(record).await {
+    let _ = sync_manager.push_changes_to_server(changes).await;
+  }
+
+  Ok(result)
 }
 
 #[tauri::command]
-pub async fn delete_key(data_manager: State<'_, DataManager>, key: Key) -> DataResult<()> {
+pub async fn delete_key(
+  data_manager: State<'_, DataManager>,
+  sync_manager: State<'_, SyncManager>,
+  key: Key,
+) -> DataResult<()> {
+  let db = &data_manager.database_connection;
+
+  let existing = entities::keys::Entity::find()
+    .filter(entities::keys::Column::Uuid.eq(&key.id))
+    .one(db)
+    .await?
+    .ok_or(DataError::NotFound)?;
+
+  // Prevent deleting a key that is still referenced by a host
   let host = entities::hosts::Entity::find()
-    .filter(entities::hosts::Column::KeyId.eq(key.id))
-    .one(&data_manager.database_connection)
+    .filter(entities::hosts::Column::KeyId.eq(existing.id))
+    .one(db)
     .await?;
 
   if host.is_some() {
@@ -183,14 +236,18 @@ pub async fn delete_key(data_manager: State<'_, DataManager>, key: Key) -> DataR
     ));
   }
 
-  let active_model = entities::keys::ActiveModel {
-    id: ActiveValue::Unchanged(key.id),
+  let uuid = key.id.clone();
+  entities::keys::ActiveModel {
+    id: ActiveValue::Unchanged(existing.id),
     ..Default::default()
-  };
+  }
+  .delete(db)
+  .await?;
 
-  active_model
-    .delete(&data_manager.database_connection)
-    .await?;
+  if let Ok(changes) = sync_manager.delete_key(&uuid).await {
+    let _ = sync_manager.push_changes_to_server(changes).await;
+  }
 
   Ok(())
 }
+
