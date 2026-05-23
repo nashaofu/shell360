@@ -116,6 +116,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const suppressButtonClickRef = useRef(false);
+  const isDraggingRef = useRef(false);
   const previousButtonBoundsRef = useRef<SftpButtonBounds | null>(null);
   const dragStateRef = useRef<{
     hasMoved: boolean;
@@ -395,17 +396,22 @@ export default function Sftp({ containerRef, session }: SftpProps) {
     createLoading;
 
   const getButtonBounds = useCallback((): SftpButtonBounds | null => {
-    if (!containerSize || !buttonSize) {
+    const container = containerRef.current;
+    const button = buttonRef.current;
+    if (!container || !button) {
       return null;
     }
 
+    const containerRect = container.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+
     const maxX = Math.max(
       SFTP_BUTTON_MARGIN,
-      containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
+      containerRect.width - buttonRect.width - SFTP_BUTTON_MARGIN,
     );
     const maxY = Math.max(
       SFTP_BUTTON_MARGIN,
-      containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
+      containerRect.height - buttonRect.height - SFTP_BUTTON_MARGIN,
     );
 
     return {
@@ -414,7 +420,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
       minY: SFTP_BUTTON_MARGIN,
       maxY,
     };
-  }, [buttonSize, containerSize]);
+  }, []);
 
   const clampButtonPosition = useCallback(
     (position: SftpButtonPosition, bounds = getButtonBounds()) => {
@@ -474,10 +480,10 @@ export default function Sftp({ containerRef, session }: SftpProps) {
 
       return nextPosition;
     });
-  }, [clampButtonPosition, getButtonBounds, getDefaultButtonPosition]);
+  }, [clampButtonPosition, getButtonBounds, getDefaultButtonPosition, containerSize, buttonSize]);
 
   useEffect(() => {
-    if (!buttonPosition) {
+    if (isDraggingRef.current || !buttonPosition) {
       return;
     }
 
@@ -485,7 +491,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
       SFTP_BUTTON_POSITION_STORAGE_KEY,
       JSON.stringify(buttonPosition),
     );
-  }, [buttonPosition]);
+  }, [buttonPosition, isDraggingButton]);
 
   const stopDraggingButton = useCallback(
     (
@@ -502,6 +508,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
       }
 
       dragStateRef.current = null;
+      isDraggingRef.current = false;
       setIsDraggingButton(false);
 
       if (dragState.hasMoved) {
@@ -517,8 +524,19 @@ export default function Sftp({ containerRef, session }: SftpProps) {
 
   const onButtonPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (event.button !== 0 || !buttonPosition) {
+      if (event.button !== 0) {
         return;
+      }
+
+      let position = buttonPosition;
+      if (!position) {
+        const container = containerRef.current;
+        const parent = event.currentTarget.parentElement;
+        if (!container || !parent) return;
+        const containerRect = container.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+        position = { x: parentRect.left - containerRect.left, y: parentRect.top - containerRect.top };
+        setButtonPosition(position);
       }
 
       event.preventDefault();
@@ -528,9 +546,10 @@ export default function Sftp({ containerRef, session }: SftpProps) {
         pointerId: event.pointerId,
         startClientX: event.clientX,
         startClientY: event.clientY,
-        startPosition: buttonPosition,
+        startPosition: position,
       };
       setIsDraggingButton(true);
+      isDraggingRef.current = true;
     },
     [buttonPosition],
   );
