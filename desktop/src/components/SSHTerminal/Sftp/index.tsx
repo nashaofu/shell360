@@ -42,13 +42,42 @@ import useSftpActions from "./useSftpActions";
 
 const SFTP_BUTTON_MARGIN = 10;
 const SFTP_BUTTON_POSITION_STORAGE_KEY = "desktop.sftp.button.position";
-const SFTP_BUTTON_DRAG_THRESHOLD = 3;
+const SFTP_BUTTON_DRAG_THRESHOLD = 6;
 const SFTP_BUTTON_DEFAULT_OPACITY = 0.85;
 
 type SftpButtonPosition = {
   x: number;
   y: number;
 };
+
+type SftpButtonBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
+const getPositionRatio = (
+  position: SftpButtonPosition,
+  bounds: SftpButtonBounds,
+) => ({
+  x:
+    bounds.maxX === bounds.minX
+      ? 0
+      : (position.x - bounds.minX) / (bounds.maxX - bounds.minX),
+  y:
+    bounds.maxY === bounds.minY
+      ? 0
+      : (position.y - bounds.minY) / (bounds.maxY - bounds.minY),
+});
+
+const getPositionFromRatio = (
+  ratio: SftpButtonPosition,
+  bounds: SftpButtonBounds,
+) => ({
+  x: bounds.minX + (bounds.maxX - bounds.minX) * ratio.x,
+  y: bounds.minY + (bounds.maxY - bounds.minY) * ratio.y,
+});
 
 const getInitialButtonPosition = (): SftpButtonPosition | null => {
   const savedPosition = localStorage.getItem(SFTP_BUTTON_POSITION_STORAGE_KEY);
@@ -87,6 +116,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const suppressButtonClickRef = useRef(false);
+  const previousButtonBoundsRef = useRef<SftpButtonBounds | null>(null);
   const dragStateRef = useRef<{
     hasMoved: boolean;
     pointerId: number;
@@ -364,51 +394,77 @@ export default function Sftp({ containerRef, session }: SftpProps) {
     removeFileLoading ||
     createLoading;
 
-  const clampButtonPosition = useCallback(
-    (position: SftpButtonPosition) => {
-      if (!containerSize || !buttonSize) {
-        return position;
-      }
-
-      const maxX = Math.max(
-        SFTP_BUTTON_MARGIN,
-        containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
-      );
-      const maxY = Math.max(
-        SFTP_BUTTON_MARGIN,
-        containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
-      );
-
-      return {
-        x: Math.min(Math.max(position.x, SFTP_BUTTON_MARGIN), maxX),
-        y: Math.min(Math.max(position.y, SFTP_BUTTON_MARGIN), maxY),
-      };
-    },
-    [buttonSize, containerSize],
-  );
-
-  const getDefaultButtonPosition = useCallback(() => {
+  const getButtonBounds = useCallback((): SftpButtonBounds | null => {
     if (!containerSize || !buttonSize) {
       return null;
     }
 
-    return clampButtonPosition({
-      x: containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
-      y: containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
-    });
-  }, [buttonSize, clampButtonPosition, containerSize]);
+    const maxX = Math.max(
+      SFTP_BUTTON_MARGIN,
+      containerSize.width - buttonSize.width - SFTP_BUTTON_MARGIN,
+    );
+    const maxY = Math.max(
+      SFTP_BUTTON_MARGIN,
+      containerSize.height - buttonSize.height - SFTP_BUTTON_MARGIN,
+    );
+
+    return {
+      minX: SFTP_BUTTON_MARGIN,
+      maxX,
+      minY: SFTP_BUTTON_MARGIN,
+      maxY,
+    };
+  }, [buttonSize, containerSize]);
+
+  const clampButtonPosition = useCallback(
+    (position: SftpButtonPosition, bounds = getButtonBounds()) => {
+      if (!bounds) {
+        return position;
+      }
+
+      return {
+        x: Math.min(Math.max(position.x, bounds.minX), bounds.maxX),
+        y: Math.min(Math.max(position.y, bounds.minY), bounds.maxY),
+      };
+    },
+    [getButtonBounds],
+  );
+
+  const getDefaultButtonPosition = useCallback(() => {
+    const bounds = getButtonBounds();
+    if (!bounds) {
+      return null;
+    }
+
+    return {
+      x: bounds.maxX,
+      y: bounds.maxY,
+    };
+  }, [getButtonBounds]);
 
   useEffect(() => {
-    if (!containerSize || !buttonSize) {
+    const currentBounds = getButtonBounds();
+    if (!currentBounds) {
       return;
     }
+
+    const previousBounds = previousButtonBoundsRef.current;
+    previousButtonBoundsRef.current = currentBounds;
 
     setButtonPosition((currentPosition) => {
       if (!currentPosition) {
         return getDefaultButtonPosition();
       }
 
-      const nextPosition = clampButtonPosition(currentPosition);
+      const nextPosition = previousBounds
+        ? clampButtonPosition(
+            getPositionFromRatio(
+              getPositionRatio(currentPosition, previousBounds),
+              currentBounds,
+            ),
+            currentBounds,
+          )
+        : clampButtonPosition(currentPosition, currentBounds);
       if (
         nextPosition.x === currentPosition.x &&
         nextPosition.y === currentPosition.y
@@ -418,12 +474,7 @@ export default function Sftp({ containerRef, session }: SftpProps) {
 
       return nextPosition;
     });
-  }, [
-    buttonSize,
-    clampButtonPosition,
-    containerSize,
-    getDefaultButtonPosition,
-  ]);
+  }, [clampButtonPosition, getButtonBounds, getDefaultButtonPosition]);
 
   useEffect(() => {
     if (!buttonPosition) {
@@ -494,11 +545,11 @@ export default function Sftp({ containerRef, session }: SftpProps) {
       const deltaX = event.clientX - dragState.startClientX;
       const deltaY = event.clientY - dragState.startClientY;
 
-      if (
-        !dragState.hasMoved &&
-        (Math.abs(deltaX) > SFTP_BUTTON_DRAG_THRESHOLD ||
-          Math.abs(deltaY) > SFTP_BUTTON_DRAG_THRESHOLD)
-      ) {
+      if (!dragState.hasMoved) {
+        const distance = Math.hypot(deltaX, deltaY);
+        if (distance < SFTP_BUTTON_DRAG_THRESHOLD) {
+          return;
+        }
         dragState.hasMoved = true;
       }
 
@@ -530,10 +581,13 @@ export default function Sftp({ containerRef, session }: SftpProps) {
             left: buttonPosition?.x,
             right: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
             bottom: buttonPosition ? "auto" : SFTP_BUTTON_MARGIN,
-            zIndex: 1,
+            zIndex: 1200,
             opacity:
               isDraggingButton || isOpen ? 1 : SFTP_BUTTON_DEFAULT_OPACITY,
             cursor: isDraggingButton ? "grabbing" : "grab",
+            pointerEvents: "auto",
+            touchAction: "none",
+            userSelect: "none",
             transition: isDraggingButton ? "none" : "opacity 0.2s ease",
             "&:hover": {
               opacity: 1,
