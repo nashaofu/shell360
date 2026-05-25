@@ -24,6 +24,13 @@ declare module "*.module.less" {
   export default classes;
 }
 
+declare module "*.svg" {
+  import type { ComponentType, SVGProps } from "react";
+
+  const SvgComponent: ComponentType<SVGProps<SVGSVGElement>>;
+  export default SvgComponent;
+}
+
 interface Window {
   umami: {
     track: {
