@@ -26,6 +26,7 @@
     "ahooks": "^3.9.6",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
+    "dockview-react": "^6.0.5",
     "jotai": "^2.15.1",
     "lodash-es": "^4.17.21",
     "notistack": "^3.0.2",

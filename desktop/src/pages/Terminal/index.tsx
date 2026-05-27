@@ -1,38 +1,25 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { useTerminalsAtomWithApi } from "shared";
-import AddKey from "@/features/AddKey";
-import SSHTerminal from "@/widgets/SshTerminal";
-import styles from "./index.module.less";
+import { useTerminalsAtomValue } from "shared";
+import { useTerminalActiveId, useTerminalViewVisible } from "@/app/model/terminalPanelAtom";
 
 export default function Terminal() {
   const { uuid } = useParams<{ uuid: string }>();
-  const terminalsApi = useTerminalsAtomWithApi();
-  const [openAddKey, setOpenAddKey] = useState(false);
+  const terminalsState = useTerminalsAtomValue();
+  const [, setActiveTerminalId] = useTerminalActiveId();
+  const [, setVisible] = useTerminalViewVisible();
 
-  const terminal = uuid ? terminalsApi.state.get(uuid) : undefined;
+  useEffect(() => {
+    setVisible(true);
+    if (uuid && terminalsState.has(uuid)) {
+      setActiveTerminalId(uuid);
+    }
+    return () => setVisible(false);
+  }, [uuid, terminalsState, setActiveTerminalId, setVisible]);
 
-  if (!terminal) {
+  if (terminalsState.size === 0) {
     return <Navigate to="/" replace />;
   }
 
-  const onClose = () => {
-    if (uuid) terminalsApi.delete(uuid);
-  };
-
-  return (
-    <div className={styles.terminal}>
-      <SSHTerminal
-        item={terminal}
-        style={{ width: "100%", height: "100%" }}
-        onClose={onClose}
-        onOpenAddKey={() => setOpenAddKey(true)}
-      />
-      <AddKey
-        open={openAddKey}
-        onOk={() => setOpenAddKey(false)}
-        onCancel={() => setOpenAddKey(false)}
-      />
-    </div>
-  );
+  return null;
 }

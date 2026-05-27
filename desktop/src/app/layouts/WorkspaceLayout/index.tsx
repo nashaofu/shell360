@@ -1,7 +1,8 @@
 import { Outlet } from "react-router-dom";
-import TitleBar from "../components/TitleBar";
-import NavRail from "./components/NavRail";
-import StatusBar from "./components/StatusBar";
+import TitleBar from "@/widgets/TitleBar";
+import NavRail from "@/widgets/NavRail";
+import StatusBar from "@/widgets/StatusBar";
+import TerminalPanel from "@/widgets/TerminalPanel";
 import styles from "./index.module.less";
 
 export default function WorkspaceLayout() {
@@ -10,13 +11,14 @@ export default function WorkspaceLayout() {
       <TitleBar />
       <div className={styles.shell}>
         <NavRail />
-        <main className={styles.workspace}>
+        <div className={styles.workspace}>
           <div className={styles.workspaceScroll}>
             <div className={styles.workspaceInner}>
               <Outlet />
             </div>
           </div>
-        </main>
+          <TerminalPanel />
+        </div>
       </div>
       <StatusBar />
     </div>

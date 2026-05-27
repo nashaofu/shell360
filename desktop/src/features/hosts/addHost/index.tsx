@@ -20,7 +20,7 @@ import {
   type Host,
   updateHost,
 } from "tauri-plugin-data";
-import AddKey from "@/features/AddKey";
+import AddKey from "@/features/keys/addKey";
 import PageDrawer from "@/shared/ui/PageDrawer";
 
 type AddHostProps = {

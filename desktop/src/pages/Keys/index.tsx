@@ -3,14 +3,14 @@ import { get } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import { useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
-import AddKey from "@/features/AddKey";
+import AddKey from "@/features/keys/addKey";
 import useMessage from "@/shared/hooks/useMessage";
 import useModal from "@/shared/hooks/useModal";
 import { copy } from "@/shared/lib/clipboard";
 import Empty from "@/shared/ui/Empty";
 import panel from "@/shared/styles/panel.module.less";
 
-import GenerateKey from "./GenerateKey";
+import GenerateKey from "@/features/keys/generateKey";
 import styles from "./index.module.less";
 
 function getKeyTypeLabel(key: Key) {

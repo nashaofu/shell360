@@ -29,6 +29,7 @@ declare module "*.svg" {
 
   const SvgComponent: ComponentType<SVGProps<SVGSVGElement>>;
   export default SvgComponent;
+  export const ReactComponent: ComponentType<SVGProps<SVGSVGElement>>;
 }
 
 interface Window {

@@ -16,7 +16,7 @@ import useModal from "@/shared/hooks/useModal";
 import Empty from "@/shared/ui/Empty";
 import panel from "@/shared/styles/panel.module.less";
 
-import AddHost from "./AddHost";
+import AddHost from "@/features/hosts/addHost";
 import styles from "./index.module.less";
 
 const AVATAR_COLORS = ["#4285f4", "#27ae60", "#f59e0b", "#7c5cbf", "#e53935"];

@@ -3,8 +3,8 @@ import { useAtomValue } from "jotai";
 import { useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/app/model/cryptoAtom";
-import ChangeCryptoPassword from "@/features/ChangeCryptoPassword";
-import InitCrypto from "@/features/InitCrypto";
+import ChangeCryptoPassword from "@/features/crypto/changeCryptoPassword";
+import InitCrypto from "@/features/crypto/initCrypto";
 import styles from "./index.module.less";
 
 export default function CryptoSettings() {

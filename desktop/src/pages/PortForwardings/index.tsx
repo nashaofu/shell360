@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
-import AddKey from "@/features/AddKey";
+import AddKey from "@/features/keys/addKey";
 import Empty from "@/shared/ui/Empty";
 import panel from "@/shared/styles/panel.module.less";
 
-import AddPortForwarding from "./AddPortForwarding";
+import AddPortForwarding from "@/features/portForwardings/addPortForwarding";
 import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
