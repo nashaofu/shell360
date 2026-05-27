@@ -1,8 +1,8 @@
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { authAtom } from "@/app/model/authAtom";
-import { cryptoIsEnableAtom } from "@/app/model/cryptoAtom";
+import { authAtom } from "@/atoms/auth";
+import { cryptoIsEnableAtom } from "@/atoms/crypto";
 import GuardLoading from "./GuardLoading";
 
 type RequireUnlockProps = {

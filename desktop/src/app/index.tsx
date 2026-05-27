@@ -1,8 +1,8 @@
 import { Theme } from "@radix-ui/themes";
 import { RouterProvider } from "react-router-dom";
 import { useAppearanceValue } from "shared";
-import { useAutoCheckUpdate } from "@/app/model/updateAtom";
-import UpdateDialog from "@/widgets/UpdateDialog";
+import { useAutoCheckUpdate } from "@/atoms/update";
+import UpdateDialog from "@/components/UpdateDialog";
 import styles from "./index.module.less";
 import router from "./routes";
 

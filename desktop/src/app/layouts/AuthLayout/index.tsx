@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Outlet } from "react-router-dom";
-import TitleBar from "@/widgets/TitleBar";
+import TitleBar from "@/components/TitleBar";
 import styles from "./index.module.less";
 
 type AuthLayoutProps = {

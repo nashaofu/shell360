@@ -17,32 +17,27 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        Component: lazy(() => import("@/pages/Hosts")),
-        ErrorBoundary: RouterErrorBoundary,
-      },
-      {
-        path: "/terminal/:uuid",
-        Component: lazy(() => import("@/pages/Terminal")),
+        Component: lazy(() => import("@/routes/Hosts")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
         path: "/port-forwardings",
-        Component: lazy(() => import("@/pages/PortForwardings")),
+        Component: lazy(() => import("@/routes/PortForwardings")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
         path: "/keys",
-        Component: lazy(() => import("@/pages/Keys")),
+        Component: lazy(() => import("@/routes/Keys")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
         path: "/known-hosts",
-        Component: lazy(() => import("@/pages/KnownHosts")),
+        Component: lazy(() => import("@/routes/KnownHosts")),
         ErrorBoundary: RouterErrorBoundary,
       },
       {
         path: "/settings",
-        Component: lazy(() => import("@/pages/Settings")),
+        Component: lazy(() => import("@/routes/Settings")),
         ErrorBoundary: RouterErrorBoundary,
       },
     ],
@@ -57,7 +52,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/unlock",
-        Component: lazy(() => import("@/pages/Unlock")),
+        Component: lazy(() => import("@/routes/Unlock")),
         ErrorBoundary: RouterErrorBoundary,
       },
     ],
