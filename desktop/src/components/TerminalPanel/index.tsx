@@ -8,6 +8,7 @@ import {
   createContext,
   type FunctionComponent,
 } from "react";
+import clsx from "clsx";
 import {
   DockviewReact,
   type AddPanelOptions,
@@ -29,7 +30,12 @@ const TerminalCtx = createContext<{ onOpenAddKey: () => void }>({
 
 const PANEL_MIN_WIDTH = 220;
 const PANEL_MIN_HEIGHT = 120;
-const TAB_CONTEXT_MENU_ITEMS = ["close", "closeOthers", "closeAll", "separator"] as const;
+const TAB_CONTEXT_MENU_ITEMS = [
+  "close",
+  "closeOthers",
+  "closeAll",
+  "separator",
+] as const;
 
 function TerminalContent({ params, api }: IDockviewPanelProps<{ terminalId: string }>) {
   const { terminalId } = params;
@@ -215,7 +221,11 @@ export default function TerminalPanel() {
   return (
     <TerminalCtx.Provider value={contextValue}>
       <div
-        className={`${styles.root} ${styles.appDockview} ${visible ? styles.visible : styles.hidden}`}
+        className={clsx(
+          styles.root,
+          styles.appDockview,
+          visible ? styles.visible : styles.hidden,
+        )}
       >
         <DockviewReact
           components={components}

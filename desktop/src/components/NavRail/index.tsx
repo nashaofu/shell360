@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
+import { useSetTerminalViewVisible } from "@/atoms/terminal";
 import styles from "./index.module.less";
 
 type NavItem = {
@@ -74,8 +75,12 @@ function NavSection({
 
 export default function NavRail() {
   const navigate = useNavigate();
+  const setTerminalViewVisible = useSetTerminalViewVisible();
   const { pathname } = useLocation();
-  const onNavigate = (to: string) => navigate(to, { replace: true });
+  const onNavigate = (to: string) => {
+    setTerminalViewVisible(false);
+    navigate(to, { replace: true });
+  };
 
   return (
     <aside className={styles.navRail}>

@@ -1,11 +1,5 @@
-import {
-  Heading,
-  IconButton,
-  Separator,
-  Theme,
-  useThemeContext,
-} from "@radix-ui/themes";
-import type { ReactNode } from "react";
+import { Heading, IconButton, Separator, Theme } from "@radix-ui/themes";
+import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Loading } from "shared";
 
@@ -29,19 +23,33 @@ export default function PageDrawer({
   footer,
   onCancel,
 }: PageDrawerProps) {
-  const themeContext = useThemeContext();
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onCancel]);
 
   if (!open) return null;
 
   return createPortal(
-    <Theme {...themeContext}>
+    <Theme asChild>
       <div className={styles.overlay} onClick={onCancel}>
-        <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.panel}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="page-drawer-title"
+          tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div
             className={styles.header}
             style={{ marginTop: TITLE_BAR_HEIGHT }}
           >
-            <Heading size="4" weight="medium">
+            <Heading id="page-drawer-title" size="4" weight="medium">
               {title}
             </Heading>
             {!loading && (
@@ -49,6 +57,7 @@ export default function PageDrawer({
                 type="button"
                 variant="ghost"
                 color="gray"
+                aria-label="关闭"
                 onClick={onCancel}
               >
                 <span className="icon-arrow-right" />
