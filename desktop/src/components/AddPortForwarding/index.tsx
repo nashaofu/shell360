@@ -29,7 +29,7 @@ export default function AddPortForwarding({
   onCancel,
 }: AddPortForwardingProps) {
   const { refresh: refreshPortForwardings } = usePortForwardings();
-  const formApi = useForm<PortForwardingFormFields, "id">({
+  const formApi = useForm<PortForwardingFormFields>({
     defaultValues: {
       name: "",
       portForwardingType: PortForwardingType.Local,
@@ -99,7 +99,7 @@ export default function AddPortForwarding({
   return (
     <PageDrawer
       open={open}
-      title={data ? "Edit host" : "Add host"}
+      title={data ? "Edit port forwarding" : "Add port forwarding"}
       onCancel={onCancel}
       footer={
         <div

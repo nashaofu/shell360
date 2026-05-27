@@ -1,7 +1,7 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export type UpdateAtom = {
   hasUpdate: boolean;
@@ -25,25 +25,24 @@ export const updateAtom = atom<UpdateAtom>({
   downloaded: undefined,
 });
 
-let activeChecking: Promise<Update | null> | undefined;
-
 export function useCheckUpdate() {
   const setState = useSetAtom(updateAtom);
   const store = useStore();
+  const activeCheckingRef = useRef<Promise<Update | null> | undefined>(undefined);
 
   const checkUpdate = useCallback(async () => {
-    if (activeChecking) {
-      return activeChecking;
+    if (activeCheckingRef.current) {
+      return activeCheckingRef.current;
     }
 
     const currentState = store.get(updateAtom);
     if (currentState.checking) {
-      activeChecking = currentState.checking;
+      activeCheckingRef.current = currentState.checking;
       return currentState.checking;
     }
 
     const checking = check();
-    activeChecking = checking;
+    activeCheckingRef.current = checking;
 
     setState((prev) => {
       if (prev.checking) {
@@ -66,8 +65,8 @@ export function useCheckUpdate() {
         update,
       }));
 
-      if (activeChecking === checking) {
-        activeChecking = undefined;
+      if (activeCheckingRef.current === checking) {
+        activeCheckingRef.current = undefined;
       }
 
       return update;
@@ -79,8 +78,8 @@ export function useCheckUpdate() {
         update: null,
       }));
 
-      if (activeChecking === checking) {
-        activeChecking = undefined;
+      if (activeCheckingRef.current === checking) {
+        activeCheckingRef.current = undefined;
       }
 
       throw err;
@@ -90,19 +89,19 @@ export function useCheckUpdate() {
   return checkUpdate;
 }
 
-let timer: number | undefined;
-
 export function useAutoCheckUpdate() {
   const checkUpdate = useCheckUpdate();
+  const timerRef = useRef<number | undefined>(undefined);
+
   useEffect(() => {
     const autoCheckUpdate = async () => {
       let update: Update | null = null;
       try {
         update = await checkUpdate();
       } finally {
-        clearTimeout(timer);
+        clearTimeout(timerRef.current);
         if (!update) {
-          timer = window.setTimeout(() => autoCheckUpdate(), 1000 * 60 * 3);
+          timerRef.current = window.setTimeout(() => autoCheckUpdate(), 1000 * 60 * 3);
         }
       }
     };
@@ -110,7 +109,7 @@ export function useAutoCheckUpdate() {
     autoCheckUpdate();
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timerRef.current);
     };
   }, [checkUpdate]);
 }

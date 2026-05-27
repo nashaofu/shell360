@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { usePortForwardingsAtomValue, useTerminalsAtomValue } from "shared";
 import { useFileTransfersCount } from "@/atoms/terminal";
 import styles from "./index.module.less";
@@ -18,47 +17,46 @@ export default function StatusBar() {
   return (
     <div className={styles.statusBar}>
       <div className={styles.left}>
-        <button type="button" className={styles.chip}>
+        <button
+          type="button"
+          className={styles.chip}
+          title={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
+          aria-label={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
+        >
           <span className="icon-terminal" />
-          {terminalCount} {terminalCount === 1 ? "terminal" : "terminals"}
+          <span className={styles.value}>{terminalCount}</span>
         </button>
         <div className={styles.divider} />
-        <button type="button" className={styles.chip}>
+        <button
+          type="button"
+          className={styles.chip}
+          title={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
+          aria-label={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
+        >
           <span className="icon-site-map" />
-          {portForwardingCount} port{" "}
-          {portForwardingCount === 1 ? "forwarding" : "forwardings"}
-          <span
-            className={clsx(
-              styles.badge,
-              portForwardingCount > 0 ? styles.badgeGreen : styles.badgeGray,
-            )}
-          >
-            {portForwardingCount > 0 ? "active" : "idle"}
-          </span>
+          <span className={styles.value}>{portForwardingCount}</span>
         </button>
         <div className={styles.divider} />
-        <button type="button" className={styles.chip}>
+        <button
+          type="button"
+          className={styles.chip}
+          title={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
+          aria-label={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
+        >
           <span className="icon-file-upload" />
-          {transferCount}{" "}
-          {transferCount === 1 ? "file transferring" : "files transferring"}
-          <span
-            className={clsx(
-              styles.badge,
-              transferCount > 0 ? styles.badgeAccent : styles.badgeGray,
-            )}
-          >
-            {transferCount > 0 ? "busy" : "idle"}
-          </span>
+          <span className={styles.value}>{transferCount}</span>
         </button>
       </div>
       <div className={styles.spacer} />
       <div className={styles.right}>
-        <button type="button" className={styles.chip}>
+        <button
+          type="button"
+          className={styles.chip}
+          title={`${notificationCount} notifications`}
+          aria-label={`${notificationCount} notifications`}
+        >
           <span className="icon-info-circle" />
-          Notifications
-          <span className={clsx(styles.badge, styles.badgeAccent)}>
-            {notificationCount}
-          </span>
+          <span className={styles.value}>{notificationCount}</span>
         </button>
       </div>
     </div>

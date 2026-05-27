@@ -1,4 +1,4 @@
-import { Badge, Text } from "@radix-ui/themes";
+import { Text } from "@radix-ui/themes";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
@@ -13,9 +13,7 @@ export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
   const activateTerminal = useActivateTerminal();
   const terminalsState = useTerminalsAtomValue();
-  const terminals = [...terminalsState.values()];
-  const terminalCount = terminals.length;
-  const hasTerminal = terminalCount > 0;
+  const hasTerminal = terminalsState.size > 0;
   const profileName = "Local User";
   const profileInitials = profileName
     .split(" ")
@@ -83,13 +81,7 @@ export default function TitleBar() {
           </span>
           <span className={styles.workspaceBtnText}>
             <span className={styles.workspaceBtnLabel}>Workspace</span>
-            <span className={styles.workspaceBtnMeta}>
-              {hasTerminal ? "Terminal active" : "No terminal"}
-            </span>
           </span>
-          <Badge size="1" variant="soft" color="gray" radius="full">
-            {terminalCount}
-          </Badge>
         </button>
       </div>
 

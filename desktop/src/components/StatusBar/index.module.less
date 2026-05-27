@@ -31,8 +31,8 @@
   height: var(--status-bar-height, 28px);
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 6px;
+  gap: 5px;
+  padding: 0 7px;
   border: none;
   background: transparent;
   font-size: 10px;
@@ -53,29 +53,13 @@
   }
 }
 
-.badge {
-  padding: 0 4px;
-  border-radius: 3px;
-  font-size: 8px;
+.value {
+  min-width: 1ch;
   font-family: monospace;
-  background: var(--gray-a3);
   color: var(--gray-10);
-  line-height: 1.4;
-}
-
-.badgeAccent {
-  background: var(--accent-a3);
-  color: var(--accent-11);
-}
-
-.badgeGreen {
-  background: var(--green-a3);
-  color: var(--green-11);
-}
-
-.badgeGray {
-  background: var(--gray-a3);
-  color: var(--gray-10);
+  font-size: 10px;
+  line-height: 1;
+  text-align: right;
 }
 
 .divider {
