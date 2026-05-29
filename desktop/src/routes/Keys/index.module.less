@@ -9,17 +9,18 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px 16px;
-  border: 1px solid var(--gray-a5);
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
   border-radius: 8px;
-  background: var(--color-panel-solid, var(--gray-1));
+  background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
+  box-shadow: var(--app-shadow-card, none);
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
 }
 
 .card:hover {
-  border-color: var(--gray-a7);
-  background: var(--gray-a2);
+  border-color: var(--app-panel-border, var(--gray-a7));
+  background: color-mix(in srgb, var(--app-panel-bg, var(--color-panel-solid)) 92%, var(--app-hover-bg, var(--gray-a2)));
 }
 
 .cardHead {

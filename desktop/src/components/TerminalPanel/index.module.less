@@ -3,7 +3,7 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--color-background) 96%, var(--gray-2));
+  background: var(--app-workspace-bg, color-mix(in srgb, var(--color-background) 96%, var(--gray-2)));
   z-index: 10;
 }
 
@@ -18,13 +18,13 @@
 .dockview {
   flex: 1;
   min-height: 0;
-  background: var(--color-background);
+  background: var(--app-workspace-bg, var(--color-background));
 }
 
 .appDockview {
-  --dv-background-color: color-mix(in srgb, var(--color-background) 96%, var(--gray-2));
-  --dv-group-view-background-color: var(--color-background);
-  --dv-tabs-and-actions-container-background-color: color-mix(in srgb, var(--color-panel) 96%, var(--gray-2));
+  --dv-background-color: var(--app-workspace-bg, color-mix(in srgb, var(--color-background) 96%, var(--gray-2)));
+  --dv-group-view-background-color: var(--app-workspace-bg, var(--color-background));
+  --dv-tabs-and-actions-container-background-color: var(--app-status-bg, color-mix(in srgb, var(--color-panel) 96%, var(--gray-2)));
   --dv-activegroup-visiblepanel-tab-background-color: color-mix(in srgb, var(--color-surface) 88%, var(--accent-a2));
   --dv-activegroup-hiddenpanel-tab-background-color: transparent;
   --dv-inactivegroup-visiblepanel-tab-background-color: color-mix(in srgb, var(--color-surface) 88%, var(--gray-a2));
@@ -50,19 +50,17 @@
   color: var(--gray-12);
 
   :global(.dv-groupview) {
-    background: var(--color-background);
+    background: var(--app-workspace-bg, var(--color-background));
   }
 
   :global(.dv-groupview.dv-active-group > .dv-tabs-and-actions-container) {
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent-8) 54%, transparent);
+    box-shadow: none;
   }
 
   :global(.dv-tabs-and-actions-container) {
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 52%, transparent), transparent),
-      color-mix(in srgb, var(--color-panel) 96%, var(--gray-2));
-    border-bottom: 1px solid color-mix(in srgb, var(--gray-a4) 82%, transparent);
-    padding: 0 5px 0 4px;
+    background: var(--app-status-bg, color-mix(in srgb, var(--color-panel) 96%, var(--gray-2)));
+    border-bottom: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 82%, transparent));
+    padding: 0;
   }
 
   :global(.dv-tabs-container),
@@ -72,8 +70,8 @@
   }
 
   :global(.dv-tabs-container) {
-    gap: 2px;
-    padding-top: 1px;
+    gap: 0;
+    padding-top: 0;
   }
 
   :global(.dv-right-actions-container) {
@@ -83,11 +81,13 @@
   :global(.dv-tab) {
     min-width: 118px;
     max-width: 220px;
-    height: 26px;
-    margin: 4px 0 3px 4px;
-    padding: 0 5px 0 9px;
-    border-radius: 6px;
+    height: 30px;
+    margin: 3px 0 0 0;
+    padding: 0 5px 0 10px;
+    border-radius: 0;
     border: 1px solid transparent;
+    border-bottom: none;
+    outline: none;
     position: relative;
     transition:
       background-color 0.13s ease,
@@ -99,11 +99,11 @@
   :global(.dv-tab::before) {
     content: "";
     position: absolute;
-    left: 8px;
-    right: 8px;
-    top: -1px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     height: 2px;
-    border-radius: 0 0 2px 2px;
+    border-radius: 2px 2px 0 0;
     background: transparent;
   }
 
@@ -122,12 +122,30 @@
       .dv-tabs-container
       > .dv-tab.dv-active-tab
   ) {
-    background-color: color-mix(in srgb, var(--color-surface) 88%, var(--accent-a2)) !important;
-    border-color: color-mix(in srgb, var(--accent-a5) 40%, var(--gray-a4)) !important;
+    background-color: var(--app-panel-bg, color-mix(in srgb, var(--color-surface) 64%, transparent)) !important;
+    border-color: transparent !important;
     color: var(--gray-12) !important;
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--color-surface) 84%, transparent),
-      0 1px 2px color-mix(in srgb, var(--gray-a4) 14%, transparent);
+    box-shadow: none;
+    outline: none !important;
+  }
+
+  :global(.dv-tab.dv-active-tab),
+  :global(.dv-tab.dv-active-tab:active),
+  :global(.dv-tab.dv-active-tab:focus),
+  :global(.dv-tab.dv-active-tab:focus-visible),
+  :global(.dv-tab.dv-active-tab:focus-within),
+  :global(.dv-tab.dv-active-tab .dv-default-tab),
+  :global(.dv-tab.dv-active-tab .dv-default-tab:active),
+  :global(.dv-tab.dv-active-tab .dv-default-tab:focus),
+  :global(.dv-tab.dv-active-tab .dv-default-tab:focus-visible),
+  :global(.dv-tab.dv-active-tab .dv-default-tab:focus-within),
+  :global(.dv-tab.dv-active-tab .dv-default-tab-action),
+  :global(.dv-tab.dv-active-tab .dv-default-tab-action:active),
+  :global(.dv-tab.dv-active-tab .dv-default-tab-action:focus),
+  :global(.dv-tab.dv-active-tab .dv-default-tab-action:focus-visible) {
+    border-color: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 
   :global(
@@ -146,6 +164,7 @@
       > .dv-tab.dv-inactive-tab
   ) {
     background-color: transparent !important;
+    border-color: transparent !important;
     color: var(--gray-11) !important;
   }
 
@@ -155,8 +174,8 @@
       .dv-tabs-container
       > .dv-tab.dv-inactive-tab:hover
   ) {
-    background-color: color-mix(in srgb, var(--gray-a3) 72%, transparent) !important;
-    border-color: color-mix(in srgb, var(--gray-a4) 64%, transparent) !important;
+    background-color: var(--app-hover-bg, color-mix(in srgb, var(--gray-a3) 56%, transparent)) !important;
+    border-color: transparent !important;
     color: var(--gray-12) !important;
   }
 
@@ -203,11 +222,11 @@
   }
 
   :global(.dv-content-container) {
-    background: var(--color-background);
+    background: var(--app-workspace-bg, var(--color-background));
   }
 
   :global(.dv-split-view-container.dv-separator-border .dv-view:not(:first-child)::before) {
-    background-color: color-mix(in srgb, var(--gray-a5) 72%, transparent);
+    background-color: var(--app-panel-border, color-mix(in srgb, var(--gray-a5) 72%, transparent));
   }
 
   :global(.dv-sash) {
@@ -224,10 +243,10 @@
   }
 
   :global(.dv-tabs-overflow-container) {
-    border: 1px solid color-mix(in srgb, var(--gray-a4) 82%, transparent);
+    border: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 82%, transparent));
     border-radius: 6px;
-    background: var(--color-panel);
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--gray-a8) 16%, transparent);
+    background: var(--app-elevated-bg, var(--color-panel));
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--gray-a8) 14%, transparent);
   }
 }
 

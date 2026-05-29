@@ -15,7 +15,7 @@
   display: flex;
   overflow: hidden;
   min-height: 0;
-  background: var(--color-background);
+  background: var(--app-workspace-bg, var(--color-background));
 }
 
 .workspace {
@@ -33,6 +33,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  background: var(--app-workspace-bg, var(--color-background));
 }
 
 .workspaceInner {

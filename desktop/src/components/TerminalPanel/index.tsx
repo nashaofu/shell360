@@ -1,22 +1,22 @@
+import clsx from "clsx";
 import {
+  type AddPanelOptions,
+  type DockviewApi,
+  DockviewReact,
+  type DockviewReadyEvent,
+  type IDockviewPanelProps,
+  type IWatermarkPanelProps,
+} from "dockview-react";
+import {
+  createContext,
+  type FunctionComponent,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  createContext,
-  type FunctionComponent,
 } from "react";
-import clsx from "clsx";
-import {
-  DockviewReact,
-  type AddPanelOptions,
-  type DockviewReadyEvent,
-  type IDockviewPanelProps,
-  type IWatermarkPanelProps,
-  type DockviewApi,
-} from "dockview-react";
 import "dockview-react/dist/styles/dockview.css";
 import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
 import { useTerminalActiveId, useTerminalViewVisible } from "@/atoms/terminal";
@@ -37,7 +37,10 @@ const TAB_CONTEXT_MENU_ITEMS = [
   "separator",
 ] as const;
 
-function TerminalContent({ params, api }: IDockviewPanelProps<{ terminalId: string }>) {
+function TerminalContent({
+  params,
+  api,
+}: IDockviewPanelProps<{ terminalId: string }>) {
   const { terminalId } = params;
   const terminalsState = useTerminalsAtomValue();
   const terminalsApi = useTerminalsAtomWithApi();
@@ -103,7 +106,7 @@ function getTerminalPanelOptions(
 export default function TerminalPanel() {
   const terminalsState = useTerminalsAtomValue();
   const terminalsApi = useTerminalsAtomWithApi();
-  const [visible] = useTerminalViewVisible();
+  const [visible, setVisible] = useTerminalViewVisible();
   const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const [openAddKey, setOpenAddKey] = useState(false);
   const apiRef = useRef<DockviewApi | null>(null);
@@ -116,7 +119,10 @@ export default function TerminalPanel() {
   activeIdRef.current = activeTerminalId;
   const openAddKeyModal = useCallback(() => setOpenAddKey(true), []);
   const closeAddKeyModal = useCallback(() => setOpenAddKey(false), []);
-  const contextValue = useMemo(() => ({ onOpenAddKey: openAddKeyModal }), [openAddKeyModal]);
+  const contextValue = useMemo(
+    () => ({ onOpenAddKey: openAddKeyModal }),
+    [openAddKeyModal],
+  );
 
   const onReady = useCallback(
     (event: DockviewReadyEvent) => {
@@ -131,7 +137,14 @@ export default function TerminalPanel() {
       apiRef.current = api;
 
       for (const [uuid, term] of terminalsRef.current) {
-        api.addPanel(getTerminalPanelOptions(api, uuid, term.name, uuid !== activeIdRef.current));
+        api.addPanel(
+          getTerminalPanelOptions(
+            api,
+            uuid,
+            term.name,
+            uuid !== activeIdRef.current,
+          ),
+        );
         addedRef.current.add(uuid);
       }
 
@@ -173,6 +186,12 @@ export default function TerminalPanel() {
       disposablesRef.current = [];
     };
   }, []);
+
+  useEffect(() => {
+    if (terminalsState.size === 0) {
+      setVisible(false);
+    }
+  }, [terminalsState, setVisible]);
 
   useEffect(() => {
     if (!activeTerminalId || !terminalsState.has(activeTerminalId)) {

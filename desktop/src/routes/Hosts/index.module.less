@@ -29,9 +29,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px;
-  border: 1px solid var(--gray-a5);
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
   border-radius: 9px;
-  background: var(--color-panel-solid, var(--gray-1));
+  background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
+  box-shadow: var(--app-shadow-card, none);
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -39,9 +40,9 @@
     box-shadow 0.15s ease;
 
   &:hover {
-    border-color: var(--gray-a7);
-    background: var(--gray-a2);
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--gray-12) 16%, transparent);
+    border-color: var(--app-panel-border, var(--gray-a7));
+    background: color-mix(in srgb, var(--app-panel-bg, var(--color-panel-solid)) 92%, var(--app-hover-bg, var(--gray-a2)));
+    box-shadow: 0 8px 22px rgba(18, 25, 38, 0.06);
   }
 }
 
@@ -157,8 +158,8 @@
 }
 
 .moreBtn:hover {
-  background: var(--gray-a3);
-  border-color: var(--gray-a5);
+  background: var(--app-hover-bg, var(--gray-a3));
+  border-color: var(--app-soft-border, var(--gray-a5));
   color: var(--gray-12);
 }
 

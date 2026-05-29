@@ -4,13 +4,15 @@
   align-items: center;
   padding: 0 4px 0 12px;
   gap: 10px;
-  background: color-mix(in srgb, var(--color-panel) 96%, var(--gray-2));
-  border-bottom: 1px solid color-mix(in srgb, var(--gray-a4) 72%, transparent);
+  background: var(--app-chrome-bg, color-mix(in srgb, var(--color-panel) 96%, var(--gray-2)));
+  border-bottom: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 72%, transparent));
   -webkit-app-region: drag;
   flex-shrink: 0;
   position: relative;
   z-index: 20;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 58%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 70%, transparent),
+    var(--app-shadow-soft, none);
 }
 
 .leftRail {

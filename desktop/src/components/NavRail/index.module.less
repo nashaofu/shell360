@@ -5,8 +5,8 @@
   align-items: center;
   gap: 3px;
   padding: 6px 0;
-  border-right: 1px solid var(--gray-a4);
-  background: var(--color-panel);
+  border-right: 1px solid var(--app-panel-border, var(--gray-a4));
+  background: var(--app-rail-bg, var(--color-panel));
   flex-shrink: 0;
 }
 
@@ -52,7 +52,7 @@
 }
 
 .navItem:hover {
-  background: var(--gray-a3);
+  background: var(--app-hover-bg, var(--gray-a3));
   color: var(--gray-12);
 }
 
