@@ -4,7 +4,7 @@ import RequireLocked from "@/app/guards/RequireLocked";
 import RequireUnlock from "@/app/guards/RequireUnlock";
 import AuthLayout from "@/app/layouts/AuthLayout";
 import AppLayout from "@/app/layouts/AppLayout";
-import RouterErrorBoundary from "@/app/routes/RouterErrorBoundary";
+import RouterErrorBoundary from "@/components/RouterErrorBoundary";
 
 const router = createBrowserRouter([
   {

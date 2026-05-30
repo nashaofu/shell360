@@ -11,7 +11,7 @@ import {
   type SSHSessionDisconnectEvent,
 } from "tauri-plugin-ssh";
 
-import type { PortForwardingsAtom } from "../atoms/portForwardingsAtom";
+import type { PortForwardingsAtom } from "../atoms/portForwardings.atom";
 
 export interface JumpHostChainItem {
   host: Host;

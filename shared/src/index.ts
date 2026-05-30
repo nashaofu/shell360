@@ -1,9 +1,9 @@
 import "./styles/index.less";
 
 // atoms
-export * from "./atoms/appearanceAtom";
-export * from "./atoms/portForwardingsAtom";
-export * from "./atoms/terminalsAtom";
+export * from "./atoms/appearance.atom";
+export * from "./atoms/portForwardings.atom";
+export * from "./atoms/session.atom";
 // components
 export * from "./components/EditHostForm";
 export * from "./components/EditKeyForm";

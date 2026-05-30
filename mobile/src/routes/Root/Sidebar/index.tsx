@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
-import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import overlay from "@/utils/overlay";
 import logo from "./logo.svg";
 import styles from "./index.module.less";

@@ -2,7 +2,7 @@ import { DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
 import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
-import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
 

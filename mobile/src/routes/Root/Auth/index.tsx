@@ -1,8 +1,8 @@
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 
-import { authAtom } from "@/atom/authAtom";
-import { cryptoIsEnableAtom } from "@/atom/cryptoAtom";
+import { authAtom } from "@/atoms/auth.atom";
+import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import styles from "./index.module.less";
 
 import UnlockCrypto from "./UnlockCrypto";

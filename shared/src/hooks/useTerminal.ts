@@ -6,7 +6,7 @@ import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 import {
   type TerminalAtom,
   useTerminalsAtomWithApi,
-} from "@/atoms/terminalsAtom";
+} from "@/atoms/session.atom";
 
 import { useShell } from "./useShell";
 

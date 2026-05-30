@@ -5,7 +5,7 @@ import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
-import { useFileTransfersActions } from "@/atoms/terminal";
+import { useFileTransfersActions } from "@/atoms/terminalView.atom";
 
 type UseSftpActionsOpts = {
   dirname?: string;

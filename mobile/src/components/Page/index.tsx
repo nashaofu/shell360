@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { useGlobalStateAtomWithApi } from "@/atom/globalState";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import styles from "./index.module.less";
 
 type PageProps = {

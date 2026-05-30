@@ -2,7 +2,7 @@ import { Button, Flex, Switch, Text } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import { useCallback, useState } from "react";
 import { changeCryptoEnable } from "tauri-plugin-data";
-import { cryptoIsEnableAtom } from "@/atoms/crypto";
+import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import InitCrypto from "@/components/InitCrypto";
 import styles from "./index.module.less";

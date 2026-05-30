@@ -13,7 +13,7 @@ import {
 } from "react";
 import "dockview-react/dist/styles/dockview.css";
 import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
-import { useTerminalActiveId, useTerminalViewVisible } from "@/atoms/terminal";
+import { useTerminalActiveId, useTerminalViewVisible } from "@/atoms/terminalView.atom";
 import AddKey from "@/components/AddKey";
 import SftpContent from "@/components/SftpPanel";
 import TerminalPanel from "@/components/TerminalPanel";

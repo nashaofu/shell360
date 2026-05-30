@@ -10,7 +10,7 @@ import {
   useTerminalsAtomWithApi,
 } from "shared";
 import { addHost, deleteHost, type Host } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";

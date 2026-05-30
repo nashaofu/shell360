@@ -1,10 +1,10 @@
 import { Theme } from "@radix-ui/themes";
 import { RouterProvider } from "react-router-dom";
 import { useAppearanceValue } from "shared";
-import { useAutoCheckUpdate } from "@/atoms/update";
+import { useAutoCheckUpdate } from "@/atoms/update.atom";
 import UpdateDialog from "@/components/UpdateDialog";
+import router from "@/routes";
 import styles from "./index.module.less";
-import router from "./routes";
 
 export default function App() {
   const appearance = useAppearanceValue();

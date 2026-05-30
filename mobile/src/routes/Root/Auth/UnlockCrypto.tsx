@@ -4,7 +4,7 @@ import { useSetAtom } from "jotai";
 import { type KeyboardEvent, useCallback, useState } from "react";
 import { Loading, TextFieldPassword } from "shared";
 import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
-import { authAtom } from "@/atom/authAtom";
+import { authAtom } from "@/atoms/auth.atom";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import styles from "./index.module.less";

@@ -3,7 +3,7 @@ import { get } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
+import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";

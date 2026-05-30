@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
-import { useSetTerminalViewVisible } from "@/atoms/terminal";
+import { useSetTerminalViewVisible } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
 type NavItem = {

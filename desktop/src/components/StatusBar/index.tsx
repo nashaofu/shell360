@@ -1,5 +1,5 @@
 import { usePortForwardingsAtomValue, useTerminalsAtomValue } from "shared";
-import { useFileTransfersCount } from "@/atoms/terminal";
+import { useFileTransfersCount } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
 export default function StatusBar() {

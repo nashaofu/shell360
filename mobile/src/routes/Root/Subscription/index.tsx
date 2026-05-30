@@ -8,7 +8,7 @@ import {
   useIsSubscription,
   useLoadableCustomerInfoAtom,
   useLoadableOfferingsAtomValue,
-} from "@/atom/iap";
+} from "@/atoms/iap.atom";
 
 import Buy from "./Buy";
 

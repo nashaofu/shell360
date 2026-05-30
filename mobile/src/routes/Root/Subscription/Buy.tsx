@@ -8,7 +8,7 @@ import {
   iapRestore,
 } from "tauri-plugin-mobile";
 
-import { useRefreshCustomerInfoAtom } from "@/atom/iap";
+import { useRefreshCustomerInfoAtom } from "@/atoms/iap.atom";
 import useMessage from "@/hooks/useMessage";
 import openUrl from "@/utils/openUrl";
 
