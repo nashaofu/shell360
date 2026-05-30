@@ -3,14 +3,14 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import RequireLocked from "@/app/guards/RequireLocked";
 import RequireUnlock from "@/app/guards/RequireUnlock";
 import AuthLayout from "@/app/layouts/AuthLayout";
-import WorkspaceLayout from "@/app/layouts/WorkspaceLayout";
+import AppLayout from "@/app/layouts/AppLayout";
 import RouterErrorBoundary from "@/app/routes/RouterErrorBoundary";
 
 const router = createBrowserRouter([
   {
     Component: () => (
       <RequireUnlock>
-        <WorkspaceLayout />
+        <AppLayout />
       </RequireUnlock>
     ),
     ErrorBoundary: RouterErrorBoundary,

@@ -7,8 +7,7 @@ import {
 } from "shared";
 import { copy } from "@/utils/clipboard";
 import openUrl from "@/utils/openUrl";
-
-import Sftp from "./Sftp";
+import styles from "./index.module.less";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
@@ -26,7 +25,6 @@ export default function SSHTerminal({
   const {
     loading,
     error,
-    session,
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
@@ -38,33 +36,15 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose, onCopy: copy });
 
+  const showLoading = !terminal || loading || error;
+
   return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        ...style,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          overflow: "hidden",
-          pointerEvents: loading || error ? "none" : "unset",
-          visibility: loading || error ? "hidden" : "visible",
-        }}
-        data-paste="true"
-      >
+    <div className={styles.root} style={style}>
+      <div className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`} data-paste="true">
         <XTerminal
           fontFamily={item.host.terminalSettings?.fontFamily}
           fontSize={item.host.terminalSettings?.fontSize}
-          theme={
-            TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
-          }
+          theme={TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme}
           onReady={onTerminalReady}
           onData={onTerminalData}
           onBinary={onTerminalBinaryData}
@@ -72,7 +52,7 @@ export default function SSHTerminal({
           onOpenUrl={openUrl}
         />
       </div>
-      {(!terminal || loading || error) && (
+      {showLoading && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
@@ -81,10 +61,7 @@ export default function SSHTerminal({
             width: "100%",
             height: "100%",
             position: "absolute",
-            top: "0",
-            right: "0",
-            bottom: "0",
-            left: "0",
+            inset: 0,
           }}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
@@ -93,7 +70,6 @@ export default function SSHTerminal({
           onOpenAddKey={onOpenAddKey}
         />
       )}
-      {!loading && !error && session && <Sftp session={session} />}
     </div>
   );
 }

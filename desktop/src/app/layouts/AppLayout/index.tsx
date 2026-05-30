@@ -1,11 +1,11 @@
 import { Outlet } from "react-router-dom";
 import NavRail from "@/components/NavRail";
 import StatusBar from "@/components/StatusBar";
-import TerminalPanel from "@/components/TerminalPanel";
+import Workspace from "@/components/Workspace";
 import TitleBar from "@/components/TitleBar";
 import styles from "./index.module.less";
 
-export default function WorkspaceLayout() {
+export default function AppLayout() {
   return (
     <div className={styles.root}>
       <TitleBar />
@@ -17,7 +17,7 @@ export default function WorkspaceLayout() {
               <Outlet />
             </div>
           </div>
-          <TerminalPanel />
+          <Workspace />
         </div>
       </div>
       <StatusBar />

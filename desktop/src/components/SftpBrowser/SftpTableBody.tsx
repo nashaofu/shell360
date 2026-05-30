@@ -30,8 +30,8 @@ export function SftpTableBody<T extends Record<string, unknown>>({
 }: SftpTableBodyProps<T>) {
   return (
     <tbody>
-      {!isRoot && (
-        <tr onDoubleClick={onParentClick}>
+        {!isRoot && (
+          <tr onDoubleClick={onParentClick} className={styles.tableRow}>
           {cells.map((item, index) => {
             const sx = item.sx?.(false);
             return (
@@ -48,7 +48,7 @@ export function SftpTableBody<T extends Record<string, unknown>>({
                   ...(sx || {}),
                 }}
               >
-                {index === 0 && <div className={styles.parentLink}>..</div>}
+                {index === 0 && <div className={styles.parentLink}><span className="icon-folder-open" /> ..</div>}
               </td>
             );
           })}
@@ -88,7 +88,7 @@ export function SftpTableBody<T extends Record<string, unknown>>({
         </tr>
       )}
       {data.map((row, index) => (
-        <tr key={String(row[dataKey] ?? index)}>
+        <tr key={String(row[dataKey] ?? index)} className={styles.tableRow}>
           {cells.map((item) => {
             const sx = item.sx?.(false);
 

@@ -22,6 +22,7 @@ export type TerminalAtom = {
   jumpHostChain: JumpHostChainItem[];
   status: "pending" | "success" | "failed";
   error?: unknown;
+  type?: "terminal" | "sftp";
 };
 
 const terminalsAtom = atom<Map<string, TerminalAtom>>(new Map());
@@ -126,6 +127,45 @@ export function useTerminalsAtomWithApi() {
         name: count === 0 ? name : `${name} (${count})`,
         jumpHostChain,
         status: "pending",
+        type: "terminal",
+      };
+
+      establishTerminal(item);
+
+      map.set(uuid, item);
+
+      setState(map);
+      stateRef.current = map;
+      return [item, map];
+    },
+  );
+
+  const addSftpTerminal = useMemoizedFn(
+    (host: Host): [TerminalAtom, Map<string, TerminalAtom>] => {
+      const uuid = uuidV4();
+      const map = new Map(stateRef.current);
+
+      const count = [...map.values()].reduce((prev, item) => {
+        if (item.host.id === host.id && item.type === "sftp") {
+          return prev + 1;
+        }
+        return prev;
+      }, 0);
+
+      const name = host.name || `${host.hostname}:${host.port}`;
+
+      const jumpHostChain = resolveJumpHostChain(host, {
+        hostsMap,
+        onDisconnect: () => deleteTerminal(uuid),
+      });
+
+      const item: TerminalAtom = {
+        uuid,
+        host,
+        name: `SFTP - ${count === 0 ? name : `${name} (${count})`}`,
+        jumpHostChain,
+        status: "pending",
+        type: "sftp",
       };
 
       establishTerminal(item);
@@ -142,6 +182,7 @@ export function useTerminalsAtomWithApi() {
     state,
     getState,
     add: addTerminal,
+    addSftp: addSftpTerminal,
     update: updateTerminal,
     delete: deleteTerminal,
     establish: establishTerminal,

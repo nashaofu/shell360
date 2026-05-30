@@ -2,11 +2,15 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--color-panel);
-  font-size: 13px;
+  background: var(--muted, var(--color-panel));
+  font-size: 12px;
   font-weight: 600;
-  padding: 8px 10px;
+  color: var(--gray-10);
+  padding: 6px 10px;
   border-bottom: 1px solid var(--gray-a5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  user-select: none;
 }
 
 .sortButton {
@@ -16,9 +20,14 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font: inherit;
   padding: 0;
+  transition: color 0.12s;
+}
+
+.sortButton:hover {
+  color: var(--gray-12);
 }
 
 .sortButtonActive {
@@ -26,6 +35,7 @@
 }
 
 .sortIcon {
-  font-size: 10px;
+  font-size: 8px;
   line-height: 1;
+  opacity: 0.8;
 }

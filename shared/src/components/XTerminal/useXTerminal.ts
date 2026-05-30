@@ -1,5 +1,4 @@
 import "@xterm/xterm/css/xterm.css";
-import { CanvasAddon } from "@xterm/addon-canvas";
 import { FitAddon } from "@xterm/addon-fit";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -86,13 +85,11 @@ export function useXTerminal({
       onOpenUrlFn(uri);
     });
     const unicode11Addon = new Unicode11Addon();
-    const canvasAddon = new CanvasAddon();
     const webglAddon = new WebglAddon();
     const fitAddon = new FitAddon();
 
     terminal.loadAddon(webLinksAddon);
     terminal.loadAddon(unicode11Addon);
-    terminal.loadAddon(canvasAddon);
     terminal.loadAddon(webglAddon);
     terminal.loadAddon(fitAddon);
 
@@ -105,8 +102,8 @@ export function useXTerminal({
 
     return () => {
       terminal.dispose();
+      webLinksAddon.dispose();
       unicode11Addon.dispose();
-      canvasAddon.dispose();
       webglAddon.dispose();
       fitAddon.dispose();
       terminalRef.current = null;

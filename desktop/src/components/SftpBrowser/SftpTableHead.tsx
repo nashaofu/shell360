@@ -72,7 +72,7 @@ export function SftpTableHead<T extends Record<string, unknown>>({
                     }
                   >
                     {item.title}
-                    <span className={styles.sortIcon}>{isAsc ? "^" : "v"}</span>
+                    <span className={styles.sortIcon}>{isAsc ? "▲" : "▼"}</span>
                   </button>
                 ) : (
                   item.title

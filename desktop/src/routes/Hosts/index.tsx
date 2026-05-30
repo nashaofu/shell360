@@ -128,6 +128,14 @@ export default function Hosts() {
     [activateTerminal, terminalsAtomWithApi],
   );
 
+  const onOpenSftp = useCallback(
+    (host: Host) => {
+      const [item] = terminalsAtomWithApi.addSftp(host);
+      activateTerminal(item.uuid);
+    },
+    [activateTerminal, terminalsAtomWithApi],
+  );
+
   const onAddHostClose = useCallback(() => {
     setIsOpenAddHost(false);
     setEditHost(undefined);
@@ -457,6 +465,32 @@ export default function Hosts() {
                               </svg>
                               Open Terminal
                             </button>
+                            <button
+                              type="button"
+                              className={styles.connectBtn}
+                              onClick={() => onOpenSftp(item)}
+                            >
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 12 12"
+                                fill="none"
+                              >
+                                <path
+                                  d="M2 2h8v8H2z"
+                                  stroke="currentColor"
+                                  strokeWidth="1.2"
+                                  fill="none"
+                                />
+                                <path
+                                  d="M4 6h4M6 4v4"
+                                  stroke="currentColor"
+                                  strokeWidth="1.2"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              SFTP
+                            </button>
                             <DropdownMenu.Root>
                               <DropdownMenu.Trigger>
                                 <button
@@ -571,6 +605,13 @@ export default function Hosts() {
                                   onClick={() => onOpenChannel(item)}
                                 >
                                   Open
+                                </button>
+                                <button
+                                  type="button"
+                                  className={panel.actionButton}
+                                  onClick={() => onOpenSftp(item)}
+                                >
+                                  SFTP
                                 </button>
                                 <DropdownMenu.Root>
                                   <DropdownMenu.Trigger>
