@@ -1,6 +1,7 @@
+import { DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
-import { Dropdown, type TerminalAtom, useTerminalsAtomWithApi } from "shared";
+import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atom/globalState";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
@@ -106,8 +107,8 @@ export default function Terminals() {
         >
           {activeTerminal?.name || "Shell360"}
         </div>
-        <Dropdown menus={headerRightMenus}>
-          {({ onChangeOpen }) => (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
             <button
               type="button"
               style={{
@@ -118,12 +119,21 @@ export default function Terminals() {
                 cursor: "pointer",
                 padding: 4,
               }}
-              onClick={(event) => onChangeOpen(event.currentTarget)}
             >
               <span className="icon-more" />
             </button>
-          )}
-        </Dropdown>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+            {headerRightMenus.map((item) => (
+              <DropdownMenu.Item
+                key={item.value}
+                onSelect={() => item.onClick?.()}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </div>
       {[...terminalsAtomWithApi.state.values()].map((item) => {
         const visible = match?.params.uuid === item.uuid;

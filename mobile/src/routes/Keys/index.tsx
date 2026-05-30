@@ -1,7 +1,7 @@
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
-import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Dropdown, useKeys } from "shared";
+import { useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atom/iap";
 import AddKey from "@/components/AddKey";
@@ -148,8 +148,8 @@ export default function Keys() {
     <Page
       title="Keys"
       headerRight={
-        <Dropdown menus={headerRightMenus}>
-          {({ onChangeOpen }) => (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
             <button
               type="button"
               style={{
@@ -160,12 +160,21 @@ export default function Keys() {
                 cursor: "pointer",
                 padding: 4,
               }}
-              onClick={(event) => onChangeOpen(event.currentTarget)}
             >
               <span className="icon-more" />
             </button>
-          )}
-        </Dropdown>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+            {headerRightMenus.map((item) => (
+              <DropdownMenu.Item
+                key={item.value}
+                onSelect={() => item.onClick?.()}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       }
     >
       <div
@@ -191,22 +200,29 @@ export default function Keys() {
           />
         </div>
         <div style={{ marginLeft: 16 }}>
-          <Dropdown menus={menus}>
-            {({ onChangeOpen }) => (
-              <div style={{ display: "flex", gap: 1 }}>
-                <Button onClick={onAddKeyButtonClick}>
-                  <span className="icon-add" />
-                  Add key
-                </Button>
-                <Button
-                  variant="soft"
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
-                >
+          <div style={{ display: "flex", gap: 1 }}>
+            <Button onClick={onAddKeyButtonClick}>
+              <span className="icon-add" />
+              Add key
+            </Button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <Button variant="soft">
                   <span className="icon-more" />
                 </Button>
-              </div>
-            )}
-          </Dropdown>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                {menus.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.value}
+                    onSelect={() => item.onClick?.()}
+                  >
+                    {item.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          </div>
         </div>
       </div>
       <AutoRepeatGrid
@@ -222,18 +238,8 @@ export default function Keys() {
             title={item.name}
             extra={
               <div onClick={(event) => event.stopPropagation()}>
-                <Dropdown
-                  menus={itemMenus}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
                     <button
                       type="button"
                       style={{
@@ -246,15 +252,32 @@ export default function Keys() {
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onClick={(event) => {
+                      onClick={() => {
                         selectedKeyRef.current = item;
-                        onChangeOpen(event.currentTarget);
                       }}
                     >
                       <span className="icon-more" />
                     </button>
-                  )}
-                </Dropdown>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  >
+                    {itemMenus.map((menuItem) => (
+                      <DropdownMenu.Item
+                        key={menuItem.value}
+                        onSelect={() => menuItem.onClick?.()}
+                      >
+                        {menuItem.label}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
               </div>
             }
           />

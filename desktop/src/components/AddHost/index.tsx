@@ -1,4 +1,4 @@
-import { Button, Flex } from "@radix-ui/themes";
+import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -6,7 +6,6 @@ import {
   DEFAULT_TERMINAL_FONT_SIZE,
   DEFAULT_TERMINAL_THEME,
   DEFAULT_TERMINAL_TYPE,
-  Dropdown,
   EditHostForm,
   type EditHostFormFields,
   useHosts,
@@ -19,9 +18,9 @@ import {
   type Host,
   updateHost,
 } from "tauri-plugin-data";
-import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import AddKey from "@/components/AddKey";
 import PageDrawer from "@/components/PageDrawer";
+import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 
 type AddHostProps = {
   open?: boolean;
@@ -195,24 +194,31 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
               Cancel
             </Button>
 
-            <Dropdown menus={menus}>
-              {({ onChangeOpen }) => (
-                <Flex style={{ flex: 1 }} gap="1">
-                  <Button
-                    style={{ flex: 1 }}
-                    onClick={formApi.handleSubmit(onSave)}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant="soft"
-                    onClick={(event) => onChangeOpen(event.currentTarget)}
-                  >
+            <Flex style={{ flex: 1 }} gap="1">
+              <Button
+                style={{ flex: 1 }}
+                onClick={formApi.handleSubmit(onSave)}
+              >
+                Save
+              </Button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  <Button variant="soft">
                     <span className="icon-more" />
                   </Button>
-                </Flex>
-              )}
-            </Dropdown>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                  {menus.map((item) => (
+                    <DropdownMenu.Item
+                      key={item.value}
+                      onSelect={() => item.onClick?.()}
+                    >
+                      {item.label}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </Flex>
           </Flex>
         }
       >

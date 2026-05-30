@@ -1,103 +1,158 @@
+import { Text } from "@radix-ui/themes";
+import {
+  type ReactNode,
+  StrictMode,
+  useCallback,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { type ReactNode, StrictMode, useEffect, useReducer } from "react";
 import styles from "./index.module.less";
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                             */
+/* ------------------------------------------------------------------ */
 
 export type MessageType = "success" | "error" | "info" | "warning" | "loading";
 
-export interface MessageItem {
-  id: string;
+export interface MessageConfig {
   type: MessageType;
   content: ReactNode;
-  duration: number;
-  onClose?: () => void;
-}
-
-export interface MessageOptions {
-  /** Auto-close duration in ms. 0 = never auto-close. Default: 3000 */
   duration?: number;
   onClose?: () => void;
+  /** Unique key for deduplication. If set, calling with the same key
+   *  will update the existing message instead of creating a new one. */
+  key?: string;
 }
 
-type Listener = (items: MessageItem[]) => void;
-const listeners: Set<Listener> = new Set();
-let currentItems: MessageItem[] = [];
+interface InternalItem extends Required<
+  Pick<MessageConfig, "content" | "duration">
+> {
+  id: string;
+  type: MessageType;
+  key?: string;
+  onClose?: () => void;
+}
+
+export interface MessageGlobalConfig {
+  /** @default 3000 */
+  duration?: number;
+  /** @default 3 */
+  maxCount?: number;
+  /** @default 24 */
+  top?: number;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Internal state                                                    */
+/* ------------------------------------------------------------------ */
+
+type Listener = (items: InternalItem[]) => void;
+const listeners = new Set<Listener>();
+let items: InternalItem[] = [];
+const globalConfig: Required<MessageGlobalConfig> = {
+  duration: 3000,
+  maxCount: 3,
+  top: 24,
+};
+let idCounter = 0;
+const genId = () => `msg-${Date.now()}-${++idCounter}`;
 
 function notify() {
-  for (const listener of listeners) listener([...currentItems]);
+  for (const l of listeners) l([...items]);
 }
 
-function addItem(item: MessageItem) {
-  currentItems = [...currentItems, item];
+function addItem(item: InternalItem) {
+  // Deduplicate by key
+  if (item.key) {
+    items = items.filter((i) => i.key !== item.key);
+  }
+  items = [...items, item];
+  // Respect maxCount: remove oldest
+  if (items.length > globalConfig.maxCount) {
+    items = items.slice(items.length - globalConfig.maxCount);
+  }
   notify();
 }
 
 function removeItem(id: string) {
-  currentItems = currentItems.filter((item) => item.id !== id);
+  const target = items.find((i) => i.id === id);
+  items = items.filter((i) => i.id !== id);
+  notify();
+  target?.onClose?.();
+}
+
+function clearAll() {
+  items = [];
   notify();
 }
 
-let rootContainer: HTMLDivElement | null = null;
+/* ------------------------------------------------------------------ */
+/*  Standalone root (fallback when no <MessageProvider />)            */
+/* ------------------------------------------------------------------ */
+
+let rootEl: HTMLDivElement | null = null;
 
 function ensureRoot() {
-  if (rootContainer) return;
-
-  rootContainer = document.createElement("div");
-  rootContainer.setAttribute("data-shell360-message", "true");
-  document.body.appendChild(rootContainer);
-  createRoot(rootContainer).render(
+  if (rootEl) return;
+  rootEl = document.createElement("div");
+  rootEl.setAttribute("data-shell360-message", "true");
+  document.body.appendChild(rootEl);
+  createRoot(rootEl).render(
     <StrictMode>
-      <MessageList />
+      <MessageContainer />
     </StrictMode>,
   );
 }
 
-const ICON_MAP: Record<MessageType, string> = {
-  success: "OK",
-  error: "!",
-  info: "i",
-  warning: "!",
-  loading: "",
-};
+/* ------------------------------------------------------------------ */
+/*  MessageContainer — subscribes to items list                       */
+/* ------------------------------------------------------------------ */
 
-function MessageList() {
-  const [items, dispatch] = useReducer(
-    (_: MessageItem[], next: MessageItem[]) => next,
-    [],
-  );
-
-  useEffect(() => {
-    const listener: Listener = (next) => dispatch(next);
-    listeners.add(listener);
+function useMessageStore() {
+  const subscribe = useCallback((cb: () => void) => {
+    listeners.add(cb);
     return () => {
-      listeners.delete(listener);
+      listeners.delete(cb);
     };
   }, []);
 
+  const getSnapshot = useCallback(() => items, []);
+  const getServerSnapshot = useCallback(() => items, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+export function MessageContainer({ top }: { top?: number }) {
+  const currentItems = useMessageStore();
+
   return (
-    <div className={styles.container}>
-      {items.map((item) => (
+    <div className={styles.container} style={{ top: top ?? globalConfig.top }}>
+      {currentItems.map((item) => (
         <MessageNotice
           key={item.id}
           item={item}
-          onClose={() => {
-            item.onClose?.();
-            removeItem(item.id);
-          }}
+          onClose={() => removeItem(item.id)}
         />
       ))}
     </div>
   );
 }
 
-interface MessageNoticeProps {
-  item: MessageItem;
-  onClose: () => void;
-}
+/* ------------------------------------------------------------------ */
+/*  MessageNotice — single toast                                      */
+/* ------------------------------------------------------------------ */
 
-function MessageNotice({ item, onClose }: MessageNoticeProps) {
+function MessageNotice({
+  item,
+  onClose,
+}: {
+  item: InternalItem;
+  onClose: () => void;
+}) {
   useEffect(() => {
-    if (item.duration === 0) return;
+    if (item.duration <= 0) return;
     const timer = window.setTimeout(onClose, item.duration);
     return () => clearTimeout(timer);
   }, [item.duration, onClose]);
@@ -110,97 +165,92 @@ function MessageNotice({ item, onClose }: MessageNoticeProps) {
     >
       <span
         className={`${styles.icon} ${item.type === "loading" ? styles.spin : ""}`}
-      >
-        {ICON_MAP[item.type]}
-      </span>
-      <span className={styles.content}>{item.content}</span>
+        data-type={item.type}
+      />
+      <Text size="2" className={styles.content}>
+        {item.content}
+      </Text>
     </div>
   );
 }
 
-/**
- * Optional provider renders messages inside the React tree so they inherit
- * the Radix Theme context. If omitted, messages fall back to a standalone root.
- */
-export function MessageProvider({ children }: { children?: ReactNode }) {
-  const [items, dispatch] = useReducer(
-    (_: MessageItem[], next: MessageItem[]) => next,
-    [],
-  );
+/* ------------------------------------------------------------------ */
+/*  MessageProvider — place at app root to inherit Theme              */
+/* ------------------------------------------------------------------ */
 
-  useEffect(() => {
-    const listener: Listener = (next) => dispatch(next);
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  }, []);
-
+export function MessageProvider({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      {createPortal(
-        <div className={styles.container}>
-          {items.map((item) => (
-            <MessageNotice
-              key={item.id}
-              item={item}
-              onClose={() => {
-                item.onClose?.();
-                removeItem(item.id);
-              }}
-            />
-          ))}
-        </div>,
-        document.body,
-      )}
+      {createPortal(<MessageContainer />, document.body)}
     </>
   );
 }
 
-let idCounter = 0;
-const genId = () => `msg-${Date.now()}-${++idCounter}`;
+/* ------------------------------------------------------------------ */
+/*  Imperative API  (like antd message)                               */
+/* ------------------------------------------------------------------ */
 
-function open(
-  type: MessageType,
-  content: ReactNode,
-  options?: MessageOptions,
-): () => void {
+function openMessage(config: MessageConfig): () => void {
   if (listeners.size === 0) ensureRoot();
 
   const id = genId();
-  const { duration = 3000, onClose } = options ?? {};
+  const duration = config.duration ?? globalConfig.duration;
 
-  addItem({ id, type, content, duration, onClose });
+  addItem({
+    id,
+    type: config.type,
+    content: config.content,
+    duration: duration >= 0 ? duration : globalConfig.duration,
+    onClose: config.onClose,
+    key: config.key,
+  });
 
   return () => removeItem(id);
 }
 
-export const message = {
-  open(config: {
-    type: MessageType;
-    content: ReactNode;
-    duration?: number;
-    onClose?: () => void;
-  }): () => void {
-    return open(config.type, config.content, {
-      duration: config.duration,
-      onClose: config.onClose,
-    });
+export interface MessageInstance {
+  (config: MessageConfig): () => void;
+  success(content: ReactNode, duration?: number): () => void;
+  error(content: ReactNode, duration?: number): () => void;
+  info(content: ReactNode, duration?: number): () => void;
+  warning(content: ReactNode, duration?: number): () => void;
+  loading(content: ReactNode, duration?: number): () => void;
+  open(config: MessageConfig): () => void;
+  config(options: MessageGlobalConfig): void;
+  destroy(): void;
+}
+
+export const message: MessageInstance = Object.assign(
+  (config: MessageConfig) => openMessage(config),
+  {
+    success(content: ReactNode, duration?: number) {
+      return openMessage({ type: "success", content, duration });
+    },
+    error(content: ReactNode, duration?: number) {
+      return openMessage({ type: "error", content, duration });
+    },
+    info(content: ReactNode, duration?: number) {
+      return openMessage({ type: "info", content, duration });
+    },
+    warning(content: ReactNode, duration?: number) {
+      return openMessage({ type: "warning", content, duration });
+    },
+    loading(content: ReactNode, duration?: number) {
+      return openMessage({ type: "loading", content, duration: duration ?? 0 });
+    },
+    open(config: MessageConfig) {
+      return openMessage(config);
+    },
+    config(options: MessageGlobalConfig) {
+      if (options.duration !== undefined)
+        globalConfig.duration = options.duration;
+      if (options.maxCount !== undefined)
+        globalConfig.maxCount = options.maxCount;
+      if (options.top !== undefined) globalConfig.top = options.top;
+    },
+    destroy() {
+      clearAll();
+    },
   },
-  success(content: ReactNode, options?: MessageOptions) {
-    return open("success", content, options);
-  },
-  error(content: ReactNode, options?: MessageOptions) {
-    return open("error", content, options);
-  },
-  info(content: ReactNode, options?: MessageOptions) {
-    return open("info", content, options);
-  },
-  warning(content: ReactNode, options?: MessageOptions) {
-    return open("warning", content, options);
-  },
-  loading(content: ReactNode, options?: MessageOptions) {
-    return open("loading", content, options);
-  },
-};
+);

@@ -1,22 +1,20 @@
-import { IconButton } from "@radix-ui/themes";
+import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  Dropdown,
   getHostDesc,
   getHostName,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
 import { addHost, deleteHost, type Host } from "tauri-plugin-data";
+import AddHost from "@/components/AddHost";
+import Empty from "@/components/Empty";
+import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-import { useActivateTerminal } from "@/hooks/useActivateTerminal";
-import Empty from "@/components/Empty";
 import panel from "@/styles/panel.module.less";
-
-import AddHost from "@/components/AddHost";
 import styles from "./index.module.less";
 
 const AVATAR_COLORS = ["#4285f4", "#27ae60", "#f59e0b", "#7c5cbf", "#e53935"];
@@ -227,7 +225,13 @@ export default function Hosts() {
               fill="none"
               aria-hidden="true"
             >
-              <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3" />
+              <circle
+                cx="6"
+                cy="6"
+                r="4"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              />
               <path
                 d="M9.5 9.5L13 13"
                 stroke="currentColor"
@@ -253,10 +257,38 @@ export default function Hosts() {
               onClick={() => setViewMode("grid")}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="1" width="4" height="4" rx="0.8" fill="currentColor" />
-                <rect x="7" y="1" width="4" height="4" rx="0.8" fill="currentColor" />
-                <rect x="1" y="7" width="4" height="4" rx="0.8" fill="currentColor" />
-                <rect x="7" y="7" width="4" height="4" rx="0.8" fill="currentColor" />
+                <rect
+                  x="1"
+                  y="1"
+                  width="4"
+                  height="4"
+                  rx="0.8"
+                  fill="currentColor"
+                />
+                <rect
+                  x="7"
+                  y="1"
+                  width="4"
+                  height="4"
+                  rx="0.8"
+                  fill="currentColor"
+                />
+                <rect
+                  x="1"
+                  y="7"
+                  width="4"
+                  height="4"
+                  rx="0.8"
+                  fill="currentColor"
+                />
+                <rect
+                  x="7"
+                  y="7"
+                  width="4"
+                  height="4"
+                  rx="0.8"
+                  fill="currentColor"
+                />
               </svg>
             </button>
             <button
@@ -278,10 +310,7 @@ export default function Hosts() {
               </svg>
             </button>
           </div>
-          <button
-            type="button"
-            className={panel.button}
-          >
+          <button type="button" className={panel.button}>
             Import
           </button>
           <button
@@ -289,8 +318,19 @@ export default function Hosts() {
             className={clsx(panel.button, panel.buttonPrimary)}
             onClick={() => setIsOpenAddHost(true)}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 12 12"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 1v10M1 6h10"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
             </svg>
             New Host
           </button>
@@ -303,7 +343,8 @@ export default function Hosts() {
                   <div className={panel.sectionLabel}>
                     <span>{group.label}</span>
                     <span className={panel.sectionCount}>
-                      {group.items.length} {group.items.length === 1 ? "host" : "hosts"}
+                      {group.items.length}{" "}
+                      {group.items.length === 1 ? "host" : "hosts"}
                     </span>
                   </div>
                   <div className={styles.grid}>
@@ -315,7 +356,9 @@ export default function Hosts() {
                       const statusClassName = isLocal
                         ? styles.statusTextActive
                         : styles.statusTextIdle;
-                      const dotClassName = isLocal ? panel.statusActive : panel.statusIdle;
+                      const dotClassName = isLocal
+                        ? panel.statusActive
+                        : panel.statusIdle;
 
                       return (
                         <article
@@ -337,12 +380,19 @@ export default function Hosts() {
                               <div className={styles.name}>{name}</div>
                               <div className={styles.addr}>{desc}</div>
                             </div>
-                            <span className={clsx(panel.tag, panel[`tag${group.tone}`])}>
+                            <span
+                              className={clsx(
+                                panel.tag,
+                                panel[`tag${group.tone}`],
+                              )}
+                            >
                               {group.label}
                             </span>
                           </div>
                           <div className={styles.statusRow}>
-                            <span className={clsx(panel.statusDot, dotClassName)} />
+                            <span
+                              className={clsx(panel.statusDot, dotClassName)}
+                            />
                             <span className={statusClassName}>
                               {isLocal ? "Connected" : "Idle"}
                             </span>
@@ -376,7 +426,12 @@ export default function Hosts() {
                               className={styles.connectBtn}
                               onClick={() => onOpenChannel(item)}
                             >
-                              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 12 12"
+                                fill="none"
+                              >
                                 <rect
                                   x="1.5"
                                   y="2.5"
@@ -402,28 +457,57 @@ export default function Hosts() {
                               </svg>
                               Open Terminal
                             </button>
-                            <Dropdown
-                              menus={menus}
-                              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                              transformOrigin={{ vertical: "top", horizontal: "right" }}
-                            >
-                              {({ onChangeOpen }) => (
+                            <DropdownMenu.Root>
+                              <DropdownMenu.Trigger>
                                 <button
                                   type="button"
                                   className={styles.moreBtn}
-                                  onClick={(event) => {
+                                  onClick={() => {
                                     selectedHostRef.current = item;
-                                    onChangeOpen(event.currentTarget);
                                   }}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                    <circle cx="6" cy="2.5" r="1" fill="currentColor" />
-                                    <circle cx="6" cy="6" r="1" fill="currentColor" />
-                                    <circle cx="6" cy="9.5" r="1" fill="currentColor" />
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 12 12"
+                                    fill="none"
+                                  >
+                                    <circle
+                                      cx="6"
+                                      cy="2.5"
+                                      r="1"
+                                      fill="currentColor"
+                                    />
+                                    <circle
+                                      cx="6"
+                                      cy="6"
+                                      r="1"
+                                      fill="currentColor"
+                                    />
+                                    <circle
+                                      cx="6"
+                                      cy="9.5"
+                                      r="1"
+                                      fill="currentColor"
+                                    />
                                   </svg>
                                 </button>
-                              )}
-                            </Dropdown>
+                              </DropdownMenu.Trigger>
+                              <DropdownMenu.Content
+                                side="bottom"
+                                align="end"
+                                sideOffset={4}
+                              >
+                                {menus.map((menuItem) => (
+                                  <DropdownMenu.Item
+                                    key={menuItem.value}
+                                    onSelect={() => menuItem.onClick?.()}
+                                  >
+                                    {menuItem.label}
+                                  </DropdownMenu.Item>
+                                ))}
+                              </DropdownMenu.Content>
+                            </DropdownMenu.Root>
                           </div>
                         </article>
                       );
@@ -448,9 +532,16 @@ export default function Hosts() {
                       {listItems.map((item) => {
                         const isLocal = item.groupTone === "Local";
                         return (
-                          <tr key={item.id} onDoubleClick={() => onOpenChannel(item)}>
-                            <td className={styles.listName}>{getHostName(item)}</td>
-                            <td className={styles.listAddr}>{getHostDesc(item)}</td>
+                          <tr
+                            key={item.id}
+                            onDoubleClick={() => onOpenChannel(item)}
+                          >
+                            <td className={styles.listName}>
+                              {getHostName(item)}
+                            </td>
+                            <td className={styles.listAddr}>
+                              {getHostDesc(item)}
+                            </td>
                             <td>
                               <span
                                 className={clsx(
@@ -465,7 +556,9 @@ export default function Hosts() {
                               <span
                                 className={clsx(
                                   panel.statusDot,
-                                  isLocal ? panel.statusActive : panel.statusIdle,
+                                  isLocal
+                                    ? panel.statusActive
+                                    : panel.statusIdle,
                                 )}
                               />
                               <span>{isLocal ? "Connected" : "Idle"}</span>
@@ -479,32 +572,35 @@ export default function Hosts() {
                                 >
                                   Open
                                 </button>
-                                <Dropdown
-                                  menus={menus}
-                                  anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "right",
-                                  }}
-                                  transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "right",
-                                  }}
-                                >
-                                  {({ onChangeOpen }) => (
+                                <DropdownMenu.Root>
+                                  <DropdownMenu.Trigger>
                                     <IconButton
                                       type="button"
                                       size="1"
                                       variant="ghost"
                                       color="gray"
-                                      onClick={(event) => {
+                                      onClick={() => {
                                         selectedHostRef.current = item;
-                                        onChangeOpen(event.currentTarget);
                                       }}
                                     >
                                       <span className="icon-more" />
                                     </IconButton>
-                                  )}
-                                </Dropdown>
+                                  </DropdownMenu.Trigger>
+                                  <DropdownMenu.Content
+                                    side="bottom"
+                                    align="end"
+                                    sideOffset={4}
+                                  >
+                                    {menus.map((menuItem) => (
+                                      <DropdownMenu.Item
+                                        key={menuItem.value}
+                                        onSelect={() => menuItem.onClick?.()}
+                                      >
+                                        {menuItem.label}
+                                      </DropdownMenu.Item>
+                                    ))}
+                                  </DropdownMenu.Content>
+                                </DropdownMenu.Root>
                               </div>
                             </td>
                           </tr>

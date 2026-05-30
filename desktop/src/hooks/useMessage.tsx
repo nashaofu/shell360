@@ -1,39 +1,41 @@
-import {
-  type OptionsWithExtraProps,
-  useSnackbar,
-  type VariantType,
-} from "notistack";
-import { type ReactNode, useMemo } from "react";
+import type { ReactNode } from "react";
+import { useMemo } from "react";
+import { message as sharedMessage } from "shared";
 
+type NotistackCompatArg = { message: ReactNode };
+
+/**
+ * Hook wrapper around the static `message` API.
+ * Supports both the old notistack-style `{ message }` object and direct strings.
+ */
 export default function useMessage() {
-  const { enqueueSnackbar } = useSnackbar();
-
-  const fns = useMemo(() => {
-    const implMessageFn =
-      (variant: VariantType) =>
-      ({
-        anchorOrigin = {
-          vertical: "top",
-          horizontal: "center",
-        },
-        ...props
-      }: Omit<OptionsWithExtraProps<VariantType>, "variant"> & {
-        message: ReactNode;
-      }) => {
-        enqueueSnackbar({
-          ...props,
-          anchorOrigin,
-          variant,
-        });
-      };
-
-    return {
-      info: implMessageFn("info"),
-      success: implMessageFn("success"),
-      error: implMessageFn("error"),
-      warning: implMessageFn("warning"),
-    };
-  }, [enqueueSnackbar]);
-
-  return fns;
+  return useMemo(
+    () => ({
+      success: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.success(
+          typeof arg === "object" && arg !== null && "message" in arg
+            ? (arg as NotistackCompatArg).message
+            : (arg as ReactNode),
+        ),
+      error: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.error(
+          typeof arg === "object" && arg !== null && "message" in arg
+            ? (arg as NotistackCompatArg).message
+            : (arg as ReactNode),
+        ),
+      info: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.info(
+          typeof arg === "object" && arg !== null && "message" in arg
+            ? (arg as NotistackCompatArg).message
+            : (arg as ReactNode),
+        ),
+      warning: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.warning(
+          typeof arg === "object" && arg !== null && "message" in arg
+            ? (arg as NotistackCompatArg).message
+            : (arg as ReactNode),
+        ),
+    }),
+    [],
+  );
 }

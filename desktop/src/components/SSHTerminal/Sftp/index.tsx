@@ -1,6 +1,7 @@
+import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Dropdown, Loading, useSftp } from "shared";
+import { Loading, useSftp } from "shared";
 import {
   type SSHSession,
   type SSHSftpFile,
@@ -9,6 +10,7 @@ import {
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
+import styles from "./index.module.less";
 import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
@@ -18,7 +20,6 @@ import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
-import styles from "./index.module.less";
 
 type SftpProps = {
   session: SSHSession;
@@ -350,27 +351,28 @@ export default function Sftp({ session }: SftpProps) {
                     >
                       <span className="icon-file-upload" />
                     </button>
-                    <Dropdown
-                      menus={actions}
-                      anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "right",
-                      }}
-                      transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                    >
-                      {({ onChangeOpen }) => (
-                        <button
-                          type="button"
-                          className={styles.iconButton}
-                          onClick={(event) => onChangeOpen(event.currentTarget)}
-                        >
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        <button type="button" className={styles.iconButton}>
                           <span className="icon-more" />
                         </button>
-                      )}
-                    </Dropdown>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content
+                        side="bottom"
+                        align="end"
+                        sideOffset={4}
+                      
+                      >
+                        {actions.map((item) => (
+                          <DropdownMenu.Item
+                            key={item.value}
+                            onSelect={() => item.onClick?.()}
+                          >
+                            {item.label}
+                          </DropdownMenu.Item>
+                        ))}
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
                   </div>
                 </div>
                 <div className={styles.divider} />

@@ -4,6 +4,15 @@ import { useCallback, useMemo } from "react";
 
 const APPEARANCE_VALUES = ["inherit", "light", "dark"] as const;
 
+export const APP_RADIX_THEME = {
+  accentColor: "indigo",
+  grayColor: "auto",
+  panelBackground: "translucent",
+  radius: "medium",
+  scaling: "100%",
+  hasBackground: true,
+} as const;
+
 export type Appearance = (typeof APPEARANCE_VALUES)[number];
 
 export const appearanceAtom = atomWithStorage<Appearance>(

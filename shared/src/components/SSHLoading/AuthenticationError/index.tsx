@@ -1,10 +1,9 @@
-import { Button } from "@radix-ui/themes";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
 
-import { Dropdown } from "@/components/Dropdown";
 import { useHosts } from "@/hooks/useHosts";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
@@ -110,35 +109,17 @@ export default function AuthenticationError({
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
-        <Dropdown
-          menus={[
-            {
-              label: "Save and continue",
-              value: "Save and continue",
-              onClick: formApi.handleSubmit((values) =>
-                onContinue(values, true),
-              ),
-            },
-          ]}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-        >
-          {({ onChangeOpen }) => (
-            <div className={styles.splitButtonGroup}>
-              <Button
-                style={{ flex: 1, minWidth: 0 }}
-                onClick={formApi.handleSubmit((values) =>
-                  onContinue(values, false),
-                )}
-              >
-                Continue
-              </Button>
+        <div className={styles.splitButtonGroup}>
+          <Button
+            style={{ flex: 1, minWidth: 0 }}
+            onClick={formApi.handleSubmit((values) =>
+              onContinue(values, false),
+            )}
+          >
+            Continue
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
               <Button
                 style={{
                   width: 34,
@@ -146,13 +127,21 @@ export default function AuthenticationError({
                   padding: 0,
                   justifyContent: "center",
                 }}
-                onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-more" />
               </Button>
-            </div>
-          )}
-        </Dropdown>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+              <DropdownMenu.Item
+                onSelect={() => {
+                  formApi.handleSubmit((values) => onContinue(values, true))();
+                }}
+              >
+                Save and continue
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        </div>
       </div>
     </form>
   );

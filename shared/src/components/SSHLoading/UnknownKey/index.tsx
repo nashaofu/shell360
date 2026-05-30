@@ -1,8 +1,7 @@
-import { Button } from "@radix-ui/themes";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
-import { Dropdown } from "@/components/Dropdown";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 import styles from "../styles.module.less";
@@ -23,32 +22,15 @@ export default function UnknownKey({
         <StatusButton variant="outlined" onClick={onClose}>
           Close
         </StatusButton>
-        <Dropdown
-          menus={[
-            {
-              label: "Add and continue",
-              value: "Add and continue",
-              onClick: () =>
-                onReConnect(SSHSessionCheckServerKey.AddAndContinue),
-            },
-          ]}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-        >
-          {({ onChangeOpen }) => (
-            <div className={styles.splitButtonGroup}>
-              <Button
-                style={{ flex: 1, minWidth: 0 }}
-                onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
-              >
-                Continue
-              </Button>
+        <div className={styles.splitButtonGroup}>
+          <Button
+            style={{ flex: 1, minWidth: 0 }}
+            onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
+          >
+            Continue
+          </Button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
               <Button
                 style={{
                   width: 34,
@@ -56,13 +38,21 @@ export default function UnknownKey({
                   padding: 0,
                   justifyContent: "center",
                 }}
-                onClick={(event) => onChangeOpen(event.currentTarget)}
               >
                 <span className="icon-more" />
               </Button>
-            </div>
-          )}
-        </Dropdown>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  onReConnect(SSHSessionCheckServerKey.AddAndContinue)
+                }
+              >
+                Add and continue
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        </div>
       </div>
     </>
   );

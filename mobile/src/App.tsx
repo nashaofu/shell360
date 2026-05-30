@@ -1,10 +1,8 @@
 import { Theme } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
-import { SnackbarProvider } from "notistack";
 import { lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { useModalsAtomValue } from "./atom/modalsAtom";
 import { themeAtom } from "./atom/themeAtom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
@@ -53,25 +51,14 @@ const router = createBrowserRouter([
 
 export default function App() {
   const theme = useAtomValue(themeAtom);
-  const modalsAtomValue = useModalsAtomValue();
 
   return (
-    <SnackbarProvider
-      dense
-      autoHideDuration={3000}
-      disableWindowBlurListener
-      classes={{
-        root: "notistack-snackbar-root",
-      }}
-    >
-      <Theme {...theme}>
-        <div className={styles.appShell}>
-          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-            <RouterProvider router={router} />
-            {modalsAtomValue.map((item) => item.element)}
-          </ErrorBoundary>
-        </div>
-      </Theme>
-    </SnackbarProvider>
+    <Theme {...theme}>
+      <div className={styles.appShell}>
+        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+          <RouterProvider router={router} />
+        </ErrorBoundary>
+      </div>
+    </Theme>
   );
 }

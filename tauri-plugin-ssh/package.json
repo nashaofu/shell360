@@ -18,11 +18,11 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.9.0",
-    "uuid": "^13.0.0"
+    "@tauri-apps/api": "^2.11.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@rslib/core": "^0.18.0",
-    "typescript": "^5.9.3"
+    "@rslib/core": "^0.22.0",
+    "typescript": "^6.0.3"
   }
 }

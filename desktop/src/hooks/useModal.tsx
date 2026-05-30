@@ -1,89 +1,20 @@
-import { useMemo, useState } from "react";
-import type { HookModalProps } from "@/components/HookModal";
+import { useMemo } from "react";
+import { modal as sharedModal } from "shared";
 
-type HookConfig = Omit<HookModalProps, "open" | "hideCancel" | "hideOk">;
-type HookConfigWithoutCancel = Omit<
-  HookConfig,
-  "cancelText" | "CancelButtonProps"
->;
-
-function createStatusIcon(name: string, color: string) {
-  return <span className={name} style={{ fontSize: 32, color }} />;
-}
-
+/**
+ * Hook wrapper around the static `modal` API.
+ * Returns the same `{ info, success, error, warning, confirm }` shape so
+ * existing callers don't need to change their usage.
+ */
 export default function useModal() {
-  const [, setOpen] = useState(false);
-  const [, setModalProps] = useState<Omit<HookModalProps, "open">>({});
-
-  const fns = useMemo(
+  return useMemo(
     () => ({
-      info: ({ icon, onOk, ...props }: HookConfigWithoutCancel) => {
-        setOpen(true);
-        setModalProps({
-          ...props,
-          icon: icon || createStatusIcon("icon-info-circle", "var(--blue-11)"),
-          hideCancel: true,
-          onOk: async () => {
-            await onOk?.();
-            setOpen(false);
-          },
-        });
-      },
-      success: ({ icon, onOk, ...props }: HookConfigWithoutCancel) => {
-        setOpen(true);
-        setModalProps({
-          ...props,
-          icon:
-            icon || createStatusIcon("icon-success-circle", "var(--green-11)"),
-          hideCancel: true,
-          onOk: async () => {
-            await onOk?.();
-            setOpen(false);
-          },
-        });
-      },
-      error: ({ icon, onOk, ...props }: HookConfigWithoutCancel) => {
-        setOpen(true);
-        setModalProps({
-          ...props,
-          icon: icon || createStatusIcon("icon-error-circle", "var(--red-11)"),
-          hideCancel: true,
-          onOk: async () => {
-            await onOk?.();
-            setOpen(false);
-          },
-        });
-      },
-      warning: ({ icon, onOk, ...props }: HookConfigWithoutCancel) => {
-        setOpen(true);
-        setModalProps({
-          ...props,
-          icon:
-            icon || createStatusIcon("icon-warning-circle", "var(--amber-11)"),
-          hideCancel: true,
-          onOk: async () => {
-            await onOk?.();
-            setOpen(false);
-          },
-        });
-      },
-      confirm: ({ onOk, onCancel, ...props }: HookConfig) => {
-        setOpen(true);
-        setModalProps({
-          ...props,
-          onOk: async () => {
-            await onOk?.();
-            setOpen(false);
-          },
-          onCancel: async () => {
-            await onCancel?.();
-            setOpen(false);
-          },
-        });
-      },
+      info: sharedModal.info,
+      success: sharedModal.success,
+      error: sharedModal.error,
+      warning: sharedModal.warning,
+      confirm: sharedModal.confirm,
     }),
     [],
   );
-
-  return fns;
 }

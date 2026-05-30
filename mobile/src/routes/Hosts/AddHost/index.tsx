@@ -1,5 +1,5 @@
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@radix-ui/themes";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,7 +7,6 @@ import {
   DEFAULT_TERMINAL_FONT_SIZE,
   DEFAULT_TERMINAL_THEME,
   DEFAULT_TERMINAL_TYPE,
-  Dropdown,
   EditHostForm,
   type EditHostFormFields,
   useHosts,
@@ -202,30 +201,39 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
               Cancel
             </Button>
 
-            <Dropdown sx={{ width: "48%" }} menus={menus}>
-              {({ onChangeOpen }) => (
-                <div style={{ display: "flex", flex: 1 }}>
-                  <Button
-                    style={{
-                      flex: 1,
-                      borderRadius: "var(--radius-2) 0 0 var(--radius-2)",
-                    }}
-                    onClick={formApi.handleSubmit(onSave)}
-                  >
-                    Save
-                  </Button>
+            <div style={{ display: "flex", flex: 1, width: "48%" }}>
+              <Button
+                style={{
+                  flex: 1,
+                  borderRadius: "var(--radius-2) 0 0 var(--radius-2)",
+                }}
+                onClick={formApi.handleSubmit(onSave)}
+              >
+                Save
+              </Button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
                   <Button
                     style={{
                       borderRadius: "0 var(--radius-2) var(--radius-2) 0",
                       borderLeft: "1px solid var(--accent-a5)",
                     }}
-                    onClick={(event) => onChangeOpen(event.currentTarget)}
                   >
                     <span className="icon-more" />
                   </Button>
-                </div>
-              )}
-            </Dropdown>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                  {menus.map((item) => (
+                    <DropdownMenu.Item
+                      key={item.value}
+                      onSelect={() => item.onClick?.()}
+                    >
+                      {item.label}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </div>
           </div>
         }
       >

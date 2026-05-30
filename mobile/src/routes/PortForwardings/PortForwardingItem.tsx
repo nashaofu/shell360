@@ -1,9 +1,9 @@
-import { createPortal } from "react-dom";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
-  Dropdown,
   establishPortForwarding as establishPortForwardingUtil,
   getPortForwardingDesc,
   PortForwardingLoading,
@@ -215,18 +215,8 @@ export default function PortForwardingItem({
         desc={getPortForwardingDesc(item, hostsMap)}
         extra={
           <div onClick={(event) => event.stopPropagation()}>
-            <Dropdown
-              menus={menus}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-            >
-              {({ onChangeOpen }) => (
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
                 <button
                   type="button"
                   style={{
@@ -239,12 +229,21 @@ export default function PortForwardingItem({
                     display: "flex",
                     alignItems: "center",
                   }}
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
                   <span className="icon-more" />
                 </button>
-              )}
-            </Dropdown>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                {menus.map((item) => (
+                  <DropdownMenu.Item
+                    key={item.value}
+                    onSelect={() => item.onClick?.()}
+                  >
+                    {item.label}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
           </div>
         }
         onClick={() => onOpenOrClosePortForwarding()}

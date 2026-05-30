@@ -1,9 +1,8 @@
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get, omit } from "lodash-es";
-import { Button } from "@radix-ui/themes";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Dropdown,
   getHostDesc,
   getHostName,
   HostTagsSelect,
@@ -288,18 +287,8 @@ export default function Hosts() {
             desc={getHostDesc(item)}
             extra={
               <div onClick={(event) => event.stopPropagation()}>
-                <Dropdown
-                  menus={menus}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                  }}
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                  }}
-                >
-                  {({ onChangeOpen }) => (
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
                     <button
                       type="button"
                       style={{
@@ -312,15 +301,32 @@ export default function Hosts() {
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onClick={(event) => {
+                      onClick={() => {
                         selectedHostRef.current = item;
-                        onChangeOpen(event.currentTarget);
                       }}
                     >
                       <span className="icon-more" />
                     </button>
-                  )}
-                </Dropdown>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  
+                    side="bottom"
+                    align="end"
+                    sideOffset={4}
+                  >
+                    {menus.map((menuItem) => (
+                      <DropdownMenu.Item
+                        key={menuItem.value}
+                        onSelect={() => menuItem.onClick?.()}
+                      >
+                        {menuItem.label}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
               </div>
             }
             onClick={() => onOpenChannel(item)}

@@ -1,9 +1,7 @@
+import { DropdownMenu } from "@radix-ui/themes";
 import { type ReactNode, useMemo } from "react";
 import { v4 as uuidV4 } from "uuid";
-
 import { useHosts } from "@/hooks/useHosts";
-
-import { Dropdown } from "../Dropdown";
 import styles from "./index.module.less";
 
 interface Tag {
@@ -12,7 +10,6 @@ interface Tag {
 }
 
 export type HostTagsSelectChildProps = {
-  onChangeOpen: (target: HTMLElement | null) => void;
   label: string;
 };
 
@@ -89,10 +86,17 @@ export function HostTagsSelect({
   }, [value, onChange, tags]);
 
   return (
-    <Dropdown menus={tagsMenus}>
-      {({ onChangeOpen }) =>
-        children({ onChangeOpen, label: tagsMap.get(value) || "All" })
-      }
-    </Dropdown>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>
+        {children({ label: tagsMap.get(value) || "All" })}
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom" align="start" sideOffset={4}>
+        {tagsMenus.map((item) => (
+          <DropdownMenu.Item key={item.value} onSelect={() => item.onClick()}>
+            {item.label}
+          </DropdownMenu.Item>
+        ))}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
   );
 }
