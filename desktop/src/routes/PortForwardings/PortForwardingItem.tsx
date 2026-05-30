@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
   establishPortForwarding as establishPortForwardingUtil,
+  message,
   PortForwardingLoading,
   type PortForwardingsAtom,
   SSHLoading,
@@ -104,8 +105,14 @@ export default function PortForwardingItem({
             color: "orange",
           },
           onOk: async () => {
-            await deletePortForwarding(item);
-            refreshPortForwardings();
+            try {
+              await deletePortForwarding(item);
+              refreshPortForwardings();
+            } catch (err) {
+              message.error(
+                `Failed to delete: ${(err as Error).message ?? "Unknown error"}`,
+              );
+            }
           },
         });
       },

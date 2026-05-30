@@ -3,11 +3,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
 import { useTerminalsAtomValue } from "shared";
-import logo from "@/assets/logo.svg?url";
+import logo from "@/assets/logo.svg";
+import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
 import { ReactComponent as WorkspaceIcon } from "./workspace.svg";
-
-import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);

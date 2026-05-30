@@ -4,6 +4,7 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
 import { type MouseEvent, useCallback, useEffect, useState } from "react";
+import { message } from "shared";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
@@ -60,20 +61,26 @@ export default function KnownHosts() {
           color: "orange",
         },
         onOk: async () => {
-          const knownHosts = await readKnownHost();
+          try {
+            const knownHosts = await readKnownHost();
 
-          const newItems = knownHosts.filter(
-            (item) => item.id !== knownHost.id,
-          );
-          const data = newItems
-            .map((item) => `${item.host} ${item.type} ${item.key}`)
-            .join("\r\n");
+            const newItems = knownHosts.filter(
+              (item) => item.id !== knownHost.id,
+            );
+            const data = newItems
+              .map((item) => `${item.host} ${item.type} ${item.key}`)
+              .join("\r\n");
 
-          await writeTextFile("./known_hosts", data, {
-            baseDir: BaseDirectory.AppData,
-          });
+            await writeTextFile("./known_hosts", data, {
+              baseDir: BaseDirectory.AppData,
+            });
 
-          setItems(newItems);
+            setItems(newItems);
+          } catch (err) {
+            message.error(
+              `Failed to delete: ${(err as Error).message ?? "Unknown error"}`,
+            );
+          }
         },
       });
     },

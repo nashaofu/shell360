@@ -9,7 +9,7 @@
   -webkit-app-region: drag;
   flex-shrink: 0;
   position: relative;
-  z-index: 20;
+  z-index: var(--title-bar-z-index, 4000);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-surface) 70%, transparent),
     var(--app-shadow-soft, none);
@@ -36,24 +36,19 @@
 .logoWrap {
   width: 24px;
   height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 7px;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent-9) 86%, var(--gray-12)), var(--accent-10));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
     0 1px 2px color-mix(in srgb, var(--gray-a8) 20%, transparent);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .logoImg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.96;
+  display: block;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  filter: brightness(0) invert(1);
 }
 
 .brandText {

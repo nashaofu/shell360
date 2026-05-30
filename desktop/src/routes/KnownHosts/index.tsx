@@ -11,6 +11,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { message } from "shared";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import { copy } from "@/utils/clipboard";
@@ -95,20 +96,26 @@ export default function KnownHosts() {
           color: "orange",
         },
         onOk: async () => {
-          const knownHosts = await readKnownHost();
+          try {
+            const knownHosts = await readKnownHost();
 
-          const newItems = knownHosts.filter(
-            (item) => item.id !== knownHost.id,
-          );
-          const data = newItems
-            .map((item) => `${item.host} ${item.type} ${item.key}`)
-            .join("\r\n");
+            const newItems = knownHosts.filter(
+              (item) => item.id !== knownHost.id,
+            );
+            const data = newItems
+              .map((item) => `${item.host} ${item.type} ${item.key}`)
+              .join("\r\n");
 
-          await writeTextFile("./known_hosts", data, {
-            baseDir: BaseDirectory.AppLocalData,
-          });
+            await writeTextFile("./known_hosts", data, {
+              baseDir: BaseDirectory.AppLocalData,
+            });
 
-          setItems(newItems);
+            setItems(newItems);
+          } catch (err) {
+            message.error(
+              `Failed to delete: ${(err as Error).message ?? "Unknown error"}`,
+            );
+          }
         },
       });
     },
@@ -132,10 +139,16 @@ export default function KnownHosts() {
         color: "orange",
       },
       onOk: async () => {
-        await writeTextFile("./known_hosts", "", {
-          baseDir: BaseDirectory.AppLocalData,
-        });
-        setItems([]);
+        try {
+          await writeTextFile("./known_hosts", "", {
+            baseDir: BaseDirectory.AppLocalData,
+          });
+          setItems([]);
+        } catch (err) {
+          message.error(
+            `Failed to clear: ${(err as Error).message ?? "Unknown error"}`,
+          );
+        }
       },
     });
   }, [modal]);

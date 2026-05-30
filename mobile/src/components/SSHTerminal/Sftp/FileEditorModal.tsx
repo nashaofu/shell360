@@ -25,23 +25,30 @@ export default function FileEditorModal({
   const message = useMessage();
 
   useEffect(() => {
-    if (open && file) {
-      setLoading(true);
-      onLoadContent()
-        .then((fileContent) => {
-          setContent(fileContent);
-        })
-        .catch((err) => {
-          console.error("Failed to load file:", err);
-          message.error({
-            message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
-          });
-          onClose();
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+    if (!open || !file) {
+      return;
     }
+    let cancelled = false;
+    setLoading(true);
+    onLoadContent()
+      .then((fileContent) => {
+        if (cancelled) { return; }
+        setContent(fileContent);
+      })
+      .catch((err) => {
+        if (cancelled) { return; }
+        console.error("Failed to load file:", err);
+        message.error({
+          message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
+        });
+        onClose();
+      })
+      .finally(() => {
+        if (!cancelled) { setLoading(false); }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open, file, onLoadContent, onClose, message]);
 
   const handleSave = useCallback(async () => {

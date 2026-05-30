@@ -323,8 +323,12 @@ function confirmFooter(
 /* ------------------------------------------------------------------ */
 
 function dispatch(config: InternalModal) {
-  if (listeners.size === 0) ensureRoot();
-  addModal(config);
+  if (listeners.size === 0) {
+    modals = [...modals, config];
+    ensureRoot();
+  } else {
+    addModal(config);
+  }
 }
 
 export interface ModalInstanceAPI {
