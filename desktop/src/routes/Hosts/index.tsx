@@ -3,12 +3,26 @@ import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
+  AddIcon,
+  ContentCopyIcon,
+  DeleteIcon,
+  EditIcon,
+  FilterIcon,
+  GridIcon,
   getHostDesc,
   getHostName,
+  HostTagsSelect,
+  JumpIcon,
+  ListIcon,
+  MoreIcon,
+  SearchIcon,
+  SftpIcon,
+  TerminalIcon,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
 import { addHost, deleteHost, type Host } from "tauri-plugin-data";
+
 import AddHost from "@/components/AddHost";
 import Empty from "@/components/Empty";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
@@ -38,10 +52,6 @@ function getAvatarLabel(name: string) {
 
 type HostTone = "Prod" | "Staging" | "Local" | "Accent";
 
-function getPrimaryTag(host: Host) {
-  return host.tags?.find((tag) => tag.trim())?.trim() || "Untagged";
-}
-
 function getHostTone(tag: string): HostTone {
   const normalized = tag.trim().toLowerCase();
   if (normalized.includes("prod")) {
@@ -56,8 +66,13 @@ function getHostTone(tag: string): HostTone {
   return "Accent";
 }
 
+function getHostTags(host: Host) {
+  return (host.tags || []).filter((tag) => tag.trim()).map((tag) => tag.trim());
+}
+
 export default function Hosts() {
   const [keyword, setKeyword] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string>();
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -72,52 +87,17 @@ export default function Hosts() {
 
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
-    if (!kw) return hosts;
-    return hosts.filter(
+    let filtered = hosts;
+    if (selectedTag) {
+      filtered = filtered.filter((item) => item.tags?.includes(selectedTag));
+    }
+    if (!kw) return filtered;
+    return filtered.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
         `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
     );
-  }, [hosts, keyword]);
-
-  const groups = useMemo(() => {
-    const grouped = new Map<string, Host[]>();
-
-    for (const item of items) {
-      const tag = getPrimaryTag(item);
-      const group = grouped.get(tag) ?? [];
-      group.push(item);
-      grouped.set(tag, group);
-    }
-
-    return Array.from(grouped.entries())
-      .sort(([left], [right]) => {
-        if (left === "Untagged") {
-          return 1;
-        }
-        if (right === "Untagged") {
-          return -1;
-        }
-        return left.localeCompare(right);
-      })
-      .map(([label, groupItems]) => ({
-        label,
-        tone: getHostTone(label),
-        items: groupItems,
-      }));
-  }, [items]);
-
-  const listItems = useMemo(
-    () =>
-      groups.flatMap((group) =>
-        group.items.map((item) => ({
-          ...item,
-          groupLabel: group.label,
-          groupTone: group.tone,
-        })),
-      ),
-    [groups],
-  );
+  }, [hosts, keyword, selectedTag]);
 
   const onOpenChannel = useCallback(
     (host: Host) => {
@@ -140,19 +120,22 @@ export default function Hosts() {
     setEditHost(undefined);
   }, []);
 
-  const onCopyHost = useCallback(async (host: Host) => {
-    try {
-      const copiedHost = await addHost({
-        ...omit(host, ["id"]),
-        name: `${getHostName(host)} Copy`,
-      });
-      await refreshHosts();
-      setEditHost(copiedHost);
-      setIsOpenAddHost(true);
-    } catch (err) {
-      message.error({ message: get(err, "message") || "Copy failed" });
-    }
-  }, [message, refreshHosts]);
+  const onCopyHost = useCallback(
+    async (host: Host) => {
+      try {
+        const copiedHost = await addHost({
+          ...omit(host, ["id"]),
+          name: `${getHostName(host)} Copy`,
+        });
+        await refreshHosts();
+        setEditHost(copiedHost);
+        setIsOpenAddHost(true);
+      } catch (err) {
+        message.error({ message: get(err, "message") || "Copy failed" });
+      }
+    },
+    [message, refreshHosts],
+  );
 
   const onDeleteHost = useCallback(
     (host: Host) => {
@@ -183,26 +166,7 @@ export default function Hosts() {
         <div className={panel.toolbar}>
           <span className={panel.title}>Hosts</span>
           <label className={panel.search}>
-            <svg
-              className={panel.searchIcon}
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <circle
-                cx="6"
-                cy="6"
-                r="4"
-                stroke="currentColor"
-                strokeWidth="1.3"
-              />
-              <path
-                d="M9.5 9.5L13 13"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-            </svg>
+            <SearchIcon className={panel.searchIcon} />
             <input
               className={panel.searchInput}
               value={keyword}
@@ -210,6 +174,20 @@ export default function Hosts() {
               onChange={(event) => setKeyword(event.target.value)}
             />
           </label>
+          <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
+            {({ label }) => (
+              <button
+                type="button"
+                className={clsx(
+                  panel.button,
+                  selectedTag && panel.buttonPrimary,
+                )}
+              >
+                <FilterIcon width="11" height="11" />
+                {label}
+              </button>
+            )}
+          </HostTagsSelect>
           <div className={panel.toggleGroup}>
             <button
               type="button"
@@ -220,40 +198,7 @@ export default function Hosts() {
               title="Grid view"
               onClick={() => setViewMode("grid")}
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect
-                  x="1"
-                  y="1"
-                  width="4"
-                  height="4"
-                  rx="0.8"
-                  fill="currentColor"
-                />
-                <rect
-                  x="7"
-                  y="1"
-                  width="4"
-                  height="4"
-                  rx="0.8"
-                  fill="currentColor"
-                />
-                <rect
-                  x="1"
-                  y="7"
-                  width="4"
-                  height="4"
-                  rx="0.8"
-                  fill="currentColor"
-                />
-                <rect
-                  x="7"
-                  y="7"
-                  width="4"
-                  height="4"
-                  rx="0.8"
-                  fill="currentColor"
-                />
-              </svg>
+              <GridIcon width="12" height="12" />
             </button>
             <button
               type="button"
@@ -264,253 +209,132 @@ export default function Hosts() {
               title="List view"
               onClick={() => setViewMode("list")}
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M1 3h10M1 6h10M1 9h10"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <ListIcon width="12" height="12" />
             </button>
           </div>
-          <button type="button" className={panel.button}>
-            Import
-          </button>
           <button
             type="button"
             className={clsx(panel.button, panel.buttonPrimary)}
             onClick={() => setIsOpenAddHost(true)}
           >
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 12 12"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
+            <AddIcon width="11" height="11" />
             New Host
           </button>
         </div>
         <div className={panel.content}>
           {items.length > 0 ? (
             viewMode === "grid" ? (
-              groups.map((group) => (
-                <section key={group.label} className={styles.group}>
-                  <div className={panel.sectionLabel}>
-                    <span>{group.label}</span>
-                    <span className={panel.sectionCount}>
-                      {group.items.length}{" "}
-                      {group.items.length === 1 ? "host" : "hosts"}
-                    </span>
-                  </div>
-                  <div className={styles.grid}>
-                    {group.items.map((item) => {
-                      const name = getHostName(item);
-                      const desc = getHostDesc(item);
-                      const avatarBg = getAvatarColor(name);
-                      const isLocal = group.tone === "Local";
-                      const statusClassName = isLocal
-                        ? styles.statusTextActive
-                        : styles.statusTextIdle;
-                      const dotClassName = isLocal
-                        ? panel.statusActive
-                        : panel.statusIdle;
+              <div className={styles.grid}>
+                {items.map((item) => {
+                  const name = getHostName(item);
+                  const desc = getHostDesc(item);
+                  const avatarBg = getAvatarColor(name);
+                  const jumpCount = item.jumpHostIds?.length ?? 0;
+                  const tags = getHostTags(item);
 
-                      return (
-                        <article
-                          key={item.id}
-                          className={styles.card}
-                          onDoubleClick={() => onOpenChannel(item)}
+                  return (
+                    <article
+                      key={item.id}
+                      className={styles.card}
+                      onDoubleClick={() => onOpenChannel(item)}
+                    >
+                      <div className={styles.cardHead}>
+                        <div
+                          className={styles.avatar}
+                          style={{
+                            background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
+                            color: avatarBg,
+                          }}
                         >
-                          <div className={styles.cardHead}>
-                            <div
-                              className={styles.avatar}
-                              style={{
-                                background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
-                                color: avatarBg,
+                          {getAvatarLabel(name)}
+                        </div>
+                        <div className={styles.cardInfo}>
+                          <div className={styles.name}>{name}</div>
+                          <div className={styles.addr}>{desc}</div>
+                          {jumpCount > 0 && (
+                            <div className={styles.cardMetaInline}>
+                              <span className={styles.metaPill}>
+                                <JumpIcon className={styles.auxMetaIcon} />
+                                {jumpCount} jump{jumpCount > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {tags.length > 0 && (
+                          <div className={styles.cardTags}>
+                            {tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className={clsx(
+                                  panel.tag,
+                                  panel[`tag${getHostTone(tag)}`],
+                                )}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles.cardFooter}>
+                        <button
+                          type="button"
+                          className={styles.connectBtn}
+                          onClick={() => onOpenChannel(item)}
+                        >
+                          <TerminalIcon width="11" height="11" />
+                          Open Terminal
+                        </button>
+                        <button
+                          type="button"
+                          className={clsx(
+                            styles.connectBtn,
+                            styles.connectBtnSecondary,
+                          )}
+                          onClick={() => onOpenSftp(item)}
+                        >
+                          <SftpIcon width="11" height="11" />
+                          SFTP
+                        </button>
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger>
+                            <button type="button" className={styles.moreBtn}>
+                              <MoreIcon width="12" height="12" />
+                            </button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Content
+                            side="bottom"
+                            align="end"
+                            sideOffset={4}
+                          >
+                            <DropdownMenu.Item
+                              onSelect={() => {
+                                setEditHost(item);
+                                setIsOpenAddHost(true);
                               }}
                             >
-                              {getAvatarLabel(name)}
-                            </div>
-                            <div className={styles.cardInfo}>
-                              <div className={styles.name}>{name}</div>
-                              <div className={styles.addr}>{desc}</div>
-                            </div>
-                            <span
-                              className={clsx(
-                                panel.tag,
-                                panel[`tag${group.tone}`],
-                              )}
+                              <EditIcon style={{ marginRight: 8 }} />
+                              Edit
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Item
+                              onSelect={() => onCopyHost(item)}
                             >
-                              {group.label}
-                            </span>
-                          </div>
-                          <div className={styles.statusRow}>
-                            <span
-                              className={clsx(panel.statusDot, dotClassName)}
-                            />
-                            <span className={statusClassName}>
-                              {isLocal ? "Connected" : "Idle"}
-                            </span>
-                            <span className={styles.auxMeta}>
-                              <svg
-                                className={styles.auxMetaIcon}
-                                viewBox="0 0 14 14"
-                                fill="none"
-                              >
-                                <circle
-                                  cx="7"
-                                  cy="7"
-                                  r="5.5"
-                                  stroke="currentColor"
-                                  strokeWidth="1.1"
-                                />
-                                <path
-                                  d="M7 1.5C7 1.5 4 5 4 7C4 9 5.3 10.5 7 10.5C8.7 10.5 10 9 10 7C10 5 7 1.5 7 1.5Z"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                              </svg>
-                              {item.authenticationMethod}
-                              {!!item.jumpHostIds?.length &&
-                                ` · ${item.jumpHostIds.length} jump${item.jumpHostIds.length > 1 ? "s" : ""}`}
-                            </span>
-                          </div>
-                          <div className={styles.cardFooter}>
-                            <button
-                              type="button"
-                              className={styles.connectBtn}
-                              onClick={() => onOpenChannel(item)}
+                              <ContentCopyIcon style={{ marginRight: 8 }} />
+                              Copy
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Item
+                              onSelect={() => onDeleteHost(item)}
                             >
-                              <svg
-                                width="11"
-                                height="11"
-                                viewBox="0 0 12 12"
-                                fill="none"
-                              >
-                                <rect
-                                  x="1.5"
-                                  y="2.5"
-                                  width="9"
-                                  height="7"
-                                  rx="1"
-                                  stroke="currentColor"
-                                  strokeWidth="1.2"
-                                />
-                                <path
-                                  d="M3 5.5l1.5 1.5L3 8.5"
-                                  stroke="currentColor"
-                                  strokeWidth="1.2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M7 8.5h2"
-                                  stroke="currentColor"
-                                  strokeWidth="1.2"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              Open Terminal
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.connectBtn}
-                              onClick={() => onOpenSftp(item)}
-                            >
-                              <svg
-                                width="11"
-                                height="11"
-                                viewBox="0 0 12 12"
-                                fill="none"
-                              >
-                                <path
-                                  d="M2 2h8v8H2z"
-                                  stroke="currentColor"
-                                  strokeWidth="1.2"
-                                  fill="none"
-                                />
-                                <path
-                                  d="M4 6h4M6 4v4"
-                                  stroke="currentColor"
-                                  strokeWidth="1.2"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              SFTP
-                            </button>
-                            <DropdownMenu.Root>
-                              <DropdownMenu.Trigger>
-                                <button
-                                  type="button"
-                                  className={styles.moreBtn}
-                                >
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 12 12"
-                                    fill="none"
-                                  >
-                                    <circle
-                                      cx="6"
-                                      cy="2.5"
-                                      r="1"
-                                      fill="currentColor"
-                                    />
-                                    <circle
-                                      cx="6"
-                                      cy="6"
-                                      r="1"
-                                      fill="currentColor"
-                                    />
-                                    <circle
-                                      cx="6"
-                                      cy="9.5"
-                                      r="1"
-                                      fill="currentColor"
-                                    />
-                                  </svg>
-                                </button>
-                              </DropdownMenu.Trigger>
-                              <DropdownMenu.Content
-                                side="bottom"
-                                align="end"
-                                sideOffset={4}
-                              >
-                                <DropdownMenu.Item
-                                  onSelect={() => {
-                                    setEditHost(item);
-                                    setIsOpenAddHost(true);
-                                  }}
-                                >
-                                  <span className="icon-edit" style={{ marginRight: 8 }} />
-                                  Edit
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
-                                  <span className="icon-content-copy" style={{ marginRight: 8 }} />
-                                  Copy
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
-                                  <span className="icon-delete" style={{ marginRight: 8 }} />
-                                  Delete
-                                </DropdownMenu.Item>
-                              </DropdownMenu.Content>
-                            </DropdownMenu.Root>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))
+                              <DeleteIcon style={{ marginRight: 8 }} />
+                              Delete
+                            </DropdownMenu.Item>
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Root>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             ) : (
               <div className={styles.listView}>
                 <div className={panel.tableWrap}>
@@ -519,14 +343,13 @@ export default function Hosts() {
                       <tr>
                         <th>Host</th>
                         <th>Address</th>
-                        <th>Label</th>
-                        <th>Status</th>
+                        <th>Tags</th>
                         <th />
                       </tr>
                     </thead>
                     <tbody>
-                      {listItems.map((item) => {
-                        const isLocal = item.groupTone === "Local";
+                      {items.map((item) => {
+                        const tags = getHostTags(item);
                         return (
                           <tr
                             key={item.id}
@@ -539,25 +362,19 @@ export default function Hosts() {
                               {getHostDesc(item)}
                             </td>
                             <td>
-                              <span
-                                className={clsx(
-                                  panel.tag,
-                                  panel[`tag${item.groupTone}`],
-                                )}
-                              >
-                                {item.groupLabel}
-                              </span>
-                            </td>
-                            <td className={styles.listStatus}>
-                              <span
-                                className={clsx(
-                                  panel.statusDot,
-                                  isLocal
-                                    ? panel.statusActive
-                                    : panel.statusIdle,
-                                )}
-                              />
-                              <span>{isLocal ? "Connected" : "Idle"}</span>
+                              <div className={styles.listTags}>
+                                {tags.map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className={clsx(
+                                      panel.tag,
+                                      panel[`tag${getHostTone(tag)}`],
+                                    )}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
                             </td>
                             <td>
                               <div className={panel.actionGroup}>
@@ -583,7 +400,7 @@ export default function Hosts() {
                                       variant="ghost"
                                       color="gray"
                                     >
-                                      <span className="icon-more" />
+                                      <MoreIcon />
                                     </IconButton>
                                   </DropdownMenu.Trigger>
                                   <DropdownMenu.Content
@@ -597,15 +414,21 @@ export default function Hosts() {
                                         setIsOpenAddHost(true);
                                       }}
                                     >
-                                      <span className="icon-edit" style={{ marginRight: 8 }} />
+                                      <EditIcon style={{ marginRight: 8 }} />
                                       Edit
                                     </DropdownMenu.Item>
-                                    <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
-                                      <span className="icon-content-copy" style={{ marginRight: 8 }} />
+                                    <DropdownMenu.Item
+                                      onSelect={() => onCopyHost(item)}
+                                    >
+                                      <ContentCopyIcon
+                                        style={{ marginRight: 8 }}
+                                      />
                                       Copy
                                     </DropdownMenu.Item>
-                                    <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
-                                      <span className="icon-delete" style={{ marginRight: 8 }} />
+                                    <DropdownMenu.Item
+                                      onSelect={() => onDeleteHost(item)}
+                                    >
+                                      <DeleteIcon style={{ marginRight: 8 }} />
                                       Delete
                                     </DropdownMenu.Item>
                                   </DropdownMenu.Content>

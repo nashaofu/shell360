@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { CloseIcon, FileIcon } from "shared";
 import type { SSHSftpFile } from "tauri-plugin-ssh";
-
 import useMessage from "@/hooks/useMessage";
 import styles from "./FileEditorModal.module.less";
 
@@ -32,11 +32,15 @@ export default function FileEditorModal({
     setLoading(true);
     onLoadContent()
       .then((fileContent) => {
-        if (cancelled) { return; }
+        if (cancelled) {
+          return;
+        }
         setContent(fileContent);
       })
       .catch((err) => {
-        if (cancelled) { return; }
+        if (cancelled) {
+          return;
+        }
         console.error("Failed to load file:", err);
         message.error({
           message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
@@ -44,7 +48,9 @@ export default function FileEditorModal({
         onClose();
       })
       .finally(() => {
-        if (!cancelled) { setLoading(false); }
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -81,7 +87,7 @@ export default function FileEditorModal({
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.modal}>
         <div className={styles.header}>
-          <span className="icon-file" />
+          <FileIcon />
           <div className={styles.title}>Edit: {file?.name}</div>
           <button
             type="button"
@@ -89,7 +95,7 @@ export default function FileEditorModal({
             disabled={loading || saving}
             onClick={handleCancel}
           >
-            <span className="icon-close" />
+            <CloseIcon />
           </button>
         </div>
         <div className={styles.content}>

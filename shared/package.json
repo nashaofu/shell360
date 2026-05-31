@@ -43,6 +43,7 @@
   "devDependencies": {
     "@rsbuild/plugin-less": "^1.6.3",
     "@rsbuild/plugin-react": "^2.0.0",
+    "@rsbuild/plugin-svgr": "^2.0.2",
     "@rslib/core": "^0.22.0",
     "@rstest/core": "^0.10.3",
     "@types/lodash-es": "^4.17.12",

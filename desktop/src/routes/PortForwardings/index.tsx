@@ -1,12 +1,11 @@
 import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
-import { useHosts, usePortForwardings } from "shared";
+import { AddIcon, SearchIcon, useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
+import AddPortForwarding from "@/components/AddPortForwarding";
 import Empty from "@/components/Empty";
 import panel from "@/styles/panel.module.less";
-
-import AddPortForwarding from "@/components/AddPortForwarding";
 import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
@@ -61,26 +60,7 @@ export default function PortForwardings() {
         <div className={panel.toolbar}>
           <span className={panel.title}>Port Forwardings</span>
           <label className={panel.search}>
-            <svg
-              className={panel.searchIcon}
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <circle
-                cx="6"
-                cy="6"
-                r="4"
-                stroke="currentColor"
-                strokeWidth="1.3"
-              />
-              <path
-                d="M9.5 9.5L13 13"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-            </svg>
+            <SearchIcon className={panel.searchIcon} />
             <input
               className={panel.searchInput}
               value={keyword}
@@ -93,9 +73,7 @@ export default function PortForwardings() {
             className={clsx(panel.button, panel.buttonPrimary)}
             onClick={() => setIsOpenAddPortForwarding(true)}
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
+            <AddIcon width="11" height="11" />
             New Rule
           </button>
         </div>

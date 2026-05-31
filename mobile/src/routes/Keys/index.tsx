@@ -1,7 +1,14 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
-import { useKeys } from "shared";
+import {
+  AddIcon,
+  DeleteIcon,
+  EditIcon,
+  KeyIcon,
+  MoreIcon,
+  useKeys,
+} from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AddKey from "@/components/AddKey";
@@ -128,7 +135,7 @@ export default function Keys() {
                 padding: 4,
               }}
             >
-              <span className="icon-more" />
+              <MoreIcon />
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
@@ -169,13 +176,13 @@ export default function Keys() {
         <div style={{ marginLeft: 16 }}>
           <div style={{ display: "flex", gap: 1 }}>
             <Button onClick={onAddKeyButtonClick}>
-              <span className="icon-add" />
+              <AddIcon />
               Add key
             </Button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
                 <Button variant="soft">
-                  <span className="icon-more" />
+                  <MoreIcon />
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
@@ -201,7 +208,7 @@ export default function Keys() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<span className="icon-key" />}
+            icon={<KeyIcon />}
             title={item.name}
             extra={
               <div onClick={(event) => event.stopPropagation()}>
@@ -220,7 +227,7 @@ export default function Keys() {
                         alignItems: "center",
                       }}
                     >
-                      <span className="icon-more" />
+                      <MoreIcon />
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content
@@ -234,11 +241,11 @@ export default function Keys() {
                         setIsOpenAddKey(true);
                       }}
                     >
-                      <span className="icon-edit" style={{ marginRight: 8 }} />
+                      <EditIcon style={{ marginRight: 8 }} />
                       Edit
                     </DropdownMenu.Item>
                     <DropdownMenu.Item onSelect={() => onDeleteKey(item)}>
-                      <span className="icon-delete" style={{ marginRight: 8 }} />
+                      <DeleteIcon style={{ marginRight: 8 }} />
                       Delete
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>

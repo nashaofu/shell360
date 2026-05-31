@@ -1,8 +1,7 @@
 import { get } from "lodash-es";
-
-import styles from "../styles.module.less";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
+import styles from "../styles.module.less";
 
 export default function DefaultError({ error, onClose, onRetry }: ErrorProps) {
   return (

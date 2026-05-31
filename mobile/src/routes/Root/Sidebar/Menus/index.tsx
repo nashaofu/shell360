@@ -1,12 +1,21 @@
 import { useCallback } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
+import { FingerprintIcon, HostIcon, KeyIcon, SiteMapIcon } from "shared";
 import styles from "./index.module.less";
 
 const MENU_ITEMS = [
-  { icon: "icon-host", text: "Hosts", to: "/" },
-  { icon: "icon-site-map", text: "Port forwardings", to: "/port-forwardings" },
-  { icon: "icon-key", text: "Keys", to: "/keys" },
-  { icon: "icon-fingerprint", text: "Known hosts", to: "/known-hosts" },
+  { icon: <HostIcon className={styles.itemIcon} />, text: "Hosts", to: "/" },
+  {
+    icon: <SiteMapIcon className={styles.itemIcon} />,
+    text: "Port forwardings",
+    to: "/port-forwardings",
+  },
+  { icon: <KeyIcon className={styles.itemIcon} />, text: "Keys", to: "/keys" },
+  {
+    icon: <FingerprintIcon className={styles.itemIcon} />,
+    text: "Known hosts",
+    to: "/known-hosts",
+  },
 ];
 
 type MenusProps = {
@@ -36,7 +45,7 @@ export default function Menus({ onClick }: MenusProps) {
               className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
               onClick={() => onListItemClick(item.to)}
             >
-              <span className={`${styles.itemIcon} ${item.icon}`} />
+              {item.icon}
               <span className={styles.itemText}>{item.text}</span>
             </button>
           </li>

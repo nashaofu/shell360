@@ -1,5 +1,6 @@
 import { Select, Text, TextField } from "@radix-ui/themes";
 import type { ChangeEvent } from "react";
+import { useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { TextFieldPassword } from "../TextFieldPassword";
@@ -12,44 +13,20 @@ enum Algorithm {
 }
 
 const ALGORITHM_MENUS = [
-  {
-    label: "ed25519",
-    value: Algorithm.Ed25519,
-  },
-  {
-    label: "rsa",
-    value: Algorithm.Rsa,
-  },
-  {
-    label: "ecdsa",
-    value: Algorithm.Ecdsa,
-  },
+  { label: "ed25519", value: Algorithm.Ed25519 },
+  { label: "rsa", value: Algorithm.Rsa },
+  { label: "ecdsa", value: Algorithm.Ecdsa },
 ];
 
 const RSA_BIT_SIZE = [
-  {
-    label: "2048",
-    value: 2048,
-  },
-  {
-    label: "4096",
-    value: 4096,
-  },
+  { label: "2048", value: 2048 },
+  { label: "4096", value: 4096 },
 ];
 
 const ECDSA_CURVE = [
-  {
-    label: "NIST P-256",
-    value: "NistP256",
-  },
-  {
-    label: "NIST P-384",
-    value: "NistP384",
-  },
-  {
-    label: "NIST P-521",
-    value: "NistP521",
-  },
+  { label: "NIST P-256", value: "NistP256" },
+  { label: "NIST P-384", value: "NistP384" },
+  { label: "NIST P-521", value: "NistP521" },
 ];
 
 export type GenerateKeyFormFields = {
@@ -66,6 +43,19 @@ export type GenerateKeyFormProps = {
 
 export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
   const algorithm = formApi.watch("algorithm");
+
+  const onAlgorithmChange = useCallback(
+    (value: string) => {
+      formApi.setValue("algorithm", value as Algorithm);
+      if (value !== Algorithm.Rsa) {
+        formApi.setValue("bitSize", "");
+      }
+      if (value !== Algorithm.Ecdsa) {
+        formApi.setValue("curve", "");
+      }
+    },
+    [formApi],
+  );
 
   const onInputChange =
     (onChange: (value: string) => void) =>
@@ -137,7 +127,7 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
             </Text>
             <Select.Root
               value={field.value || ""}
-              onValueChange={(value) => field.onChange(value)}
+              onValueChange={onAlgorithmChange}
             >
               <Select.Trigger
                 style={{ width: "100%" }}

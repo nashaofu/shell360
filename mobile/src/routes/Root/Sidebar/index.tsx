@@ -1,11 +1,12 @@
+import { Portal } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
+import { SettingsIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import overlay from "@/utils/overlay";
-import logo from "./logo.svg";
 import styles from "./index.module.less";
+import logo from "./logo.svg";
 import Menus from "./Menus";
 import Terminals from "./Terminals";
 
@@ -35,8 +36,8 @@ export default function Sidebar() {
 
   if (!globalStateAtomWithApi.isOpenSidebar) return null;
 
-  return createPortal(
-    <>
+  return (
+    <Portal>
       <div
         className={styles.overlay}
         onClick={globalStateAtomWithApi.closeSidebar}
@@ -52,7 +53,7 @@ export default function Sidebar() {
             className={styles.settingsBtn}
             onClick={goSettings}
           >
-            <span className="icon-settings" />
+            <SettingsIcon />
           </button>
         </div>
 
@@ -66,7 +67,6 @@ export default function Sidebar() {
           <Terminals onClick={globalStateAtomWithApi.closeSidebar} />
         </div>
       </div>
-    </>,
-    document.body,
+    </Portal>
   );
 }

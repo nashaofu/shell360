@@ -33,15 +33,12 @@ export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
         render={({ field }) => {
           return (
             <SegmentedControl.Root
+              style={{ width: "100%" }}
               value={field.value ? "true" : "false"}
               onValueChange={(v) => field.onChange(v === "true")}
             >
               <SegmentedControl.Item value="false">
                 Disabled
-              </SegmentedControl.Item>
-              <SegmentedControl.Item value="true">
-                Enabled
-              
               </SegmentedControl.Item>
               <SegmentedControl.Item value="true">
                 Enabled

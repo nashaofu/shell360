@@ -9,6 +9,7 @@ import {
   DEFAULT_TERMINAL_TYPE,
   EditHostForm,
   type EditHostFormFields,
+  MoreIcon,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
@@ -219,7 +220,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
                       borderLeft: "1px solid var(--accent-a5)",
                     }}
                   >
-                    <span className="icon-more" />
+                    <MoreIcon />
                   </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>

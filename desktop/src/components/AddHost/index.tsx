@@ -1,6 +1,6 @@
 import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type FieldErrors, useForm } from "react-hook-form";
 import {
   DEFAULT_TERMINAL_FONT_FAMILY,
   DEFAULT_TERMINAL_FONT_SIZE,
@@ -8,7 +8,9 @@ import {
   DEFAULT_TERMINAL_TYPE,
   EditHostForm,
   type EditHostFormFields,
+  MoreIcon,
   useHosts,
+  useKeys,
   useTerminalsAtomWithApi,
 } from "shared";
 import {
@@ -21,6 +23,7 @@ import {
 import AddKey from "@/components/AddKey";
 import PageDrawer from "@/components/PageDrawer";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
+import useMessage from "@/hooks/useMessage";
 
 type AddHostProps = {
   open?: boolean;
@@ -32,7 +35,9 @@ type AddHostProps = {
 export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
   const activateTerminal = useActivateTerminal();
   const { refresh: refreshHosts } = useHosts();
+  const { refresh: refreshKeys } = useKeys();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
+  const msg = useMessage();
 
   const formApi = useForm<EditHostFormFields>({
     defaultValues: {
@@ -97,7 +102,9 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         authenticationMethod: authenticationMethod,
         password:
           authenticationMethod === AuthenticationMethod.Password
-            ? values.password || ""
+            ? data && !values.password
+              ? undefined
+              : values.password || ""
             : undefined,
         keyId:
           authenticationMethod === AuthenticationMethod.PublicKey ||
@@ -107,14 +114,17 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
         envs: values.envs?.split(",").reduce<Env[]>((envs, env) => {
-          let [key, value] = env.split("=");
-          key = key.trim();
-          value = value?.trim();
+          const eqIdx = env.indexOf("=");
+          if (eqIdx === -1) {
+            return envs;
+          }
+          const key = env.slice(0, eqIdx).trim();
+          const value = env.slice(eqIdx + 1).trim();
 
           if (!key) {
             return envs;
           }
-          if (value === undefined) {
+          if (!value) {
             return envs;
           }
           envs.push({ key, value });
@@ -144,23 +154,60 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
 
   const onSaveAndConnect = useCallback(
     async (values: EditHostFormFields) => {
-      const savedHost = await save(values);
-      await refreshHosts();
-      onOk();
+      try {
+        const savedHost = await save(values);
+        await refreshHosts();
 
-      const [item] = terminalsAtomWithApi.add(savedHost);
-      activateTerminal(item.uuid);
+        const [item] = terminalsAtomWithApi.add(savedHost);
+        activateTerminal(item.uuid);
+
+        onOk();
+      } catch (error) {
+        msg.error({
+          message: `Failed to save and connect: ${error instanceof Error ? error.message : error}`,
+        });
+      }
     },
-    [activateTerminal, onOk, save, refreshHosts, terminalsAtomWithApi],
+    [activateTerminal, onOk, save, refreshHosts, terminalsAtomWithApi, msg],
   );
 
   const onSave = useCallback(
     async (values: EditHostFormFields) => {
-      await save(values);
-      await refreshHosts();
-      onOk();
+      try {
+        await save(values);
+        await refreshHosts();
+        onOk();
+      } catch (error) {
+        msg.error({
+          message: `Failed to save host: ${error instanceof Error ? error.message : error}`,
+        });
+      }
     },
-    [onOk, refreshHosts, save],
+    [onOk, refreshHosts, save, msg],
+  );
+
+  const onValidationError = useCallback(
+    (errors: FieldErrors<EditHostFormFields>) => {
+      let errorMessage = "Please fill in the required fields";
+      for (const err of Object.values(errors)) {
+        if (!err) continue;
+        if (typeof err.message === "string") {
+          errorMessage = err.message;
+          break;
+        }
+        for (const nested of Object.values(err)) {
+          if (
+            nested &&
+            typeof (nested as { message?: unknown }).message === "string"
+          ) {
+            errorMessage = (nested as { message: string }).message;
+            break;
+          }
+        }
+      }
+      msg.error(errorMessage);
+    },
+    [msg],
   );
 
   const menus = useMemo(
@@ -168,10 +215,10 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       {
         value: "Save & Connect",
         label: "Save & Connect",
-        onClick: formApi.handleSubmit(onSaveAndConnect),
+        onClick: formApi.handleSubmit(onSaveAndConnect, onValidationError),
       },
     ],
-    [formApi, onSaveAndConnect],
+    [formApi, onSaveAndConnect, onValidationError],
   );
 
   useEffect(() => {
@@ -197,14 +244,14 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             <Flex style={{ flex: 1 }} gap="1">
               <Button
                 style={{ flex: 1 }}
-                onClick={formApi.handleSubmit(onSave)}
+                onClick={formApi.handleSubmit(onSave, onValidationError)}
               >
                 Save
               </Button>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
                   <Button variant="soft">
-                    <span className="icon-more" />
+                    <MoreIcon />
                   </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
@@ -225,12 +272,16 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         <EditHostForm
           formApi={formApi}
           onOpenAddKey={() => setAddKeyOpen(true)}
+          onSubmit={formApi.handleSubmit(onSave, onValidationError)}
         />
       </PageDrawer>
       <AddKey
         open={addKeyOpen}
         onCancel={() => setAddKeyOpen(false)}
-        onOk={() => setAddKeyOpen(false)}
+        onOk={() => {
+          setAddKeyOpen(false);
+          refreshKeys();
+        }}
       />
     </>
   );

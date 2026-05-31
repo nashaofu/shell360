@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { get } from "lodash-es";
 import { useEffect, useMemo, useState } from "react";
-import { Loading } from "shared";
+import { CloseIcon, ErrorCircleIcon, Loading } from "shared";
 
 import {
   useIsShowPaywallAtom,
@@ -109,7 +109,7 @@ export default function Subscription() {
               padding: 6,
             }}
           >
-            <span className="icon-close" />
+            <CloseIcon />
           </button>
         </div>
         <div style={{ padding: 16 }}>
@@ -146,8 +146,7 @@ export default function Subscription() {
               )}
               {loadableOfferingsAtomValue.state === "hasError" && (
                 <div style={{ textAlign: "center" }}>
-                  <span
-                    className="icon-error-circle"
+                  <ErrorCircleIcon
                     style={{ fontSize: 48, color: "var(--red-9)" }}
                   />
                   <div>Loading failed</div>

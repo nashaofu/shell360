@@ -1,7 +1,14 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Loading, useSftp } from "shared";
+import {
+  CloseIcon,
+  FileUploadIcon,
+  FolderIcon,
+  Loading,
+  MoreIcon,
+  useSftp,
+} from "shared";
 import {
   type SSHSession,
   type SSHSftpFile,
@@ -305,7 +312,7 @@ export default function Sftp({ session }: SftpProps) {
           }
           onClick={() => setIsOpen(true)}
         >
-          <span className="icon-folder" />
+          <FolderIcon />
         </button>
       )}
       {isOpen && (
@@ -319,7 +326,7 @@ export default function Sftp({ session }: SftpProps) {
                 disabled={isLoading}
                 onClick={() => setIsOpen(false)}
               >
-                <span className="icon-close" />
+                <CloseIcon />
               </button>
             </div>
 
@@ -352,19 +359,18 @@ export default function Sftp({ session }: SftpProps) {
                       disabled={uploadFileLoading}
                       onClick={uploadFile}
                     >
-                      <span className="icon-file-upload" />
+                      <FileUploadIcon />
                     </button>
                     <DropdownMenu.Root>
                       <DropdownMenu.Trigger>
                         <button type="button" className={styles.iconButton}>
-                          <span className="icon-more" />
+                          <MoreIcon />
                         </button>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Content
                         side="bottom"
                         align="end"
                         sideOffset={4}
-                      
                       >
                         {actions.map((item) => (
                           <DropdownMenu.Item

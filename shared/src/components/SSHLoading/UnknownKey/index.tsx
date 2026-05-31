@@ -1,6 +1,7 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+import { MoreIcon } from "../../Icon";
 
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
@@ -39,7 +40,7 @@ export default function UnknownKey({
                   justifyContent: "center",
                 }}
               >
-                <span className="icon-more" />
+                <MoreIcon />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>

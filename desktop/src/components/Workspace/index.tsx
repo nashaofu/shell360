@@ -5,15 +5,13 @@ import {
   DockviewReact,
   type DockviewReadyEvent,
 } from "dockview-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "dockview-react/dist/styles/dockview.css";
 import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
-import { useTerminalActiveId, useTerminalViewVisible } from "@/atoms/terminalView.atom";
+import {
+  useTerminalActiveId,
+  useTerminalViewVisible,
+} from "@/atoms/terminalView.atom";
 import AddKey from "@/components/AddKey";
 import SftpContent from "@/components/SftpPanel";
 import TerminalPanel from "@/components/TerminalPanel";
@@ -36,7 +34,10 @@ function getAddPanelOptions(
     inactive,
     component: type === "sftp" ? "sftp" : "terminal",
     params,
-    position: { referenceGroup: api.activeGroup!, direction: "within" as const },
+    position: {
+      referenceGroup: api.activeGroup!,
+      direction: "within" as const,
+    },
     minimumWidth: PANEL_MIN_WIDTH,
     minimumHeight: PANEL_MIN_HEIGHT,
   };
@@ -76,10 +77,17 @@ export default function Workspace() {
 
       for (const [uuid, term] of terminalsRef.current) {
         api.addPanel(
-          getAddPanelOptions(api, uuid, term.name, uuid !== activeIdRef.current, {
-            terminalId: uuid,
-            onOpenAddKey: openAddKeyModal,
-          }, term.type),
+          getAddPanelOptions(
+            api,
+            uuid,
+            term.name,
+            uuid !== activeIdRef.current,
+            {
+              terminalId: uuid,
+              onOpenAddKey: openAddKeyModal,
+            },
+            term.type,
+          ),
         );
         addedIdsRef.current.add(uuid);
       }
@@ -150,22 +158,33 @@ export default function Workspace() {
     for (const [id, term] of terminalsState) {
       if (!addedIds.has(id)) {
         api.addPanel(
-          getAddPanelOptions(api, id, term.name, false, {
-            terminalId: id,
-            onOpenAddKey: openAddKeyModal,
-          }, term.type),
+          getAddPanelOptions(
+            api,
+            id,
+            term.name,
+            false,
+            {
+              terminalId: id,
+              onOpenAddKey: openAddKeyModal,
+            },
+            term.type,
+          ),
         );
         addedIds.add(id);
         continue;
       }
       const panel = api.getPanel(id);
-      if (panel?.title !== term.name) panel.api.setTitle(term.name);
+      if (panel?.title !== term.name) panel?.api.setTitle(term.name);
     }
   }, [terminalsState, openAddKeyModal]);
 
   return (
     <div
-      className={clsx(styles.root, styles.appDockview, visible ? styles.visible : styles.hidden)}
+      className={clsx(
+        styles.root,
+        styles.appDockview,
+        visible ? styles.visible : styles.hidden,
+      )}
     >
       <DockviewReact
         components={components}
@@ -180,7 +199,11 @@ export default function Workspace() {
         singleTabMode="default"
         dndStrategy="pointer"
       />
-      <AddKey open={openAddKey} onCancel={closeAddKeyModal} onOk={closeAddKeyModal} />
+      <AddKey
+        open={openAddKey}
+        onCancel={closeAddKeyModal}
+        onOk={closeAddKeyModal}
+      />
     </div>
   );
 }

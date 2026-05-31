@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import { Outlet, useMatch } from "react-router-dom";
 import { useHosts, useKeys, usePortForwardings } from "shared";
-import styles from "./index.module.less";
-
 import Sidebar from "../Sidebar";
 import Subscription from "../Subscription";
 import Terminals from "../Terminals";
+import styles from "./index.module.less";
 
 export default function Content() {
   const match = useMatch("/terminal/:uuid");

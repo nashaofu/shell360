@@ -1,9 +1,9 @@
-import clsx from "clsx";
 import {
   BaseDirectory,
   readTextFile,
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
+import clsx from "clsx";
 import {
   type MouseEvent,
   useCallback,
@@ -11,10 +11,10 @@ import {
   useMemo,
   useState,
 } from "react";
+import { SearchIcon } from "shared";
+import Empty from "@/components/Empty";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-import { copy } from "@/utils/clipboard";
-import Empty from "@/components/Empty";
 import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
 
@@ -121,37 +121,6 @@ export default function KnownHosts() {
     [modal],
   );
 
-  const onExport = useCallback(() => {
-    if (!items.length) {
-      return;
-    }
-
-    copy(items.map((item) => item.id).join("\r\n"));
-    message.success({ message: "Copied known_hosts entries" });
-  }, [items, message]);
-
-  const onClearAll = useCallback(() => {
-    modal.confirm({
-      title: "Clear known_hosts",
-      content: "Remove all saved known_hosts entries from this device?",
-      OkButtonProps: {
-        color: "orange",
-      },
-      onOk: async () => {
-        try {
-          await writeTextFile("./known_hosts", "", {
-            baseDir: BaseDirectory.AppLocalData,
-          });
-          setItems([]);
-        } catch (err) {
-          message.error(
-            `Failed to clear: ${(err as Error).message ?? "Unknown error"}`,
-          );
-        }
-      },
-    });
-  }, [modal]);
-
   useEffect(() => {
     readKnownHost().then((knownHosts) => setItems(knownHosts));
   }, []);
@@ -173,106 +142,77 @@ export default function KnownHosts() {
 
   return (
     <section className={panel.page}>
-        <div className={panel.toolbar}>
-          <span className={panel.title}>Known Hosts</span>
-          <label className={panel.search}>
-            <svg
-              className={panel.searchIcon}
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <circle
-                cx="6"
-                cy="6"
-                r="4"
-                stroke="currentColor"
-                strokeWidth="1.3"
-              />
-              <path
-                d="M9.5 9.5L13 13"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-              />
-            </svg>
-            <input
-              className={panel.searchInput}
-              value={keyword}
-              placeholder="Filter hosts..."
-              onChange={(event) => setKeyword(event.target.value)}
-            />
-          </label>
-          <button type="button" className={panel.button} onClick={onExport}>
-            Export
-          </button>
-          <button
-            type="button"
-            className={clsx(panel.button, panel.buttonDanger)}
-            onClick={onClearAll}
-          >
-            Clear All
-          </button>
-        </div>
-        <div className={panel.content}>
-          {filteredItems.length ? (
-            <div className={panel.tableWrap}>
-              <table className={panel.table}>
-                <thead>
-                  <tr>
-                    <th>Hostname / IP</th>
-                    <th>Key Type</th>
-                    <th>Fingerprint</th>
-                    <th>Saved</th>
-                    <th>State</th>
-                    <th>Label</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className={styles.hostCell}>{item.host}</td>
-                      <td>
-                        <span className={`${panel.tag} ${panel.tagAccent}`}>
-                          {item.type}
-                        </span>
-                      </td>
-                      <td className={styles.fingerprintCell}>
-                        {getFingerprint(item.key)}
-                      </td>
-                      <td className={styles.timeCell}>Saved entry</td>
-                      <td className={styles.timeCell}>Available</td>
-                      <td>
-                        <span
-                          className={clsx(
-                            panel.tag,
-                            panel[`tag${getKnownHostTone(item.host)}`],
-                          )}
+      <div className={panel.toolbar}>
+        <span className={panel.title}>Known Hosts</span>
+        <label className={panel.search}>
+          <SearchIcon className={panel.searchIcon} />
+          <input
+            className={panel.searchInput}
+            value={keyword}
+            placeholder="Filter hosts..."
+            onChange={(event) => setKeyword(event.target.value)}
+          />
+        </label>
+      </div>
+      <div className={panel.content}>
+        {filteredItems.length ? (
+          <div className={panel.tableWrap}>
+            <table className={panel.table}>
+              <thead>
+                <tr>
+                  <th>Hostname / IP</th>
+                  <th>Key Type</th>
+                  <th>Fingerprint</th>
+                  <th>Saved</th>
+                  <th>State</th>
+                  <th>Label</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className={styles.hostCell}>{item.host}</td>
+                    <td>
+                      <span className={`${panel.tag} ${panel.tagAccent}`}>
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className={styles.fingerprintCell}>
+                      {getFingerprint(item.key)}
+                    </td>
+                    <td className={styles.timeCell}>Saved entry</td>
+                    <td className={styles.timeCell}>Available</td>
+                    <td>
+                      <span
+                        className={clsx(
+                          panel.tag,
+                          panel[`tag${getKnownHostTone(item.host)}`],
+                        )}
+                      >
+                        {getKnownHostLabel(item.host)}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={panel.actionGroup}>
+                        <button
+                          type="button"
+                          className={`${panel.actionButton} ${panel.dangerButton}`}
+                          onClick={(event) => onDelete(event, item)}
                         >
-                          {getKnownHostLabel(item.host)}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={panel.actionGroup}>
-                          <button
-                            type="button"
-                            className={`${panel.actionButton} ${panel.dangerButton}`}
-                            onClick={(event) => onDelete(event, item)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <Empty desc="There is no known hosts yet." />
-          )}
-        </div>
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Empty desc="There is no known hosts yet." />
+        )}
+      </div>
     </section>
   );
 }

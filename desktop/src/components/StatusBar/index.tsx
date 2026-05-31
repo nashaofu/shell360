@@ -1,4 +1,11 @@
-import { usePortForwardingsAtomValue, useTerminalsAtomValue } from "shared";
+import {
+  FileUploadIcon,
+  InfoCircleIcon,
+  SiteMapIcon,
+  TerminalIcon,
+  usePortForwardingsAtomValue,
+  useTerminalsAtomValue,
+} from "shared";
 import { useFileTransfersCount } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
@@ -11,8 +18,9 @@ export default function StatusBar() {
   const notificationCount =
     [...terminalsState.values()].filter((item) => item.status !== "success")
       .length +
-    [...portForwardingsState.values()].filter((item) => item.status === "failed")
-      .length;
+    [...portForwardingsState.values()].filter(
+      (item) => item.status === "failed",
+    ).length;
 
   return (
     <div className={styles.statusBar}>
@@ -23,7 +31,7 @@ export default function StatusBar() {
           title={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
           aria-label={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
         >
-          <span className="icon-terminal" />
+          <TerminalIcon />
           <span className={styles.value}>{terminalCount}</span>
         </button>
         <div className={styles.divider} />
@@ -33,7 +41,7 @@ export default function StatusBar() {
           title={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
           aria-label={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
         >
-          <span className="icon-site-map" />
+          <SiteMapIcon />
           <span className={styles.value}>{portForwardingCount}</span>
         </button>
         <div className={styles.divider} />
@@ -43,7 +51,7 @@ export default function StatusBar() {
           title={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
           aria-label={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
         >
-          <span className="icon-file-upload" />
+          <FileUploadIcon />
           <span className={styles.value}>{transferCount}</span>
         </button>
       </div>
@@ -55,7 +63,7 @@ export default function StatusBar() {
           title={`${notificationCount} notifications`}
           aria-label={`${notificationCount} notifications`}
         >
-          <span className="icon-info-circle" />
+          <InfoCircleIcon />
           <span className={styles.value}>{notificationCount}</span>
         </button>
       </div>

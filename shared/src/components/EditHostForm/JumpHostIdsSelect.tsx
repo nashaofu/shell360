@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
+import { AddIcon, ArrowDownIcon, ArrowUpIcon, DeleteIcon } from "../Icon";
 import styles from "./JumpHostIdsSelect.module.less";
 
 function getJumpHostName(
@@ -119,7 +120,7 @@ export default function JumpHostIdsSelect({
                     onClick={() => handleMoveUp(index)}
                     disabled={index === 0}
                   >
-                    <span className="icon-arrow-up" />
+                    <ArrowUpIcon />
                   </IconButton>
                   <IconButton
                     type="button"
@@ -129,7 +130,7 @@ export default function JumpHostIdsSelect({
                     onClick={() => handleMoveDown(index)}
                     disabled={index === value.length - 1}
                   >
-                    <span className="icon-arrow-down" />
+                    <ArrowDownIcon />
                   </IconButton>
                   <IconButton
                     type="button"
@@ -138,7 +139,7 @@ export default function JumpHostIdsSelect({
                     size="1"
                     onClick={() => handleRemove(index)}
                   >
-                    <span className="icon-delete" />
+                    <DeleteIcon />
                   </IconButton>
                 </div>
               </div>
@@ -186,7 +187,7 @@ export default function JumpHostIdsSelect({
           color="gray"
           onClick={handleAdd}
         >
-          <span className="icon-add" />
+          <AddIcon />
           Add
         </Button>
       </div>

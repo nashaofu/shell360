@@ -1,7 +1,14 @@
 import dayjs from "dayjs";
 import { useCallback } from "react";
+import {
+  DeleteIcon,
+  EditIcon,
+  FileDownloadIcon,
+  FileIcon,
+  FolderIcon,
+  SymlinkIcon,
+} from "shared";
 import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
-
 import type useModal from "@/hooks/useModal";
 import SftpFilenameInput from "./SftpFilenameInput";
 import type { SftpTableCell } from "./types";
@@ -84,10 +91,10 @@ export default function useCells({
       maxWidth: 320,
       render: (item: SSHSftpFile) => {
         const icons = {
-          [SSHSftpFileType.Dir]: "icon-folder",
-          [SSHSftpFileType.File]: "icon-file",
-          [SSHSftpFileType.Symlink]: "icon-symlink",
-          [SSHSftpFileType.Other]: "icon-file",
+          [SSHSftpFileType.Dir]: FolderIcon,
+          [SSHSftpFileType.File]: FileIcon,
+          [SSHSftpFileType.Symlink]: SymlinkIcon,
+          [SSHSftpFileType.Other]: FileIcon,
         };
 
         let size = "";
@@ -111,9 +118,10 @@ export default function useCells({
             title={item.name}
             onDoubleClick={() => onDoubleClickName(item)}
           >
-            <span
-              className={`${styles.fileIcon} ${icons[item.fileType] || "icon-file"}`}
-            />
+            {(() => {
+              const IconComp = icons[item.fileType] || FileIcon;
+              return <IconComp className={styles.fileIcon} />;
+            })()}
             <div className={styles.nameContent}>
               {selectedFile?.path === item.path ? (
                 <div className={styles.renameWrapMobile}>
@@ -181,21 +189,21 @@ export default function useCells({
             disabled={item.fileType !== SSHSftpFileType.File}
             onClick={() => downloadFile(item)}
           >
-            <span className="icon-file-download" />
+            <FileDownloadIcon />
           </button>
           <button
             type="button"
             className={styles.optButton}
             onClick={() => onRename(item)}
           >
-            <span className="icon-edit" />
+            <EditIcon />
           </button>
           <button
             type="button"
             className={styles.optButton}
             onClick={() => onDelete(item)}
           >
-            <span className="icon-delete" />
+            <DeleteIcon />
           </button>
         </div>
       ),

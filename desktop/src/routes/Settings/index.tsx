@@ -12,14 +12,21 @@ import { getVersion } from "@tauri-apps/api/app";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { type Appearance, useAppearance } from "shared";
+import {
+  type Appearance,
+  FileIcon,
+  HostIcon,
+  KeyIcon,
+  LabelIcon,
+  useAppearance,
+} from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import InitCrypto from "@/components/InitCrypto";
-import openUrl from "@/utils/openUrl";
 import Page from "@/components/Page";
+import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
 
 type SettingSectionProps = {
@@ -30,14 +37,15 @@ type SettingSectionProps = {
 };
 
 type SettingActionProps = {
-  icon: string;
+  icon: ReactNode;
   title: string;
   description: string;
-  value?: string;
+  value?: ReactNode;
   onClick?: () => void;
   ctaLabel?: string;
   disabled?: boolean;
   tone?: "default" | "primary";
+  footer?: ReactNode;
 };
 
 const APPEARANCE_OPTIONS: Array<{
@@ -50,16 +58,8 @@ const APPEARANCE_OPTIONS: Array<{
     label: "Follow system",
     hint: "Match the device theme automatically.",
   },
-  {
-    value: "light",
-    label: "Light",
-    hint: "Keep surfaces bright and clear.",
-  },
-  {
-    value: "dark",
-    label: "Dark",
-    hint: "Reduce glare for long sessions.",
-  },
+  { value: "light", label: "Light", hint: "Keep surfaces bright and clear." },
+  { value: "dark", label: "Dark", hint: "Reduce glare for long sessions." },
 ];
 
 function SettingSection({
@@ -99,43 +99,49 @@ function SettingAction({
   ctaLabel = "Open",
   disabled,
   tone = "default",
+  footer,
 }: SettingActionProps) {
   return (
     <Card variant="surface">
-      <Flex
-        align={{ initial: "start", sm: "center" }}
-        direction={{ initial: "column", sm: "row" }}
-        justify="between"
-        gap="4"
-      >
-        <div className={styles.actionMain}>
-          <span className={`${styles.actionIcon} ${icon}`} />
-          <div className={styles.actionText}>
-            <Text as="p" className={styles.actionTitle}>
-              {title}
-            </Text>
-            <Text as="p" className={styles.actionDescription}>
-              {description}
-            </Text>
+      <Flex direction="column" gap="2">
+        <Flex
+          align={{ initial: "start", sm: "center" }}
+          direction={{ initial: "column", sm: "row" }}
+          justify="between"
+          gap="4"
+        >
+          <div className={styles.actionMain}>
+            <span className={styles.actionIcon}>{icon}</span>
+            <div className={styles.actionText}>
+              <Text as="p" className={styles.actionTitle}>
+                {title}
+              </Text>
+              <Text as="p" className={styles.actionDescription}>
+                {description}
+              </Text>
+            </div>
           </div>
-        </div>
-        <div className={styles.actionMeta}>
-          {value && (
-            <Text as="span" className={styles.actionValue}>
-              {value}
-            </Text>
-          )}
-          {onClick && (
-            <Button
-              size="2"
-              variant={tone === "primary" ? "solid" : "soft"}
-              onClick={onClick}
-              disabled={disabled}
-            >
-              {ctaLabel}
-            </Button>
-          )}
-        </div>
+          <div className={styles.actionMeta}>
+            {value && typeof value === "string" ? (
+              <Text as="span" className={styles.actionValue}>
+                {value}
+              </Text>
+            ) : (
+              value
+            )}
+            {onClick && (
+              <Button
+                size="2"
+                variant={tone === "primary" ? "solid" : "soft"}
+                onClick={onClick}
+                disabled={disabled}
+              >
+                {ctaLabel}
+              </Button>
+            )}
+          </div>
+        </Flex>
+        {footer}
       </Flex>
     </Card>
   );
@@ -154,9 +160,7 @@ export default function Settings() {
     useState(false);
 
   useEffect(() => {
-    getVersion().then((ver) => {
-      setVersion(ver);
-    });
+    getVersion().then(setVersion);
   }, []);
 
   const onCryptoEnableChange = useCallback((checked: boolean) => {
@@ -164,10 +168,7 @@ export default function Settings() {
       setInitCryptoIsOpen(true);
       return;
     }
-
-    changeCryptoEnable({
-      cryptoEnable: false,
-    });
+    changeCryptoEnable({ cryptoEnable: false });
   }, []);
 
   const onCheckUpdate = useCallback(async () => {
@@ -175,9 +176,7 @@ export default function Settings() {
       setOpenUpdateDialog(true);
       return;
     }
-
     setCheckingError(undefined);
-
     try {
       const result = await checkUpdate();
       if (result) {
@@ -187,6 +186,32 @@ export default function Settings() {
       setCheckingError(String(error));
     }
   }, [checkUpdate, hasUpdate, setOpenUpdateDialog]);
+
+  const renderUpdateFooter = () => {
+    if (checking) {
+      return (
+        <Flex align="center" gap="2" className={styles.inlineNotice}>
+          <Spinner size="2" />
+          <Text as="span">Checking the latest version...</Text>
+        </Flex>
+      );
+    }
+    if (checkingError) {
+      return (
+        <Text as="p" className={styles.inlineNoticeError}>
+          {checkingError}
+        </Text>
+      );
+    }
+    if (!hasUpdate) {
+      return (
+        <Text as="p" className={styles.inlineNotice}>
+          No update is currently detected.
+        </Text>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={styles.pageWrap}>
@@ -213,18 +238,16 @@ export default function Settings() {
                 value={appearance}
                 onValueChange={(value) => setAppearance(value as Appearance)}
               >
-                {APPEARANCE_OPTIONS.map((option) => {
-                  return (
-                    <RadioCards.Item key={option.value} value={option.value}>
-                      <Flex direction="column" width="100%">
-                        <Text weight="bold">{option.label}</Text>
-                        <Text color="gray" size="1" truncate>
-                          {option.hint}
-                        </Text>
-                      </Flex>
-                    </RadioCards.Item>
-                  );
-                })}
+                {APPEARANCE_OPTIONS.map((option) => (
+                  <RadioCards.Item key={option.value} value={option.value}>
+                    <Flex direction="column" width="100%">
+                      <Text weight="bold">{option.label}</Text>
+                      <Text color="gray" size="1" truncate>
+                        {option.hint}
+                      </Text>
+                    </Flex>
+                  </RadioCards.Item>
+                ))}
               </RadioCards.Root>
             </SettingSection>
 
@@ -233,39 +256,27 @@ export default function Settings() {
               title="Data protection"
               description="Manage local encryption and trusted hosts."
             >
-              <div className={styles.securityPanel}>
-                <Card variant="surface">
-                  <Flex
-                    align={{ initial: "start", sm: "center" }}
-                    direction={{ initial: "column", sm: "row" }}
-                    justify="between"
-                    gap="4"
-                  >
-                    <Flex direction="column" gap="1">
-                      <Text as="p" className={styles.highlightTitle}>
-                        Local encryption
-                      </Text>
-                      <Text as="p" className={styles.highlightDescription}>
-                        Protect saved application data on this device.
-                      </Text>
-                    </Flex>
-                    <Switch
-                      checked={cryptoEnable}
-                      onCheckedChange={onCryptoEnableChange}
-                    />
-                  </Flex>
-                </Card>
-
-                {cryptoEnable && (
-                  <SettingAction
-                    icon="icon-key"
-                    title="Change encryption password"
-                    description="Update the password for encrypted local data."
-                    onClick={() => setChangeCryptoPasswordIsOpen(true)}
-                    ctaLabel="Change"
+              <SettingAction
+                icon={<KeyIcon />}
+                title="Local encryption"
+                description="Protect saved application data on this device."
+                value={
+                  <Switch
+                    checked={cryptoEnable}
+                    onCheckedChange={onCryptoEnableChange}
                   />
-                )}
-              </div>
+                }
+              />
+
+              {cryptoEnable && (
+                <SettingAction
+                  icon={<KeyIcon />}
+                  title="Change encryption password"
+                  description="Update the password for encrypted local data."
+                  onClick={() => setChangeCryptoPasswordIsOpen(true)}
+                  ctaLabel="Change"
+                />
+              )}
             </SettingSection>
 
             <SettingSection
@@ -273,61 +284,41 @@ export default function Settings() {
               title="Updates and support"
               description="Low-frequency actions and app information."
             >
-              <div className={styles.stackGroup}>
-                <SettingAction
-                  icon="icon-label"
-                  title="Check for updates"
-                  description={
-                    hasUpdate
-                      ? "A new version is available."
-                      : "Look for a new release."
-                  }
-                  onClick={onCheckUpdate}
-                  ctaLabel={hasUpdate ? "Open updater" : "Check now"}
-                  value={checking ? "Checking..." : undefined}
-                  disabled={!!checking}
-                  tone="primary"
-                />
+              <SettingAction
+                icon={<LabelIcon />}
+                title="Check for updates"
+                description={
+                  hasUpdate
+                    ? "A new version is available."
+                    : "Look for a new release."
+                }
+                onClick={onCheckUpdate}
+                ctaLabel={hasUpdate ? "Open updater" : "Check now"}
+                value={checking ? "Checking..." : undefined}
+                disabled={!!checking}
+                tone="primary"
+                footer={renderUpdateFooter()}
+              />
 
-                {checking && (
-                  <Flex align="center" gap="2" className={styles.inlineNotice}>
-                    <Spinner size="2" />
-                    <Text as="span">Checking the latest version...</Text>
-                  </Flex>
-                )}
+              <SettingAction
+                icon={<HostIcon />}
+                title="Project repository"
+                description="Open the GitHub repository."
+                onClick={() => openUrl("https://github.com/nashaofu/shell360")}
+                ctaLabel="Open"
+              />
 
-                {!checking && !hasUpdate && !checkingError && (
-                  <Text as="p" className={styles.inlineNotice}>
-                    No update is currently detected.
-                  </Text>
-                )}
-
-                {!!checkingError && (
-                  <Text as="p" className={styles.inlineNoticeError}>
-                    {checkingError}
-                  </Text>
-                )}
-                <SettingAction
-                  icon="icon-host"
-                  title="Project repository"
-                  description="Open the GitHub repository."
-                  onClick={() =>
-                    openUrl("https://github.com/nashaofu/shell360")
-                  }
-                  ctaLabel="Open"
-                />
-                <SettingAction
-                  icon="icon-file"
-                  title="Documentation"
-                  description="Open the project README."
-                  onClick={() =>
-                    openUrl(
-                      "https://github.com/nashaofu/shell360/blob/master/README.md",
-                    )
-                  }
-                  ctaLabel="Read"
-                />
-              </div>
+              <SettingAction
+                icon={<FileIcon />}
+                title="Documentation"
+                description="Open the project README."
+                onClick={() =>
+                  openUrl(
+                    "https://github.com/nashaofu/shell360/blob/master/README.md",
+                  )
+                }
+                ctaLabel="Read"
+              />
             </SettingSection>
           </div>
         </div>

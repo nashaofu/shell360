@@ -1,7 +1,7 @@
 import SftpFilenameInput from "./SftpFilenameInput";
+import styles from "./SftpTableBody.module.less";
 import type { SftpTableCell } from "./types";
 import type { CreateType } from "./useCreate";
-import styles from "./SftpTableBody.module.less";
 
 export type SftpTableBodyProps<T extends Record<string, unknown>> = {
   dataKey: keyof T;

@@ -1,24 +1,40 @@
 import clsx from "clsx";
+import type { ReactNode } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
+import {
+  FingerprintIcon,
+  HostIcon,
+  KeyIcon,
+  SettingsIcon,
+  SiteMapIcon,
+} from "shared";
 import { useSetTerminalViewVisible } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
 type NavItem = {
-  icon: string;
+  icon: ReactNode;
   pageTitle: string;
   to: string;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: "icon-host", pageTitle: "Hosts", to: "/" },
   {
-    icon: "icon-site-map",
+    icon: <HostIcon className={styles.navIcon} />,
+    pageTitle: "Hosts",
+    to: "/",
+  },
+  {
+    icon: <SiteMapIcon className={styles.navIcon} />,
     pageTitle: "Port Forwardings",
     to: "/port-forwardings",
   },
-  { icon: "icon-key", pageTitle: "Keys", to: "/keys" },
   {
-    icon: "icon-fingerprint",
+    icon: <KeyIcon className={styles.navIcon} />,
+    pageTitle: "Keys",
+    to: "/keys",
+  },
+  {
+    icon: <FingerprintIcon className={styles.navIcon} />,
     pageTitle: "Known Hosts",
     to: "/known-hosts",
   },
@@ -26,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const BOTTOM_ITEMS: NavItem[] = [
   {
-    icon: "icon-settings",
+    icon: <SettingsIcon className={styles.navIcon} />,
     pageTitle: "Settings",
     to: "/settings",
   },
@@ -65,7 +81,7 @@ function NavSection({
             aria-label={item.pageTitle}
             onClick={() => onNavigate(item.to)}
           >
-            <span className={clsx(styles.navIcon, item.icon)} />
+            {item.icon}
           </button>
         );
       })}

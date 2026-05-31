@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { EmptyIcon } from "shared";
 import styles from "./index.module.less";
 
 type EmptyProps = {
@@ -9,7 +10,7 @@ type EmptyProps = {
 export default function Empty({ desc, children }: EmptyProps) {
   return (
     <div className={styles.root}>
-      <span className={`icon-empty ${styles.icon}`} aria-hidden="true" />
+      <EmptyIcon className={styles.icon} aria-hidden="true" />
       {!!desc && (
         <div className={styles.descWrap}>
           <p className={styles.desc}>{desc}</p>

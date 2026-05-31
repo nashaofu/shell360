@@ -1,6 +1,6 @@
+import type { IDockviewPanelProps } from "dockview-react";
 import { last } from "lodash-es";
 import { useMemo } from "react";
-import type { IDockviewPanelProps } from "dockview-react";
 import { useTerminalsAtomValue } from "shared";
 import SftpBrowser from "@/components/SftpBrowser";
 

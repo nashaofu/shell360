@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -46,10 +46,18 @@ export default function SSHTerminal({
     }
   }, [activeTerminalId, item.uuid, terminal]);
 
+  const handleRootMouseDown = useCallback(() => {
+    terminal?.focus();
+  }, [terminal]);
+
   const showLoading = !terminal || loading || error;
 
   return (
-    <div className={styles.root} style={style}>
+    <div
+      className={styles.root}
+      style={style}
+      onMouseDown={handleRootMouseDown}
+    >
       <div
         className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`}
         data-paste="true"

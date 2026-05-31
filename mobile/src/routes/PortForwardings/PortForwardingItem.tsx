@@ -1,11 +1,13 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { DropdownMenu, Portal } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
-import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
+  DeleteIcon,
+  EditIcon,
   establishPortForwarding as establishPortForwardingUtil,
   getPortForwardingDesc,
+  MoreIcon,
   PortForwardingLoading,
   type PortForwardingsAtom,
   SSHLoading,
@@ -101,7 +103,7 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <span className="icon-edit" style={{ marginRight: 8 }} />
+            <EditIcon style={{ marginRight: 8 }} />
             Edit
           </>
         ),
@@ -111,7 +113,7 @@ export default function PortForwardingItem({
       {
         label: (
           <>
-            <span className="icon-delete" style={{ marginRight: 8 }} />
+            <DeleteIcon style={{ marginRight: 8 }} />
             Delete
           </>
         ),
@@ -143,8 +145,12 @@ export default function PortForwardingItem({
   const onOpenOrClosePortForwarding = useCallback(async () => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (portForwardingsAtom) {
-      await closePortForwarding(portForwardingsAtom);
-      tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+      try {
+        await closePortForwarding(portForwardingsAtom);
+      } catch {
+        // session already dead, proceed with teardown
+      }
+      await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
       portForwardingsAtomWithApi.delete(portForwardingsAtom.portForwarding.id);
       return;
     }
@@ -186,9 +192,9 @@ export default function PortForwardingItem({
 
     portForwardingsAtom = {
       ...portForwardingsAtom,
-      jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) => ({
-        ...item,
-        host: hostData,
+      jumpHostChain: portForwardingsAtom.jumpHostChain.map((chainItem) => ({
+        ...chainItem,
+        host: chainItem.host.id === hostData.id ? hostData : chainItem.host,
       })),
     };
     portForwardingsAtomWithApi.update(portForwardingsAtom);
@@ -209,8 +215,12 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    closePortForwarding(portForwardingsAtom);
-    tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+    try {
+      await closePortForwarding(portForwardingsAtom);
+    } catch {
+      // session already dead, proceed with teardown
+    }
+    await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
     portForwardingsAtomWithApi.delete(item.id);
   }, [closePortForwarding, item.id, portForwardingsAtomWithApi]);
 
@@ -238,7 +248,7 @@ export default function PortForwardingItem({
                     alignItems: "center",
                   }}
                 >
-                  <span className="icon-more" />
+                  <MoreIcon />
                 </button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
@@ -256,8 +266,8 @@ export default function PortForwardingItem({
         }
         onClick={() => onOpenOrClosePortForwarding()}
       />
-      {isLoading &&
-        createPortal(
+      {isLoading && (
+        <Portal>
           <div
             style={{
               position: "fixed",
@@ -288,9 +298,9 @@ export default function PortForwardingItem({
                 onRetry={onRetry}
               />
             )}
-          </div>,
-          document.body,
-        )}
+          </div>
+        </Portal>
+      )}
     </>
   );
 }

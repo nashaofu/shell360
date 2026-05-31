@@ -1,7 +1,7 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Loading, useSftp } from "shared";
+import { FileUploadIcon, Loading, MoreIcon, useSftp } from "shared";
 import {
   type SSHSession,
   type SSHSftpFile,
@@ -294,79 +294,93 @@ export default function Sftp({ session }: SftpProps) {
 
   return (
     <>
-      <Loading
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          height: "100%",
-        }}
-        loading={isLoading}
-        size={48}
-        progress={progress}
-      >
-        <div className={styles.toolbar}>
-          <SftpBreadcrumbs
-            dirname={dirname}
-            onClick={onSftpBreadcrumbsClick}
-            onNavigate={onNavigatePath}
-          />
-          <div className={styles.toolbarRight}>
-            <SftpFileSearch value={keyword} onChange={setKeyword} />
-            <button
-              type="button"
-              className={styles.iconButton}
-              disabled={uploadFileLoading}
-              onClick={uploadFile}
-            >
-              <span className="icon-file-upload" />
-            </button>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
-                <button type="button" className={styles.iconButton}>
-                  <span className="icon-more" />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
-                {actions.map((item) => (
-                  <DropdownMenu.Item
-                    key={item.value}
-                    onSelect={() => item.onClick?.()}
-                  >
-                    {item.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
-          </div>
+      {initError ? (
+        <div className={styles.container}>
+          <p
+            style={{
+              color: "var(--red-10)",
+              textAlign: "center",
+              padding: "24px",
+            }}
+          >
+            Failed to initialize SFTP: {initError.message}
+          </p>
         </div>
-        <div className={styles.divider} />
-        <div className={styles.tablePanel}>
-          <div ref={tableContainerRef} className={styles.tableContainer}>
-            <table className={styles.table}>
-              <SftpTableHead
-                cells={cells}
-                orderBy={orderBy}
-                order={order}
-                onSort={onSort}
-              />
-              <SftpTableBody
-                dataKey="name"
-                data={data}
-                cells={cells}
-                isRoot={isRoot}
-                createType={createType}
-                creatingFilename={creatingFilename}
-                onCreatingFilenameChange={onCreatingFilenameChange}
-                onCreateCancel={onCreateCancel}
-                onCreateOk={onCreateOk}
-                onParentClick={onParentClick}
-              />
-            </table>
+      ) : (
+        <Loading
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            height: "100%",
+          }}
+          loading={isLoading}
+          size={48}
+          progress={progress}
+        >
+          <div className={styles.toolbar}>
+            <SftpBreadcrumbs
+              dirname={dirname}
+              onClick={onSftpBreadcrumbsClick}
+              onNavigate={onNavigatePath}
+            />
+            <div className={styles.toolbarRight}>
+              <SftpFileSearch value={keyword} onChange={setKeyword} />
+              <button
+                type="button"
+                className={styles.iconButton}
+                disabled={uploadFileLoading}
+                onClick={uploadFile}
+              >
+                <FileUploadIcon />
+              </button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  <button type="button" className={styles.iconButton}>
+                    <MoreIcon />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                  {actions.map((item) => (
+                    <DropdownMenu.Item
+                      key={item.value}
+                      onSelect={() => item.onClick?.()}
+                    >
+                      {item.label}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </div>
           </div>
-        </div>
-      </Loading>
+          <div className={styles.divider} />
+          <div className={styles.tablePanel}>
+            <div ref={tableContainerRef} className={styles.tableContainer}>
+              <table className={styles.table}>
+                <SftpTableHead
+                  cells={cells}
+                  orderBy={orderBy}
+                  order={order}
+                  onSort={onSort}
+                />
+                <SftpTableBody
+                  dataKey="name"
+                  data={data}
+                  cells={cells}
+                  isRoot={isRoot}
+                  createType={createType}
+                  creatingFilename={creatingFilename}
+                  onCreatingFilenameChange={onCreatingFilenameChange}
+                  onCreateCancel={onCreateCancel}
+                  onCreateOk={onCreateOk}
+                  onParentClick={onParentClick}
+                />
+              </table>
+            </div>
+          </div>
+        </Loading>
+      )}
       <FileEditorModal
         open={isEditorOpen}
         file={editingFile}

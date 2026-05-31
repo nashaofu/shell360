@@ -1,8 +1,9 @@
-import type { CSSProperties } from "react";
 import { get } from "lodash-es";
+import type { CSSProperties } from "react";
 
 import { getHostName } from "@/utils/host";
 
+import { HostIcon } from "../Icon";
 import { Loading } from "../Loading";
 import AuthenticationError from "./AuthenticationError";
 import type { ErrorProps } from "./common";
@@ -44,7 +45,7 @@ export function SSHLoading({
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.hostIcon}>
-            <span className="icon-host" />
+            <HostIcon />
           </div>
           <div className={styles.hostText}>
             <div className={styles.hostName}>{getHostName(host)}</div>

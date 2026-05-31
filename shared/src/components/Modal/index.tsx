@@ -3,11 +3,21 @@ import {
   type ButtonProps,
   Dialog,
   Flex,
+  Portal,
   Text,
   Theme,
 } from "@radix-ui/themes";
-import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import {
+  type ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import ErrorIcon from "./ErrorIcon";
+import InfoIcon from "./InfoIcon";
+import SuccessIcon from "./SuccessIcon";
+import WarningIcon from "./WarningIcon";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -31,6 +41,7 @@ export interface ModalConfig {
 export interface ConfirmOptions {
   title?: ReactNode;
   content?: ReactNode;
+  icon?: ReactNode;
   okText?: string;
   cancelText?: string;
   /** @default false */
@@ -112,14 +123,13 @@ export function ModalProvider({
   return (
     <>
       {children}
-      {createPortal(
+      <Portal>
         <Theme appearance={appearance ?? "light"} hasBackground>
           {state.map((cfg) => (
             <ModalInstance key={cfg.id} config={cfg} />
           ))}
-        </Theme>,
-        document.body,
-      )}
+        </Theme>
+      </Portal>
     </>
   );
 }
@@ -129,69 +139,10 @@ export function ModalProvider({
 /* ------------------------------------------------------------------ */
 
 const PRESET_ICONS: Record<string, ReactNode> = {
-  info: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--blue-9)"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12.01" y2="8" />
-    </svg>
-  ),
-  success: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--green-9)"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="16 8 10 16 7 13" />
-    </svg>
-  ),
-  error: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--red-9)"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="15" y1="9" x2="9" y2="15" />
-      <line x1="9" y1="9" x2="15" y2="15" />
-    </svg>
-  ),
-  warning: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="var(--amber-9)"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 1 1.71 3h16.94a2 2 0 0 1 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  ),
+  info: <InfoIcon />,
+  success: <SuccessIcon />,
+  error: <ErrorIcon />,
+  warning: <WarningIcon />,
 };
 
 /* ------------------------------------------------------------------ */
@@ -453,6 +404,7 @@ export const modal: ModalInstanceAPI = {
         id,
         title: options.title,
         content: options.content,
+        icon: options.icon,
         maskClosable: false,
         footer: (close) => confirmFooter(options, close, settle),
         onClose: () => settle(false),
@@ -476,11 +428,7 @@ export const modal: ModalInstanceAPI = {
         content: options.content,
         maskClosable: false,
         footer: (close) =>
-          confirmFooter(
-            { ...options, isAlert: true },
-            close,
-            () => settle(),
-          ),
+          confirmFooter({ ...options, isAlert: true }, close, () => settle()),
         onClose: settle,
       });
     });

@@ -1,17 +1,28 @@
 .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
-.group + .group {
-  margin-top: 16px;
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.listTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .grid {
@@ -27,10 +38,10 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px;
   border: 1px solid var(--app-soft-border, var(--gray-a5));
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
   box-shadow: var(--app-shadow-card, none);
   cursor: pointer;
@@ -42,7 +53,7 @@
   &:hover {
     border-color: var(--app-panel-border, var(--gray-a7));
     background: color-mix(in srgb, var(--app-panel-bg, var(--color-panel-solid)) 92%, var(--app-hover-bg, var(--gray-a2)));
-    box-shadow: 0 8px 22px rgba(18, 25, 38, 0.06);
+    box-shadow: 0 6px 18px rgba(18, 25, 38, 0.055);
   }
 }
 
@@ -55,11 +66,14 @@
 .cardInfo {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .name {
   font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--gray-12);
   white-space: nowrap;
   overflow: hidden;
@@ -67,8 +81,9 @@
 }
 
 .addr {
-  margin-top: 1px;
+  margin-top: 2px;
   font-size: 10px;
+  line-height: 1.35;
   color: var(--gray-9);
   white-space: nowrap;
   overflow: hidden;
@@ -76,30 +91,11 @@
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
 }
 
-.statusRow {
+.cardMetaInline {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  font-size: 10.5px;
-  color: var(--gray-10);
-}
-
-.statusTextActive {
-  color: var(--green-11);
-}
-
-.statusTextIdle {
-  color: var(--gray-10);
-}
-
-.auxMeta {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
   gap: 4px;
-  color: var(--gray-10);
-  font-size: 9.5px;
+  margin-top: 4px;
 }
 
 .auxMetaIcon {
@@ -108,16 +104,32 @@
   flex-shrink: 0;
 }
 
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gray-10);
+  font-size: 9.5px;
+  line-height: 1;
+}
+
 .cardFooter {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 2px;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--app-soft-border, var(--gray-a4));
 }
 
 .connectBtn {
   flex: 1;
-  height: 26px;
+  height: 28px;
+  min-width: 0;
   padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--accent-9) 30%, transparent);
   border-radius: 5px;
@@ -127,8 +139,9 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 0.13s ease,
@@ -140,9 +153,21 @@
   border-color: color-mix(in srgb, var(--accent-9) 50%, transparent);
 }
 
+.connectBtnSecondary {
+  border-color: var(--app-soft-border, var(--gray-a5));
+  background: transparent;
+  color: var(--gray-10);
+}
+
+.connectBtnSecondary:hover {
+  background: var(--app-hover-bg, var(--gray-a3));
+  border-color: var(--app-panel-border, var(--gray-a6));
+  color: var(--gray-12);
+}
+
 .moreBtn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: 1px solid transparent;
   border-radius: 5px;
   background: transparent;
@@ -174,14 +199,18 @@
   color: var(--gray-9);
 }
 
-.listStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10.5px;
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
 }
 
-.listMeta {
-  font-size: 10px;
-  color: var(--gray-9);
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    min-height: auto;
+  }
 }

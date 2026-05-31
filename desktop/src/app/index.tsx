@@ -1,6 +1,6 @@
 import { Theme } from "@radix-ui/themes";
 import { RouterProvider } from "react-router-dom";
-import { ModalProvider, useAppearanceValue } from "shared";
+import { MessageProvider, ModalProvider, useAppearanceValue } from "shared";
 import { useAutoCheckUpdate } from "@/atoms/update.atom";
 import UpdateDialog from "@/components/UpdateDialog";
 import router from "@/routes";
@@ -8,7 +8,10 @@ import styles from "./index.module.less";
 
 export default function App() {
   const appearance = useAppearanceValue();
+
   useAutoCheckUpdate();
+
+  const providerAppearance = appearance === "inherit" ? undefined : appearance;
 
   return (
     <Theme
@@ -21,9 +24,11 @@ export default function App() {
       radius="medium"
       scaling="100%"
     >
-      <ModalProvider appearance={appearance}>
-        <RouterProvider router={router} />
-        <UpdateDialog />
+      <ModalProvider appearance={providerAppearance}>
+        <MessageProvider appearance={providerAppearance}>
+          <RouterProvider router={router} />
+          <UpdateDialog />
+        </MessageProvider>
       </ModalProvider>
     </Theme>
   );

@@ -8,6 +8,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import { LockIcon, VisibilityIcon, VisibilityOffIcon } from "../Icon";
 import styles from "./index.module.less";
 
 type PasswordInputProps = {
@@ -81,7 +82,7 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
         color={error ? "red" : undefined}
       >
         <TextField.Slot>
-          <span className="icon-lock" aria-hidden="true" />
+          <LockIcon aria-hidden="true" />
         </TextField.Slot>
         <TextField.Slot side="right">
           <IconButton
@@ -92,10 +93,11 @@ export const TextFieldPassword = forwardRef(function TextFieldPassword(
             onClick={onVisibilityChange}
             aria-label={isVisible ? "Hide password" : "Show password"}
           >
-            <span
-              className={isVisible ? "icon-visibility-off" : "icon-visibility"}
-              aria-hidden="true"
-            />
+            {isVisible ? (
+              <VisibilityOffIcon aria-hidden="true" />
+            ) : (
+              <VisibilityIcon aria-hidden="true" />
+            )}
           </IconButton>
         </TextField.Slot>
       </TextField.Root>

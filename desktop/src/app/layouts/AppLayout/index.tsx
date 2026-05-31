@@ -1,8 +1,8 @@
 import { Outlet } from "react-router-dom";
 import NavRail from "@/components/NavRail";
 import StatusBar from "@/components/StatusBar";
-import Workspace from "@/components/Workspace";
 import TitleBar from "@/components/TitleBar";
+import Workspace from "@/components/Workspace";
 import styles from "./index.module.less";
 
 export default function AppLayout() {

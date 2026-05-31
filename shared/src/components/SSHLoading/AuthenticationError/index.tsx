@@ -3,8 +3,8 @@ import { get } from "lodash-es";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
-
 import { useHosts } from "@/hooks/useHosts";
+import { MoreIcon } from "../../Icon";
 import { type ErrorProps, StatusButton } from "../common";
 import ErrorText from "../ErrorText";
 import styles from "../styles.module.less";
@@ -128,7 +128,7 @@ export default function AuthenticationError({
                   justifyContent: "center",
                 }}
               >
-                <span className="icon-more" />
+                <MoreIcon />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>

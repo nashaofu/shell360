@@ -4,6 +4,7 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
 import { type MouseEvent, useCallback, useEffect, useState } from "react";
+import { DeleteIcon, FingerprintIcon } from "shared";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
@@ -104,7 +105,7 @@ export default function KnownHosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<span className="icon-fingerprint" />}
+            icon={<FingerprintIcon />}
             title={item.host}
             desc={item.type}
             extra={
@@ -113,7 +114,7 @@ export default function KnownHosts() {
                 className={styles.deleteButton}
                 onClick={(event) => onDelete(event, item)}
               >
-                <span className="icon-delete" />
+                <DeleteIcon />
               </button>
             }
           />

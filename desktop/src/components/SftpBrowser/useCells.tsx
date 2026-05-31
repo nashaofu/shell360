@@ -1,5 +1,13 @@
 import dayjs from "dayjs";
 import { useCallback } from "react";
+import {
+  DeleteIcon,
+  EditIcon,
+  FileDownloadIcon,
+  FileIcon,
+  FolderIcon,
+  SymlinkIcon,
+} from "shared";
 import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 
 import type useModal from "@/hooks/useModal";
@@ -84,12 +92,14 @@ export default function useCells({
       maxWidth: 320,
       minWidth: 320,
       render: (item: SSHSftpFile) => {
-        const icons = {
-          [SSHSftpFileType.Dir]: "icon-folder",
-          [SSHSftpFileType.File]: "icon-file",
-          [SSHSftpFileType.Symlink]: "icon-symlink",
-          [SSHSftpFileType.Other]: "icon-file",
+        const iconMap = {
+          [SSHSftpFileType.Dir]: FolderIcon,
+          [SSHSftpFileType.File]: FileIcon,
+          [SSHSftpFileType.Symlink]: SymlinkIcon,
+          [SSHSftpFileType.Other]: FileIcon,
         };
+
+        const IconComponent = iconMap[item.fileType] || FileIcon;
 
         return (
           <div
@@ -97,9 +107,7 @@ export default function useCells({
             title={item.name}
             onDoubleClick={() => onDoubleClickName(item)}
           >
-            <span
-              className={`${styles.fileIcon} ${icons[item.fileType] || "icon-file"}`}
-            />
+            <IconComponent className={styles.fileIcon} />
             <div className={styles.nameContent}>
               {selectedFile?.path === item.path ? (
                 <div className={styles.renameWrapDesktop}>
@@ -168,6 +176,7 @@ export default function useCells({
           return {
             position: "sticky",
             right: 0,
+            zIndex: 3,
             borderLeft: "1px solid var(--gray-a5)",
             backgroundColor: "var(--color-panel)",
           };
@@ -175,7 +184,7 @@ export default function useCells({
         return {
           position: "sticky",
           right: 0,
-          backgroundColor: "var(--color-panel)",
+          zIndex: 2,
           borderLeft: "1px solid var(--gray-a5)",
         };
       },
@@ -187,21 +196,21 @@ export default function useCells({
             disabled={item.fileType !== SSHSftpFileType.File}
             onClick={() => downloadFile(item)}
           >
-            <span className="icon-file-download" />
+            <FileDownloadIcon />
           </button>
           <button
             type="button"
             className={styles.optButton}
             onClick={() => onRename(item)}
           >
-            <span className="icon-edit" />
+            <EditIcon />
           </button>
           <button
             type="button"
             className={styles.optButton}
             onClick={() => onDelete(item)}
           >
-            <span className="icon-delete" />
+            <DeleteIcon />
           </button>
         </div>
       ),

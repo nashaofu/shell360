@@ -1,8 +1,8 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
 import { type MutableRefObject, useState } from "react";
+import { WarningCircleIcon } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
-
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
 
@@ -40,8 +40,7 @@ export default function useSftpActions({
           modal.confirm({
             title: "Warning",
             icon: (
-              <span
-                className="icon-warning-circle"
+              <WarningCircleIcon
                 style={{ fontSize: 32, color: "var(--amber-11, #d97706)" }}
               />
             ),

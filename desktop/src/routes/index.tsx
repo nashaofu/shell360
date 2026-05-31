@@ -2,8 +2,8 @@ import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import RequireLocked from "@/app/guards/RequireLocked";
 import RequireUnlock from "@/app/guards/RequireUnlock";
-import AuthLayout from "@/app/layouts/AuthLayout";
 import AppLayout from "@/app/layouts/AppLayout";
+import AuthLayout from "@/app/layouts/AuthLayout";
 import RouterErrorBoundary from "@/components/RouterErrorBoundary";
 
 const router = createBrowserRouter([

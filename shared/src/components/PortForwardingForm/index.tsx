@@ -233,7 +233,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
           },
           max: {
             value: 65535,
-            message: "The local port cannot be greater than 1",
+            message: "The local port cannot be greater than 65535",
           },
         }}
         render={({ field, fieldState }) => (
@@ -322,7 +322,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               },
               max: {
                 value: 65535,
-                message: "The remote port cannot be greater than 1",
+                message: "The remote port cannot be greater than 65535",
               },
             }}
             render={({ field, fieldState }) => (

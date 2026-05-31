@@ -28,7 +28,9 @@ export const updateAtom = atom<UpdateAtom>({
 export function useCheckUpdate() {
   const setState = useSetAtom(updateAtom);
   const store = useStore();
-  const activeCheckingRef = useRef<Promise<Update | null> | undefined>(undefined);
+  const activeCheckingRef = useRef<Promise<Update | null> | undefined>(
+    undefined,
+  );
 
   const checkUpdate = useCallback(async () => {
     if (activeCheckingRef.current) {
@@ -101,7 +103,10 @@ export function useAutoCheckUpdate() {
       } finally {
         clearTimeout(timerRef.current);
         if (!update) {
-          timerRef.current = window.setTimeout(() => autoCheckUpdate(), 1000 * 60 * 3);
+          timerRef.current = window.setTimeout(
+            () => autoCheckUpdate(),
+            1000 * 60 * 3,
+          );
         }
       }
     };

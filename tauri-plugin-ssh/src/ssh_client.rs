@@ -16,7 +16,7 @@ use tokio::{io, net::TcpStream};
 use crate::{
   SSHError,
   commands::{
-    port_forwarding::SSHPortForwarding,
+     port_forwarding::{SSHPortForwarding, SSHPortForwardingId},
     session::{SSHSessionCheckServerKey, SSHSessionId, SessionIpcChannelData},
   },
   ssh_manager::SSHManager,
@@ -206,8 +206,15 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     async move {
       let ssh_manager = self.ssh_manager();
-      let mut sessions = ssh_manager.sessions.lock().await;
-      if let Some(session) = sessions.remove(&self.ssh_session_id) {
+
+      let session = {
+        let mut sessions = ssh_manager.sessions.lock().await;
+        sessions.remove(&self.ssh_session_id)
+      };
+
+      let mut return_error = None;
+
+      if let Some(session) = session {
         match reason {
           client::DisconnectReason::ReceivedDisconnect(_) => {
             session
@@ -218,10 +225,42 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
             session.ipc_channel.send(SessionIpcChannelData::Disconnect(
               DisconnectReason::Error(error.to_string()),
             ))?;
-            return Err(error);
+            return_error = Some(error);
           }
         }
       }
+
+      let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
+      let ids: Vec<SSHPortForwardingId> = port_forwardings
+        .iter()
+        .filter_map(|(id, pf)| {
+          let pf_session_id = match pf {
+            SSHPortForwarding::Local { ssh_session_id, .. }
+            | SSHPortForwarding::Remote { ssh_session_id, .. }
+            | SSHPortForwarding::Dynamic { ssh_session_id, .. } => *ssh_session_id,
+          };
+          if pf_session_id == self.ssh_session_id {
+            Some(*id)
+          } else {
+            None
+          }
+        })
+        .collect();
+
+      for id in ids {
+        if let Some(entry) = port_forwardings.remove(&id) {
+          if let SSHPortForwarding::Local { notify, .. }
+          | SSHPortForwarding::Dynamic { notify, .. } = &entry
+          {
+            notify.notify_last();
+          }
+        }
+      }
+
+      if let Some(error) = return_error {
+        return Err(error);
+      }
+
       Ok(())
     }
   }

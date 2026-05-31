@@ -5,6 +5,7 @@ import { type ChangeEvent, useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import type { Key } from "tauri-plugin-data";
 
+import { FileUploadIcon } from "../Icon";
 import { TextFieldPassword } from "../TextFieldPassword";
 import styles from "./index.module.less";
 
@@ -21,14 +22,14 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
       directory: false,
     });
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const text = await readTextFile(file);
 
     const filename = file.split(/[\\/]/).pop() || "";
-    formApi.setValue("name", filename);
+    if (!formApi.getValues("name")) {
+      formApi.setValue("name", filename);
+    }
     formApi.setValue("privateKey", text);
   }, [formApi]);
 
@@ -38,12 +39,9 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
       directory: false,
     });
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const text = await readTextFile(file);
-
     formApi.setValue("publicKey", text);
   }, [formApi]);
 
@@ -53,12 +51,9 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
       directory: false,
     });
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const text = await readTextFile(file);
-
     formApi.setValue("certificate", text);
   }, [formApi]);
 
@@ -142,7 +137,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 color="gray"
                 onClick={importPrivatekey}
               >
-                <span className="icon-file-upload" />
+                <FileUploadIcon />
               </IconButton>
             </div>
             <TextArea
@@ -179,7 +174,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 color="gray"
                 onClick={importPublicKey}
               >
-                <span className="icon-file-upload" />
+                <FileUploadIcon />
               </IconButton>
             </div>
             <TextArea
@@ -234,7 +229,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 color="gray"
                 onClick={importCertificate}
               >
-                <span className="icon-file-upload" />
+                <FileUploadIcon />
               </IconButton>
             </div>
             <TextArea

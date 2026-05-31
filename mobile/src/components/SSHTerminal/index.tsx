@@ -2,6 +2,7 @@ import { useSize } from "ahooks";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  KeyboardIcon,
   SSHLoading,
   TERMINAL_THEMES_MAP,
   type TerminalAtom,
@@ -161,7 +162,7 @@ export default function SSHTerminal({
               }}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >
-              <span className="icon-keyboard" />
+              <KeyboardIcon />
             </div>
           </div>
 

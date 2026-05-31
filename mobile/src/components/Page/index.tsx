@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { MenuIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import styles from "./index.module.less";
 
@@ -22,7 +23,7 @@ export default function Page({ title, headerRight, children }: PageProps) {
             onClick={globalStateAtomWithApi.openSidebar}
             aria-label="Open sidebar"
           >
-            <span className="icon-menu" aria-hidden="true" />
+            <MenuIcon aria-hidden="true" />
           </button>
           <h1 className={styles.title}>{title}</h1>
           {headerRight}

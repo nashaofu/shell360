@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-  <rect x="2.5" y="2.5" width="15" height="15" rx="3"
-        fill="currentColor" fill-opacity="0.08"
-        stroke="currentColor" stroke-width="1.4"
-        stroke-linejoin="round"/>
-  <path d="M2.5 10h15M8.1 2.5v7.5M11.9 10v7.5"
-        stroke="currentColor" stroke-width="1.4"
-        stroke-linecap="round"/>
-</svg>

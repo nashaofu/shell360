@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-
-import useAutoRepeatGridTemplateColumns from "./useAutoRepeatGridTemplateColumns";
 import styles from "./index.module.less";
+import useAutoRepeatGridTemplateColumns from "./useAutoRepeatGridTemplateColumns";
 
 type AutoRepeatGridProps = {
   itemWidth: number;

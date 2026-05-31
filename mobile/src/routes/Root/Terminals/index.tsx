@@ -1,7 +1,12 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
-import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
+import {
+  MenuIcon,
+  MoreIcon,
+  type TerminalAtom,
+  useTerminalsAtomWithApi,
+} from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
@@ -93,7 +98,7 @@ export default function Terminals() {
           }}
           onClick={globalStateAtomWithApi.openSidebar}
         >
-          <span className="icon-menu" />
+          <MenuIcon />
         </button>
         <div
           style={{
@@ -120,7 +125,7 @@ export default function Terminals() {
                 padding: 4,
               }}
             >
-              <span className="icon-more" />
+              <MoreIcon />
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>

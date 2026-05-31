@@ -1,6 +1,7 @@
 import { Button, Flex, Switch, Text } from "@radix-ui/themes";
 import { useAtomValue } from "jotai";
 import { type CSSProperties, useCallback, useState } from "react";
+import { ArrowRightIcon } from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
@@ -72,7 +73,7 @@ export default function CryptoSettings() {
             color="gray"
             onClick={onChangeCryptoPassword}
           >
-            <span className="icon-arrow-right" />
+            <ArrowRightIcon />
           </Button>
         </Flex>
       )}

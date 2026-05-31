@@ -55,7 +55,9 @@ export default function App() {
 
   return (
     <Theme {...theme}>
-      <ModalProvider appearance={theme.appearance as "light" | "dark" | undefined}>
+      <ModalProvider
+        appearance={theme.appearance as "light" | "dark" | undefined}
+      >
         <div className={styles.appShell}>
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
             <RouterProvider router={router} />

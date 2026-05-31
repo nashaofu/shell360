@@ -1,5 +1,8 @@
 import { useCallback } from "react";
-import { useSetTerminalActiveId, useSetTerminalViewVisible } from "@/atoms/terminalView.atom";
+import {
+  useSetTerminalActiveId,
+  useSetTerminalViewVisible,
+} from "@/atoms/terminalView.atom";
 
 export function useActivateTerminal() {
   const setActiveTerminalId = useSetTerminalActiveId();

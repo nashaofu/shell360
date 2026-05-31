@@ -160,6 +160,8 @@ pub async fn port_forwarding_local_open<R: Runtime>(
 ) -> SSHResult<SSHSessionId> {
   let notify = Arc::new(Notify::new());
 
+  let listener = TcpListener::bind((local_address.clone(), local_port)).await?;
+
   {
     let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
     port_forwardings.insert(
@@ -175,8 +177,6 @@ pub async fn port_forwarding_local_open<R: Runtime>(
       },
     );
   }
-
-  let listener = TcpListener::bind((local_address, local_port)).await?;
 
   async_runtime::spawn(async move {
     loop {
@@ -209,6 +209,7 @@ pub async fn port_forwarding_local_open<R: Runtime>(
       }
     }
 
+    drop(listener);
     {
       let ssh_manager = app_handle.state::<SSHManager<R>>();
       let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
@@ -250,6 +251,17 @@ pub async fn port_forwarding_remote_open<R: Runtime>(
   remote_port: u16,
 ) -> SSHResult<SSHSessionId> {
   {
+    let mut sessions = ssh_manager.sessions.lock().await;
+    let session = sessions
+      .get_mut(&ssh_session_id)
+      .ok_or(SSHError::NotFoundSession)?;
+
+    session
+      .tcpip_forward(remote_address.clone(), remote_port as u32)
+      .await?;
+  }
+
+  {
     let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
     port_forwardings.insert(
       ssh_port_forwarding_id,
@@ -258,21 +270,10 @@ pub async fn port_forwarding_remote_open<R: Runtime>(
         ssh_session_id,
         local_address,
         local_port,
-        remote_address: remote_address.clone(),
+        remote_address,
         remote_port,
       },
     );
-  }
-
-  {
-    let mut sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get_mut(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
-
-    session
-      .tcpip_forward(remote_address, remote_port as u32)
-      .await?;
   }
 
   Ok(ssh_session_id)
@@ -320,6 +321,8 @@ pub async fn port_forwarding_dynamic_open<R: Runtime>(
 ) -> SSHResult<SSHSessionId> {
   let notify = Arc::new(Notify::new());
 
+  let listener = TcpListener::bind((local_address.clone(), local_port)).await?;
+
   {
     let mut port_forwardings = ssh_manager.port_forwardings.lock().await;
     port_forwardings.insert(
@@ -333,8 +336,6 @@ pub async fn port_forwarding_dynamic_open<R: Runtime>(
       },
     );
   }
-
-  let listener = TcpListener::bind((local_address, local_port)).await?;
 
   async_runtime::spawn(async move {
     loop {
@@ -359,6 +360,7 @@ pub async fn port_forwarding_dynamic_open<R: Runtime>(
       }
     }
 
+    drop(listener);
     {
       let ssh_manager = app_handle.state::<SSHManager<R>>();
       let mut port_forwardings = ssh_manager.port_forwardings.lock().await;

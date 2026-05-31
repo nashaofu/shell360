@@ -2,6 +2,7 @@
   min-width: 120px;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
 }
 
 .radio,
@@ -9,18 +10,15 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid var(--gray-8, #9ca3af);
   display: inline-block;
+  flex-shrink: 0;
+}
+
+.radio {
+  border: 1px solid var(--gray-8);
 }
 
 .radioChecked {
-  border-color: var(--accent-9, #3b82f6);
-  box-shadow:
-    inset 0 0 0 3px var(--color-background, #fff),
-    inset 0 0 0 7px var(--accent-9, #3b82f6);
-}
-
-.menuText {
-  display: inline-block;
-  padding-left: 6px;
+  border: 1px solid var(--accent-9);
+  background: radial-gradient(circle, var(--accent-9) 35%, transparent 35%);
 }

@@ -9,6 +9,7 @@ export * from "./components/EditHostForm";
 export * from "./components/EditKeyForm";
 export * from "./components/GenerateKeyForm";
 export * from "./components/HostTagsSelect";
+export * from "./components/Icon";
 export * from "./components/Loading";
 export * from "./components/Message";
 export * from "./components/Modal";

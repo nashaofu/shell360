@@ -3,9 +3,16 @@ import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  AddIcon,
+  ContentCopyIcon,
+  DeleteIcon,
+  EditIcon,
   getHostDesc,
   getHostName,
+  HostIcon,
   HostTagsSelect,
+  LabelIcon,
+  MoreIcon,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
@@ -79,27 +86,30 @@ export default function Hosts() {
     refreshHosts();
   }, [refreshHosts]);
 
-  const onCopyHost = useCallback(async (host: Host) => {
-    if (!isSubscription && hosts.length >= 3) {
-      setOpen(true);
-      return;
-    }
+  const onCopyHost = useCallback(
+    async (host: Host) => {
+      if (!isSubscription && hosts.length >= 3) {
+        setOpen(true);
+        return;
+      }
 
-    try {
-      const copiedHost = await addHost({
-        ...omit(host, ["id"]),
-        name: `${getHostName(host)} Copy`,
-      });
+      try {
+        const copiedHost = await addHost({
+          ...omit(host, ["id"]),
+          name: `${getHostName(host)} Copy`,
+        });
 
-      await refreshHosts();
-      setEditHost(copiedHost);
-      setIsOpenAddHost(true);
-    } catch (err) {
-      message.error({
-        message: get(err, "message") || "Copy failed",
-      });
-    }
-  }, [hosts.length, isSubscription, message, refreshHosts, setOpen]);
+        await refreshHosts();
+        setEditHost(copiedHost);
+        setIsOpenAddHost(true);
+      } catch (err) {
+        message.error({
+          message: get(err, "message") || "Copy failed",
+        });
+      }
+    },
+    [hosts.length, isSubscription, message, refreshHosts, setOpen],
+  );
 
   const onDeleteHost = useCallback(
     (host: Host) => {
@@ -146,7 +156,7 @@ export default function Hosts() {
                   }}
                   onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
-                  <span className="icon-label" />
+                  <LabelIcon />
                 </button>
               );
             }}
@@ -162,7 +172,7 @@ export default function Hosts() {
             }}
             onClick={onAddHostButtonClick}
           >
-            <span className="icon-add" />
+            <AddIcon />
           </button>
         </>
       }
@@ -209,13 +219,13 @@ export default function Hosts() {
                   }}
                   onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
-                  <span className="icon-label" />
+                  <LabelIcon />
                   {label}
                 </button>
               )}
             </HostTagsSelect>
             <Button onClick={onAddHostButtonClick}>
-              <span className="icon-add" />
+              <AddIcon />
               Add host
             </Button>
           </div>
@@ -230,7 +240,7 @@ export default function Hosts() {
         {items.map((item) => (
           <ItemCard
             key={item.id}
-            icon={<span className="icon-host" />}
+            icon={<HostIcon />}
             title={getHostName(item)}
             desc={getHostDesc(item)}
             extra={
@@ -250,7 +260,7 @@ export default function Hosts() {
                         alignItems: "center",
                       }}
                     >
-                      <span className="icon-more" />
+                      <MoreIcon />
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content
@@ -264,15 +274,15 @@ export default function Hosts() {
                         setIsOpenAddHost(true);
                       }}
                     >
-                      <span className="icon-edit" style={{ marginRight: 8 }} />
+                      <EditIcon style={{ marginRight: 8 }} />
                       Edit
                     </DropdownMenu.Item>
                     <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
-                      <span className="icon-content-copy" style={{ marginRight: 8 }} />
+                      <ContentCopyIcon style={{ marginRight: 8 }} />
                       Copy
                     </DropdownMenu.Item>
                     <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
-                      <span className="icon-delete" style={{ marginRight: 8 }} />
+                      <DeleteIcon style={{ marginRight: 8 }} />
                       Delete
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>

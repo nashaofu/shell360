@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
-import { type TerminalAtom, useTerminalsAtomWithApi } from "shared";
+import {
+  type TerminalAtom,
+  TerminalIcon,
+  useTerminalsAtomWithApi,
+} from "shared";
 import styles from "./index.module.less";
 
 type TerminalsProps = {
@@ -34,7 +38,7 @@ export default function Terminals({ onClick }: TerminalsProps) {
               className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
               onClick={() => onListItemClick(item)}
             >
-              <span className={`${styles.itemIcon} icon-terminal`} />
+              <TerminalIcon className={styles.itemIcon} />
               <span className={styles.itemText}>{item.name}</span>
             </button>
           </li>

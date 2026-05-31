@@ -21,7 +21,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: auto;
   background: var(--black-a7);
   display: flex;
   justify-content: flex-end;
@@ -61,6 +61,21 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.bodyLoading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.spinnerOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-panel-solid) 70%, transparent);
 }
 
 .content {

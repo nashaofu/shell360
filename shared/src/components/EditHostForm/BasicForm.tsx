@@ -6,6 +6,13 @@ import { AuthenticationMethod } from "tauri-plugin-data";
 import { useHosts } from "@/hooks/useHosts";
 import { useKeys } from "@/hooks/useKeys";
 
+import {
+  CodeIcon,
+  HostIcon,
+  NumberIcon,
+  UserIcon,
+  VariableIcon,
+} from "../Icon";
 import { TextFieldPassword } from "../TextFieldPassword";
 import styles from "./BasicForm.module.less";
 import { TERMINAL_TYPES } from "./terminalTypes";
@@ -28,6 +35,7 @@ export default function BasicForm({
   const { data: keys } = useKeys();
   const authenticationMethod = formApi.watch("authenticationMethod");
   const [tagInput, setTagInput] = useState("");
+  const [tagInputFocused, setTagInputFocused] = useState(false);
 
   const wrapperStyle =
     sx && typeof sx === "object"
@@ -66,13 +74,24 @@ export default function BasicForm({
     }
 
     event.preventDefault();
-    const nextTag = tagInput.trim();
+    const nextTag = tagInput.replace(/,$/, "").trim();
     if (!nextTag || values.includes(nextTag)) {
       setTagInput("");
       return;
     }
 
     onChange([...values, nextTag]);
+    setTagInput("");
+  };
+
+  const commitTagInput = (
+    values: string[],
+    onChange: (value: string[]) => void,
+  ) => {
+    const nextTag = tagInput.replace(/,$/, "").trim();
+    if (nextTag && !values.includes(nextTag)) {
+      onChange([...values, nextTag]);
+    }
     setTagInput("");
   };
 
@@ -127,6 +146,13 @@ export default function BasicForm({
             field.onChange(values.filter((item) => item !== tag));
           };
 
+          const suggestedTags = tags.filter(
+            (tag) =>
+              !values.includes(tag) &&
+              (!tagInput.trim() ||
+                tag.toLowerCase().includes(tagInput.toLowerCase().trim())),
+          );
+
           return (
             <div className={styles.formField}>
               <Text
@@ -137,37 +163,59 @@ export default function BasicForm({
               >
                 Tags
               </Text>
-              <div className={styles.tagsWrap}>
-                {values.map((tag) => (
-                  <span key={tag} className={styles.tagChip}>
-                    {tag}
-                    <IconButton
-                      type="button"
-                      variant="ghost"
-                      color="gray"
-                      size="1"
-                      onClick={() => onRemoveTag(tag)}
-                      aria-label="Remove tag"
-                    >
-                      ×
-                    </IconButton>
-                  </span>
-                ))}
-                <input
-                  className={styles.tagInput}
-                  value={tagInput}
-                  placeholder={values.length ? "" : "Type tag and press Enter"}
-                  list="host-tags-list"
-                  onChange={(event) => setTagInput(event.target.value)}
-                  onKeyDown={(event) =>
-                    onTagsInputKeyDown(event, values, field.onChange)
-                  }
-                />
-                <datalist id="host-tags-list">
-                  {tags.map((tag) => (
-                    <option key={tag} value={tag} />
+              <div className={styles.tagsFieldWrapper}>
+                <div
+                  className={`${styles.tagsWrap} ${tagInputFocused ? styles.tagsWrapFocused : ""}`}
+                >
+                  {values.map((tag) => (
+                    <span key={tag} className={styles.tagChip}>
+                      {tag}
+                      <IconButton
+                        type="button"
+                        variant="ghost"
+                        color="gray"
+                        size="1"
+                        onClick={() => onRemoveTag(tag)}
+                        aria-label="Remove tag"
+                      >
+                        ×
+                      </IconButton>
+                    </span>
                   ))}
-                </datalist>
+                  <input
+                    className={styles.tagInput}
+                    value={tagInput}
+                    placeholder={
+                      values.length ? "" : "Type tag and press Enter"
+                    }
+                    onChange={(event) => setTagInput(event.target.value)}
+                    onKeyDown={(event) =>
+                      onTagsInputKeyDown(event, values, field.onChange)
+                    }
+                    onFocus={() => setTagInputFocused(true)}
+                    onBlur={() => {
+                      setTagInputFocused(false);
+                      commitTagInput(values, field.onChange);
+                    }}
+                  />
+                </div>
+                {tagInputFocused && suggestedTags.length > 0 && (
+                  <div className={styles.tagsSuggestions}>
+                    {suggestedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className={styles.tagSuggestionChip}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          field.onChange([...values, tag]);
+                          setTagInput("");
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               {fieldState.invalid && (
                 <Text size="1" color="red" as="p" mt="1">
@@ -212,7 +260,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             >
               <TextField.Slot>
-                <span className="icon-host" aria-hidden="true" />
+                <HostIcon aria-hidden="true" />
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
@@ -242,7 +290,7 @@ export default function BasicForm({
           },
           max: {
             value: 65535,
-            message: "The port cannot be greater than 1",
+            message: "The port cannot be greater than 65535",
           },
         }}
         render={({ field, fieldState }) => (
@@ -262,7 +310,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             >
               <TextField.Slot>
-                <span className="icon-number" aria-hidden="true" />
+                <NumberIcon aria-hidden="true" />
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
@@ -307,7 +355,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             >
               <TextField.Slot>
-                <span className="icon-user" aria-hidden="true" />
+                <UserIcon aria-hidden="true" />
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
@@ -468,7 +516,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             >
               <TextField.Slot>
-                <span className="icon-code" aria-hidden="true" />
+                <CodeIcon aria-hidden="true" />
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (
@@ -561,7 +609,7 @@ export default function BasicForm({
               onChange={onInputChange(field.onChange)}
             >
               <TextField.Slot>
-                <span className="icon-variable" aria-hidden="true" />
+                <VariableIcon aria-hidden="true" />
               </TextField.Slot>
             </TextField.Root>
             {fieldState.invalid && (

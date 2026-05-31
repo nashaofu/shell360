@@ -1,4 +1,4 @@
-import { Text } from "@radix-ui/themes";
+import { Portal, Text, Theme } from "@radix-ui/themes";
 import {
   type ReactNode,
   StrictMode,
@@ -6,7 +6,6 @@ import {
   useEffect,
   useSyncExternalStore,
 } from "react";
-import { createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
 import styles from "./index.module.less";
 
@@ -26,9 +25,8 @@ export interface MessageConfig {
   key?: string;
 }
 
-interface InternalItem extends Required<
-  Pick<MessageConfig, "content" | "duration">
-> {
+interface InternalItem
+  extends Required<Pick<MessageConfig, "content" | "duration">> {
   id: string;
   type: MessageType;
   key?: string;
@@ -101,7 +99,9 @@ function ensureRoot() {
   document.body.appendChild(rootEl);
   createRoot(rootEl).render(
     <StrictMode>
-      <MessageContainer />
+      <Theme appearance="inherit">
+        <MessageContainer />
+      </Theme>
     </StrictMode>,
   );
 }
@@ -163,10 +163,11 @@ function MessageNotice({
       role="alert"
       aria-live="polite"
     >
-      <span
-        className={`${styles.icon} ${item.type === "loading" ? styles.spin : ""}`}
-        data-type={item.type}
-      />
+      {item.type === "loading" ? (
+        <span className={styles.spin} />
+      ) : (
+        <span className={`${styles.icon} ${styles[item.type]}`} />
+      )}
       <Text size="2" className={styles.content}>
         {item.content}
       </Text>
@@ -178,11 +179,21 @@ function MessageNotice({
 /*  MessageProvider — place at app root to inherit Theme              */
 /* ------------------------------------------------------------------ */
 
-export function MessageProvider({ children }: { children: ReactNode }) {
+export function MessageProvider({
+  children,
+  appearance,
+}: {
+  children: ReactNode;
+  appearance?: "light" | "dark" | "inherit";
+}) {
   return (
     <>
       {children}
-      {createPortal(<MessageContainer />, document.body)}
+      <Portal>
+        <Theme appearance={appearance ?? "inherit"}>
+          <MessageContainer />
+        </Theme>
+      </Portal>
     </>
   );
 }

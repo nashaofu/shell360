@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SearchIcon } from "shared";
 import styles from "./SftpFileSearch.module.less";
 
 type SftpFileSearchProps = {
@@ -50,7 +51,7 @@ export default function SftpFileSearch({
   return (
     <div ref={wrapperRef} className={styles.root}>
       <button type="button" className={styles.searchButton} onClick={onShow}>
-        <span className="icon-search" />
+        <SearchIcon />
       </button>
       <input
         ref={inputRef}

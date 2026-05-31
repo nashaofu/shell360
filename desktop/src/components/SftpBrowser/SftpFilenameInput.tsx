@@ -1,4 +1,5 @@
 import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
+import { CheckIcon, CloseIcon } from "shared";
 import styles from "./SftpFilenameInput.module.less";
 
 type SftpFilenameInputProps = {
@@ -52,14 +53,14 @@ export default function SftpFilenameInput({
           className={styles.actionButton}
           onClick={() => onCancel()}
         >
-          <span className="icon-close" />
+          <CloseIcon />
         </button>
         <button
           type="button"
           className={styles.actionButton}
           onClick={() => onOk()}
         >
-          <span className="icon-check" />
+          <CheckIcon />
         </button>
       </div>
     </div>

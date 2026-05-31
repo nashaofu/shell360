@@ -1,7 +1,7 @@
-import clsx from "clsx";
+import { Portal } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
+import clsx from "clsx";
 import { useCallback, useMemo } from "react";
-import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
   establishPortForwarding as establishPortForwardingUtil,
@@ -124,8 +124,12 @@ export default function PortForwardingItem({
   const onOpenOrClosePortForwarding = useCallback(async () => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (portForwardingsAtom) {
-      await closePortForwarding(portForwardingsAtom);
-      tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+      try {
+        await closePortForwarding(portForwardingsAtom);
+      } catch {
+        // session already dead, proceed with teardown
+      }
+      await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
       portForwardingsAtomWithApi.delete(portForwardingsAtom.portForwarding.id);
       return;
     }
@@ -167,9 +171,9 @@ export default function PortForwardingItem({
 
     portForwardingsAtom = {
       ...portForwardingsAtom,
-      jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) => ({
-        ...item,
-        host: hostData,
+      jumpHostChain: portForwardingsAtom.jumpHostChain.map((chainItem) => ({
+        ...chainItem,
+        host: chainItem.host.id === hostData.id ? hostData : chainItem.host,
       })),
     };
     portForwardingsAtomWithApi.update(portForwardingsAtom);
@@ -190,8 +194,12 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    await closePortForwarding(portForwardingsAtom);
-    tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+    try {
+      await closePortForwarding(portForwardingsAtom);
+    } catch {
+      // session already dead, proceed with teardown
+    }
+    await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
     portForwardingsAtomWithApi.delete(item.id);
   }, [closePortForwarding, item.id, portForwardingsAtomWithApi]);
 
@@ -301,8 +309,8 @@ export default function PortForwardingItem({
           </div>
         </td>
       </tr>
-      {isLoading &&
-        createPortal(
+      {isLoading && (
+        <Portal>
           <div
             style={{
               position: "fixed",
@@ -333,9 +341,9 @@ export default function PortForwardingItem({
                 onRetry={onRetry}
               />
             )}
-          </div>,
-          document.body,
-        )}
+          </div>
+        </Portal>
+      )}
     </>
   );
 }

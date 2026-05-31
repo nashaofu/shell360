@@ -1,6 +1,6 @@
 import { KEYBOARD_KEY_WIDTH } from "./constants";
-import { useVirtualKeyboard } from "./useVirtualKeyboard";
 import styles from "./index.module.less";
+import { useVirtualKeyboard } from "./useVirtualKeyboard";
 
 export type VirtualKeyboardProps = {
   className?: string;

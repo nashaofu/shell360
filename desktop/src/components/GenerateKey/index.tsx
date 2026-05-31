@@ -1,16 +1,13 @@
 import { Button, Flex } from "@radix-ui/themes";
 import { invoke } from "@tauri-apps/api/core";
+import { get } from "lodash-es";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  GenerateKeyForm,
-  type GenerateKeyFormFields,
-  Loading,
-  useKeys,
-} from "shared";
+import { GenerateKeyForm, type GenerateKeyFormFields, useKeys } from "shared";
 import { addKey } from "tauri-plugin-data";
 
 import PageDrawer from "@/components/PageDrawer";
+import useMessage from "@/hooks/useMessage";
 
 type GenerateKeyProps = {
   open?: boolean;
@@ -24,6 +21,7 @@ export default function GenerateKey({
   onCancel,
 }: GenerateKeyProps) {
   const { refresh: refreshKeys } = useKeys();
+  const message = useMessage();
   const formApi = useForm<GenerateKeyFormFields>({
     defaultValues: {
       name: "",
@@ -58,21 +56,22 @@ export default function GenerateKey({
           publicKey,
           passphrase: values.passphrase,
         });
+
+        await refreshKeys();
+        onOk();
+      } catch (err) {
+        message.error({
+          message: get(err, "message") || "Failed to generate key",
+        });
       } finally {
         setLoading(false);
       }
-
-      await refreshKeys();
-      onOk();
     },
-    [refreshKeys, onOk],
+    [refreshKeys, onOk, message],
   );
 
   useEffect(() => {
-    if (open) {
-      return;
-    }
-
+    if (open) return;
     formApi.reset();
   }, [formApi, open]);
 
@@ -84,24 +83,22 @@ export default function GenerateKey({
       onCancel={onCancel}
       footer={
         <Flex gap="3">
-          <Loading loading={loading} sx={{ flex: 1 }}>
-            <Button
-              style={{ width: "100%" }}
-              variant="outline"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-          </Loading>
+          <Button
+            style={{ flex: 1 }}
+            variant="outline"
+            loading={loading}
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
 
-          <Loading loading={loading} sx={{ flex: 1 }}>
-            <Button
-              style={{ width: "100%" }}
-              onClick={formApi.handleSubmit(onGenerate)}
-            >
-              Generate
-            </Button>
-          </Loading>
+          <Button
+            style={{ flex: 1 }}
+            loading={loading}
+            onClick={formApi.handleSubmit(onGenerate)}
+          >
+            Generate
+          </Button>
         </Flex>
       }
     >

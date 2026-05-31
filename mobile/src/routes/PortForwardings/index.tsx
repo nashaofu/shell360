@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
 import { Button } from "@radix-ui/themes";
-import { useHosts, usePortForwardings } from "shared";
+import { useCallback, useMemo, useState } from "react";
+import { AddIcon, useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
@@ -59,7 +59,7 @@ export default function PortForwardings() {
           />
         </div>
         <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-          <span className="icon-add" />
+          <AddIcon />
           Add
         </Button>
       </div>

@@ -2,14 +2,23 @@ import { Text } from "@radix-ui/themes";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
-import { useTerminalsAtomValue } from "shared";
+import {
+  SearchIcon,
+  useTerminalsAtomValue,
+  WindowCloseIcon,
+  WindowMaximizeIcon,
+  WindowMinimizeIcon,
+  WindowRestoreIcon,
+  WorkspaceIcon,
+} from "shared";
 import logo from "@/assets/logo.svg";
+import QuickSearch from "@/components/QuickSearch";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
-import { ReactComponent as WorkspaceIcon } from "./workspace.svg";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const activateTerminal = useActivateTerminal();
   const terminalsState = useTerminalsAtomValue();
   const hasTerminal = terminalsState.size > 0;
@@ -54,6 +63,20 @@ export default function TitleBar() {
     };
   }, []);
 
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <div className={styles.titleBar}>
       <div className={styles.leftRail}>
@@ -89,9 +112,10 @@ export default function TitleBar() {
           type="button"
           className={styles.searchTrigger}
           title="Quick search"
+          onClick={openSearch}
         >
           <span className={styles.searchTriggerIcon}>
-            <span className="icon-search" />
+            <SearchIcon />
           </span>
           <span className={styles.searchTriggerLabel}>Jump to anything</span>
           <span className={styles.searchTriggerHint}>
@@ -123,7 +147,7 @@ export default function TitleBar() {
               onClick={onClickMinimize}
               title="Minimize"
             >
-              <span className="icon-window-minimize" />
+              <WindowMinimizeIcon />
             </button>
             <button
               type="button"
@@ -131,11 +155,7 @@ export default function TitleBar() {
               onClick={onClickToggleMaximize}
               title="Maximize"
             >
-              {isMaximized ? (
-                <span className="icon-window-restore" />
-              ) : (
-                <span className="icon-window-maximize" />
-              )}
+              {isMaximized ? <WindowRestoreIcon /> : <WindowMaximizeIcon />}
             </button>
             <button
               type="button"
@@ -146,11 +166,13 @@ export default function TitleBar() {
               onClick={onClickClose}
               title="Close"
             >
-              <span className="icon-window-close" />
+              <WindowCloseIcon />
             </button>
           </div>
         </div>
       </div>
+
+      <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

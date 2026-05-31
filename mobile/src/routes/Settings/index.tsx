@@ -1,7 +1,19 @@
 import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
 import { useAtom } from "jotai";
-import { type CSSProperties, useCallback, useEffect, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+import {
+  ArrowRightIcon,
+  FileDownloadIcon,
+  FileUploadIcon,
+  WarningCircleIcon,
+} from "shared";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import { ThemeMode, themeModeAtom } from "@/atoms/theme.atom";
 import Page from "@/components/Page";
@@ -29,14 +41,14 @@ const rowBorderStyle: CSSProperties = {
 
 type SettingsActionRowProps = {
   label: string;
-  iconClassName: string;
+  icon: ReactNode;
   onClick: () => void;
   bordered?: boolean;
 };
 
 function SettingsActionRow({
   label,
-  iconClassName,
+  icon,
   onClick,
   bordered = true,
 }: SettingsActionRowProps) {
@@ -48,7 +60,7 @@ function SettingsActionRow({
     >
       <Text size="2">{label}</Text>
       <Button type="button" variant="ghost" color="gray" onClick={onClick}>
-        <span className={iconClassName} />
+        {icon}
       </Button>
     </Flex>
   );
@@ -61,7 +73,7 @@ function IOSIAP() {
     <Card size="2" style={sectionStyle}>
       <SettingsActionRow
         label="Subscription"
-        iconClassName="icon-arrow-right"
+        icon={<ArrowRightIcon />}
         onClick={() => setOpen(true)}
         bordered={false}
       />
@@ -117,8 +129,7 @@ export default function Settings() {
       modal.confirm({
         title: "Warning",
         icon: (
-          <span
-            className="icon-warning-circle"
+          <WarningCircleIcon
             style={{ fontSize: 32, color: "var(--orange-9)" }}
           />
         ),
@@ -180,12 +191,12 @@ export default function Settings() {
         </Flex>
         <SettingsActionRow
           label="Export"
-          iconClassName="icon-file-download"
+          icon={<FileDownloadIcon />}
           onClick={onExportData}
         />
         <SettingsActionRow
           label="Import"
-          iconClassName="icon-file-upload"
+          icon={<FileUploadIcon />}
           onClick={onImportData}
           bordered={false}
         />
@@ -198,7 +209,7 @@ export default function Settings() {
       <Card size="2" style={sectionStyle}>
         <SettingsActionRow
           label="Privacy Policy"
-          iconClassName="icon-arrow-right"
+          icon={<ArrowRightIcon />}
           onClick={() =>
             openUrl(
               "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
@@ -208,7 +219,7 @@ export default function Settings() {
         {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
           <SettingsActionRow
             label="Terms of Use"
-            iconClassName="icon-arrow-right"
+            icon={<ArrowRightIcon />}
             onClick={() =>
               openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
@@ -216,7 +227,7 @@ export default function Settings() {
         )}
         <SettingsActionRow
           label="About"
-          iconClassName="icon-arrow-right"
+          icon={<ArrowRightIcon />}
           onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
         />
         <Flex align="center" justify="between" style={rowStyle}>
