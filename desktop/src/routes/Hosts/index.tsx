@@ -1,7 +1,7 @@
 import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   getHostDesc,
   getHostName,
@@ -58,7 +58,6 @@ function getHostTone(tag: string): HostTone {
 
 export default function Hosts() {
   const [keyword, setKeyword] = useState("");
-  const selectedHostRef = useRef<Host>(null);
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -141,14 +140,11 @@ export default function Hosts() {
     setEditHost(undefined);
   }, []);
 
-  const onCopyHost = useCallback(async () => {
-    const selectedHost = selectedHostRef.current;
-    selectedHostRef.current = null;
-    if (!selectedHost) return;
+  const onCopyHost = useCallback(async (host: Host) => {
     try {
       const copiedHost = await addHost({
-        ...omit(selectedHost, ["id"]),
-        name: `${getHostName(selectedHost)} Copy`,
+        ...omit(host, ["id"]),
+        name: `${getHostName(host)} Copy`,
       });
       await refreshHosts();
       setEditHost(copiedHost);
@@ -158,67 +154,27 @@ export default function Hosts() {
     }
   }, [message, refreshHosts]);
 
-  const menus = useMemo(
-    () => [
-      {
-        label: (
-          <>
-            <span className="icon-edit" style={{ marginRight: 8 }} />
-            Edit
-          </>
-        ),
-        value: "Edit",
-        onClick: () => {
-          setIsOpenAddHost(true);
-          setEditHost(selectedHostRef.current || undefined);
-          selectedHostRef.current = null;
+  const onDeleteHost = useCallback(
+    (host: Host) => {
+      const hostname = host.name || `${host.hostname}:${host.port}`;
+      modal.confirm({
+        title: "Delete Confirmation",
+        content: `Are you sure to delete the host: ${hostname}?`,
+        OkButtonProps: { color: "orange" },
+        onOk: async () => {
+          try {
+            await deleteHost(host);
+          } catch (err) {
+            message.error({
+              message: get(err, "message") || "Deletion failed",
+            });
+            throw err;
+          }
+          refreshHosts();
         },
-      },
-      {
-        label: (
-          <>
-            <span className="icon-content-copy" style={{ marginRight: 8 }} />
-            Copy
-          </>
-        ),
-        value: "Copy",
-        onClick: onCopyHost,
-      },
-      {
-        label: (
-          <>
-            <span className="icon-delete" style={{ marginRight: 8 }} />
-            Delete
-          </>
-        ),
-        value: "Delete",
-        onClick: () => {
-          const selectedHost = selectedHostRef.current;
-          selectedHostRef.current = null;
-          if (!selectedHost) return;
-          const hostname =
-            selectedHost.name ||
-            `${selectedHost.hostname}:${selectedHost.port}`;
-          modal.confirm({
-            title: "Delete Confirmation",
-            content: `Are you sure to delete the host: ${hostname}?`,
-            OkButtonProps: { color: "orange" },
-            onOk: async () => {
-              try {
-                await deleteHost(selectedHost);
-              } catch (err) {
-                message.error({
-                  message: get(err, "message") || "Deletion failed",
-                });
-                throw err;
-              }
-              refreshHosts();
-            },
-          });
-        },
-      },
-    ],
-    [modal, onCopyHost, refreshHosts, message],
+      });
+    },
+    [modal, refreshHosts, message],
   );
 
   return (
@@ -496,9 +452,6 @@ export default function Hosts() {
                                 <button
                                   type="button"
                                   className={styles.moreBtn}
-                                  onClick={() => {
-                                    selectedHostRef.current = item;
-                                  }}
                                 >
                                   <svg
                                     width="12"
@@ -532,14 +485,23 @@ export default function Hosts() {
                                 align="end"
                                 sideOffset={4}
                               >
-                                {menus.map((menuItem) => (
-                                  <DropdownMenu.Item
-                                    key={menuItem.value}
-                                    onSelect={() => menuItem.onClick?.()}
-                                  >
-                                    {menuItem.label}
-                                  </DropdownMenu.Item>
-                                ))}
+                                <DropdownMenu.Item
+                                  onSelect={() => {
+                                    setEditHost(item);
+                                    setIsOpenAddHost(true);
+                                  }}
+                                >
+                                  <span className="icon-edit" style={{ marginRight: 8 }} />
+                                  Edit
+                                </DropdownMenu.Item>
+                                <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
+                                  <span className="icon-content-copy" style={{ marginRight: 8 }} />
+                                  Copy
+                                </DropdownMenu.Item>
+                                <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
+                                  <span className="icon-delete" style={{ marginRight: 8 }} />
+                                  Delete
+                                </DropdownMenu.Item>
                               </DropdownMenu.Content>
                             </DropdownMenu.Root>
                           </div>
@@ -620,9 +582,6 @@ export default function Hosts() {
                                       size="1"
                                       variant="ghost"
                                       color="gray"
-                                      onClick={() => {
-                                        selectedHostRef.current = item;
-                                      }}
                                     >
                                       <span className="icon-more" />
                                     </IconButton>
@@ -632,14 +591,23 @@ export default function Hosts() {
                                     align="end"
                                     sideOffset={4}
                                   >
-                                    {menus.map((menuItem) => (
-                                      <DropdownMenu.Item
-                                        key={menuItem.value}
-                                        onSelect={() => menuItem.onClick?.()}
-                                      >
-                                        {menuItem.label}
-                                      </DropdownMenu.Item>
-                                    ))}
+                                    <DropdownMenu.Item
+                                      onSelect={() => {
+                                        setEditHost(item);
+                                        setIsOpenAddHost(true);
+                                      }}
+                                    >
+                                      <span className="icon-edit" style={{ marginRight: 8 }} />
+                                      Edit
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
+                                      <span className="icon-content-copy" style={{ marginRight: 8 }} />
+                                      Copy
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
+                                      <span className="icon-delete" style={{ marginRight: 8 }} />
+                                      Delete
+                                    </DropdownMenu.Item>
                                   </DropdownMenu.Content>
                                 </DropdownMenu.Root>
                               </div>

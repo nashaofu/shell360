@@ -1,5 +1,6 @@
 import { Heading, IconButton, Separator, Theme } from "@radix-ui/themes";
-import { type ReactNode, useEffect } from "react";
+import clsx from "clsx";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Loading } from "shared";
 
@@ -23,22 +24,42 @@ export default function PageDrawer({
   footer,
   onCancel,
 }: PageDrawerProps) {
+  const [closing, setClosing] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => clearTimeout(timerRef.current);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    if (timerRef.current) return;
+    setClosing(true);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = undefined;
+      setClosing(false);
+      onCancel();
+    }, 200);
+  }, [onCancel]);
+
+  const handleKeyDownRef = useRef(handleCancel);
+  handleKeyDownRef.current = handleCancel;
+
   useEffect(() => {
     if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleKeyDownRef.current();
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onCancel]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
-  if (!open) return null;
+  if (!open && !closing) return null;
 
   return createPortal(
     <Theme asChild>
-      <div className={styles.overlay} onClick={onCancel}>
+      <div className={clsx(styles.overlay, closing && styles.closingOverlay)} onClick={handleCancel}>
         <div
-          className={styles.panel}
+          className={clsx(styles.panel, closing && styles.closingPanel)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="page-drawer-title"
@@ -52,17 +73,17 @@ export default function PageDrawer({
             <Heading id="page-drawer-title" size="4" weight="medium">
               {title}
             </Heading>
-            {!loading && (
-              <IconButton
-                type="button"
-                variant="ghost"
-                color="gray"
-                aria-label="关闭"
-                onClick={onCancel}
-              >
-                <span className="icon-arrow-right" />
-              </IconButton>
-            )}
+                {!loading && (
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    color="gray"
+                    aria-label="关闭"
+                    onClick={handleCancel}
+                  >
+                    <span className="icon-arrow-right" />
+                  </IconButton>
+                )}
           </div>
           <Separator size="4" />
           <Loading

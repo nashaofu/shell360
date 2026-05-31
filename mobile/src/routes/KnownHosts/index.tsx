@@ -4,11 +4,11 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
 import { type MouseEvent, useCallback, useEffect, useState } from "react";
-import { message } from "shared";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
+import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import styles from "./index.module.less";
 
@@ -43,6 +43,7 @@ type KnownHost = {
 export default function KnownHosts() {
   const [items, setItems] = useState<KnownHost[]>([]);
   const modal = useModal();
+  const message = useMessage();
 
   const onDelete = useCallback(
     (event: MouseEvent<HTMLButtonElement>, knownHost: KnownHost) => {

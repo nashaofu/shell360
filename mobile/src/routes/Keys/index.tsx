@@ -1,6 +1,6 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get } from "lodash-es";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useKeys } from "shared";
 import { deleteKey, type Key } from "tauri-plugin-data";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
@@ -16,7 +16,6 @@ import GenerateKey from "./GenerateKey";
 
 export default function Keys() {
   const [keyword, setKeyword] = useState("");
-  const selectedKeyRef = useRef<Key>(null);
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -87,60 +86,28 @@ export default function Keys() {
     [onAddKeyButtonClick, onGenerateKeyButtonClick],
   );
 
-  const itemMenus = useMemo(
-    () => [
-      {
-        label: (
-          <>
-            <span className="icon-edit" style={{ marginRight: 8 }} />
-            Edit
-          </>
-        ),
-        value: "Edit",
-        onClick: () => {
-          setIsOpenAddKey(true);
-          setEditKey(selectedKeyRef.current || undefined);
-          selectedKeyRef.current = null;
+  const onDeleteKey = useCallback(
+    (key: Key) => {
+      modal.confirm({
+        title: "Delete Confirmation",
+        content: `Are you sure to delete the key: ${key.name}?`,
+        OkButtonProps: {
+          color: "orange",
         },
-      },
-      {
-        label: (
-          <>
-            <span className="icon-delete" style={{ marginRight: 8 }} />
-            Delete
-          </>
-        ),
-        value: "Delete",
-        onClick: () => {
-          const selectedKey = selectedKeyRef.current;
-          selectedKeyRef.current = null;
-          if (!selectedKey) {
-            return;
+        onOk: async () => {
+          try {
+            await deleteKey(key);
+          } catch (err) {
+            message.error({
+              message: get(err, "message") || "Deletion failed",
+            });
+            throw err;
           }
-          const deleteKeyName = selectedKey.name;
 
-          modal.confirm({
-            title: "Delete Confirmation",
-            content: `Are you sure to delete the key: ${deleteKeyName}?`,
-            OkButtonProps: {
-              color: "orange",
-            },
-            onOk: async () => {
-              try {
-                await deleteKey(selectedKey);
-              } catch (err) {
-                message.error({
-                  message: get(err, "message") || "Deletion failed",
-                });
-                throw err;
-              }
-
-              refreshKeys();
-            },
-          });
+          refreshKeys();
         },
-      },
-    ],
+      });
+    },
     [message, modal, refreshKeys],
   );
 
@@ -252,9 +219,6 @@ export default function Keys() {
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onClick={() => {
-                        selectedKeyRef.current = item;
-                      }}
                     >
                       <span className="icon-more" />
                     </button>
@@ -263,19 +227,20 @@ export default function Keys() {
                     side="bottom"
                     align="end"
                     sideOffset={4}
-                  
-                    side="bottom"
-                    align="end"
-                    sideOffset={4}
                   >
-                    {itemMenus.map((menuItem) => (
-                      <DropdownMenu.Item
-                        key={menuItem.value}
-                        onSelect={() => menuItem.onClick?.()}
-                      >
-                        {menuItem.label}
-                      </DropdownMenu.Item>
-                    ))}
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        setEditKey(item);
+                        setIsOpenAddKey(true);
+                      }}
+                    >
+                      <span className="icon-edit" style={{ marginRight: 8 }} />
+                      Edit
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={() => onDeleteKey(item)}>
+                      <span className="icon-delete" style={{ marginRight: 8 }} />
+                      Delete
+                    </DropdownMenu.Item>
                   </DropdownMenu.Content>
                 </DropdownMenu.Root>
               </div>

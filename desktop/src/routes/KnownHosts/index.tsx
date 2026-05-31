@@ -11,7 +11,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { message } from "shared";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import { copy } from "@/utils/clipboard";

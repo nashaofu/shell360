@@ -1,14 +1,13 @@
-import { Button, type ButtonProps, Dialog, Flex, Text } from "@radix-ui/themes";
 import {
-  type ReactNode,
-  StrictMode,
-  useCallback,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+  Button,
+  type ButtonProps,
+  Dialog,
+  Flex,
+  Text,
+  Theme,
+} from "@radix-ui/themes";
+import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { createRoot } from "react-dom/client";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -62,85 +61,65 @@ interface InternalModal extends ModalConfig {
   preset?: "info" | "success" | "error" | "warning";
 }
 
-type Listener = (modals: InternalModal[]) => void;
-const listeners = new Set<Listener>();
+/** The serialized modal list. Entries are pushed via addModal / removeModal. */
 let modals: InternalModal[] = [];
 let idCounter = 0;
 const genId = () => `modal-${Date.now()}-${++idCounter}`;
 
-function notify() {
-  for (const l of listeners) l([...modals]);
-}
+/** Registered by ModalProvider on mount so imperative calls can trigger re-renders. */
+let setModalsState: ((next: InternalModal[]) => void) | null = null;
 
-function addModal(m: InternalModal) {
-  modals = [...modals, m];
-  notify();
+function addModal(config: InternalModal) {
+  modals = [...modals, config];
+  setModalsState?.(modals);
 }
 
 function removeModal(id: string) {
-  const m = modals.find((x) => x.id === id);
+  const found = modals.find((x) => x.id === id);
   modals = modals.filter((x) => x.id !== id);
-  notify();
-  m?.onClose?.();
+  setModalsState?.(modals);
+  found?.onClose?.();
+}
+
+function destroyAll() {
+  const old = [...modals];
+  modals = [];
+  setModalsState?.(modals);
+  for (const m of old) m.onClose?.();
 }
 
 /* ------------------------------------------------------------------ */
-/*  Standalone root                                                   */
+/*  ModalProvider — mount inside the React tree, render via portal    */
 /* ------------------------------------------------------------------ */
 
-let rootEl: HTMLDivElement | null = null;
+export function ModalProvider({
+  children,
+  appearance,
+}: {
+  children?: ReactNode;
+  appearance?: "light" | "dark";
+}) {
+  const [state, setState] = useState<InternalModal[]>([]);
 
-function ensureRoot() {
-  if (rootEl) return;
-  rootEl = document.createElement("div");
-  rootEl.setAttribute("data-shell360-modal", "true");
-  document.body.appendChild(rootEl);
-  createRoot(rootEl).render(
-    <StrictMode>
-      <ModalLayer />
-    </StrictMode>,
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  ModalLayer — subscribes to modal list                             */
-/* ------------------------------------------------------------------ */
-
-function useModalStore() {
-  const subscribe = useCallback((cb: () => void) => {
-    listeners.add(cb);
+  useLayoutEffect(() => {
+    setModalsState = setState;
+    setState(modals);
     return () => {
-      listeners.delete(cb);
+      setModalsState = null;
     };
   }, []);
 
-  const getSnapshot = useCallback(() => modals, []);
-  const getServerSnapshot = useCallback(() => modals, []);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-export function ModalLayer() {
-  const current = useModalStore();
-
-  return (
-    <>
-      {current.map((cfg) => (
-        <ModalInstance key={cfg.id} config={cfg} />
-      ))}
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  ModalProvider — render inside React tree for Theme context        */
-/* ------------------------------------------------------------------ */
-
-export function ModalProvider({ children }: { children?: ReactNode }) {
   return (
     <>
       {children}
-      {createPortal(<ModalLayer />, document.body)}
+      {createPortal(
+        <Theme appearance={appearance ?? "light"} hasBackground>
+          {state.map((cfg) => (
+            <ModalInstance key={cfg.id} config={cfg} />
+          ))}
+        </Theme>,
+        document.body,
+      )}
     </>
   );
 }
@@ -208,7 +187,7 @@ const PRESET_ICONS: Record<string, ReactNode> = {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 1 1.71 3h16.94a2 2 0 0 1 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
@@ -227,7 +206,7 @@ function ModalInstance({ config }: { config: InternalModal }) {
     if (closeInProgress.current) return;
     closeInProgress.current = true;
     setOpen(false);
-    // Wait for Radix close animation
+    // Wait for Radix close animation, then remove from list
     setTimeout(() => {
       removeModal(config.id);
     }, 200);
@@ -322,15 +301,6 @@ function confirmFooter(
 /*  Imperative API  (like antd modal)                                 */
 /* ------------------------------------------------------------------ */
 
-function dispatch(config: InternalModal) {
-  if (listeners.size === 0) {
-    modals = [...modals, config];
-    ensureRoot();
-  } else {
-    addModal(config);
-  }
-}
-
 export interface ModalInstanceAPI {
   open(config: ModalConfig): () => void;
   info(
@@ -353,7 +323,7 @@ export interface ModalInstanceAPI {
 export const modal: ModalInstanceAPI = {
   open(config: ModalConfig): () => void {
     const id = genId();
-    dispatch({ ...config, id });
+    addModal({ ...config, id });
     return () => removeModal(id);
   },
 
@@ -367,7 +337,7 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         preset: "info",
         title: options.title,
@@ -395,7 +365,7 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         preset: "success",
         title: options.title,
@@ -423,7 +393,7 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         preset: "error",
         title: options.title,
@@ -451,7 +421,7 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         preset: "warning",
         title: options.title,
@@ -479,7 +449,7 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         title: options.title,
         content: options.content,
@@ -500,22 +470,23 @@ export const modal: ModalInstanceAPI = {
       };
 
       const id = genId();
-      dispatch({
+      addModal({
         id,
         title: options.title,
         content: options.content,
         maskClosable: false,
         footer: (close) =>
-          confirmFooter({ ...options, isAlert: true }, close, () => settle()),
+          confirmFooter(
+            { ...options, isAlert: true },
+            close,
+            () => settle(),
+          ),
         onClose: settle,
       });
     });
   },
 
   destroyAll() {
-    const ids = [...modals];
-    modals = [];
-    notify();
-    for (const m of ids) m.onClose?.();
+    destroyAll();
   },
 };

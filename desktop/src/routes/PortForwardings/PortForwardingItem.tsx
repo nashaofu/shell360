@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import {
   closePortForwarding as closePortForwardingUtil,
   establishPortForwarding as establishPortForwardingUtil,
-  message,
   PortForwardingLoading,
   type PortForwardingsAtom,
   SSHLoading,
@@ -20,6 +19,7 @@ import {
   type PortForwarding,
 } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
@@ -47,6 +47,7 @@ export default function PortForwardingItem({
   const portForwardingsAtomWithApi = usePortForwardingsAtomWithApi();
   const { data: keys } = useKeys();
   const modal = useModal();
+  const message = useMessage();
 
   const title = useMemo(() => {
     const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);

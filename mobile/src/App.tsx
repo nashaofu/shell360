@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import { lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { ModalProvider } from "shared";
 import { themeAtom } from "./atom/themeAtom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
@@ -54,11 +55,13 @@ export default function App() {
 
   return (
     <Theme {...theme}>
-      <div className={styles.appShell}>
-        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-          <RouterProvider router={router} />
-        </ErrorBoundary>
-      </div>
+      <ModalProvider appearance={theme.appearance as "light" | "dark" | undefined}>
+        <div className={styles.appShell}>
+          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+            <RouterProvider router={router} />
+          </ErrorBoundary>
+        </div>
+      </ModalProvider>
     </Theme>
   );
 }
