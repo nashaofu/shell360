@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   SSHLoading,
   TERMINAL_THEMES_MAP,
@@ -5,6 +6,7 @@ import {
   useTerminal,
   XTerminal,
 } from "shared";
+import { useTerminalActiveId } from "@/atoms/terminalView.atom";
 import { copy } from "@/utils/clipboard";
 import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
@@ -36,15 +38,28 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose, onCopy: copy });
 
+  const [activeTerminalId] = useTerminalActiveId();
+
+  useEffect(() => {
+    if (activeTerminalId === item.uuid && terminal) {
+      terminal.focus();
+    }
+  }, [activeTerminalId, item.uuid, terminal]);
+
   const showLoading = !terminal || loading || error;
 
   return (
     <div className={styles.root} style={style}>
-      <div className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`} data-paste="true">
+      <div
+        className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`}
+        data-paste="true"
+      >
         <XTerminal
           fontFamily={item.host.terminalSettings?.fontFamily}
           fontSize={item.host.terminalSettings?.fontSize}
-          theme={TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme}
+          theme={
+            TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
+          }
           onReady={onTerminalReady}
           onData={onTerminalData}
           onBinary={onTerminalBinaryData}
