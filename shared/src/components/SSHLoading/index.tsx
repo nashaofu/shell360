@@ -1,3 +1,4 @@
+import { Progress } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import type { CSSProperties } from "react";
 
@@ -55,9 +56,7 @@ export function SSHLoading({
           </div>
         </div>
         <div className={styles.progressWrap}>
-          <div
-            className={`${styles.progressBar} ${error ? styles.progressError : ""}`}
-          />
+          <Progress value={null} color={error ? "red" : undefined} />
         </div>
         {!!error && (
           <div className={styles.errorSection}>

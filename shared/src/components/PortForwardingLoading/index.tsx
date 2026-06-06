@@ -1,4 +1,4 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Progress } from "@radix-ui/themes";
 import { get } from "lodash-es";
 import { useMemo } from "react";
 import type { PortForwarding } from "tauri-plugin-data";
@@ -35,9 +35,7 @@ export function PortForwardingLoading({
         </div>
       </div>
       <div className={styles.progressWrap}>
-        <div
-          className={`${styles.progressBar} ${error ? styles.progressError : ""}`}
-        />
+        <Progress value={null} color={error ? "red" : undefined} />
       </div>
       {!!error && (
         <>

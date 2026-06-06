@@ -1,11 +1,16 @@
 .root {
+  display: flex;
+  flex-direction: column;
+  width: 420px;
   max-width: 100%;
-  margin: 0 auto;
   padding: 24px;
+  background: var(--color-panel-solid);
+  border-radius: 12px;
+  box-shadow: var(--app-shadow-card, 0 8px 32px color-mix(in srgb, var(--black-a4) 72%, transparent));
 }
 
 .title {
-  padding: 12px 0;
+  padding: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
@@ -14,47 +19,27 @@
 }
 
 .description {
-  font-size: 12px;
+  font-size: 13px;
   user-select: text;
   word-break: break-all;
-  color: var(--gray-11, #6b7280);
+  color: var(--gray-11);
 }
 
 .progressWrap {
-  padding: 12px 0;
-}
-
-.progressBar {
-  position: relative;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent-9, #3b82f6) 18%, transparent);
-}
-
-.progressBar::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: var(--accent-9, #3b82f6);
-  animation: progress-slide 1.1s ease-in-out infinite;
-}
-
-.progressError {
-  background: color-mix(in srgb, var(--red-9, #e11d48) 18%, transparent);
-}
-
-.progressError::before {
-  background: var(--red-9, #e11d48);
+  padding: 16px 0 0;
 }
 
 .errorText {
-  margin: 24px auto 40px;
-  font-size: 14px;
+  margin: 20px 0 28px;
+  padding: 10px 12px;
+  font-size: 13px;
   user-select: text;
   word-break: break-all;
-  color: var(--red-11, #be123c);
+  color: var(--red-11);
+  border: 1px solid color-mix(in srgb, var(--red-9) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--red-3) 50%, transparent);
+  line-height: 1.45;
 }
 
 .actions {
@@ -66,14 +51,4 @@
 
 .actionButton {
   min-width: 150px;
-}
-
-@keyframes progress-slide {
-  from {
-    transform: translateX(-140%);
-  }
-
-  to {
-    transform: translateX(350%);
-  }
 }

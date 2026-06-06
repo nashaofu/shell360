@@ -1,3 +1,4 @@
+import { Spinner } from "@radix-ui/themes";
 import type { CSSProperties, ReactNode } from "react";
 
 import styles from "./index.module.less";
@@ -10,6 +11,13 @@ export type LoadingProps = {
   children?: ReactNode;
 };
 
+function getSpinnerSize(size: string | number): "1" | "2" | "3" {
+  const num = typeof size === "number" ? size : Number.parseInt(size, 10);
+  if (num < 20) return "1";
+  if (num <= 28) return "2";
+  return "3";
+}
+
 export function Loading({
   sx,
   loading,
@@ -21,17 +29,12 @@ export function Loading({
     ? Object.assign({}, ...sx.filter(Boolean))
     : sx;
 
-  const spinnerSize = typeof size === "number" ? `${size}px` : size;
-
   return (
     <div className={styles.root} style={rootStyle}>
       {children}
       {loading && (
         <div className={styles.overlay}>
-          <span
-            className={styles.spinner}
-            style={{ width: spinnerSize, height: spinnerSize }}
-          />
+          <Spinner size={getSpinnerSize(size)} />
           {progress !== undefined && (
             <div className={styles.progress}>{progress}%</div>
           )}
