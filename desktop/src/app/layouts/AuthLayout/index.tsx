@@ -10,7 +10,7 @@ type AuthLayoutProps = {
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className={styles.root}>
-      <TitleBar />
+      <TitleBar basic />
       <main className={styles.content}>
         <div className={styles.contentInner}>{children ?? <Outlet />}</div>
       </main>

@@ -16,7 +16,7 @@ import QuickSearch from "@/components/QuickSearch";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
 
-export default function TitleBar() {
+export default function TitleBar({ basic }: { basic?: boolean }) {
   const isMacos = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
   const [isMaximized, setIsMaximized] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -67,6 +67,7 @@ export default function TitleBar() {
   const openSearch = useCallback(() => setSearchOpen(true), []);
 
   useEffect(() => {
+    if (basic) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -76,7 +77,7 @@ export default function TitleBar() {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [basic]);
 
   return (
     <div
@@ -95,54 +96,60 @@ export default function TitleBar() {
           </span>
         </div>
 
-        <button
-          type="button"
-          className={styles.workspaceBtn}
-          onClick={onClickSessions}
-          title={hasTerminal ? "Open current terminal" : "No terminal open"}
-          disabled={!hasTerminal}
-        >
-          <span className={styles.workspaceBtnIcon}>
-            <WorkspaceIcon />
-          </span>
-          <span className={styles.workspaceBtnText}>
-            <span className={styles.workspaceBtnLabel}>Workspace</span>
-          </span>
-        </button>
+        {!basic && (
+          <button
+            type="button"
+            className={styles.workspaceBtn}
+            onClick={onClickSessions}
+            title={hasTerminal ? "Open current terminal" : "No terminal open"}
+            disabled={!hasTerminal}
+          >
+            <span className={styles.workspaceBtnIcon}>
+              <WorkspaceIcon />
+            </span>
+            <span className={styles.workspaceBtnText}>
+              <span className={styles.workspaceBtnLabel}>Workspace</span>
+            </span>
+          </button>
+        )}
       </div>
 
-      <div className={styles.centerRail}>
-        <button
-          type="button"
-          className={styles.searchTrigger}
-          title="Quick search"
-          onClick={openSearch}
-        >
-          <span className={styles.searchTriggerIcon}>
-            <SearchIcon />
-          </span>
-          <span className={styles.searchTriggerLabel}>Jump to anything</span>
-          <span className={styles.searchTriggerHint}>
-            Hosts, sessions, commands
-          </span>
-          <span className={styles.searchTriggerShortcut}>Ctrl K</span>
-        </button>
-      </div>
+      {!basic && (
+        <div className={styles.centerRail}>
+          <button
+            type="button"
+            className={styles.searchTrigger}
+            title="Quick search"
+            onClick={openSearch}
+          >
+            <span className={styles.searchTriggerIcon}>
+              <SearchIcon />
+            </span>
+            <span className={styles.searchTriggerLabel}>Jump to anything</span>
+            <span className={styles.searchTriggerHint}>
+              Hosts, sessions, commands
+            </span>
+            <span className={styles.searchTriggerShortcut}>Ctrl K</span>
+          </button>
+        </div>
+      )}
 
       <div className={styles.dragRegion} data-tauri-drag-region="true" />
 
       <div className={styles.rightRail}>
         <div className={styles.utilityGroup}>
-          <button
-            type="button"
-            className={styles.profileBtn}
-            title="User profile"
-          >
-            <span className={styles.profileAvatar}>{profileInitials}</span>
-            <span className={styles.profileName}>{profileName}</span>
-          </button>
+          {!basic && (
+            <button
+              type="button"
+              className={styles.profileBtn}
+              title="User profile"
+            >
+              <span className={styles.profileAvatar}>{profileInitials}</span>
+              <span className={styles.profileName}>{profileName}</span>
+            </button>
+          )}
 
-          {!isMacos && <div className={styles.rightSep} aria-hidden="true" />}
+          {!isMacos && !basic && <div className={styles.rightSep} aria-hidden="true" />}
 
           {!isMacos && (
             <div className={styles.winControls}>
