@@ -139,7 +139,7 @@ export default function PortForwardingItem({
         },
       },
     ],
-    [item, modal, onEdit, refreshPortForwardings],
+    [item, modal, message.error, onEdit, refreshPortForwardings],
   );
 
   const onOpenOrClosePortForwarding = useCallback(async () => {

@@ -61,7 +61,7 @@ const PAGES = [
 function matches(query: string, ...fields: (string | undefined)[]): boolean {
   if (!query) return true;
   const q = query.toLowerCase();
-  return fields.some((f) => f && f.toLowerCase().includes(q));
+  return fields.some((f) => f?.toLowerCase().includes(q));
 }
 
 export default function QuickSearch({ open, onClose }: QuickSearchProps) {
@@ -156,6 +156,7 @@ export default function QuickSearch({ open, onClose }: QuickSearchProps) {
     terminalsAtomWithApi,
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset index on query change
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);

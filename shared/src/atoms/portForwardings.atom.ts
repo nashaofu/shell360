@@ -115,11 +115,7 @@ export function usePortForwardingsAtomWithApi() {
 
       // 重新检查状态，可能在延迟期间被删除或状态改变
       const checkItem = stateRef.current.get(portForwardingId);
-      if (
-        !checkItem ||
-        checkItem.status !== "pending" ||
-        !checkItem.isReconnecting
-      ) {
+      if (checkItem?.status !== "pending" || !checkItem?.isReconnecting) {
         console.log("端口转发状态已改变，取消重连");
         return;
       }

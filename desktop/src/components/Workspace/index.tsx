@@ -35,7 +35,7 @@ function getAddPanelOptions(
     component: type === "sftp" ? "sftp" : "terminal",
     params,
     position: {
-      referenceGroup: api.activeGroup!,
+      referenceGroup: api.activeGroup as NonNullable<typeof api.activeGroup>,
       direction: "within" as const,
     },
     minimumWidth: PANEL_MIN_WIDTH,
@@ -70,7 +70,9 @@ export default function Workspace() {
     (event: DockviewReadyEvent) => {
       const { api } = event;
 
-      disposablesRef.current.forEach((d) => d.dispose());
+      for (const d of disposablesRef.current) {
+        d.dispose();
+      }
       apiRef.current = api;
 
       const disposables: Array<{ dispose(): void }> = [];
@@ -115,7 +117,9 @@ export default function Workspace() {
 
   useEffect(() => {
     return () => {
-      disposablesRef.current.forEach((d) => d.dispose());
+      for (const d of disposablesRef.current) {
+        d.dispose();
+      }
       apiRef.current = null;
       addedIdsRef.current.clear();
       syncingRef.current.clear();

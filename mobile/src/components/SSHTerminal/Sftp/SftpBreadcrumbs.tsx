@@ -60,33 +60,6 @@ export default function SftpBreadcrumbs({
     [handleConfirmEdit, handleCancelEdit],
   );
 
-  const items = dirs.map((item, index) => {
-    const path = `/${dirs.slice(0, index + 1).join("/")}`;
-    if (index < dirs.length - 1) {
-      return (
-        <button
-          type="button"
-          // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一�?          key={item + index}
-          className={styles.breadcrumbItem}
-          onClick={() => onClick(path)}
-        >
-          {item}
-        </button>
-      );
-    } else {
-      return (
-        <button
-          type="button"
-          // biome-ignore lint/suspicious/noArrayIndexKey: 路径中的部分可能存在重复，但路径整体是唯一�?          key={item + index}
-          className={styles.breadcrumbItem}
-          onClick={() => onClick(path)}
-        >
-          {item}
-        </button>
-      );
-    }
-  });
-
   if (isEditing) {
     return (
       <div className={styles.editRoot}>
@@ -126,12 +99,23 @@ export default function SftpBreadcrumbs({
         /
       </button>
       <div className={styles.breadcrumbs} onDoubleClick={handleStartEdit}>
-        {items.map((item, index) => (
-          <div key={index} className={styles.breadcrumbNode}>
-            {index > 0 && <span className={styles.separator}>/</span>}
-            {item}
-          </div>
-        ))}
+        {dirs.map((item, index) => {
+          const path = `/${dirs.slice(0, index + 1).join("/")}`;
+          const isLast = index === dirs.length - 1;
+          return (
+            <div key={path} className={styles.breadcrumbNode}>
+              {index > 0 && <span className={styles.separator}>/</span>}
+              <button
+                type="button"
+                className={styles.breadcrumbItem}
+                onClick={() => onClick(path)}
+                tabIndex={isLast ? -1 : undefined}
+              >
+                {item}
+              </button>
+            </div>
+          );
+        })}
       </div>
       <button
         type="button"

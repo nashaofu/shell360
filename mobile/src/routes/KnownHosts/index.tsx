@@ -86,7 +86,7 @@ export default function KnownHosts() {
         },
       });
     },
-    [modal],
+    [modal, message.error],
   );
 
   useEffect(() => {

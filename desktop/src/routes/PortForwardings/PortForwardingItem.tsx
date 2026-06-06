@@ -118,7 +118,7 @@ export default function PortForwardingItem({
         });
       },
     }),
-    [item, modal, refreshPortForwardings],
+    [item, modal, message.error, refreshPortForwardings],
   );
 
   const onOpenOrClosePortForwarding = useCallback(async () => {

@@ -75,7 +75,7 @@ export default function useRename({
     onRenameCancel();
   }, [editingFilename, onRenameCancel, rename, selectedFile]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files 改变时重置重命名状�?
+  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets rename state
   useEffect(() => {
     onRenameCancel();
   }, [files]);

@@ -125,7 +125,7 @@ export default function useCreate({
     onCreateCancel,
   ]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files 改变时重置创建状�?
+  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets create state
   useEffect(() => {
     onCreateCancel();
   }, [files]);
