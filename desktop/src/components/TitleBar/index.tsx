@@ -17,6 +17,7 @@ import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
 
 export default function TitleBar() {
+  const isMacos = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
   const [isMaximized, setIsMaximized] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const activateTerminal = useActivateTerminal();
@@ -78,7 +79,10 @@ export default function TitleBar() {
   }, []);
 
   return (
-    <div className={styles.titleBar}>
+    <div
+      className={styles.titleBar}
+      data-platform={import.meta.env.TAURI_ENV_PLATFORM}
+    >
       <div className={styles.leftRail}>
         <div className={styles.brand}>
           <span className={styles.logoWrap}>
@@ -138,37 +142,39 @@ export default function TitleBar() {
             <span className={styles.profileName}>{profileName}</span>
           </button>
 
-          <div className={styles.rightSep} aria-hidden="true" />
+          {!isMacos && <div className={styles.rightSep} aria-hidden="true" />}
 
-          <div className={styles.winControls}>
-            <button
-              type="button"
-              className={styles.winControlsBtn}
-              onClick={onClickMinimize}
-              title="Minimize"
-            >
-              <WindowMinimizeIcon />
-            </button>
-            <button
-              type="button"
-              className={styles.winControlsBtn}
-              onClick={onClickToggleMaximize}
-              title="Maximize"
-            >
-              {isMaximized ? <WindowRestoreIcon /> : <WindowMaximizeIcon />}
-            </button>
-            <button
-              type="button"
-              className={clsx(
-                styles.winControlsBtn,
-                styles.winControlsBtnClose,
-              )}
-              onClick={onClickClose}
-              title="Close"
-            >
-              <WindowCloseIcon />
-            </button>
-          </div>
+          {!isMacos && (
+            <div className={styles.winControls}>
+              <button
+                type="button"
+                className={styles.winControlsBtn}
+                onClick={onClickMinimize}
+                title="Minimize"
+              >
+                <WindowMinimizeIcon />
+              </button>
+              <button
+                type="button"
+                className={styles.winControlsBtn}
+                onClick={onClickToggleMaximize}
+                title="Maximize"
+              >
+                {isMaximized ? <WindowRestoreIcon /> : <WindowMaximizeIcon />}
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  styles.winControlsBtn,
+                  styles.winControlsBtnClose,
+                )}
+                onClick={onClickClose}
+                title="Close"
+              >
+                <WindowCloseIcon />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
