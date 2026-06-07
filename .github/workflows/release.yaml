@@ -86,13 +86,13 @@ jobs:
             host: ubuntu-22.04
             build: bash ./scripts/linux.sh
 
-          - name: ios
-            host: macos-15
-            build: zsh ./scripts/ios.sh
+          # - name: ios
+          #   host: macos-15
+          #   build: zsh ./scripts/ios.sh
 
-          - name: android
-            host: ubuntu-22.04
-            build: bash ./scripts/android.sh
+          # - name: android
+          #   host: ubuntu-22.04
+          #   build: bash ./scripts/android.sh
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}

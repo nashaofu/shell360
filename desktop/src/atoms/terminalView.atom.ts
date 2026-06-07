@@ -1,5 +1,7 @@
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useSetAtom } from "jotai";
 import { useCallback } from "react";
+
+const fileTransfersAtom = atom(0);
 
 export const terminalActiveIdAtom = atom<string | null>(null);
 export const terminalViewVisibleAtom = atom(false);
@@ -18,12 +20,6 @@ export function useTerminalViewVisible() {
 
 export function useSetTerminalViewVisible() {
   return useSetAtom(terminalViewVisibleAtom);
-}
-
-const fileTransfersAtom = atom(0);
-
-export function useFileTransfersCount() {
-  return useAtomValue(fileTransfersAtom);
 }
 
 export function useFileTransfersActions() {

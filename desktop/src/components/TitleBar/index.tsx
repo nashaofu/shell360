@@ -23,14 +23,6 @@ export default function TitleBar() {
   const [visible, setVisible] = useTerminalViewVisible();
   const terminalsState = useTerminalsAtomValue();
   const hasTerminal = terminalsState.size > 0;
-  const profileName = "Local User";
-  const profileInitials = profileName
-    .split(" ")
-    .map((item) => item[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   const onClickMinimize = useCallback(() => {
     getCurrentWindow().minimize();
   }, []);
@@ -134,9 +126,9 @@ export default function TitleBar() {
 
       <div className={styles.rightRail}>
         <div className={styles.utilityGroup}>
-          <div className={styles.profileBtn} title="User profile">
+          {/* <div className={styles.profileBtn} title="User profile">
             <span className={styles.profileAvatar}>{profileInitials}</span>
-          </div>
+          </div> */}
 
           {!isMacos && <div className={styles.rightSep} aria-hidden="true" />}
 

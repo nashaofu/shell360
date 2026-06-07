@@ -1,6 +1,5 @@
 import {
   FolderIcon,
-  InfoCircleIcon,
   SiteMapIcon,
   TerminalIcon,
   usePortForwardingsAtomValue,

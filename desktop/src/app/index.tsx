@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Theme } from "@radix-ui/themes";
 import { RouterProvider } from "react-router-dom";
 import { MessageProvider, ModalProvider, useAppearanceValue } from "shared";
@@ -10,6 +11,12 @@ export default function App() {
   const appearance = useAppearanceValue();
 
   useAutoCheckUpdate();
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", handler);
+    return () => document.removeEventListener("contextmenu", handler);
+  }, []);
 
   const providerAppearance = appearance === "inherit" ? undefined : appearance;
 
