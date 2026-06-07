@@ -1,4 +1,4 @@
-import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import {
@@ -9,6 +9,8 @@ import {
   EditHostForm,
   type EditHostFormFields,
   MoreIcon,
+  parseEnvs,
+  stringifyEnvs,
   useHosts,
   useKeys,
   useTerminalsAtomWithApi,
@@ -16,11 +18,11 @@ import {
 import {
   AuthenticationMethod,
   addHost,
-  type Env,
   type Host,
   updateHost,
 } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
+import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
@@ -74,7 +76,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       keyId: data?.keyId ?? "",
       startupCommand: data?.startupCommand ?? "",
       terminalType: data?.terminalType ?? DEFAULT_TERMINAL_TYPE,
-      envs: data?.envs?.map((env) => `${env.key}=${env.value}`).join(",") ?? "",
+      envs: stringifyEnvs(data?.envs),
       jumpHostEnabled: !!data?.jumpHostIds?.length,
       jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
@@ -113,23 +115,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             : undefined,
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
-        envs: values.envs?.split(",").reduce<Env[]>((envs, env) => {
-          const eqIdx = env.indexOf("=");
-          if (eqIdx === -1) {
-            return envs;
-          }
-          const key = env.slice(0, eqIdx).trim();
-          const value = env.slice(eqIdx + 1).trim();
-
-          if (!key) {
-            return envs;
-          }
-          if (!value) {
-            return envs;
-          }
-          envs.push({ key, value });
-          return envs;
-        }, []),
+        envs: parseEnvs(values.envs),
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
           ? {
@@ -205,7 +191,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
           }
         }
       }
-      msg.error(errorMessage);
+      msg.error({ message: errorMessage });
     },
     [msg],
   );
@@ -236,18 +222,10 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         title={data ? "Edit host" : "Add host"}
         onCancel={onCancel}
         footer={
-          <Flex align="center" gap="2">
-            <Button style={{ flex: 1 }} variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-
-            <Flex style={{ flex: 1 }} gap="1">
-              <Button
-                style={{ flex: 1 }}
-                onClick={formApi.handleSubmit(onSave, onValidationError)}
-              >
-                Save
-              </Button>
+          <DrawerFooter
+            onCancel={onCancel}
+            onSubmit={formApi.handleSubmit(onSave, onValidationError)}
+            extra={
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
                   <Button variant="soft">
@@ -265,8 +243,8 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
                   ))}
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
-            </Flex>
-          </Flex>
+            }
+          />
         }
       >
         <EditHostForm

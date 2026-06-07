@@ -4,61 +4,17 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
 import clsx from "clsx";
-import {
-  type MouseEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { SearchIcon } from "shared";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { getTagTone, type KnownHost, useKnownHostsStore } from "shared";
 import Empty from "@/components/Empty";
-import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
+import ListToolbar from "@/components/ListToolbar";
+import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import panel from "@/styles/panel.module.less";
+import { filterByKeyword } from "@/utils/list";
 import styles from "./index.module.less";
 
-async function readKnownHost() {
-  const data = await readTextFile("./known_hosts", {
-    baseDir: BaseDirectory.AppLocalData,
-  });
-
-  const knownHosts = data
-    .split(/\r|\n/)
-    .filter(Boolean)
-    .map((item) => {
-      const result = item.split(" ").filter(Boolean);
-      return {
-        id: item,
-        host: result[0],
-        type: result[1],
-        key: result[2],
-      };
-    });
-
-  return knownHosts;
-}
-
-type KnownHost = {
-  id: string;
-  host: string;
-  type: string;
-  key: string;
-};
-
-function getKnownHostTone(host: string) {
-  const normalized = host.toLowerCase();
-  if (normalized.includes("prod") || normalized.startsWith("10.0.")) {
-    return "Prod";
-  }
-  if (normalized.includes("stag") || normalized.startsWith("10.1.")) {
-    return "Staging";
-  }
-  if (normalized.includes("local") || normalized.includes("127.0.0.1")) {
-    return "Local";
-  }
-  return "Accent";
-}
+const KNOWN_HOSTS_PATH = "./known_hosts";
+const KNOWN_HOSTS_BASE_DIR = BaseDirectory.AppLocalData;
 
 function getKnownHostLabel(host: string) {
   return host.split(/[,:]/)[0] || host;
@@ -73,87 +29,62 @@ function getFingerprint(key: string) {
 }
 
 export default function KnownHosts() {
-  const [items, setItems] = useState<KnownHost[]>([]);
   const [keyword, setKeyword] = useState("");
-  const modal = useModal();
-  const message = useMessage();
+  const confirmDelete = useConfirmDelete();
+  const { items, remove } = useKnownHostsStore({
+    readText: useCallback(async () => {
+      try {
+        return await readTextFile(KNOWN_HOSTS_PATH, {
+          baseDir: KNOWN_HOSTS_BASE_DIR,
+        });
+      } catch {
+        return "";
+      }
+    }, []),
+    writeText: useCallback(async (data: string) => {
+      await writeTextFile(KNOWN_HOSTS_PATH, data, {
+        baseDir: KNOWN_HOSTS_BASE_DIR,
+      });
+    }, []),
+  });
 
   const onDelete = useCallback(
     (event: MouseEvent<HTMLButtonElement>, knownHost: KnownHost) => {
       event.stopPropagation();
 
-      const knownHostContent = ` ${knownHost.host} ${knownHost.type} ${knownHost.key}`;
-      modal.confirm({
-        title: "Delete Confirmation",
+      const knownHostContent = knownHost.rawLine;
+      confirmDelete({
         content: (
           <div className={styles.confirmContent}>
             Are you sure to delete the known host:
             {knownHostContent}?
           </div>
         ),
-        OkButtonProps: {
-          color: "orange",
-        },
-        onOk: async () => {
-          try {
-            const knownHosts = await readKnownHost();
-
-            const newItems = knownHosts.filter(
-              (item) => item.id !== knownHost.id,
-            );
-            const data = newItems
-              .map((item) => `${item.host} ${item.type} ${item.key}`)
-              .join("\r\n");
-
-            await writeTextFile("./known_hosts", data, {
-              baseDir: BaseDirectory.AppLocalData,
-            });
-
-            setItems(newItems);
-          } catch (err) {
-            message.error(
-              `Failed to delete: ${(err as Error).message ?? "Unknown error"}`,
-            );
-          }
+        failureMessage: "Failed to delete",
+        onDelete: async () => {
+          await remove(knownHost);
         },
       });
     },
-    [modal, message.error],
+    [confirmDelete, remove],
   );
 
-  useEffect(() => {
-    readKnownHost().then((knownHosts) => setItems(knownHosts));
-  }, []);
-
   const filteredItems = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
-
-    if (!kw) {
-      return items;
-    }
-
-    return items.filter(
-      (item) =>
-        item.host.toLowerCase().includes(kw) ||
-        item.type.toLowerCase().includes(kw) ||
-        item.key.toLowerCase().includes(kw),
-    );
+    return filterByKeyword(items, keyword, [
+      (item) => item.host,
+      (item) => item.type,
+      (item) => item.key,
+    ]);
   }, [items, keyword]);
 
   return (
     <section className={panel.page}>
-      <div className={panel.toolbar}>
-        <span className={panel.title}>Known Hosts</span>
-        <label className={panel.search}>
-          <SearchIcon className={panel.searchIcon} />
-          <input
-            className={panel.searchInput}
-            value={keyword}
-            placeholder="Filter hosts..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </label>
-      </div>
+      <ListToolbar
+        title="Known Hosts"
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        searchPlaceholder="Filter hosts..."
+      />
       <div className={panel.content}>
         {filteredItems.length ? (
           <div className={panel.tableWrap}>
@@ -163,8 +94,6 @@ export default function KnownHosts() {
                   <th>Hostname / IP</th>
                   <th>Key Type</th>
                   <th>Fingerprint</th>
-                  <th>Saved</th>
-                  <th>State</th>
                   <th>Label</th>
                   <th />
                 </tr>
@@ -181,13 +110,11 @@ export default function KnownHosts() {
                     <td className={styles.fingerprintCell}>
                       {getFingerprint(item.key)}
                     </td>
-                    <td className={styles.timeCell}>Saved entry</td>
-                    <td className={styles.timeCell}>Available</td>
                     <td>
                       <span
                         className={clsx(
                           panel.tag,
-                          panel[`tag${getKnownHostTone(item.host)}`],
+                          panel[`tag${getTagTone(item.host)}`],
                         )}
                       >
                         {getKnownHostLabel(item.host)}

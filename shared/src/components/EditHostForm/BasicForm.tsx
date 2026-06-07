@@ -1,10 +1,13 @@
 import { IconButton, Select, Text, TextField } from "@radix-ui/themes";
-import { type ChangeEvent, type KeyboardEvent, useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { AuthenticationMethod } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { useKeys } from "@/hooks/useKeys";
+import { validateEnvs } from "@/utils/env";
+import { onInputChange } from "@/utils/form";
+import { resolveSpacing } from "@/utils/style";
 
 import {
   CodeIcon,
@@ -37,12 +40,7 @@ export default function BasicForm({
   const [tagInput, setTagInput] = useState("");
   const [tagInputFocused, setTagInputFocused] = useState(false);
 
-  const wrapperStyle =
-    sx && typeof sx === "object"
-      ? (sx as { mb?: number }).mb
-        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
-        : undefined
-      : undefined;
+  const wrapperStyle = resolveSpacing(sx);
 
   const tags = useMemo(() => {
     const set = new Set<string>();
@@ -57,12 +55,6 @@ export default function BasicForm({
     }
     return Array.from(set);
   }, [hosts]);
-
-  const onInputChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
 
   const onTagsInputKeyDown = (
     event: KeyboardEvent<HTMLInputElement>,
@@ -576,22 +568,7 @@ export default function BasicForm({
         name="envs"
         control={formApi.control}
         rules={{
-          validate: (value) => {
-            if (!value) {
-              return true;
-            }
-            const envs = value.split(",");
-            for (const env of envs) {
-              let [key, envValue] = env.split("=");
-              key = key.trim();
-              envValue = envValue?.trim();
-
-              if (!key || envValue === undefined) {
-                return "Invalid environment variable format";
-              }
-            }
-            return true;
-          },
+          validate: validateEnvs,
         }}
         render={({ field, fieldState }) => (
           <div className={styles.formField}>

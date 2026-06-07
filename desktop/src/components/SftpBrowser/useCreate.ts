@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
@@ -83,7 +84,7 @@ export default function useCreate({
   );
 
   const onCreatingFilenameChange = useCallback((val: string) => {
-    setCreatingFilename(val.replace("/", ""));
+    setCreatingFilename(sanitizeSftpFilename(val));
   }, []);
 
   const onCreate = useCallback(

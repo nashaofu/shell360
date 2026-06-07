@@ -1,6 +1,7 @@
 import { SegmentedControl, Text } from "@radix-ui/themes";
 import { Controller } from "react-hook-form";
 
+import { resolveSpacing } from "@/utils/style";
 import JumpHostIdsSelect from "./JumpHostIdsSelect";
 import styles from "./JumpHostsForm.module.less";
 import type { EditHostFormApi } from "./types";
@@ -13,12 +14,7 @@ type JumpHostsFormProps = {
 export default function JumpHostsForm({ formApi, sx }: JumpHostsFormProps) {
   const jumpHostEnabled = formApi.watch("jumpHostEnabled");
   const hostId = formApi.watch("id");
-  const wrapperStyle =
-    sx && typeof sx === "object"
-      ? (sx as { mb?: number }).mb
-        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
-        : undefined
-      : undefined;
+  const wrapperStyle = resolveSpacing(sx);
 
   return (
     <section className={styles.section} style={wrapperStyle}>

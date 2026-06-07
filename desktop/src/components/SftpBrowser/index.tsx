@@ -1,12 +1,17 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { FileUploadIcon, Loading, MoreIcon, useSftp } from "shared";
 import {
-  type SSHSession,
-  type SSHSftpFile,
-  SSHSftpFileType,
-} from "tauri-plugin-ssh";
+  FileUploadIcon,
+  getSftpBrowserFiles,
+  Loading,
+  MoreIcon,
+  SSHLoading,
+  type TerminalAtom,
+  useSftpConnection,
+  useSftpFileEditor,
+} from "shared";
+import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
@@ -22,10 +27,12 @@ import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
 
 type SftpProps = {
-  session?: SSHSession;
+  item: TerminalAtom;
+  onClose: () => unknown;
+  onOpenAddKey: () => unknown;
 };
 
-export default function Sftp({ session }: SftpProps) {
+export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
@@ -34,15 +41,17 @@ export default function Sftp({ session }: SftpProps) {
   const message = useMessage();
   const [keyword, setKeyword] = useState("");
   const [isShowHiddenFiles, setIsShowHiddenFiles] = useState(false);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingFile, setEditingFile] = useState<SSHSftpFile | null>(null);
 
   const {
     sftpRef,
-    loading: initLoading,
-    error: initError,
-  } = useSftp({
-    session,
+    loading: connectionLoading,
+    error: connectionError,
+    currentJumpHostChainItem,
+    onReConnect,
+    onReAuth,
+    onRetry,
+  } = useSftpConnection({
+    item,
     onSuccess: async (sftp) => {
       const dirname = await sftp.sftpCanonicalize(".");
       setDirname(dirname);
@@ -109,35 +118,14 @@ export default function Sftp({ session }: SftpProps) {
     }
   }, []);
 
-  const onEditFile = useCallback((item: SSHSftpFile) => {
-    if (item.fileType === SSHSftpFileType.File) {
-      setEditingFile(item);
-      setIsEditorOpen(true);
-    }
-  }, []);
-
-  const handleLoadFileContent = useCallback(async () => {
-    if (!editingFile || !sftpRef.current) {
-      throw new Error("No file selected or SFTP not initialized");
-    }
-    return await sftpRef.current.sftpReadTextFile(editingFile.path);
-  }, [editingFile, sftpRef]);
-
-  const handleSaveFileContent = useCallback(
-    async (content: string) => {
-      if (!editingFile || !sftpRef.current) {
-        throw new Error("No file selected or SFTP not initialized");
-      }
-      await sftpRef.current.sftpWriteTextFile(editingFile.path, content);
-      refreshDir();
-    },
-    [editingFile, sftpRef, refreshDir],
-  );
-
-  const handleCloseEditor = useCallback(() => {
-    setIsEditorOpen(false);
-    setEditingFile(null);
-  }, []);
+  const {
+    isEditorOpen,
+    editingFile,
+    onEditFile,
+    loadFileContent,
+    saveFileContent,
+    closeEditor,
+  } = useSftpFileEditor({ sftpRef, refreshDir });
 
   const {
     renameLoading,
@@ -165,31 +153,14 @@ export default function Sftp({ session }: SftpProps) {
   });
 
   const data = useMemo(() => {
-    const filteredFiles = (files ?? [])
-      .filter((item) => {
-        if (isShowHiddenFiles) {
-          return true;
-        } else {
-          return !item.name.startsWith(".");
-        }
-      })
-      .filter((item) =>
-        item.name.toLowerCase().includes(keyword.toLowerCase()),
-      );
-
     const sortCell = cells.find((item) => item.key === orderBy);
-    if (!sortCell) {
-      return filteredFiles;
-    } else {
-      return filteredFiles.sort((a, b) => {
-        const compare = sortCell.compare?.(a, b) ?? 0;
-        if (order === SftpTableOrder.Desc) {
-          return compare;
-        } else {
-          return -compare;
-        }
-      });
-    }
+    return getSftpBrowserFiles({
+      files,
+      keyword,
+      showHiddenFiles: isShowHiddenFiles,
+      sortCell,
+      isDesc: order === SftpTableOrder.Desc,
+    });
   }, [cells, files, order, orderBy, keyword, isShowHiddenFiles]);
 
   const isRoot = dirname === "/";
@@ -283,7 +254,6 @@ export default function Sftp({ session }: SftpProps) {
   }, [isShowHiddenFiles, onCreate, refreshDir]);
 
   const isLoading =
-    initLoading ||
     readDirLoading ||
     uploadFileLoading ||
     downloadFileLoading ||
@@ -292,21 +262,18 @@ export default function Sftp({ session }: SftpProps) {
     removeFileLoading ||
     createLoading;
 
+  const showConnection = connectionLoading || !!connectionError;
+
   return (
-    <>
-      {initError ? (
-        <div className={styles.container}>
-          <p
-            style={{
-              color: "var(--red-10)",
-              textAlign: "center",
-              padding: "24px",
-            }}
-          >
-            Failed to initialize SFTP: {initError.message}
-          </p>
-        </div>
-      ) : (
+    <div className={styles.root}>
+      <div
+        className={styles.browserLayer}
+        style={
+          showConnection
+            ? { pointerEvents: "none", visibility: "hidden" }
+            : undefined
+        }
+      >
         <Loading
           sx={{
             flexGrow: 1,
@@ -380,14 +347,33 @@ export default function Sftp({ session }: SftpProps) {
             </div>
           </div>
         </Loading>
+      </div>
+      {showConnection && (
+        <SSHLoading
+          host={currentJumpHostChainItem?.host || item.host}
+          loading={currentJumpHostChainItem?.loading}
+          error={connectionError}
+          command={`sftp ${item.host.username}@${item.host.hostname} -P ${item.host.port}`}
+          sx={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            inset: 0,
+          }}
+          onReConnect={onReConnect}
+          onReAuth={onReAuth}
+          onRetry={onRetry}
+          onClose={onClose}
+          onOpenAddKey={onOpenAddKey}
+        />
       )}
       <FileEditorModal
         open={isEditorOpen}
         file={editingFile}
-        onClose={handleCloseEditor}
-        onSave={handleSaveFileContent}
-        onLoadContent={handleLoadFileContent}
+        onClose={closeEditor}
+        onSave={saveFileContent}
+        onLoadContent={loadFileContent}
       />
-    </>
+    </div>
   );
 }

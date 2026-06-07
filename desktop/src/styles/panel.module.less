@@ -204,6 +204,32 @@
   border-color: color-mix(in srgb, var(--red-9) 24%, transparent);
 }
 
+.splitButton {
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.splitButton > .button {
+  position: relative;
+}
+
+.splitButton > .button:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.splitButton > .button:last-child {
+  margin-left: -1px;
+  padding: 0 7px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.splitButton > .button:hover {
+  z-index: 1;
+}
+
 .toggleGroup {
   display: inline-flex;
   overflow: hidden;

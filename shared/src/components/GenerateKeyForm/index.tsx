@@ -1,8 +1,8 @@
 import { Select, Text, TextField } from "@radix-ui/themes";
-import type { ChangeEvent } from "react";
 import { useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
+import { onInputChange } from "@/utils/form";
 import { TextFieldPassword } from "../TextFieldPassword";
 import styles from "./index.module.less";
 
@@ -56,12 +56,6 @@ export function GenerateKeyForm({ formApi }: GenerateKeyFormProps) {
     },
     [formApi],
   );
-
-  const onInputChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
 
   return (
     <form className={styles.form} noValidate autoComplete="off">

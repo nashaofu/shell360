@@ -16,23 +16,29 @@ import AddKey from "@/components/AddKey";
 import SftpContent from "@/components/SftpPanel";
 import TerminalPanel from "@/components/TerminalPanel";
 import styles from "./index.module.less";
+import Tab from "./Tab";
 
 const PANEL_MIN_WIDTH = 220;
 const PANEL_MIN_HEIGHT = 120;
+
+type PanelParams = {
+  terminalId: string;
+  onOpenAddKey: () => void;
+  type?: string;
+};
 
 function getAddPanelOptions(
   api: DockviewApi,
   id: string,
   title: string,
   inactive: boolean,
-  params: { terminalId: string; onOpenAddKey: () => void },
-  type?: string,
-): AddPanelOptions<{ terminalId: string; onOpenAddKey: () => void }> {
+  params: PanelParams,
+): AddPanelOptions<PanelParams> {
   return {
     id,
     title,
     inactive,
-    component: type === "sftp" ? "sftp" : "terminal",
+    component: params.type === "sftp" ? "sftp" : "terminal",
     params,
     position: {
       referenceGroup: api.activeGroup as NonNullable<typeof api.activeGroup>,
@@ -87,8 +93,8 @@ export default function Workspace() {
             {
               terminalId: uuid,
               onOpenAddKey: openAddKeyModal,
+              type: term.type,
             },
-            term.type,
           ),
         );
         addedIdsRef.current.add(uuid);
@@ -162,17 +168,11 @@ export default function Workspace() {
     for (const [id, term] of terminalsState) {
       if (!addedIds.has(id)) {
         api.addPanel(
-          getAddPanelOptions(
-            api,
-            id,
-            term.name,
-            false,
-            {
-              terminalId: id,
-              onOpenAddKey: openAddKeyModal,
-            },
-            term.type,
-          ),
+          getAddPanelOptions(api, id, term.name, false, {
+            terminalId: id,
+            onOpenAddKey: openAddKeyModal,
+            type: term.type,
+          }),
         );
         addedIds.add(id);
         continue;
@@ -192,6 +192,7 @@ export default function Workspace() {
     >
       <DockviewReact
         components={components}
+        defaultTabComponent={Tab}
         onReady={onReady}
         className={styles.dockview}
         watermarkComponent={() => (

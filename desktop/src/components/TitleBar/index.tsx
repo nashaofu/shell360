@@ -1,4 +1,3 @@
-import { Text } from "@radix-ui/themes";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
@@ -11,16 +10,16 @@ import {
   WindowRestoreIcon,
   WorkspaceIcon,
 } from "shared";
-import logo from "@/assets/logo.svg";
+import { useTerminalViewVisible } from "@/atoms/terminalView.atom";
 import QuickSearch from "@/components/QuickSearch";
-import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
 
-export default function TitleBar({ basic }: { basic?: boolean }) {
+export default function TitleBar() {
   const isMacos = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const activateTerminal = useActivateTerminal();
+  const [visible, setVisible] = useTerminalViewVisible();
   const terminalsState = useTerminalsAtomValue();
   const hasTerminal = terminalsState.size > 0;
   const profileName = "Local User";
@@ -44,20 +43,18 @@ export default function TitleBar({ basic }: { basic?: boolean }) {
   }, []);
 
   const onClickSessions = useCallback(() => {
-    const terminalsList = [...terminalsState.values()];
-    const last = terminalsList[terminalsList.length - 1];
-    if (!last) {
-      return;
-    }
-    activateTerminal(last.uuid);
-  }, [terminalsState, activateTerminal]);
+    setVisible((prev) => !prev);
+  }, [setVisible]);
 
   useEffect(() => {
-    getCurrentWindow().isMaximized().then(setIsMaximized);
+    const win = getCurrentWindow();
+    const sync = () => {
+      win.isMaximized().then(setIsMaximized);
+      win.isFullscreen().then(setIsFullscreen);
+    };
+    sync();
 
-    const unListen = getCurrentWindow().onResized(() => {
-      getCurrentWindow().isMaximized().then(setIsMaximized);
-    });
+    const unListen = win.onResized(sync);
 
     return () => {
       unListen.then((fn) => fn());
@@ -67,7 +64,6 @@ export default function TitleBar({ basic }: { basic?: boolean }) {
   const openSearch = useCallback(() => setSearchOpen(true), []);
 
   useEffect(() => {
-    if (basic) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -77,79 +73,64 @@ export default function TitleBar({ basic }: { basic?: boolean }) {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [basic]);
+  }, []);
 
   return (
     <div
       className={styles.titleBar}
       data-platform={import.meta.env.TAURI_ENV_PLATFORM}
+      data-fullscreen={isFullscreen ? "true" : undefined}
     >
       <div className={styles.leftRail}>
-        <div className={styles.brand}>
-          <span className={styles.logoWrap}>
-            <img src={logo} alt="Shell360" className={styles.logoImg} />
+        <button
+          type="button"
+          className={clsx(
+            styles.workspaceBtn,
+            visible && styles.workspaceBtnActive,
+          )}
+          onClick={onClickSessions}
+          title={
+            hasTerminal
+              ? visible
+                ? "Hide workspace"
+                : "Show workspace"
+              : "No terminal open"
+          }
+          disabled={!hasTerminal}
+        >
+          <span className={styles.workspaceBtnIcon}>
+            <WorkspaceIcon />
           </span>
-          <span className={styles.brandText}>
-            <Text size="2" weight="medium" className={styles.appName}>
-              Shell360
-            </Text>
-          </span>
-        </div>
-
-        {!basic && (
-          <button
-            type="button"
-            className={styles.workspaceBtn}
-            onClick={onClickSessions}
-            title={hasTerminal ? "Open current terminal" : "No terminal open"}
-            disabled={!hasTerminal}
-          >
-            <span className={styles.workspaceBtnIcon}>
-              <WorkspaceIcon />
-            </span>
-            <span className={styles.workspaceBtnText}>
-              <span className={styles.workspaceBtnLabel}>Workspace</span>
-            </span>
-          </button>
-        )}
+          <span className={styles.workspaceBtnLabel}>Workspace</span>
+        </button>
       </div>
 
-      {!basic && (
-        <div className={styles.centerRail}>
-          <button
-            type="button"
-            className={styles.searchTrigger}
-            title="Quick search"
-            onClick={openSearch}
-          >
-            <span className={styles.searchTriggerIcon}>
-              <SearchIcon />
-            </span>
-            <span className={styles.searchTriggerLabel}>Jump to anything</span>
-            <span className={styles.searchTriggerHint}>
-              Hosts, sessions, commands
-            </span>
-            <span className={styles.searchTriggerShortcut}>Ctrl K</span>
-          </button>
-        </div>
-      )}
+      <div className={styles.centerRail}>
+        <button
+          type="button"
+          className={styles.searchTrigger}
+          title="Quick search"
+          onClick={openSearch}
+        >
+          <span className={styles.searchTriggerIcon}>
+            <SearchIcon />
+          </span>
+          <span className={styles.searchTriggerLabel}>Search</span>
+          <span className={styles.searchTriggerShortcut}>
+            {isMacos ? "\u2318 K" : "Ctrl K"}
+          </span>
+        </button>
+      </div>
 
       <div className={styles.dragRegion} data-tauri-drag-region="true" />
 
       <div className={styles.rightRail}>
         <div className={styles.utilityGroup}>
-          {!basic && (
-            <button
-              type="button"
-              className={styles.profileBtn}
-              title="User profile"
-            >
-              <span className={styles.profileAvatar}>{profileInitials}</span>
-              <span className={styles.profileName}>{profileName}</span>
-            </button>
-          )}
+          <div className={styles.profileBtn} title="User profile">
+            <span className={styles.profileAvatar}>{profileInitials}</span>
+          </div>
 
-          {!isMacos && !basic && <div className={styles.rightSep} aria-hidden="true" />}
+          {!isMacos && <div className={styles.rightSep} aria-hidden="true" />}
 
           {!isMacos && (
             <div className={styles.winControls}>

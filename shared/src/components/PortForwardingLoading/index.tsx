@@ -29,13 +29,16 @@ export function PortForwardingLoading({
   return (
     <div className={styles.root}>
       <div>
-        <div className={styles.title}>Opening {portForwarding.name} ...</div>
+        <div className={styles.title}>Opening {portForwarding.name}...</div>
         <div className={styles.description}>
           {getPortForwardingDesc(portForwarding, hostsMap)}
         </div>
       </div>
       <div className={styles.progressWrap}>
-        <Progress value={null} color={error ? "red" : undefined} />
+        <Progress
+          value={error ? 100 : null}
+          color={error ? "red" : undefined}
+        />
       </div>
       {!!error && (
         <>

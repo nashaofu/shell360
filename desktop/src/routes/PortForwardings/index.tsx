@@ -1,21 +1,27 @@
 import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
-import { AddIcon, SearchIcon, useHosts, usePortForwardings } from "shared";
+import { AddIcon, useHosts, usePortForwardings } from "shared";
 import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import AddPortForwarding from "@/components/AddPortForwarding";
 import Empty from "@/components/Empty";
+import ListToolbar from "@/components/ListToolbar";
+import { useListView } from "@/hooks/useListView";
 import panel from "@/styles/panel.module.less";
+import { filterByKeyword } from "@/utils/list";
+import styles from "./index.module.less";
 import PortForwardingItem from "./PortForwardingItem";
+import { usePortForwardingRuntime } from "./usePortForwardingRuntime";
 
 export default function PortForwardings() {
   const { data: hosts = [] } = useHosts();
   const { data: portForwardings = [] } = usePortForwardings();
 
-  const [keyword, setKeyword] = useState("");
+  const { keyword, setKeyword, viewMode, setViewMode } = useListView();
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
   const [editItem, setEditItem] = useState<PortForwarding>();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
+  const getPortForwardingRuntime = usePortForwardingRuntime();
 
   const hostsMap = useMemo(
     () => new Map(hosts.map((item) => [item.id, item])),
@@ -33,61 +39,56 @@ export default function PortForwardings() {
   }, []);
 
   const filteredItems = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
-
-    if (!kw) {
-      return portForwardings;
-    }
-
-    return portForwardings.filter((item) => {
-      const host = hostsMap.get(item.hostId);
-      return (
-        item.name.toLowerCase().includes(kw) ||
-        item.portForwardingType.toLowerCase().includes(kw) ||
-        `${item.localAddress}:${item.localPort}`.toLowerCase().includes(kw) ||
-        `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`
-          .toLowerCase()
-          .includes(kw) ||
-        host?.name?.toLowerCase().includes(kw) ||
-        host?.hostname.toLowerCase().includes(kw)
-      );
-    });
+    return filterByKeyword(portForwardings, keyword, [
+      (item) => item.name,
+      (item) => item.portForwardingType,
+      (item) => `${item.localAddress}:${item.localPort}`,
+      (item) => `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`,
+      (item) => {
+        const host = hostsMap.get(item.hostId);
+        return host?.name;
+      },
+      (item) => {
+        const host = hostsMap.get(item.hostId);
+        return host?.hostname;
+      },
+    ]);
   }, [hostsMap, keyword, portForwardings]);
 
   return (
     <>
       <section className={panel.page}>
-        <div className={panel.toolbar}>
-          <span className={panel.title}>Port Forwardings</span>
-          <label className={panel.search}>
-            <SearchIcon className={panel.searchIcon} />
-            <input
-              className={panel.searchInput}
-              value={keyword}
-              placeholder="Filter rules..."
-              onChange={(event) => setKeyword(event.target.value)}
-            />
-          </label>
+        <ListToolbar
+          title="Tunnels"
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder="Filter tunnels..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        >
           <button
             type="button"
             className={clsx(panel.button, panel.buttonPrimary)}
             onClick={() => setIsOpenAddPortForwarding(true)}
           >
             <AddIcon width="11" height="11" />
-            New Rule
+            New Tunnel
           </button>
-        </div>
+        </ListToolbar>
         <div className={panel.content}>
-          {filteredItems.length ? (
+          {filteredItems.length && viewMode === "list" ? (
             <div className={panel.tableWrap}>
               <table className={panel.table}>
                 <thead>
                   <tr>
                     <th style={{ width: 36 }} />
-                    <th>Label</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Local Address</th>
                     <th>Local Port</th>
-                    <th>Remote</th>
-                    <th>Server</th>
+                    <th>Remote Address</th>
+                    <th>Remote Port</th>
+                    <th>Host</th>
                     <th>Status</th>
                     <th />
                   </tr>
@@ -98,6 +99,8 @@ export default function PortForwardings() {
                       key={item.id}
                       item={item}
                       hostsMap={hostsMap}
+                      runtime={getPortForwardingRuntime(item)}
+                      viewMode="list"
                       onEdit={() => onEdit(item)}
                       onOpenAddKey={() => setAddKeyOpen(true)}
                     />
@@ -105,14 +108,28 @@ export default function PortForwardings() {
                 </tbody>
               </table>
             </div>
+          ) : filteredItems.length ? (
+            <div className={styles.grid}>
+              {filteredItems.map((item) => (
+                <PortForwardingItem
+                  key={item.id}
+                  item={item}
+                  hostsMap={hostsMap}
+                  runtime={getPortForwardingRuntime(item)}
+                  viewMode="grid"
+                  onEdit={() => onEdit(item)}
+                  onOpenAddKey={() => setAddKeyOpen(true)}
+                />
+              ))}
+            </div>
           ) : (
-            <Empty desc="There is no port forwarding yet, add it now.">
+            <Empty desc="There is no tunnel yet, add it now.">
               <button
                 type="button"
                 className={clsx(panel.button, panel.buttonPrimary)}
                 onClick={() => setIsOpenAddPortForwarding(true)}
               >
-                New Rule
+                New Tunnel
               </button>
             </Empty>
           )}

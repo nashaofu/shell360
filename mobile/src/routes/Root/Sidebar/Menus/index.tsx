@@ -7,7 +7,7 @@ const MENU_ITEMS = [
   { icon: <HostIcon className={styles.itemIcon} />, text: "Hosts", to: "/" },
   {
     icon: <SiteMapIcon className={styles.itemIcon} />,
-    text: "Port forwardings",
+    text: "Tunnels",
     to: "/port-forwardings",
   },
   { icon: <KeyIcon className={styles.itemIcon} />, text: "Keys", to: "/keys" },

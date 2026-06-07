@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
+import { resolveSpacing } from "../../utils/style";
 import { AddIcon, ArrowDownIcon, ArrowUpIcon, DeleteIcon } from "../Icon";
 import styles from "./JumpHostIdsSelect.module.less";
 
@@ -87,12 +88,7 @@ export default function JumpHostIdsSelect({
     }
   };
 
-  const wrapperStyle =
-    sx && typeof sx === "object"
-      ? (sx as { mt?: number }).mt
-        ? { marginTop: `${(sx as { mt: number }).mt * 8}px` }
-        : undefined
-      : undefined;
+  const wrapperStyle = resolveSpacing(sx);
 
   return (
     <div className={styles.wrapper} style={wrapperStyle}>

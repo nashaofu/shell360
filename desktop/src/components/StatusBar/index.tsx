@@ -1,23 +1,22 @@
 import {
-  FileUploadIcon,
+  FolderIcon,
   InfoCircleIcon,
   SiteMapIcon,
   TerminalIcon,
   usePortForwardingsAtomValue,
   useTerminalsAtomValue,
 } from "shared";
-import { useFileTransfersCount } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
 export default function StatusBar() {
   const terminalsState = useTerminalsAtomValue();
   const portForwardingsState = usePortForwardingsAtomValue();
-  const transferCount = useFileTransfersCount();
-  const terminalCount = terminalsState.size;
+  const terminals = [...terminalsState.values()];
+  const sshCount = terminals.filter((item) => item.type !== "sftp").length;
+  const sftpCount = terminals.filter((item) => item.type === "sftp").length;
   const portForwardingCount = portForwardingsState.size;
   const notificationCount =
-    [...terminalsState.values()].filter((item) => item.status !== "success")
-      .length +
+    terminals.filter((item) => item.status !== "success").length +
     [...portForwardingsState.values()].filter(
       (item) => item.status === "failed",
     ).length;
@@ -25,47 +24,39 @@ export default function StatusBar() {
   return (
     <div className={styles.statusBar}>
       <div className={styles.left}>
-        <button
-          type="button"
+        <div
           className={styles.chip}
-          title={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
-          aria-label={`${terminalCount} ${terminalCount === 1 ? "terminal" : "terminals"}`}
+          title={`${sshCount} ${sshCount === 1 ? "terminal" : "terminals"}`}
         >
           <TerminalIcon />
-          <span className={styles.value}>{terminalCount}</span>
-        </button>
+          <span className={styles.value}>{sshCount}</span>
+        </div>
         <div className={styles.divider} />
-        <button
-          type="button"
+        <div
           className={styles.chip}
-          title={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
-          aria-label={`${portForwardingCount} ${portForwardingCount === 1 ? "port forwarding" : "port forwardings"}`}
+          title={`${sftpCount} ${sftpCount === 1 ? "SFTP session" : "SFTP sessions"}`}
+        >
+          <FolderIcon />
+          <span className={styles.value}>{sftpCount}</span>
+        </div>
+        <div className={styles.divider} />
+        <div
+          className={styles.chip}
+          title={`${portForwardingCount} ${portForwardingCount === 1 ? "tunnel" : "tunnels"}`}
         >
           <SiteMapIcon />
           <span className={styles.value}>{portForwardingCount}</span>
-        </button>
-        <div className={styles.divider} />
-        <button
-          type="button"
-          className={styles.chip}
-          title={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
-          aria-label={`${transferCount} ${transferCount === 1 ? "file transferring" : "files transferring"}`}
-        >
-          <FileUploadIcon />
-          <span className={styles.value}>{transferCount}</span>
-        </button>
+        </div>
       </div>
       <div className={styles.spacer} />
       <div className={styles.right}>
-        <button
-          type="button"
+        <div
           className={styles.chip}
           title={`${notificationCount} notifications`}
-          aria-label={`${notificationCount} notifications`}
         >
           <InfoCircleIcon />
           <span className={styles.value}>{notificationCount}</span>
-        </button>
+        </div>
       </div>
     </div>
   );

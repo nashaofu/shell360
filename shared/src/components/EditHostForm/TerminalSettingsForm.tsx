@@ -1,7 +1,8 @@
 import { Select, Text, TextField } from "@radix-ui/themes";
-import type { ChangeEvent } from "react";
 import { Controller } from "react-hook-form";
 
+import { onInputChange } from "@/utils/form";
+import { resolveSpacing } from "@/utils/style";
 import { TERMINAL_THEMES } from "../XTerminal/themes";
 import styles from "./TerminalSettingsForm.module.less";
 import type { EditHostFormApi } from "./types";
@@ -15,18 +16,7 @@ export default function TerminalSettingsForm({
   formApi,
   sx,
 }: TerminalSettingsFormProps) {
-  const wrapperStyle =
-    sx && typeof sx === "object"
-      ? (sx as { mb?: number }).mb
-        ? { marginBottom: `${(sx as { mb: number }).mb * 8}px` }
-        : undefined
-      : undefined;
-
-  const onInputChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
+  const wrapperStyle = resolveSpacing(sx);
 
   return (
     <section className={styles.section} style={wrapperStyle}>

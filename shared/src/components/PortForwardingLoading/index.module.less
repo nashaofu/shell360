@@ -1,54 +1,56 @@
 .root {
   display: flex;
   flex-direction: column;
-  width: 420px;
+  width: 440px;
   max-width: 100%;
-  padding: 24px;
-  background: var(--color-panel-solid);
+  padding: 20px;
+  background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
+  border: 1px solid var(--app-soft-border, var(--gray-a4));
   border-radius: 12px;
-  box-shadow: var(--app-shadow-card, 0 8px 32px color-mix(in srgb, var(--black-a4) 72%, transparent));
+  box-shadow: var(--app-shadow-card, none);
 }
 
 .title {
-  padding: 0 0 8px;
-  font-size: 16px;
+  padding: 0 0 6px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--gray-12);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .description {
-  font-size: 13px;
+  font-size: 12px;
   user-select: text;
   word-break: break-all;
-  color: var(--gray-11);
+  color: var(--gray-10);
 }
 
 .progressWrap {
-  padding: 16px 0 0;
+  padding: 18px 0 0;
 }
 
 .errorText {
-  margin: 20px 0 28px;
+  margin: 16px 0;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 12px;
   user-select: text;
   word-break: break-all;
   color: var(--red-11);
-  border: 1px solid color-mix(in srgb, var(--red-9) 32%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--red-3) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red-9) 28%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red-3) 44%, transparent);
   line-height: 1.45;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .actionButton {
-  min-width: 150px;
+  min-width: 104px;
 }

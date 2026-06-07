@@ -211,8 +211,7 @@ export function useIsSubscription() {
         }
 
         return false;
-      } catch (err) {
-        console.error(err);
+      } catch {
         return undefined;
       }
     }

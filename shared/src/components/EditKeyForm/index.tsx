@@ -1,10 +1,9 @@
 import { IconButton, Text, TextArea, TextField } from "@radix-ui/themes";
-import { open } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
-import { type ChangeEvent, useCallback } from "react";
+import { useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import type { Key } from "tauri-plugin-data";
 
+import { onInputChange, onTextareaChange } from "@/utils/form";
 import { FileUploadIcon } from "../Icon";
 import { TextFieldPassword } from "../TextFieldPassword";
 import styles from "./index.module.less";
@@ -13,61 +12,42 @@ export type EditKeyFormFields = Partial<Omit<Key, "id">>;
 
 export type EditKeyFormProps = {
   formApi: UseFormReturn<EditKeyFormFields>;
+  onImportTextFile?: () => Promise<
+    | {
+        filename: string;
+        content: string;
+      }
+    | undefined
+  >;
 };
 
-export function EditKeyForm({ formApi }: EditKeyFormProps) {
-  const importPrivatekey = useCallback(async () => {
-    const file = await open({
-      multiple: false,
-      directory: false,
-    });
-
-    if (!file) return;
-
-    const text = await readTextFile(file);
-
-    const filename = file.split(/[\\/]/).pop() || "";
-    if (!formApi.getValues("name")) {
-      formApi.setValue("name", filename);
+export function EditKeyForm({ formApi, onImportTextFile }: EditKeyFormProps) {
+  const importPrivateKey = useCallback(async () => {
+    const file = await onImportTextFile?.();
+    if (!file) {
+      return;
     }
-    formApi.setValue("privateKey", text);
-  }, [formApi]);
+    if (!formApi.getValues("name")) {
+      formApi.setValue("name", file.filename);
+    }
+    formApi.setValue("privateKey", file.content);
+  }, [formApi, onImportTextFile]);
 
   const importPublicKey = useCallback(async () => {
-    const file = await open({
-      multiple: false,
-      directory: false,
-    });
-
-    if (!file) return;
-
-    const text = await readTextFile(file);
-    formApi.setValue("publicKey", text);
-  }, [formApi]);
+    const file = await onImportTextFile?.();
+    if (!file) {
+      return;
+    }
+    formApi.setValue("publicKey", file.content);
+  }, [formApi, onImportTextFile]);
 
   const importCertificate = useCallback(async () => {
-    const file = await open({
-      multiple: false,
-      directory: false,
-    });
-
-    if (!file) return;
-
-    const text = await readTextFile(file);
-    formApi.setValue("certificate", text);
-  }, [formApi]);
-
-  const onInputChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
-
-  const onTextareaChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      onChange(event.target.value);
-    };
+    const file = await onImportTextFile?.();
+    if (!file) {
+      return;
+    }
+    formApi.setValue("certificate", file.content);
+  }, [formApi, onImportTextFile]);
 
   return (
     <form className={styles.form} noValidate autoComplete="off">
@@ -135,7 +115,8 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 type="button"
                 variant="outline"
                 color="gray"
-                onClick={importPrivatekey}
+                disabled={!onImportTextFile}
+                onClick={importPrivateKey}
               >
                 <FileUploadIcon />
               </IconButton>
@@ -172,6 +153,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 type="button"
                 variant="outline"
                 color="gray"
+                disabled={!onImportTextFile}
                 onClick={importPublicKey}
               >
                 <FileUploadIcon />
@@ -227,6 +209,7 @@ export function EditKeyForm({ formApi }: EditKeyFormProps) {
                 type="button"
                 variant="outline"
                 color="gray"
+                disabled={!onImportTextFile}
                 onClick={importCertificate}
               >
                 <FileUploadIcon />

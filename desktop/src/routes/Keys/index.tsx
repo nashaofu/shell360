@@ -1,24 +1,28 @@
+import { DropdownMenu } from "@radix-ui/themes";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
-  AddIcon,
-  ContentCopyIcon,
-  DeleteIcon,
-  EditIcon,
   FileUploadIcon,
+  getAvatarColor,
+  getAvatarLabel,
+  KeyIcon,
   LockIcon,
-  SearchIcon,
+  MoreIcon,
   useKeys,
 } from "shared";
 import { addKey, deleteKey, type Key } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import Empty from "@/components/Empty";
 import GenerateKey from "@/components/GenerateKey";
+import ListToolbar from "@/components/ListToolbar";
+import { useConfirmDelete } from "@/hooks/useConfirmDelete";
+import { useListView } from "@/hooks/useListView";
 import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
 import panel from "@/styles/panel.module.less";
+import { filterByKeyword } from "@/utils/list";
 import styles from "./index.module.less";
+import KeyActions from "./KeyActions";
 
 function getKeyTypeLabel(key: Key) {
   const type = key.publicKey.trim().split(/\s+/)[0] || "";
@@ -47,45 +51,25 @@ function getKeyTypeLabel(key: Key) {
 
 function getKeyPreview(publicKey: string) {
   const [, value = publicKey] = publicKey.trim().split(/\s+/);
-  if (value.length <= 28) return value;
-  return `${value.slice(0, 18)}...${value.slice(-10)}`;
-}
-
-const AVATAR_COLORS = ["#4285f4", "#27ae60", "#f59e0b", "#7c5cbf", "#e53935"];
-
-function getAvatarColor(name: string) {
-  return AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
-}
-
-function getAvatarLabel(name: string) {
-  const words = name
-    .split(/[\s-_:/.]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-  if (words.length >= 2) {
-    return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+  if (value.length <= 22) return value;
+  return `${value.slice(0, 12)}...${value.slice(-7)}`;
 }
 
 export default function Keys() {
-  const [keyword, setKeyword] = useState("");
+  const { keyword, setKeyword, viewMode, setViewMode } = useListView();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
 
-  const modal = useModal();
+  const confirmDelete = useConfirmDelete();
   const message = useMessage();
   const { data: keys = [], loading, refresh: refreshKeys } = useKeys();
 
   const items = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
-    if (!kw) return keys;
-    return keys.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(kw) ||
-        item.publicKey?.toLowerCase().includes(kw),
-    );
+    return filterByKeyword(keys, keyword, [
+      (item) => item.name,
+      (item) => item.publicKey,
+    ]);
   }, [keys, keyword]);
 
   const onAddKeyClose = useCallback(() => {
@@ -104,26 +88,13 @@ export default function Keys() {
 
   const onDelete = useCallback(
     (item: Key) => {
-      modal.confirm({
-        title: "Delete Confirmation",
+      confirmDelete({
         content: `Are you sure to delete the key: ${item.name}?`,
-        OkButtonProps: {
-          color: "orange",
-        },
-        onOk: async () => {
-          try {
-            await deleteKey(item);
-          } catch (err) {
-            message.error({
-              message: get(err, "message") || "Deletion failed",
-            });
-            throw err;
-          }
-          refreshKeys();
-        },
+        onDelete: () => deleteKey(item),
+        onSuccess: refreshKeys,
       });
     },
-    [message, modal, refreshKeys],
+    [confirmDelete, refreshKeys],
   );
 
   const onCopyKey = useCallback(
@@ -148,38 +119,50 @@ export default function Keys() {
   return (
     <>
       <section className={panel.page}>
-        <div className={panel.toolbar}>
-          <span className={panel.title}>Keys</span>
-          <label className={panel.search}>
-            <SearchIcon className={panel.searchIcon} />
-            <input
-              className={panel.searchInput}
-              value={keyword}
-              placeholder="Search keys..."
-              onChange={(event) => setKeyword(event.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className={panel.button}
-            onClick={() => setIsOpenAddKey(true)}
-          >
-            <FileUploadIcon width="11" height="11" />
-            Add Key
-          </button>
-          <button
-            type="button"
-            className={clsx(panel.button, panel.buttonPrimary)}
-            onClick={() => setIsOpenGenerateKey(true)}
-          >
-            <AddIcon width="11" height="11" />
-            Generate Key
-          </button>
-        </div>
+        <ListToolbar
+          title="Keys"
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder="Search keys..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        >
+          <div className={panel.splitButton}>
+            <button
+              type="button"
+              className={clsx(panel.button, panel.buttonPrimary)}
+              onClick={() => setIsOpenGenerateKey(true)}
+            >
+              <KeyIcon width="11" height="11" />
+              Generate Key
+            </button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <button
+                  type="button"
+                  className={clsx(panel.button, panel.buttonPrimary)}
+                  aria-label="More key options"
+                >
+                  <MoreIcon width="13" height="13" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content side="bottom" align="end" sideOffset={6}>
+                <DropdownMenu.Item onSelect={() => setIsOpenGenerateKey(true)}>
+                  <KeyIcon style={{ marginRight: 8 }} />
+                  Generate Key
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => setIsOpenAddKey(true)}>
+                  <FileUploadIcon style={{ marginRight: 8 }} />
+                  Import Key
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          </div>
+        </ListToolbar>
         <div className={panel.content}>
           {loading ? (
             <Empty desc="Loading keys..." />
-          ) : items.length ? (
+          ) : items.length && viewMode === "grid" ? (
             <div className={styles.grid}>
               {items.map((item) => {
                 const name = item.name;
@@ -218,35 +201,82 @@ export default function Keys() {
                     {item.certificate && (
                       <div className={styles.certBadge}>Signed certificate</div>
                     )}
-                    <div className={styles.cardFooter}>
-                      <button
-                        type="button"
-                        className={styles.primaryBtn}
-                        onClick={() => onCopyKey(item)}
-                      >
-                        <ContentCopyIcon width="10" height="10" />
-                        Duplicate
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.primaryBtn}
-                        onClick={() => onEdit(item)}
-                      >
-                        <EditIcon width="10" height="10" />
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.dangerBtn}
-                        onClick={() => onDelete(item)}
-                      >
-                        <DeleteIcon width="10" height="10" />
-                        Delete
-                      </button>
-                    </div>
+                    <KeyActions
+                      item={item}
+                      viewMode="grid"
+                      onCopy={onCopyKey}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </article>
                 );
               })}
+            </div>
+          ) : items.length ? (
+            <div className={panel.tableWrap}>
+              <table className={panel.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Private Key</th>
+                    <th>Public Key</th>
+                    <th>Passphrase</th>
+                    <th>Certificate</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id}>
+                      <td className={styles.listName}>{item.name}</td>
+                      <td>
+                        <span className={styles.typeBadge}>
+                          {getKeyTypeLabel(item)}
+                        </span>
+                      </td>
+                      <td>
+                        {item.privateKey ? (
+                          <span className={styles.stateBadge}>Configured</span>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td className={styles.fingerprint}>
+                        {getKeyPreview(item.publicKey)}
+                      </td>
+                      <td>
+                        {item.passphrase ? (
+                          <span className={styles.stateBadge}>
+                            <LockIcon width="9" height="9" />
+                            Set
+                          </span>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td>
+                        {item.certificate ? (
+                          <span className={styles.certBadge}>
+                            Signed certificate
+                          </span>
+                        ) : (
+                          "--"
+                        )}
+                      </td>
+                      <td>
+                        <KeyActions
+                          item={item}
+                          viewMode="list"
+                          onCopy={onCopyKey}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <Empty desc="There is no key yet, add it now.">
@@ -256,14 +286,14 @@ export default function Keys() {
                 onClick={() => setIsOpenAddKey(true)}
               >
                 <FileUploadIcon width="11" height="11" />
-                Add Key
+                Import Key
               </button>
               <button
                 type="button"
                 className={clsx(panel.button, panel.buttonPrimary)}
                 onClick={() => setIsOpenGenerateKey(true)}
               >
-                <AddIcon width="11" height="11" />
+                <KeyIcon width="11" height="11" />
                 Generate Key
               </button>
             </Empty>

@@ -1,22 +1,19 @@
-import { DropdownMenu, IconButton } from "@radix-ui/themes";
+import { IconButton } from "@radix-ui/themes";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
   AddIcon,
-  ContentCopyIcon,
-  DeleteIcon,
-  EditIcon,
   FilterIcon,
-  GridIcon,
+  FolderIcon,
+  getAvatarColor,
+  getAvatarLabel,
   getHostDesc,
   getHostName,
+  getTagTone,
   HostTagsSelect,
   JumpIcon,
-  ListIcon,
   MoreIcon,
-  SearchIcon,
-  SftpIcon,
   TerminalIcon,
   useHosts,
   useTerminalsAtomWithApi,
@@ -25,60 +22,28 @@ import { addHost, deleteHost, type Host } from "tauri-plugin-data";
 
 import AddHost from "@/components/AddHost";
 import Empty from "@/components/Empty";
+import ListToolbar from "@/components/ListToolbar";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
+import { useConfirmDelete } from "@/hooks/useConfirmDelete";
+import { useListView } from "@/hooks/useListView";
 import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
 import panel from "@/styles/panel.module.less";
+import { filterByKeyword } from "@/utils/list";
+import HostActionsMenu from "./HostActionsMenu";
 import styles from "./index.module.less";
-
-const AVATAR_COLORS = ["#4285f4", "#27ae60", "#f59e0b", "#7c5cbf", "#e53935"];
-
-function getAvatarColor(name: string) {
-  return AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
-}
-
-function getAvatarLabel(name: string) {
-  const words = name
-    .split(/[\s-_:/.]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  if (words.length >= 2) {
-    return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
-  }
-
-  return name.slice(0, 2).toUpperCase();
-}
-
-type HostTone = "Prod" | "Staging" | "Local" | "Accent";
-
-function getHostTone(tag: string): HostTone {
-  const normalized = tag.trim().toLowerCase();
-  if (normalized.includes("prod")) {
-    return "Prod";
-  }
-  if (normalized.includes("stag")) {
-    return "Staging";
-  }
-  if (normalized.includes("local")) {
-    return "Local";
-  }
-  return "Accent";
-}
 
 function getHostTags(host: Host) {
   return (host.tags || []).filter((tag) => tag.trim()).map((tag) => tag.trim());
 }
 
 export default function Hosts() {
-  const [keyword, setKeyword] = useState("");
+  const { keyword, setKeyword, viewMode, setViewMode } = useListView();
   const [selectedTag, setSelectedTag] = useState<string>();
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const activateTerminal = useActivateTerminal();
 
-  const modal = useModal();
+  const confirmDelete = useConfirmDelete();
   const message = useMessage();
 
   const { data: hosts = [], refresh: refreshHosts } = useHosts();
@@ -86,17 +51,14 @@ export default function Hosts() {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
   const items = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
     let filtered = hosts;
     if (selectedTag) {
       filtered = filtered.filter((item) => item.tags?.includes(selectedTag));
     }
-    if (!kw) return filtered;
-    return filtered.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(kw) ||
-        `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
-    );
+    return filterByKeyword(filtered, keyword, [
+      (item) => item.name,
+      (item) => `${item.hostname}:${item.port}`,
+    ]);
   }, [hosts, keyword, selectedTag]);
 
   const onOpenChannel = useCallback(
@@ -120,6 +82,11 @@ export default function Hosts() {
     setEditHost(undefined);
   }, []);
 
+  const onEditHost = useCallback((host: Host) => {
+    setEditHost(host);
+    setIsOpenAddHost(true);
+  }, []);
+
   const onCopyHost = useCallback(
     async (host: Host) => {
       try {
@@ -140,78 +107,42 @@ export default function Hosts() {
   const onDeleteHost = useCallback(
     (host: Host) => {
       const hostname = host.name || `${host.hostname}:${host.port}`;
-      modal.confirm({
-        title: "Delete Confirmation",
+      confirmDelete({
         content: `Are you sure to delete the host: ${hostname}?`,
-        OkButtonProps: { color: "orange" },
-        onOk: async () => {
-          try {
-            await deleteHost(host);
-          } catch (err) {
-            message.error({
-              message: get(err, "message") || "Deletion failed",
-            });
-            throw err;
-          }
-          refreshHosts();
-        },
+        onDelete: () => deleteHost(host),
+        onSuccess: refreshHosts,
       });
     },
-    [modal, refreshHosts, message],
+    [confirmDelete, refreshHosts],
   );
 
   return (
     <>
       <section className={panel.page}>
-        <div className={panel.toolbar}>
-          <span className={panel.title}>Hosts</span>
-          <label className={panel.search}>
-            <SearchIcon className={panel.searchIcon} />
-            <input
-              className={panel.searchInput}
-              value={keyword}
-              placeholder="Search hosts..."
-              onChange={(event) => setKeyword(event.target.value)}
-            />
-          </label>
-          <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-            {({ label }) => (
-              <button
-                type="button"
-                className={clsx(
-                  panel.button,
-                  selectedTag && panel.buttonPrimary,
-                )}
-              >
-                <FilterIcon width="11" height="11" />
-                {label}
-              </button>
-            )}
-          </HostTagsSelect>
-          <div className={panel.toggleGroup}>
-            <button
-              type="button"
-              className={clsx(
-                panel.toggleButton,
-                viewMode === "grid" && panel.toggleButtonActive,
+        <ListToolbar
+          title="Hosts"
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          searchPlaceholder="Search hosts..."
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          leading={
+            <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
+              {({ label }) => (
+                <button
+                  type="button"
+                  className={clsx(
+                    panel.button,
+                    selectedTag && panel.buttonPrimary,
+                  )}
+                >
+                  <FilterIcon width="11" height="11" />
+                  {label}
+                </button>
               )}
-              title="Grid view"
-              onClick={() => setViewMode("grid")}
-            >
-              <GridIcon width="12" height="12" />
-            </button>
-            <button
-              type="button"
-              className={clsx(
-                panel.toggleButton,
-                viewMode === "list" && panel.toggleButtonActive,
-              )}
-              title="List view"
-              onClick={() => setViewMode("list")}
-            >
-              <ListIcon width="12" height="12" />
-            </button>
-          </div>
+            </HostTagsSelect>
+          }
+        >
           <button
             type="button"
             className={clsx(panel.button, panel.buttonPrimary)}
@@ -220,7 +151,7 @@ export default function Hosts() {
             <AddIcon width="11" height="11" />
             New Host
           </button>
-        </div>
+        </ListToolbar>
         <div className={panel.content}>
           {items.length > 0 ? (
             viewMode === "grid" ? (
@@ -267,7 +198,7 @@ export default function Hosts() {
                                 key={tag}
                                 className={clsx(
                                   panel.tag,
-                                  panel[`tag${getHostTone(tag)}`],
+                                  panel[`tag${getTagTone(tag)}`],
                                 )}
                               >
                                 {tag}
@@ -283,7 +214,7 @@ export default function Hosts() {
                           onClick={() => onOpenChannel(item)}
                         >
                           <TerminalIcon width="11" height="11" />
-                          Open Terminal
+                          Terminal
                         </button>
                         <button
                           type="button"
@@ -293,43 +224,20 @@ export default function Hosts() {
                           )}
                           onClick={() => onOpenSftp(item)}
                         >
-                          <SftpIcon width="11" height="11" />
+                          <FolderIcon width="11" height="11" />
                           SFTP
                         </button>
-                        <DropdownMenu.Root>
-                          <DropdownMenu.Trigger>
+                        <HostActionsMenu
+                          host={item}
+                          onEdit={onEditHost}
+                          onCopy={onCopyHost}
+                          onDelete={onDeleteHost}
+                          trigger={
                             <button type="button" className={styles.moreBtn}>
                               <MoreIcon width="12" height="12" />
                             </button>
-                          </DropdownMenu.Trigger>
-                          <DropdownMenu.Content
-                            side="bottom"
-                            align="end"
-                            sideOffset={4}
-                          >
-                            <DropdownMenu.Item
-                              onSelect={() => {
-                                setEditHost(item);
-                                setIsOpenAddHost(true);
-                              }}
-                            >
-                              <EditIcon style={{ marginRight: 8 }} />
-                              Edit
-                            </DropdownMenu.Item>
-                            <DropdownMenu.Item
-                              onSelect={() => onCopyHost(item)}
-                            >
-                              <ContentCopyIcon style={{ marginRight: 8 }} />
-                              Copy
-                            </DropdownMenu.Item>
-                            <DropdownMenu.Item
-                              onSelect={() => onDeleteHost(item)}
-                            >
-                              <DeleteIcon style={{ marginRight: 8 }} />
-                              Delete
-                            </DropdownMenu.Item>
-                          </DropdownMenu.Content>
-                        </DropdownMenu.Root>
+                          }
+                        />
                       </div>
                     </article>
                   );
@@ -368,7 +276,7 @@ export default function Hosts() {
                                     key={tag}
                                     className={clsx(
                                       panel.tag,
-                                      panel[`tag${getHostTone(tag)}`],
+                                      panel[`tag${getTagTone(tag)}`],
                                     )}
                                   >
                                     {tag}
@@ -383,7 +291,7 @@ export default function Hosts() {
                                   className={panel.actionButton}
                                   onClick={() => onOpenChannel(item)}
                                 >
-                                  Open
+                                  Terminal
                                 </button>
                                 <button
                                   type="button"
@@ -392,8 +300,12 @@ export default function Hosts() {
                                 >
                                   SFTP
                                 </button>
-                                <DropdownMenu.Root>
-                                  <DropdownMenu.Trigger>
+                                <HostActionsMenu
+                                  host={item}
+                                  onEdit={onEditHost}
+                                  onCopy={onCopyHost}
+                                  onDelete={onDeleteHost}
+                                  trigger={
                                     <IconButton
                                       type="button"
                                       size="1"
@@ -402,37 +314,8 @@ export default function Hosts() {
                                     >
                                       <MoreIcon />
                                     </IconButton>
-                                  </DropdownMenu.Trigger>
-                                  <DropdownMenu.Content
-                                    side="bottom"
-                                    align="end"
-                                    sideOffset={4}
-                                  >
-                                    <DropdownMenu.Item
-                                      onSelect={() => {
-                                        setEditHost(item);
-                                        setIsOpenAddHost(true);
-                                      }}
-                                    >
-                                      <EditIcon style={{ marginRight: 8 }} />
-                                      Edit
-                                    </DropdownMenu.Item>
-                                    <DropdownMenu.Item
-                                      onSelect={() => onCopyHost(item)}
-                                    >
-                                      <ContentCopyIcon
-                                        style={{ marginRight: 8 }}
-                                      />
-                                      Copy
-                                    </DropdownMenu.Item>
-                                    <DropdownMenu.Item
-                                      onSelect={() => onDeleteHost(item)}
-                                    >
-                                      <DeleteIcon style={{ marginRight: 8 }} />
-                                      Delete
-                                    </DropdownMenu.Item>
-                                  </DropdownMenu.Content>
-                                </DropdownMenu.Root>
+                                  }
+                                />
                               </div>
                             </td>
                           </tr>

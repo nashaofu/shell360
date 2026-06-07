@@ -39,15 +39,6 @@ export default function AuthenticationError({
     },
   });
 
-  // const authMethods = useMemo(() => {
-  //   const kind = get(error, 'kind');
-  //   if (kind === 'Password' || kind === 'PublicKey' || kind === 'Certificate') {
-  //     return get(error, 'methodSet');
-  //   }
-  // }, [error]);
-
-  // console.log(authMethods);
-
   const errorInfo = useMemo(() => {
     const kind = get(error, "kind");
     const message = get(error, "message");
@@ -111,7 +102,7 @@ export default function AuthenticationError({
         </StatusButton>
         <div className={styles.splitButtonGroup}>
           <Button
-            style={{ flex: 1, minWidth: 0 }}
+            className={styles.splitPrimaryButton}
             onClick={formApi.handleSubmit((values) =>
               onContinue(values, false),
             )}
@@ -120,14 +111,7 @@ export default function AuthenticationError({
           </Button>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <Button
-                style={{
-                  width: 34,
-                  minWidth: 34,
-                  padding: 0,
-                  justifyContent: "center",
-                }}
-              >
+              <Button className={styles.splitMenuButton}>
                 <MoreIcon />
               </Button>
             </DropdownMenu.Trigger>

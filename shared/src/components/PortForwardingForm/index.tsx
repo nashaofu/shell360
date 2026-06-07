@@ -1,9 +1,9 @@
 import { Select, Text, TextField } from "@radix-ui/themes";
-import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { PortForwardingType } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
+import { onInputChange } from "@/utils/form";
 import styles from "./index.module.less";
 
 export type PortForwardingFormFields = {
@@ -22,15 +22,15 @@ export type PortForwardingFormProps = {
 
 const PORT_FORWARDING_TYPES = [
   {
-    label: "Local forwarding",
+    label: "Local tunnel",
     value: PortForwardingType.Local,
   },
   {
-    label: "Remote forwarding",
+    label: "Remote tunnel",
     value: PortForwardingType.Remote,
   },
   {
-    label: "Dynamic forwarding",
+    label: "Dynamic tunnel",
     value: PortForwardingType.Dynamic,
   },
 ];
@@ -39,12 +39,6 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
   const portForwardingType = formApi.watch("portForwardingType");
   const { data: hosts } = useHosts();
   const hostOptions = hosts ?? [];
-
-  const onInputChange =
-    (onChange: (value: string) => void) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
 
   return (
     <form className={styles.form} noValidate autoComplete="off">
@@ -95,7 +89,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
         rules={{
           required: {
             value: true,
-            message: "Please select port forwarding type",
+            message: "Please select tunnel type",
           },
         }}
         render={({ field, fieldState }) => (
@@ -106,7 +100,7 @@ export function PortForwardingForm({ formApi }: PortForwardingFormProps) {
               weight="medium"
               className={styles.fieldLabel}
             >
-              Port forwarding type
+              Tunnel type
             </Text>
             <Select.Root
               value={field.value || PortForwardingType.Local}

@@ -4,7 +4,6 @@ export { ReactComponent as ArrowLeftIcon } from "./svgs/arrow-left.svg";
 export { ReactComponent as ArrowRightIcon } from "./svgs/arrow-right.svg";
 export { ReactComponent as ArrowUpIcon } from "./svgs/arrow-up.svg";
 export { ReactComponent as CheckIcon } from "./svgs/check.svg";
-export { ReactComponent as CloseIcon } from "./svgs/close.svg";
 export { ReactComponent as CodeIcon } from "./svgs/code.svg";
 export { ReactComponent as ContentCopyIcon } from "./svgs/content-copy.svg";
 export { ReactComponent as DeleteIcon } from "./svgs/delete.svg";
@@ -31,7 +30,6 @@ export { ReactComponent as MoreIcon } from "./svgs/more.svg";
 export { ReactComponent as NumberIcon } from "./svgs/number.svg";
 export { ReactComponent as SearchIcon } from "./svgs/search.svg";
 export { ReactComponent as SettingsIcon } from "./svgs/settings.svg";
-export { ReactComponent as SftpIcon } from "./svgs/sftp.svg";
 export { ReactComponent as SiteMapIcon } from "./svgs/site-map.svg";
 export { ReactComponent as SuccessCircleIcon } from "./svgs/success-circle.svg";
 export { ReactComponent as SymlinkIcon } from "./svgs/symlink.svg";
@@ -41,7 +39,10 @@ export { ReactComponent as VariableIcon } from "./svgs/variable.svg";
 export { ReactComponent as VisibilityIcon } from "./svgs/visibility.svg";
 export { ReactComponent as VisibilityOffIcon } from "./svgs/visibility-off.svg";
 export { ReactComponent as WarningCircleIcon } from "./svgs/warning-circle.svg";
-export { ReactComponent as WindowCloseIcon } from "./svgs/window-close.svg";
+export {
+  ReactComponent as CloseIcon,
+  ReactComponent as WindowCloseIcon,
+} from "./svgs/window-close.svg";
 export { ReactComponent as WindowMaximizeIcon } from "./svgs/window-maximize.svg";
 export { ReactComponent as WindowMinimizeIcon } from "./svgs/window-minimize.svg";
 export { ReactComponent as WindowRestoreIcon } from "./svgs/window-restore.svg";

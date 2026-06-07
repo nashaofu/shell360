@@ -143,7 +143,7 @@ export default function Hosts() {
       headerRight={
         <>
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-            {({ onChangeOpen }) => {
+            {() => {
               return (
                 <button
                   type="button"
@@ -154,7 +154,6 @@ export default function Hosts() {
                     cursor: "pointer",
                     padding: 4,
                   }}
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
                   <LabelIcon />
                 </button>
@@ -202,7 +201,7 @@ export default function Hosts() {
         <div style={{ marginLeft: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-              {({ onChangeOpen, label }) => (
+              {({ label }) => (
                 <button
                   type="button"
                   style={{
@@ -217,7 +216,6 @@ export default function Hosts() {
                     color: "inherit",
                     height: 36,
                   }}
-                  onClick={(event) => onChangeOpen(event.currentTarget)}
                 >
                   <LabelIcon />
                   {label}

@@ -2,25 +2,23 @@
 @import "./vars.css";
 
 .radix-themes:where(.light, .light-theme) {
-  --color-background: #f6f8fb;
+  --color-background: #fbfbfc;
   --color-panel-solid: #ffffff;
-  --color-panel-translucent: rgba(255, 255, 255, 0.88);
+  --color-panel-translucent: rgba(255, 255, 255, 0.9);
   --color-surface: rgba(255, 255, 255, 0.96);
 
-  --app-workspace-bg: #f4f7fb;
+  --app-workspace-bg: #fbfbfc;
   --app-panel-bg: #ffffff;
   --app-elevated-bg: #ffffff;
-  --app-chrome-bg: linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
-  --app-rail-bg: linear-gradient(180deg, #fafcff 0%, #f2f6fb 100%);
-  --app-toolbar-bg: linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
-  --app-status-bg: #f1f5fa;
-  --app-panel-border: rgba(20, 31, 50, 0.1);
-  --app-soft-border: rgba(20, 31, 50, 0.075);
-  --app-hover-bg: rgba(49, 66, 101, 0.055);
-  --app-active-bg: rgba(62, 99, 221, 0.1);
-  --app-control-bg: rgba(255, 255, 255, 0.72);
-  --app-shadow-soft: 0 1px 2px rgba(18, 25, 38, 0.045);
-  --app-shadow-card: 0 1px 2px rgba(18, 25, 38, 0.04);
+  --app-toolbar-bg: #ffffff;
+  --app-status-bg: #f7f7f8;
+  --app-panel-border: var(--gray-a4);
+  --app-soft-border: var(--gray-a3);
+  --app-hover-bg: var(--gray-a3);
+  --app-active-bg: var(--accent-a3);
+  --app-control-bg: #ffffff;
+  --app-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --app-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 *::-webkit-scrollbar {

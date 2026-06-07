@@ -24,6 +24,25 @@ export default function PortForwardings() {
     [hosts],
   );
 
+  const filteredItems = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    if (!kw) {
+      return portForwardings;
+    }
+
+    return portForwardings.filter((item) => {
+      const host = hostsMap.get(item.hostId);
+      return [
+        item.name,
+        item.portForwardingType,
+        `${item.localAddress}:${item.localPort}`,
+        `${item.remoteAddress ?? ""}:${item.remotePort ?? ""}`,
+        host?.name,
+        host?.hostname,
+      ].some((value) => value?.toLowerCase().includes(kw));
+    });
+  }, [hostsMap, keyword, portForwardings]);
+
   const onAddPortForwardingClose = useCallback(() => {
     setIsOpenAddPortForwarding(false);
     setEditItem(undefined);
@@ -35,7 +54,7 @@ export default function PortForwardings() {
   }, []);
 
   return (
-    <Page title="Port forwardings">
+    <Page title="Tunnels">
       <div
         style={{
           display: "flex",
@@ -70,7 +89,7 @@ export default function PortForwardings() {
         }}
         itemWidth={360}
       >
-        {portForwardings.map((item) => (
+        {filteredItems.map((item) => (
           <PortForwardingItem
             key={item.id}
             item={item}
@@ -80,10 +99,16 @@ export default function PortForwardings() {
           />
         ))}
       </AutoRepeatGrid>
-      {!portForwardings.length && (
-        <Empty desc="There is no port forwarding yet, add it now.">
+      {!filteredItems.length && (
+        <Empty
+          desc={
+            portForwardings.length
+              ? "No tunnels match your search."
+              : "There is no tunnel yet, add it now."
+          }
+        >
           <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-            Add port forwarding
+            Add tunnel
           </Button>
         </Empty>
       )}

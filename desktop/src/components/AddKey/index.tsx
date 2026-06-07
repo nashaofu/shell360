@@ -1,10 +1,12 @@
-import { Button, Flex } from "@radix-ui/themes";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { get } from "lodash-es";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { EditKeyForm, type EditKeyFormFields, useKeys } from "shared";
 import { addKey, type Key, updateKey } from "tauri-plugin-data";
 
+import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";
 import useMessage from "@/hooks/useMessage";
 
@@ -35,6 +37,21 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       certificate: data?.certificate ?? "",
     },
   });
+
+  const importTextFile = useCallback(async () => {
+    const file = await openDialog({
+      multiple: false,
+      directory: false,
+    });
+    if (!file) {
+      return undefined;
+    }
+
+    return {
+      filename: file.split(/[\\/]/).pop() || "",
+      content: await readTextFile(file),
+    };
+  }, []);
 
   const onSave = useCallback(
     async (values: EditKeyFormFields) => {
@@ -81,27 +98,15 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       title={data ? "Edit key" : "Add key"}
       onCancel={onCancel}
       footer={
-        <Flex gap="3">
-          <Button
-            style={{ flex: 1 }}
-            variant="outline"
-            loading={saving}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            style={{ flex: 1 }}
-            loading={saving}
-            onClick={formApi.handleSubmit(onSave)}
-          >
-            {data ? "Save" : "Add"}
-          </Button>
-        </Flex>
+        <DrawerFooter
+          loading={saving}
+          submitLabel={data ? "Save" : "Add"}
+          onCancel={onCancel}
+          onSubmit={formApi.handleSubmit(onSave)}
+        />
       }
     >
-      <EditKeyForm formApi={formApi} />
+      <EditKeyForm formApi={formApi} onImportTextFile={importTextFile} />
     </PageDrawer>
   );
 }

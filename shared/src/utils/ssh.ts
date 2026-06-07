@@ -22,6 +22,16 @@ export interface JumpHostChainItem {
   error?: unknown;
 }
 
+export function getActiveSession(
+  jumpHostChain: JumpHostChainItem[],
+): SSHSession | undefined {
+  const lastItem = jumpHostChain.at(-1);
+  if (lastItem?.status !== "authenticated") {
+    return undefined;
+  }
+  return lastItem.session;
+}
+
 export interface ResolveJumpHostChainOpts {
   hostsMap: Map<string, Host>;
   onDisconnect?: (data: SSHSessionDisconnectEvent) => unknown;
@@ -149,6 +159,22 @@ export async function tearDownJumpHostChainConnections(
   }
 }
 
+export async function stopPortForwardingRuntime(
+  portForwardingsAtom: PortForwardingsAtom,
+) {
+  try {
+    await closePortForwarding(portForwardingsAtom);
+  } catch {
+    // The forwarding can already be closed by the backend; still release SSH sessions.
+  }
+
+  try {
+    await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+  } catch {
+    // Continue restart/close flows even if a stale SSH session is already gone.
+  }
+}
+
 /**
  * 关闭端口转发
  */
@@ -181,23 +207,23 @@ export async function establishPortForwarding(
     });
   }
 
-  await establishJumpHostChainConnections(portForwardingsAtom.jumpHostChain, {
-    keysMap,
-    onJumpHostChainItemUpdate: (jumpHostChainItem) => {
-      if (onUpdate) {
-        onUpdate({
-          ...portForwardingsAtom,
-          jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) =>
-            item.host.id === jumpHostChainItem.host.id
-              ? jumpHostChainItem
-              : item,
-          ),
-        });
-      }
-    },
-  });
-
   try {
+    await establishJumpHostChainConnections(portForwardingsAtom.jumpHostChain, {
+      keysMap,
+      onJumpHostChainItemUpdate: (jumpHostChainItem) => {
+        if (onUpdate) {
+          onUpdate({
+            ...portForwardingsAtom,
+            jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) =>
+              item.host.id === jumpHostChainItem.host.id
+                ? jumpHostChainItem
+                : item,
+            ),
+          });
+        }
+      },
+    });
+
     const portForwarding = portForwardingsAtom.portForwarding;
     const sshPortForwarding = portForwardingsAtom.sshPortForwarding;
     if (portForwarding.portForwardingType === PortForwardingType.Local) {
@@ -240,7 +266,7 @@ export async function establishPortForwarding(
         isReconnecting: false, // 清除重连标志
       });
     }
-    await closePortForwarding(portForwardingsAtom);
+    await stopPortForwardingRuntime(portForwardingsAtom);
     throw error;
   }
 }

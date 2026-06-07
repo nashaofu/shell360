@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Outlet } from "react-router-dom";
-import TitleBar from "@/components/TitleBar";
+import AuthTitleBar from "@/components/AuthTitleBar";
 import styles from "./index.module.less";
 
 type AuthLayoutProps = {
@@ -10,7 +10,7 @@ type AuthLayoutProps = {
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className={styles.root}>
-      <TitleBar basic />
+      <AuthTitleBar />
       <main className={styles.content}>
         <div className={styles.contentInner}>{children ?? <Outlet />}</div>
       </main>

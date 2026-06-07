@@ -102,13 +102,17 @@ export function useTerminalsAtomWithApi() {
     },
   );
 
-  const addTerminal = useMemoizedFn(
-    (host: Host): [TerminalAtom, Map<string, TerminalAtom>] => {
+  const addTerminalOfType = useMemoizedFn(
+    (
+      host: Host,
+      type: "terminal" | "sftp",
+    ): [TerminalAtom, Map<string, TerminalAtom>] => {
       const uuid = uuidV4();
       const map = new Map(stateRef.current);
 
       const count = [...map.values()].reduce((prev, item) => {
-        if (item.host.id === host.id) {
+        const sameType = type === "sftp" ? item.type === "sftp" : true;
+        if (item.host.id === host.id && sameType) {
           return prev + 1;
         }
         return prev;
@@ -127,55 +131,23 @@ export function useTerminalsAtomWithApi() {
         name: count === 0 ? name : `${name} (${count})`,
         jumpHostChain,
         status: "pending",
-        type: "terminal",
+        type,
       };
 
-      establishTerminal(item);
-
       map.set(uuid, item);
-
       setState(map);
       stateRef.current = map;
+      establishTerminal(item);
       return [item, map];
     },
   );
 
-  const addSftpTerminal = useMemoizedFn(
-    (host: Host): [TerminalAtom, Map<string, TerminalAtom>] => {
-      const uuid = uuidV4();
-      const map = new Map(stateRef.current);
+  const addTerminal = useMemoizedFn((host: Host) =>
+    addTerminalOfType(host, "terminal"),
+  );
 
-      const count = [...map.values()].reduce((prev, item) => {
-        if (item.host.id === host.id && item.type === "sftp") {
-          return prev + 1;
-        }
-        return prev;
-      }, 0);
-
-      const name = host.name || `${host.hostname}:${host.port}`;
-
-      const jumpHostChain = resolveJumpHostChain(host, {
-        hostsMap,
-        onDisconnect: () => deleteTerminal(uuid),
-      });
-
-      const item: TerminalAtom = {
-        uuid,
-        host,
-        name: `SFTP - ${count === 0 ? name : `${name} (${count})`}`,
-        jumpHostChain,
-        status: "pending",
-        type: "sftp",
-      };
-
-      establishTerminal(item);
-
-      map.set(uuid, item);
-
-      setState(map);
-      stateRef.current = map;
-      return [item, map];
-    },
+  const addSftpTerminal = useMemoizedFn((host: Host) =>
+    addTerminalOfType(host, "sftp"),
   );
 
   return {

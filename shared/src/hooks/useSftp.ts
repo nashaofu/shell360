@@ -4,10 +4,17 @@ import { type SSHSession, SSHSftp } from "tauri-plugin-ssh";
 
 export interface UseSftpOpts {
   session?: SSHSession;
+  onBefore?: () => unknown;
   onSuccess?: (sftp: SSHSftp) => unknown;
+  onError?: (error: unknown) => unknown;
 }
 
-export function useSftp({ session, onSuccess }: UseSftpOpts) {
+export function useSftp({
+  session,
+  onBefore,
+  onSuccess,
+  onError,
+}: UseSftpOpts) {
   const sftpRef = useRef<SSHSftp>(null);
 
   const { loading, error, run, runAsync, refresh, refreshAsync } = useRequest(
@@ -27,7 +34,9 @@ export function useSftp({ session, onSuccess }: UseSftpOpts) {
     },
     {
       ready: !!session,
+      onBefore,
       onSuccess,
+      onError,
     },
   );
 

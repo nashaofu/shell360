@@ -21,6 +21,7 @@ const STATUS_BUTTONS = {
 
 type SSHLoadingProps = {
   sx?: CSSProperties | Array<CSSProperties | undefined>;
+  command?: string;
 } & ErrorProps;
 
 export function SSHLoading({
@@ -28,6 +29,7 @@ export function SSHLoading({
   loading,
   error,
   sx,
+  command,
   onReConnect,
   onReAuth,
   onRetry,
@@ -52,11 +54,14 @@ export function SSHLoading({
             <div className={styles.hostName}>{getHostName(host)}</div>
             <div
               className={styles.hostCommand}
-            >{`ssh ${host.username}@${host.hostname} -p ${host.port}`}</div>
+            >{`${command ?? `ssh ${host.username}@${host.hostname} -p ${host.port}`}`}</div>
           </div>
         </div>
         <div className={styles.progressWrap}>
-          <Progress value={null} color={error ? "red" : undefined} />
+          <Progress
+            value={error ? 100 : null}
+            color={error ? "red" : undefined}
+          />
         </div>
         {!!error && (
           <div className={styles.errorSection}>

@@ -4,7 +4,7 @@ import { lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ModalProvider } from "shared";
-import { themeAtom } from "./atom/themeAtom";
+import { themeAtom } from "./atoms/theme.atom";
 import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 import RouterErrorBoundary from "./components/RouterErrorBoundary";
 import Root from "./routes/Root";

@@ -41,7 +41,6 @@ export default function FileEditorModal({
         if (cancelled) {
           return;
         }
-        console.error("Failed to load file:", err);
         message.error({
           message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
         });

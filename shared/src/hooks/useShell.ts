@@ -42,8 +42,8 @@ export function useShell({
 
       try {
         await shellRef.current?.close();
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Ignore stale shell close errors before opening a replacement shell.
       }
       const shell = new SSHShell({
         session,
@@ -60,7 +60,7 @@ export function useShell({
         envs: host?.envs?.reduce<Record<string, string>>((prev, cur) => {
           const key = cur.key.trim();
           const value = cur.value.trim();
-          if (!key || value === undefined) {
+          if (!key) {
             return prev;
           }
           prev[key] = value;

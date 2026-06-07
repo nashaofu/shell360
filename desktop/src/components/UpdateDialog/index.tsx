@@ -16,8 +16,6 @@ import { useMemo } from "react";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import styles from "./index.module.less";
 
-type UpdateInfoLike = Record<string, unknown>;
-
 export default function UpdateDialog() {
   const {
     openUpdateDialog,
@@ -41,20 +39,19 @@ export default function UpdateDialog() {
 
   const isDownloadSuccess = progress === 100 && !error;
   const shouldShowProgress = isDownloading || progress > 0 || !!error;
-  const info = update as unknown as UpdateInfoLike | null;
 
   const nextVersion = useMemo(() => {
-    const value = info?.version;
-    return typeof value === "string" && value.trim() ? value.trim() : "--";
-  }, [info]);
+    const value = update?.version;
+    return value?.trim() ? value.trim() : "--";
+  }, [update]);
 
   const currentVersion = useMemo(() => {
-    const value = info?.currentVersion;
-    return typeof value === "string" && value.trim() ? value.trim() : "--";
-  }, [info]);
+    const value = update?.currentVersion;
+    return value?.trim() ? value.trim() : "--";
+  }, [update]);
 
   const publishedAt = useMemo(() => {
-    const rawValue = info?.date ?? info?.pubDate;
+    const rawValue = update?.date;
 
     if (typeof rawValue === "string") {
       const parsed = dayjs(rawValue);
@@ -65,17 +62,12 @@ export default function UpdateDialog() {
     }
 
     return "--";
-  }, [info]);
+  }, [update]);
 
   const releaseNotes = useMemo(() => {
-    const rawValue = info?.body ?? info?.notes ?? info?.releaseNotes;
-    if (typeof rawValue !== "string") {
-      return "No release notes available for this update.";
-    }
-
-    const value = rawValue.trim();
+    const value = update?.body?.trim();
     return value || "No release notes available for this update.";
-  }, [info]);
+  }, [update]);
 
   const formatBytes = (bytes?: number) => {
     if (!bytes || bytes <= 0) {

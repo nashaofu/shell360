@@ -7,6 +7,7 @@ import {
   XTerminal,
 } from "shared";
 import { useTerminalActiveId } from "@/atoms/terminalView.atom";
+import TerminalContextMenu from "@/components/TerminalContextMenu";
 import { copy } from "@/utils/clipboard";
 import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
@@ -50,7 +51,7 @@ export default function SSHTerminal({
     terminal?.focus();
   }, [terminal]);
 
-  const showLoading = !terminal || loading || error;
+  const showLoading = !terminal || loading || !!error;
 
   return (
     <div
@@ -62,18 +63,20 @@ export default function SSHTerminal({
         className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`}
         data-paste="true"
       >
-        <XTerminal
-          fontFamily={item.host.terminalSettings?.fontFamily}
-          fontSize={item.host.terminalSettings?.fontSize}
-          theme={
-            TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
-          }
-          onReady={onTerminalReady}
-          onData={onTerminalData}
-          onBinary={onTerminalBinaryData}
-          onResize={onTerminalResize}
-          onOpenUrl={openUrl}
-        />
+        <TerminalContextMenu terminal={terminal}>
+          <XTerminal
+            fontFamily={item.host.terminalSettings?.fontFamily}
+            fontSize={item.host.terminalSettings?.fontSize}
+            theme={
+              TERMINAL_THEMES_MAP.get(item.host.terminalSettings?.theme)?.theme
+            }
+            onReady={onTerminalReady}
+            onData={onTerminalData}
+            onBinary={onTerminalBinaryData}
+            onResize={onTerminalResize}
+            onOpenUrl={openUrl}
+          />
+        </TerminalContextMenu>
       </div>
       {showLoading && (
         <SSHLoading

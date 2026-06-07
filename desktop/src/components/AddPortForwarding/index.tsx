@@ -1,4 +1,3 @@
-import { Button } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -13,6 +12,7 @@ import {
   updatePortForwarding,
 } from "tauri-plugin-data";
 
+import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";
 
 type AddPortForwardingProps = {
@@ -99,26 +99,13 @@ export default function AddPortForwarding({
   return (
     <PageDrawer
       open={open}
-      title={data ? "Edit port forwarding" : "Add port forwarding"}
+      title={data ? "Edit tunnel" : "Add tunnel"}
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button style={{ width: "48%" }} variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            style={{ width: "48%" }}
-            onClick={formApi.handleSubmit(onSave)}
-          >
-            Save
-          </Button>
-        </div>
+        <DrawerFooter
+          onCancel={onCancel}
+          onSubmit={formApi.handleSubmit(onSave)}
+        />
       }
     >
       <PortForwardingForm formApi={formApi}></PortForwardingForm>

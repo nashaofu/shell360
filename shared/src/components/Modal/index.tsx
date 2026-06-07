@@ -230,7 +230,7 @@ function confirmFooter(
             settle(false);
           }}
         >
-          {options.cancelText ?? "取消"}
+          {options.cancelText ?? "Cancel"}
         </Button>
       )}
       <Button
@@ -242,7 +242,7 @@ function confirmFooter(
           settle(true);
         }}
       >
-        {options.okText ?? (options.isAlert ? "确定" : "确认")}
+        {options.okText ?? (options.isAlert ? "OK" : "Confirm")}
       </Button>
     </Flex>
   );
@@ -297,7 +297,7 @@ export const modal: ModalInstanceAPI = {
         maskClosable: true,
         footer: (close) =>
           confirmFooter(
-            { ...options, isAlert: true, okText: options.okText ?? "知道了" },
+            { ...options, isAlert: true, okText: options.okText ?? "OK" },
             close,
             () => settle(),
           ),
@@ -325,7 +325,7 @@ export const modal: ModalInstanceAPI = {
         maskClosable: true,
         footer: (close) =>
           confirmFooter(
-            { ...options, isAlert: true, okText: options.okText ?? "知道了" },
+            { ...options, isAlert: true, okText: options.okText ?? "OK" },
             close,
             () => settle(),
           ),
@@ -353,7 +353,7 @@ export const modal: ModalInstanceAPI = {
         maskClosable: true,
         footer: (close) =>
           confirmFooter(
-            { ...options, isAlert: true, okText: options.okText ?? "知道了" },
+            { ...options, isAlert: true, okText: options.okText ?? "OK" },
             close,
             () => settle(),
           ),
@@ -381,7 +381,7 @@ export const modal: ModalInstanceAPI = {
         maskClosable: true,
         footer: (close) =>
           confirmFooter(
-            { ...options, isAlert: true, okText: options.okText ?? "知道了" },
+            { ...options, isAlert: true, okText: options.okText ?? "OK" },
             close,
             () => settle(),
           ),

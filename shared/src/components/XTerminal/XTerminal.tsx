@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { DEFAULT_TERMINAL_THEME } from "./constants";
 import styles from "./index.module.less";
 import { type UseXTerminalOpts, useXTerminal } from "./useXTerminal";
 
@@ -26,5 +27,14 @@ export function XTerminal({
     onOpenUrl,
   });
 
-  return <div ref={elRef} className={clsx(styles.xterminal, className)} />;
+  return (
+    <div
+      ref={elRef}
+      className={clsx(styles.xterminal, className)}
+      style={{
+        backgroundColor:
+          theme?.background ?? DEFAULT_TERMINAL_THEME.theme.background,
+      }}
+    />
+  );
 }

@@ -1,4 +1,6 @@
 import { Button } from "@radix-ui/themes";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { EditKeyForm, type EditKeyFormFields, useKeys } from "shared";
@@ -31,6 +33,21 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       certificate: data?.certificate ?? "",
     },
   });
+
+  const importTextFile = useCallback(async () => {
+    const file = await openDialog({
+      multiple: false,
+      directory: false,
+    });
+    if (!file) {
+      return undefined;
+    }
+
+    return {
+      filename: file.split(/[\\/]/).pop() || "",
+      content: await readTextFile(file),
+    };
+  }, []);
 
   const onSave = useCallback(
     async (values: EditKeyFormFields) => {
@@ -91,7 +108,7 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
         </div>
       }
     >
-      <EditKeyForm formApi={formApi} />
+      <EditKeyForm formApi={formApi} onImportTextFile={importTextFile} />
     </PageDrawer>
   );
 }

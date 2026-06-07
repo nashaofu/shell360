@@ -10,21 +10,18 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FingerprintIcon,
+  FolderIcon,
   getHostDesc,
   getHostName,
   HostIcon,
-  KeyIcon,
   SearchIcon,
-  SettingsIcon,
-  SftpIcon,
-  SiteMapIcon,
   TerminalIcon,
   useHosts,
   useTerminalsAtomValue,
   useTerminalsAtomWithApi,
 } from "shared";
 
+import { PAGES } from "@/config/pages";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import styles from "./index.module.less";
 
@@ -41,22 +38,6 @@ interface QuickSearchProps {
   open: boolean;
   onClose: () => void;
 }
-
-const PAGE_ICONS: Record<string, ReactNode> = {
-  "/": <HostIcon />,
-  "/port-forwardings": <SiteMapIcon />,
-  "/keys": <KeyIcon />,
-  "/known-hosts": <FingerprintIcon />,
-  "/settings": <SettingsIcon />,
-};
-
-const PAGES = [
-  { path: "/", label: "Hosts" },
-  { path: "/port-forwardings", label: "Port Forwardings" },
-  { path: "/keys", label: "Keys" },
-  { path: "/known-hosts", label: "Known Hosts" },
-  { path: "/settings", label: "Settings" },
-];
 
 function matches(query: string, ...fields: (string | undefined)[]): boolean {
   if (!query) return true;
@@ -105,7 +86,7 @@ export default function QuickSearch({ open, onClose }: QuickSearchProps) {
         key: `page:${page.path}`,
         section: "Pages",
         label: page.label,
-        icon: PAGE_ICONS[page.path],
+        icon: <page.Icon />,
         onSelect: () => {
           navigate(page.path);
           handleClose();
@@ -137,7 +118,7 @@ export default function QuickSearch({ open, onClose }: QuickSearchProps) {
         section: "Active Sessions",
         label: terminal.name,
         description: terminal.type === "sftp" ? "SFTP" : "Terminal",
-        icon: terminal.type === "sftp" ? <SftpIcon /> : <TerminalIcon />,
+        icon: terminal.type === "sftp" ? <FolderIcon /> : <TerminalIcon />,
         onSelect: () => {
           activateTerminal(terminal.uuid);
           handleClose();

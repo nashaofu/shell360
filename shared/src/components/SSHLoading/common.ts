@@ -2,6 +2,7 @@ import { Button } from "@radix-ui/themes";
 import { createElement, type ReactNode } from "react";
 import type { Host } from "tauri-plugin-data";
 import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
+import styles from "./styles.module.less";
 
 export type ErrorProps = {
   host: Host;
@@ -30,7 +31,7 @@ export function StatusButton({
   return createElement(
     Button,
     {
-      style: { minWidth: 150 },
+      className: styles.statusButton,
       variant: variant === "outlined" ? "outline" : "solid",
       disabled,
       onClick,

@@ -25,21 +25,14 @@ export default function UnknownKey({
         </StatusButton>
         <div className={styles.splitButtonGroup}>
           <Button
-            style={{ flex: 1, minWidth: 0 }}
+            className={styles.splitPrimaryButton}
             onClick={() => onReConnect(SSHSessionCheckServerKey.Continue)}
           >
             Continue
           </Button>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <Button
-                style={{
-                  width: 34,
-                  minWidth: 34,
-                  padding: 0,
-                  justifyContent: "center",
-                }}
-              >
+              <Button className={styles.splitMenuButton}>
                 <MoreIcon />
               </Button>
             </DropdownMenu.Trigger>

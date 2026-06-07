@@ -1,14 +1,15 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+  justify-content: start;
   gap: 10px;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 9px;
+  padding: 13px 14px;
   border: 1px solid var(--app-soft-border, var(--gray-a5));
   border-radius: 12px;
   background: var(--app-panel-bg, var(--color-panel-solid, var(--gray-1)));
@@ -32,9 +33,9 @@
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,6 +67,15 @@
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
   font-size: 10px;
   color: var(--gray-9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listName {
+  max-width: 220px;
+  font-weight: 600;
+  color: var(--gray-12);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,6 +116,19 @@
   flex-shrink: 0;
 }
 
+.stateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--gray-9) 10%, transparent);
+  color: var(--gray-11);
+  font-size: 10px;
+  font-weight: 500;
+}
+
 .certBadge {
   display: inline-flex;
   align-items: center;
@@ -123,7 +146,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-top: 10px;
+  padding-top: 9px;
   border-top: 1px solid var(--app-soft-border, var(--gray-a4));
 }
 
@@ -154,34 +177,6 @@
   border-color: color-mix(in srgb, var(--accent-9) 50%, transparent);
 }
 
-.secondaryBtn {
-  height: 26px;
-  min-width: 0;
-  padding: 0 8px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--gray-10);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
-}
-
-.secondaryBtn:hover {
-  background: var(--app-hover-bg, var(--gray-a3));
-  border-color: var(--app-soft-border, var(--gray-a5));
-  color: var(--gray-12);
-}
-
 .dangerBtn {
   height: 26px;
   min-width: 0;
@@ -210,8 +205,12 @@
   color: var(--red-11);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 720px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 12px;
   }
 }

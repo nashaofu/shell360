@@ -44,7 +44,7 @@
   --dv-tabs-and-actions-container-height: 34px;
   --dv-tabs-and-actions-container-font-size: 11px;
   --dv-tab-font-size: 11px;
-  --dv-tab-margin: 4px 0 4px 4px;
+  --dv-tab-margin: 0;
   --dv-tab-close-icon-size: 10px;
 
   color: var(--gray-12);
@@ -81,19 +81,15 @@
   :global(.dv-tab) {
     min-width: 118px;
     max-width: 220px;
-    height: 30px;
-    margin: 3px 0 0 0;
+    height: 100%;
+    margin: 0;
     padding: 0 5px 0 10px;
-    border-radius: 0;
-    border: 1px solid transparent;
-    border-bottom: none;
-    outline: none;
+    border: none;
+    border-right: 1px solid var(--app-panel-border, color-mix(in srgb, var(--gray-a4) 60%, transparent));
     position: relative;
     transition:
       background-color 0.13s ease,
-      border-color 0.13s ease,
-      color 0.13s ease,
-      box-shadow 0.13s ease;
+      color 0.13s ease;
   }
 
   :global(.dv-tab::before) {
@@ -101,9 +97,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    top: 0;
     height: 2px;
-    border-radius: 2px 2px 0 0;
     background: transparent;
   }
 
@@ -122,30 +117,23 @@
       .dv-tabs-container
       > .dv-tab.dv-active-tab
   ) {
-    background-color: var(--app-panel-bg, color-mix(in srgb, var(--color-surface) 64%, transparent)) !important;
-    border-color: transparent !important;
+    background-color: var(--app-workspace-bg, var(--color-background)) !important;
     color: var(--gray-12) !important;
-    box-shadow: none;
+  }
+
+  :global(.dv-tabs-and-actions-container *),
+  :global(.dv-tabs-and-actions-container *:focus),
+  :global(.dv-tabs-and-actions-container *:focus-visible),
+  :global(.dv-tabs-and-actions-container *:focus-within),
+  :global(.dv-tabs-and-actions-container *:active) {
+    box-shadow: none !important;
     outline: none !important;
   }
 
-  :global(.dv-tab.dv-active-tab),
-  :global(.dv-tab.dv-active-tab:active),
-  :global(.dv-tab.dv-active-tab:focus),
-  :global(.dv-tab.dv-active-tab:focus-visible),
-  :global(.dv-tab.dv-active-tab:focus-within),
-  :global(.dv-tab.dv-active-tab .dv-default-tab),
-  :global(.dv-tab.dv-active-tab .dv-default-tab:active),
-  :global(.dv-tab.dv-active-tab .dv-default-tab:focus),
-  :global(.dv-tab.dv-active-tab .dv-default-tab:focus-visible),
-  :global(.dv-tab.dv-active-tab .dv-default-tab:focus-within),
-  :global(.dv-tab.dv-active-tab .dv-default-tab-action),
-  :global(.dv-tab.dv-active-tab .dv-default-tab-action:active),
-  :global(.dv-tab.dv-active-tab .dv-default-tab-action:focus),
-  :global(.dv-tab.dv-active-tab .dv-default-tab-action:focus-visible) {
-    border-color: transparent !important;
-    box-shadow: none !important;
-    outline: none !important;
+  :global(.dv-tab:focus)::after,
+  :global(.dv-tab:focus-within)::after {
+    display: none !important;
+    content: none !important;
   }
 
   :global(
@@ -163,9 +151,8 @@
       .dv-tabs-container
       > .dv-tab.dv-inactive-tab
   ) {
-    background-color: transparent !important;
-    border-color: transparent !important;
-    color: var(--gray-11) !important;
+    background-color: color-mix(in srgb, var(--gray-a3) 38%, transparent) !important;
+    color: var(--gray-10) !important;
   }
 
   :global(
@@ -175,7 +162,6 @@
       > .dv-tab.dv-inactive-tab:hover
   ) {
     background-color: var(--app-hover-bg, color-mix(in srgb, var(--gray-a3) 56%, transparent)) !important;
-    border-color: transparent !important;
     color: var(--gray-12) !important;
   }
 
@@ -184,7 +170,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 600;
+    font-weight: 400;
     line-height: 1;
   }
 

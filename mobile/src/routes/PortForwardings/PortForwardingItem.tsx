@@ -2,7 +2,6 @@ import { DropdownMenu, Portal } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import { useCallback, useMemo } from "react";
 import {
-  closePortForwarding as closePortForwardingUtil,
   DeleteIcon,
   EditIcon,
   establishPortForwarding as establishPortForwardingUtil,
@@ -11,7 +10,7 @@ import {
   PortForwardingLoading,
   type PortForwardingsAtom,
   SSHLoading,
-  tearDownJumpHostChainConnections,
+  stopPortForwardingRuntime,
   useKeys,
   usePortForwardings,
   usePortForwardingsAtomWithApi,
@@ -78,13 +77,6 @@ export default function PortForwardingItem({
     );
   }, [portForwardingsAtomWithApi, item.id]);
 
-  const closePortForwarding = useCallback(
-    async (portForwardingsAtom: PortForwardingsAtom) => {
-      await closePortForwardingUtil(portForwardingsAtom);
-    },
-    [],
-  );
-
   const establishPortForwarding = useCallback(
     async (portForwardingsAtom: PortForwardingsAtom) => {
       await establishPortForwardingUtil(
@@ -121,7 +113,7 @@ export default function PortForwardingItem({
         onClick: () => {
           modal.confirm({
             title: "Delete Confirmation",
-            content: `Are you sure to delete the port forwarding: ${item.name}?`,
+            content: `Are you sure to delete the tunnel: ${item.name}?`,
             OkButtonProps: {
               color: "orange",
             },
@@ -145,61 +137,33 @@ export default function PortForwardingItem({
   const onOpenOrClosePortForwarding = useCallback(async () => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (portForwardingsAtom) {
-      try {
-        await closePortForwarding(portForwardingsAtom);
-      } catch {
-        // session already dead, proceed with teardown
-      }
-      await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+      await stopPortForwardingRuntime(portForwardingsAtom);
       portForwardingsAtomWithApi.delete(portForwardingsAtom.portForwarding.id);
       return;
     }
 
     const [added] = portForwardingsAtomWithApi.add(item);
     await establishPortForwarding(added);
-  }, [
-    closePortForwarding,
-    establishPortForwarding,
-    item,
-    portForwardingsAtomWithApi,
-  ]);
+  }, [establishPortForwarding, item, portForwardingsAtomWithApi]);
 
   const onReConnect = useMemoizedFn(
     (checkServerKey?: SSHSessionCheckServerKey) => {
-      let portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+      const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
       if (!portForwardingsAtom) {
         return;
       }
 
-      portForwardingsAtom = {
-        ...portForwardingsAtom,
-        jumpHostChain: portForwardingsAtom.jumpHostChain.map((item) => ({
-          ...item,
-          checkServerKey,
-        })),
-      };
-      portForwardingsAtomWithApi.update(portForwardingsAtom);
-
-      establishPortForwarding(portForwardingsAtom);
+      portForwardingsAtomWithApi.restart(item.id, { checkServerKey });
     },
   );
 
-  const onReAuth = useMemoizedFn((hostData) => {
-    let portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+  const onReAuth = useMemoizedFn((hostData: Host) => {
+    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (!portForwardingsAtom) {
       return;
     }
 
-    portForwardingsAtom = {
-      ...portForwardingsAtom,
-      jumpHostChain: portForwardingsAtom.jumpHostChain.map((chainItem) => ({
-        ...chainItem,
-        host: chainItem.host.id === hostData.id ? hostData : chainItem.host,
-      })),
-    };
-    portForwardingsAtomWithApi.update(portForwardingsAtom);
-
-    establishPortForwarding(portForwardingsAtom);
+    portForwardingsAtomWithApi.restart(item.id, { hostData });
   });
 
   const onRetry = useMemoizedFn(() => {
@@ -207,7 +171,7 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    establishPortForwarding(portForwardingsAtom);
+    portForwardingsAtomWithApi.restart(item.id);
   });
 
   const onClose = useCallback(async () => {
@@ -215,14 +179,9 @@ export default function PortForwardingItem({
     if (!portForwardingsAtom) {
       return;
     }
-    try {
-      await closePortForwarding(portForwardingsAtom);
-    } catch {
-      // session already dead, proceed with teardown
-    }
-    await tearDownJumpHostChainConnections(portForwardingsAtom.jumpHostChain);
+    await stopPortForwardingRuntime(portForwardingsAtom);
     portForwardingsAtomWithApi.delete(item.id);
-  }, [closePortForwarding, item.id, portForwardingsAtomWithApi]);
+  }, [item.id, portForwardingsAtomWithApi]);
 
   return (
     <>

@@ -32,24 +32,11 @@ export function oscParse(data: Buffer, { onCopy }: OscParseOpts = {}): void {
     const [oscCodeString, ...oscParams] = oscString.split(";");
     const oscCode = parseInt(oscCodeString, 10);
 
-    if (oscCode === 1337) {
-      const paramString = oscParams.join(";");
-      if (paramString.startsWith("CurrentDir=")) {
-        const reportedCWD = paramString.split("=")[1];
-        // if (reportedCWD.startsWith('~')) {
-        //   reportedCWD = os.homedir() + reportedCWD.substring(1);
-        // }
-        // this.cwdReported.next(reportedCWD);
-        console.log("reportedCWD", reportedCWD);
-      } else {
-        console.debug("Unsupported OSC 1337 parameter:", paramString);
-      }
-    } else if (oscCode === 52) {
+    if (oscCode === 52) {
       if (oscParams[0] === "c" || oscParams[0] === "") {
         const content = Buffer.from(oscParams[1], "base64");
         onCopy?.(content.toString());
       }
-    } else {
     }
   }
 }

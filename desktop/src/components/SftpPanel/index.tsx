@@ -1,28 +1,28 @@
 import type { IDockviewPanelProps } from "dockview-react";
-import { last } from "lodash-es";
-import { useMemo } from "react";
-import { useTerminalsAtomValue } from "shared";
+import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
 import SftpBrowser from "@/components/SftpBrowser";
 
 export default function SftpContent({
   params,
-}: IDockviewPanelProps<{ terminalId: string }>) {
-  const { terminalId } = params;
+  api,
+}: IDockviewPanelProps<{ terminalId: string; onOpenAddKey: () => void }>) {
+  const { terminalId, onOpenAddKey } = params;
   const terminalsState = useTerminalsAtomValue();
+  const terminalsApi = useTerminalsAtomWithApi();
   const term = terminalsState.get(terminalId);
 
-  const session = useMemo(() => {
-    if (!term) return undefined;
-    const lastItem = last(term.jumpHostChain);
-    if (lastItem?.status === "authenticated") {
-      return lastItem.session;
-    }
-    return undefined;
-  }, [term]);
+  if (!term) return null;
 
   return (
     <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-      <SftpBrowser session={session} />
+      <SftpBrowser
+        item={term}
+        onClose={() => {
+          api.close();
+          terminalsApi.delete(terminalId);
+        }}
+        onOpenAddKey={onOpenAddKey}
+      />
     </div>
   );
 }

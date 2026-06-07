@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   DeleteIcon,
   EditIcon,
@@ -83,137 +83,151 @@ export default function useCells({
     [modal, removeDir, removeFile],
   );
 
-  return [
-    {
-      id: "name",
-      key: "name",
-      title: "Name",
-      compare: (a: SSHSftpFile, b: SSHSftpFile) => b.name.localeCompare(a.name),
-      maxWidth: 320,
-      minWidth: 320,
-      render: (item: SSHSftpFile) => {
-        const iconMap = {
-          [SSHSftpFileType.Dir]: FolderIcon,
-          [SSHSftpFileType.File]: FileIcon,
-          [SSHSftpFileType.Symlink]: SymlinkIcon,
-          [SSHSftpFileType.Other]: FileIcon,
-        };
+  return useMemo<SftpTableCell<SSHSftpFile>[]>(
+    () => [
+      {
+        id: "name",
+        key: "name",
+        title: "Name",
+        compare: (a: SSHSftpFile, b: SSHSftpFile) =>
+          b.name.localeCompare(a.name),
+        maxWidth: 320,
+        minWidth: 320,
+        render: (item: SSHSftpFile) => {
+          const iconMap = {
+            [SSHSftpFileType.Dir]: FolderIcon,
+            [SSHSftpFileType.File]: FileIcon,
+            [SSHSftpFileType.Symlink]: SymlinkIcon,
+            [SSHSftpFileType.Other]: FileIcon,
+          };
 
-        const IconComponent = iconMap[item.fileType] || FileIcon;
+          const IconComponent = iconMap[item.fileType] || FileIcon;
 
-        return (
-          <div
-            className={styles.nameRow}
-            title={item.name}
-            onDoubleClick={() => onDoubleClickName(item)}
-          >
-            <IconComponent className={styles.fileIcon} />
-            <div className={styles.nameContent}>
-              {selectedFile?.path === item.path ? (
-                <div className={styles.renameWrapDesktop}>
-                  <SftpFilenameInput
-                    value={editingFilename}
-                    onChange={onEditingFilenameChange}
-                    onCancel={onRenameCancel}
-                    onOk={onRenameOk}
-                  ></SftpFilenameInput>
-                </div>
-              ) : (
-                <div className={styles.fileName}>{item.name}</div>
-              )}
-              <div className={styles.filePerms}>{item.permissions}</div>
+          return (
+            <div
+              className={styles.nameRow}
+              title={item.name}
+              onDoubleClick={() => onDoubleClickName(item)}
+            >
+              <IconComponent className={styles.fileIcon} />
+              <div className={styles.nameContent}>
+                {selectedFile?.path === item.path ? (
+                  <div className={styles.renameWrapDesktop}>
+                    <SftpFilenameInput
+                      value={editingFilename}
+                      onChange={onEditingFilenameChange}
+                      onCancel={onRenameCancel}
+                      onOk={onRenameOk}
+                    ></SftpFilenameInput>
+                  </div>
+                ) : (
+                  <div className={styles.fileName}>{item.name}</div>
+                )}
+                <div className={styles.filePerms}>{item.permissions}</div>
+              </div>
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: "mtime",
-      key: "mtime",
-      title: "Date Modified",
-      compare: (a: SSHSftpFile, b: SSHSftpFile) => b.mtime - a.mtime,
-      width: 170,
-      maxWidth: 170,
-      minWidth: 170,
-      render: (item: SSHSftpFile) =>
-        dayjs.unix(item.mtime).format("YYYY-MM-DD HH:mm:ss"),
-    },
-    {
-      id: "size",
-      key: "size",
-      title: "Size",
-      width: 120,
-      maxWidth: 120,
-      minWidth: 120,
-      compare: (a: SSHSftpFile, b: SSHSftpFile) => b.size - a.size,
-      render: (item: SSHSftpFile) => {
-        if (item.fileType !== SSHSftpFileType.File) {
-          return "-";
-        }
+      {
+        id: "mtime",
+        key: "mtime",
+        title: "Date Modified",
+        compare: (a: SSHSftpFile, b: SSHSftpFile) => b.mtime - a.mtime,
+        width: 170,
+        maxWidth: 170,
+        minWidth: 170,
+        render: (item: SSHSftpFile) =>
+          dayjs.unix(item.mtime).format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        id: "size",
+        key: "size",
+        title: "Size",
+        width: 120,
+        maxWidth: 120,
+        minWidth: 120,
+        compare: (a: SSHSftpFile, b: SSHSftpFile) => b.size - a.size,
+        render: (item: SSHSftpFile) => {
+          if (item.fileType !== SSHSftpFileType.File) {
+            return "-";
+          }
 
-        if (item.size < 1024) {
-          return `${item.size} B`;
-        } else if (item.size < 1024 ** 2) {
-          return `${formatNumber(item.size / 1024, 2)} KB`;
-        } else if (item.size < 1024 ** 3) {
-          return `${formatNumber(item.size / 1024 ** 2, 2)} MB`;
-        } else if (item.size < 1024 ** 4) {
-          return `${formatNumber(item.size / 1024 ** 3, 2)} GB`;
-        } else if (item.size < 1024 ** 5) {
-          return `${formatNumber(item.size / 1024 ** 4, 2)} TB`;
-        }
+          if (item.size < 1024) {
+            return `${item.size} B`;
+          } else if (item.size < 1024 ** 2) {
+            return `${formatNumber(item.size / 1024, 2)} KB`;
+          } else if (item.size < 1024 ** 3) {
+            return `${formatNumber(item.size / 1024 ** 2, 2)} MB`;
+          } else if (item.size < 1024 ** 4) {
+            return `${formatNumber(item.size / 1024 ** 3, 2)} GB`;
+          } else if (item.size < 1024 ** 5) {
+            return `${formatNumber(item.size / 1024 ** 4, 2)} TB`;
+          }
+        },
       },
-    },
-    {
-      id: "opts",
-      key: "path",
-      title: null,
-      width: 152,
-      maxWidth: 152,
-      minWidth: 152,
-      sx: (isHeader: boolean) => {
-        if (isHeader) {
+      {
+        id: "opts",
+        key: "path",
+        title: null,
+        width: 152,
+        maxWidth: 152,
+        minWidth: 152,
+        sx: (isHeader: boolean) => {
+          if (isHeader) {
+            return {
+              position: "sticky",
+              right: 0,
+              zIndex: 3,
+              borderLeft: "1px solid var(--gray-a5)",
+              backgroundColor: "var(--color-panel)",
+            };
+          }
           return {
             position: "sticky",
             right: 0,
-            zIndex: 3,
+            zIndex: 2,
             borderLeft: "1px solid var(--gray-a5)",
-            backgroundColor: "var(--color-panel)",
           };
-        }
-        return {
-          position: "sticky",
-          right: 0,
-          zIndex: 2,
-          borderLeft: "1px solid var(--gray-a5)",
-        };
+        },
+        render: (item: SSHSftpFile) => (
+          <div className={styles.optButtons}>
+            <button
+              type="button"
+              className={styles.optButton}
+              disabled={item.fileType !== SSHSftpFileType.File}
+              onClick={() => downloadFile(item)}
+            >
+              <FileDownloadIcon />
+            </button>
+            <button
+              type="button"
+              className={styles.optButton}
+              onClick={() => onRename(item)}
+            >
+              <EditIcon />
+            </button>
+            <button
+              type="button"
+              className={styles.optButton}
+              onClick={() => onDelete(item)}
+            >
+              <DeleteIcon />
+            </button>
+          </div>
+        ),
       },
-      render: (item: SSHSftpFile) => (
-        <div className={styles.optButtons}>
-          <button
-            type="button"
-            className={styles.optButton}
-            disabled={item.fileType !== SSHSftpFileType.File}
-            onClick={() => downloadFile(item)}
-          >
-            <FileDownloadIcon />
-          </button>
-          <button
-            type="button"
-            className={styles.optButton}
-            onClick={() => onRename(item)}
-          >
-            <EditIcon />
-          </button>
-          <button
-            type="button"
-            className={styles.optButton}
-            onClick={() => onDelete(item)}
-          >
-            <DeleteIcon />
-          </button>
-        </div>
-      ),
-    },
-  ];
+    ],
+    [
+      selectedFile,
+      editingFilename,
+      onEditingFilenameChange,
+      onRenameCancel,
+      onRenameOk,
+      onRename,
+      downloadFile,
+      onDoubleClickName,
+      onDelete,
+    ],
+  );
 }

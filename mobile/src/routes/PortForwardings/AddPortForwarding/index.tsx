@@ -101,7 +101,7 @@ export default function AddPortForwarding({
   return (
     <PageDrawer
       open={open}
-      title={data ? "Edit port forwardings" : "Add port orwarding"}
+      title={data ? "Edit tunnel" : "Add tunnel"}
       onCancel={onCancel}
       footer={
         <div

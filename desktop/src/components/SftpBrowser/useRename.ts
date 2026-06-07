@@ -1,5 +1,6 @@
 import { useRequest } from "ahooks";
 import { type MutableRefObject, useCallback, useEffect, useState } from "react";
+import { sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
@@ -52,7 +53,7 @@ export default function useRename({
   );
 
   const onEditingFilenameChange = useCallback((val: string) => {
-    setEditingFilename(val.replace("/", ""));
+    setEditingFilename(sanitizeSftpFilename(val));
   }, []);
 
   const onRename = useCallback((item: SSHSftpFile) => {

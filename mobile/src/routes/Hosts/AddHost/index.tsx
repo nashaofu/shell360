@@ -10,13 +10,14 @@ import {
   EditHostForm,
   type EditHostFormFields,
   MoreIcon,
+  parseEnvs,
+  stringifyEnvs,
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
 import {
   AuthenticationMethod,
   addHost,
-  type Env,
   type Host,
   updateHost,
 } from "tauri-plugin-data";
@@ -70,7 +71,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       keyId: data?.keyId ?? "",
       startupCommand: data?.startupCommand ?? "",
       terminalType: data?.terminalType ?? DEFAULT_TERMINAL_TYPE,
-      envs: data?.envs?.map((env) => `${env.key}=${env.value}`).join(",") ?? "",
+      envs: stringifyEnvs(data?.envs),
       jumpHostEnabled: !!data?.jumpHostIds?.length,
       jumpHostIds: data?.jumpHostIds ?? [],
       terminalSettings: {
@@ -107,20 +108,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
             : undefined,
         startupCommand: values.startupCommand || undefined,
         terminalType: values.terminalType || DEFAULT_TERMINAL_TYPE,
-        envs: values.envs?.split(",").reduce<Env[]>((envs, env) => {
-          let [key, value] = env.split("=");
-          key = key.trim();
-          value = value?.trim();
-
-          if (!key) {
-            return envs;
-          }
-          if (value === undefined) {
-            return envs;
-          }
-          envs.push({ key, value });
-          return envs;
-        }, []),
+        envs: parseEnvs(values.envs),
         jumpHostIds: values.jumpHostEnabled ? values.jumpHostIds : undefined,
         terminalSettings: values.terminalSettings
           ? {

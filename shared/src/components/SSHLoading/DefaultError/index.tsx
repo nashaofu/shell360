@@ -7,7 +7,7 @@ export default function DefaultError({ error, onClose, onRetry }: ErrorProps) {
   return (
     <>
       <ErrorText
-        title={get(error, "type", "Unknown error")}
+        title="Connection failed"
         message={get(error, "message", String(error))}
       />
       <div className={styles.actions}>
