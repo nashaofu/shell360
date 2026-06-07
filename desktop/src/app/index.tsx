@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { Theme } from "@radix-ui/themes";
+import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { MessageProvider, ModalProvider, useAppearanceValue } from "shared";
 import { useAutoCheckUpdate } from "@/atoms/update.atom";
