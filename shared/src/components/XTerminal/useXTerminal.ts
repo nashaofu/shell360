@@ -13,6 +13,10 @@ import {
   DEFAULT_TERMINAL_THEME,
 } from "./constants";
 
+export type XTerminalElement = HTMLDivElement & {
+  __xterm?: Terminal;
+};
+
 export type TerminalSize = {
   col: number;
   row: number;
@@ -41,7 +45,7 @@ export function useXTerminal({
   onResize,
   onOpenUrl,
 }: UseXTerminalOpts) {
-  const elRef = useRef<HTMLDivElement>(null);
+  const elRef = useRef<XTerminalElement>(null);
   const terminalRef = useRef<Terminal>(null);
   const fitAddonRef = useRef<FitAddon>(null);
   const isReadyRef = useRef(false);
@@ -95,6 +99,8 @@ export function useXTerminal({
 
     if (elRef.current) {
       terminal.open(elRef.current);
+      elRef.current.dataset.xterminal = "true";
+      elRef.current.__xterm = terminal;
     }
 
     terminalRef.current = terminal;
@@ -102,6 +108,10 @@ export function useXTerminal({
 
     return () => {
       terminal.dispose();
+      if (elRef.current) {
+        delete elRef.current.dataset.xterminal;
+        delete elRef.current.__xterm;
+      }
       webLinksAddon.dispose();
       unicode11Addon.dispose();
       webglAddon.dispose();

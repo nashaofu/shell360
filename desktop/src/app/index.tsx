@@ -2,6 +2,7 @@ import { Theme } from "@radix-ui/themes";
 import { RouterProvider } from "react-router-dom";
 import { MessageProvider, ModalProvider, useAppearanceValue } from "shared";
 import { useAutoCheckUpdate } from "@/atoms/update.atom";
+import GlobalContextMenu from "@/components/GlobalContextMenu";
 import UpdateDialog from "@/components/UpdateDialog";
 import router from "@/routes";
 import styles from "./index.module.less";
@@ -26,8 +27,10 @@ export default function App() {
     >
       <ModalProvider appearance={providerAppearance}>
         <MessageProvider appearance={providerAppearance}>
-          <RouterProvider router={router} />
-          <UpdateDialog />
+          <GlobalContextMenu>
+            <RouterProvider router={router} />
+            <UpdateDialog />
+          </GlobalContextMenu>
         </MessageProvider>
       </ModalProvider>
     </Theme>
