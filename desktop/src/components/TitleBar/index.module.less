@@ -15,9 +15,33 @@
 .leftRail {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 16px;
   -webkit-app-region: no-drag;
   flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-a4);
+  border-radius: 4px;
+}
+
+.appName {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
 }
 
 .dragRegion {

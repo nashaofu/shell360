@@ -10,6 +10,7 @@ import {
   WindowRestoreIcon,
   WorkspaceIcon,
 } from "shared";
+import logo from "@/assets/logo.svg";
 import { useTerminalViewVisible } from "@/atoms/terminalView.atom";
 import QuickSearch from "@/components/QuickSearch";
 import styles from "./index.module.less";
@@ -82,6 +83,13 @@ export default function TitleBar() {
       data-fullscreen={isFullscreen ? "true" : undefined}
     >
       <div className={styles.leftRail}>
+        {!isMacos && (
+          <div className={styles.brand}>
+            <img src={logo} alt="Shell360" className={styles.logoImg} />
+            <span className={styles.appName}>Shell360</span>
+          </div>
+        )}
+
         <button
           type="button"
           className={clsx(

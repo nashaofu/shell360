@@ -15,12 +15,6 @@ export default function StatusBar() {
   const sshCount = terminals.filter((item) => item.type !== "sftp").length;
   const sftpCount = terminals.filter((item) => item.type === "sftp").length;
   const portForwardingCount = portForwardingsState.size;
-  const notificationCount =
-    terminals.filter((item) => item.status !== "success").length +
-    [...portForwardingsState.values()].filter(
-      (item) => item.status === "failed",
-    ).length;
-
   return (
     <div className={styles.statusBar}>
       <div className={styles.left}>
@@ -46,16 +40,6 @@ export default function StatusBar() {
         >
           <SiteMapIcon />
           <span className={styles.value}>{portForwardingCount}</span>
-        </div>
-      </div>
-      <div className={styles.spacer} />
-      <div className={styles.right}>
-        <div
-          className={styles.chip}
-          title={`${notificationCount} notifications`}
-        >
-          <InfoCircleIcon />
-          <span className={styles.value}>{notificationCount}</span>
         </div>
       </div>
     </div>
