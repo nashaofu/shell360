@@ -38,7 +38,9 @@ type GlobalContextMenuProps = {
   children: React.ReactNode;
 };
 
-function isEditableElement(element: EventTarget | null): element is EditableElement {
+function isEditableElement(
+  element: EventTarget | null,
+): element is EditableElement {
   return (
     element instanceof HTMLInputElement ||
     element instanceof HTMLTextAreaElement
@@ -211,7 +213,10 @@ export default function GlobalContextMenu({ children }: GlobalContextMenuProps) 
         <ContextMenu.Item disabled={!canCut} onSelect={handleCut}>
           Cut
         </ContextMenu.Item>
-        <ContextMenu.Item disabled={!canPaste} onSelect={() => void handlePaste()}>
+        <ContextMenu.Item
+          disabled={!canPaste}
+          onSelect={() => void handlePaste()}
+        >
           Paste
         </ContextMenu.Item>
       </ContextMenu.Content>
