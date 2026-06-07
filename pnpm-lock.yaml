@@ -187,6 +187,9 @@ importers:
       '@rsbuild/plugin-react':
         specifier: ^2.0.0
         version: 2.0.0(@rsbuild/core@2.0.8(core-js@3.46.0))(@rspack/core@2.0.5(@swc/helpers@0.5.23))
+      '@rsbuild/plugin-svgr':
+        specifier: ^2.0.2
+        version: 2.0.2(@rsbuild/core@2.0.8(core-js@3.46.0))(@rspack/core@2.0.5(@swc/helpers@0.5.23))(typescript@6.0.3)
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12

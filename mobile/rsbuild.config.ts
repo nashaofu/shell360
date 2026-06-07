@@ -1,9 +1,19 @@
 import { defineConfig } from "@rsbuild/core";
 import { pluginLess } from "@rsbuild/plugin-less";
 import { pluginReact } from "@rsbuild/plugin-react";
+import { pluginSvgr } from "@rsbuild/plugin-svgr";
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginLess()],
+  plugins: [
+    pluginReact(),
+    pluginLess(),
+    pluginSvgr({
+      svgrOptions: {
+        exportType: "named",
+      },
+      mixedImport: true,
+    }),
+  ],
   source: {
     define: {
       "import.meta.env.TAURI_ENV_PLATFORM": JSON.stringify(
