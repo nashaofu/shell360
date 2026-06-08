@@ -92,7 +92,7 @@ export default function FileEditorModal({
           <button
             type="button"
             className={styles.iconButton}
-            disabled={loading || saving}
+            disabled={saving}
             onClick={handleCancel}
           >
             <CloseIcon />
@@ -116,7 +116,7 @@ export default function FileEditorModal({
             type="button"
             className={styles.secondaryButton}
             onClick={handleCancel}
-            disabled={loading || saving}
+            disabled={saving}
           >
             Cancel
           </button>

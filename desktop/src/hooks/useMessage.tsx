@@ -1,13 +1,16 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { message as sharedMessage } from "shared";
 
 type MessageArg = { message: ReactNode };
 
 export default function useMessage() {
-  return {
-    success: (arg: MessageArg) => sharedMessage.success(arg.message),
-    error: (arg: MessageArg) => sharedMessage.error(arg.message),
-    info: (arg: MessageArg) => sharedMessage.info(arg.message),
-    warning: (arg: MessageArg) => sharedMessage.warning(arg.message),
-  };
+  return useMemo(
+    () => ({
+      success: (arg: MessageArg) => sharedMessage.success(arg.message),
+      error: (arg: MessageArg) => sharedMessage.error(arg.message),
+      info: (arg: MessageArg) => sharedMessage.info(arg.message),
+      warning: (arg: MessageArg) => sharedMessage.warning(arg.message),
+    }),
+    [],
+  );
 }

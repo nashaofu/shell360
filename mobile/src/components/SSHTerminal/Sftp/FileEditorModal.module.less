@@ -14,6 +14,7 @@
 }
 
 .header {
+  flex-shrink: 0;
   height: 48px;
   padding: env(safe-area-inset-top) 12px 0;
   display: flex;
@@ -25,6 +26,9 @@
 .title {
   flex: 1;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .iconButton {
@@ -37,11 +41,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .content {
   flex: 1;
+  min-height: 0;
   display: flex;
+  overflow: hidden;
 }
 
 .loadingWrap {
@@ -53,17 +65,23 @@
 }
 
 .editor {
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   border: 0;
   outline: 0;
   resize: none;
   padding: 12px;
   font-family: Consolas, Menlo, monospace;
   font-size: 14px;
+  box-sizing: border-box;
+}
+
+.editor:disabled {
+  cursor: not-allowed;
 }
 
 .actions {
+  flex-shrink: 0;
   height: 48px;
   padding: 0 12px calc(env(safe-area-inset-bottom));
   border-top: 1px solid var(--gray-6, #d4d4d8);
@@ -79,6 +97,13 @@
   border-radius: 8px;
   padding: 0 12px;
   cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.secondaryButton:disabled,
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .secondaryButton {
