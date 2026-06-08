@@ -17,14 +17,12 @@
       defer
       src="https://cloud.umami.is/script.js"
       data-website-id="350f97aa-5a63-4287-8b7b-6fa060350325"
-      data-tag="<%=TAURI_ENV_PLATFORM%>"
+      data-tag="<%= TAURI_ENV_PLATFORM %>"
     ></script>
   </head>
 
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-
-    <script type="module" src="/src/index.tsx"></script>
+    <div id="<%= mountId %>"></div>
   </body>
 </html>

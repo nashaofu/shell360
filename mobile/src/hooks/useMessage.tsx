@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { message as sharedMessage } from "shared";
 
 type NotistackCompatArg = { message: ReactNode };
@@ -10,14 +10,17 @@ function normalizeArg(arg: ReactNode | NotistackCompatArg): ReactNode {
 }
 
 export default function useMessage() {
-  return {
-    success: (arg: ReactNode | NotistackCompatArg) =>
-      sharedMessage.success(normalizeArg(arg)),
-    error: (arg: ReactNode | NotistackCompatArg) =>
-      sharedMessage.error(normalizeArg(arg)),
-    info: (arg: ReactNode | NotistackCompatArg) =>
-      sharedMessage.info(normalizeArg(arg)),
-    warning: (arg: ReactNode | NotistackCompatArg) =>
-      sharedMessage.warning(normalizeArg(arg)),
-  };
+  return useMemo(
+    () => ({
+      success: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.success(normalizeArg(arg)),
+      error: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.error(normalizeArg(arg)),
+      info: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.info(normalizeArg(arg)),
+      warning: (arg: ReactNode | NotistackCompatArg) =>
+        sharedMessage.warning(normalizeArg(arg)),
+    }),
+    [],
+  );
 }

@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { useCallback, useEffect, useState } from "react";
 import {
   SearchIcon,
+  UpgradeIcon,
   useTerminalsAtomValue,
   WindowCloseIcon,
   WindowMaximizeIcon,
@@ -12,6 +13,7 @@ import {
 } from "shared";
 import logo from "@/assets/logo.svg";
 import { useTerminalViewVisible } from "@/atoms/terminalView.atom";
+import { useUpdateAtom } from "@/atoms/update.atom";
 import QuickSearch from "@/components/QuickSearch";
 import styles from "./index.module.less";
 
@@ -23,6 +25,7 @@ export default function TitleBar() {
   const [visible, setVisible] = useTerminalViewVisible();
   const terminalsState = useTerminalsAtomValue();
   const hasTerminal = terminalsState.size > 0;
+  const { hasUpdate, setOpenUpdateDialog } = useUpdateAtom();
   const onClickMinimize = useCallback(() => {
     getCurrentWindow().minimize();
   }, []);
@@ -126,9 +129,16 @@ export default function TitleBar() {
 
       <div className={styles.rightRail}>
         <div className={styles.utilityGroup}>
-          {/* <div className={styles.profileBtn} title="User profile">
-            <span className={styles.profileAvatar}>{profileInitials}</span>
-          </div> */}
+          {hasUpdate && (
+            <button
+              type="button"
+              className={styles.updateBtn}
+              onClick={() => setOpenUpdateDialog(true)}
+              title="Update available"
+            >
+              <UpgradeIcon />
+            </button>
+          )}
 
           {!isMacos && <div className={styles.rightSep} aria-hidden="true" />}
 

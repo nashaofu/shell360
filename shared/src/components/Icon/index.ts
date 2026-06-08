@@ -33,6 +33,7 @@ export { ReactComponent as SiteMapIcon } from "./svgs/site-map.svg";
 export { ReactComponent as SuccessCircleIcon } from "./svgs/success-circle.svg";
 export { ReactComponent as SymlinkIcon } from "./svgs/symlink.svg";
 export { ReactComponent as TerminalIcon } from "./svgs/terminal.svg";
+export { ReactComponent as UpgradeIcon } from "./svgs/upgrade.svg";
 export { ReactComponent as UserIcon } from "./svgs/user.svg";
 export { ReactComponent as VariableIcon } from "./svgs/variable.svg";
 export { ReactComponent as VisibilityIcon } from "./svgs/visibility.svg";
