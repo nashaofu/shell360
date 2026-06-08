@@ -37,6 +37,7 @@ export { ReactComponent as UserIcon } from "./svgs/user.svg";
 export { ReactComponent as VariableIcon } from "./svgs/variable.svg";
 export { ReactComponent as VisibilityIcon } from "./svgs/visibility.svg";
 export { ReactComponent as VisibilityOffIcon } from "./svgs/visibility-off.svg";
+export { ReactComponent as UpgradeIcon } from "./svgs/upgrade.svg";
 export { ReactComponent as WarningCircleIcon } from "./svgs/warning-circle.svg";
 export {
   ReactComponent as CloseIcon,
