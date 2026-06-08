@@ -1,9 +1,8 @@
 import { Button, Callout, Dialog, Progress } from "@radix-ui/themes";
 import dayjs from "dayjs";
 import { useMemo } from "react";
-
-import { useUpdateAtom } from "@/atoms/update.atom";
 import { CloseIcon } from "shared";
+import { useUpdateAtom } from "@/atoms/update.atom";
 import styles from "./index.module.less";
 
 export default function UpdateDialog() {
@@ -88,10 +87,7 @@ export default function UpdateDialog() {
         : "Ready to download";
 
   return (
-    <Dialog.Root
-      open={openUpdateDialog}
-      onOpenChange={setOpenUpdateDialog}
-    >
+    <Dialog.Root open={openUpdateDialog} onOpenChange={setOpenUpdateDialog}>
       <Dialog.Content className={styles.content}>
         <div className={styles.inner}>
           <div className={styles.header}>

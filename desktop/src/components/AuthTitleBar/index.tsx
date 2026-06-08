@@ -93,7 +93,10 @@ export default function AuthTitleBar() {
               </button>
               <button
                 type="button"
-                className={clsx(styles.winControlsBtn, styles.winControlsBtnClose)}
+                className={clsx(
+                  styles.winControlsBtn,
+                  styles.winControlsBtnClose,
+                )}
                 onClick={onClickClose}
                 title="Close"
               >
