@@ -20,8 +20,8 @@ import {
   HostIcon,
   KeyIcon,
   UpgradeIcon,
-  WarningCircleIcon,
   useAppearance,
+  WarningCircleIcon,
 } from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
@@ -248,12 +248,7 @@ export default function Settings() {
 
   return (
     <section className={styles.page}>
-      <Flex
-        className={styles.header}
-        align="start"
-        justify="between"
-        gap="6"
-      >
+      <Flex className={styles.header} align="start" justify="between" gap="6">
         <Flex className={styles.headerMain} direction="column" gap="2">
           <Text size="1" color="gray" className={styles.eyebrow}>
             Application
@@ -393,8 +388,7 @@ export default function Settings() {
               description="Open the GitHub repository."
               cta={{
                 label: "Open",
-                onClick: () =>
-                  openUrl("https://github.com/nashaofu/shell360"),
+                onClick: () => openUrl("https://github.com/nashaofu/shell360"),
               }}
             />
             <div className={styles.actionDivider} />
