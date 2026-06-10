@@ -48,8 +48,10 @@ pnpm tauri build
 
 ## Agent Workflow
 
-- After making substantive changes, run `pnpm run tsc` and `pnpm run check`.
-- Resolve all newly introduced TypeScript and Biome issues before finishing.
+- After making changes, determine which parts of the codebase were modified:
+  - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
+  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-mobile/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+- If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.
 
@@ -76,18 +78,21 @@ pnpm tauri build
 ## Conventions
 
 ### Code Style
+
 - Double quotes, space indentation (Biome formatter)
 - No comments unless explaining non-obvious logic
 - TypeScript strict mode, no `any` — prefer type inference
 - Imports auto-organized by Biome (`organizeImports: on`)
 
 ### Components
+
 - Shared components go in `shared/src/components/`
 - Desktop-specific components go in `desktop/src/components/`
 - Folder-per-component: `index.tsx` + colocated `index.module.less`
 - Use Radix Themes components where possible
 
 ### State Management
+
 - Global state via Jotai atoms; file-per-domain named `*.atom.ts`
   - Shared: `shared/src/atoms/` (e.g. `session.atom.ts`, `portForwardings.atom.ts`, `appearance.atom.ts`)
   - Desktop: `desktop/src/atoms/` (e.g. `auth.atom.ts`, `crypto.atom.ts`, `modals.atom.ts`)
@@ -95,22 +100,26 @@ pnpm tauri build
 - Local state via React hooks; form state via react-hook-form
 
 ### Styling
+
 - Use CSS custom properties (Radix Theme tokens)
 - No hardcoded colors — use theme tokens
 - Responsive breakpoints: 480px, 720px, 1024px
 - `focus-visible` states for accessibility
 
 ### Icons
+
 - All icons live in `shared/src/components/Icon/svgs/`
 - Re-exported from `shared/src/components/Icon/index.ts` as `<Name>Icon` (svgr `ReactComponent`)
 - SVG attrs required: `width="1em" height="1em" fill="currentColor" viewBox="..." xmlns="http://www.w3.org/2000/svg"`
 - No duplicate attributes
 
 ### Shared Package Rules
+
 - `shared/` compiles to ESM and is imported by `desktop`/`mobile`
 - Do **not** import Tauri APIs in `shared/` (breaks the build) — keep Tauri logic in `desktop/src/` or `mobile/src/`
 
 ### Rust
+
 - Use the crate's result alias (e.g. `Shell360Result<T>`) instead of bare `Result` for unified error handling
 - Async command functions use `#[tauri::command]`
 - Plugin managers hold state as `Mutex<HashMap<Id, Data>>` (see `SSHManager`)

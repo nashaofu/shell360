@@ -198,18 +198,12 @@
   flex-shrink: 0;
 }
 
-/* --- right rail --- */
 .rightRail {
   display: flex;
   align-items: center;
-  -webkit-app-region: no-drag;
-  flex-shrink: 0;
-}
-
-.utilityGroup {
-  display: flex;
-  align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
 }
 
 .profileBtn {
@@ -344,7 +338,7 @@
 
 /* --- macOS: reserve space for the native traffic lights --- */
 .titleBar[data-platform="darwin"] {
-  padding-left: 80px;
+  padding-left: 88px;
 }
 
 /* fullscreen hides the native traffic lights, so reclaim the reserved space */

@@ -14,37 +14,45 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import {
   type Appearance,
+  FileDownloadIcon,
   FileIcon,
+  FileUploadIcon,
   HostIcon,
   KeyIcon,
-  LabelIcon,
+  UpgradeIcon,
   useAppearance,
+  WarningCircleIcon,
 } from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import InitCrypto from "@/components/InitCrypto";
-import Page from "@/components/Page";
+import useExportData from "@/hooks/useExportData";
+import useImportData from "@/hooks/useImportData";
+import useMessage from "@/hooks/useMessage";
+import useModal from "@/hooks/useModal";
 import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
 
-type SettingSectionProps = {
+type SectionProps = {
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
 };
 
-type SettingActionProps = {
+type ActionRowProps = {
   icon: ReactNode;
   title: string;
   description: string;
   value?: ReactNode;
-  onClick?: () => void;
-  ctaLabel?: string;
-  disabled?: boolean;
-  tone?: "default" | "primary";
+  cta?: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    tone?: "default" | "primary";
+  };
   footer?: ReactNode;
 };
 
@@ -62,88 +70,83 @@ const APPEARANCE_OPTIONS: Array<{
   { value: "dark", label: "Dark", hint: "Reduce glare for long sessions." },
 ];
 
-function SettingSection({
+function SectionHeader({
   eyebrow,
   title,
   description,
-  children,
-}: SettingSectionProps) {
+}: Omit<SectionProps, "children">) {
   return (
-    <Card variant="surface">
-      <Flex direction="column" gap="4">
-        <Flex direction="column" gap="2">
-          <Text as="p" className={styles.sectionEyebrow}>
-            {eyebrow}
-          </Text>
-          <Heading size="4" className={styles.sectionTitle}>
-            {title}
-          </Heading>
-          <Text as="p" className={styles.sectionDescription}>
-            {description}
-          </Text>
-        </Flex>
-        <Flex direction="column" gap="3">
-          {children}
-        </Flex>
-      </Flex>
-    </Card>
+    <div className={styles.sectionHeader}>
+      <Text as="p" className={styles.sectionEyebrow}>
+        {eyebrow}
+      </Text>
+      <Heading size="4" className={styles.sectionTitle}>
+        {title}
+      </Heading>
+      <Text as="p" className={styles.sectionDescription}>
+        {description}
+      </Text>
+    </div>
   );
 }
 
-function SettingAction({
+function Section({ eyebrow, title, description, children }: SectionProps) {
+  return (
+    <div className={styles.section}>
+      <SectionHeader
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
+      />
+      <Card variant="surface">{children}</Card>
+    </div>
+  );
+}
+
+function ActionRow({
   icon,
   title,
   description,
   value,
-  onClick,
-  ctaLabel = "Open",
-  disabled,
-  tone = "default",
+  cta,
   footer,
-}: SettingActionProps) {
+}: ActionRowProps) {
   return (
-    <Card variant="surface">
-      <Flex direction="column" gap="2">
-        <Flex
-          align={{ initial: "start", sm: "center" }}
-          direction={{ initial: "column", sm: "row" }}
-          justify="between"
-          gap="4"
-        >
-          <div className={styles.actionMain}>
-            <span className={styles.actionIcon}>{icon}</span>
-            <div className={styles.actionText}>
-              <Text as="p" className={styles.actionTitle}>
-                {title}
-              </Text>
-              <Text as="p" className={styles.actionDescription}>
-                {description}
-              </Text>
-            </div>
+    <div className={styles.actionRow}>
+      <Flex
+        align={{ initial: "start", sm: "center" }}
+        direction={{ initial: "column", sm: "row" }}
+        justify="between"
+        gap="4"
+        className={styles.actionRowInner}
+      >
+        <div className={styles.actionMain}>
+          <span className={styles.actionIcon}>{icon}</span>
+          <div className={styles.actionText}>
+            <Text as="p" className={styles.actionTitle}>
+              {title}
+            </Text>
+            <Text as="p" className={styles.actionDescription}>
+              {description}
+            </Text>
           </div>
-          <div className={styles.actionMeta}>
-            {value && typeof value === "string" ? (
-              <Text as="span" className={styles.actionValue}>
-                {value}
-              </Text>
-            ) : (
-              value
-            )}
-            {onClick && (
-              <Button
-                size="2"
-                variant={tone === "primary" ? "solid" : "soft"}
-                onClick={onClick}
-                disabled={disabled}
-              >
-                {ctaLabel}
-              </Button>
-            )}
-          </div>
-        </Flex>
-        {footer}
+        </div>
+        <div className={styles.actionMeta}>
+          {value}
+          {cta && (
+            <Button
+              size="2"
+              variant={cta.tone === "primary" ? "solid" : "soft"}
+              onClick={cta.onClick}
+              disabled={cta.disabled}
+            >
+              {cta.label}
+            </Button>
+          )}
+        </div>
       </Flex>
-    </Card>
+      {footer}
+    </div>
   );
 }
 
@@ -153,6 +156,10 @@ export default function Settings() {
   const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
   const { hasUpdate, checking, checkUpdate, setOpenUpdateDialog } =
     useUpdateAtom();
+  const exportData = useExportData();
+  const importData = useImportData();
+  const message = useMessage();
+  const modal = useModal();
 
   const [checkingError, setCheckingError] = useState<string>();
   const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
@@ -187,140 +194,217 @@ export default function Settings() {
     }
   }, [checkUpdate, hasUpdate, setOpenUpdateDialog]);
 
-  const renderUpdateFooter = () => {
-    if (checking) {
-      return (
-        <Flex align="center" gap="2" className={styles.inlineNotice}>
-          <Spinner size="2" />
-          <Text as="span">Checking the latest version...</Text>
-        </Flex>
-      );
+  const onExportData = useCallback(async () => {
+    try {
+      const ok = await exportData();
+      if (!ok) {
+        return;
+      }
+      message.success({
+        message: "Export file successful",
+      });
+    } catch (err) {
+      message.error({
+        message: `Export failed: ${String(err)}`,
+      });
     }
-    if (checkingError) {
-      return (
-        <Text as="p" className={styles.inlineNoticeError}>
-          {checkingError}
-        </Text>
-      );
+  }, [exportData, message]);
+
+  const onImportData = useCallback(async () => {
+    try {
+      const result = await modal.confirm({
+        title: "Warning",
+        icon: (
+          <WarningCircleIcon
+            style={{ fontSize: 32, color: "var(--orange-9)" }}
+          />
+        ),
+        content:
+          "The import file will overwrite the same configuration, which may cause data loss. Please proceed with caution.",
+        okText: "Import",
+        cancelText: "Cancel",
+      });
+      if (!result) {
+        return;
+      }
+    } catch {
+      return;
     }
-    if (!hasUpdate) {
-      return (
-        <Text as="p" className={styles.inlineNotice}>
-          No update is currently detected.
-        </Text>
-      );
+
+    try {
+      const ok = await importData();
+      if (!ok) {
+        return;
+      }
+      message.success({
+        message: "Import file successful",
+      });
+    } catch (err) {
+      message.error({
+        message: `Import failed: ${String(err)}`,
+      });
     }
-    return null;
-  };
+  }, [modal, importData, message]);
 
   return (
-    <div className={styles.pageWrap}>
-      <Page
-        eyebrow="Application"
-        title="Settings"
-        description="Adjust appearance, local security, and update behavior for the desktop workspace."
-        actions={
-          <Text as="span" className={styles.versionChip}>
-            {version ?? "--"}
+    <section className={styles.page}>
+      <Flex className={styles.header} align="start" justify="between" gap="6">
+        <Flex className={styles.headerMain} direction="column" gap="2">
+          <Text size="1" color="gray" className={styles.eyebrow}>
+            Application
           </Text>
-        }
-      >
-        <div className={styles.container}>
-          <div className={styles.layout}>
-            <SettingSection
-              eyebrow="Appearance"
-              title="Visual"
-              description="Choose how the desktop app should look."
+          <Heading size="6">Settings</Heading>
+          <Text size="2" color="gray">
+            Adjust appearance, local security, and update behavior for the
+            desktop workspace.
+          </Text>
+        </Flex>
+        <Flex className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.versionPill}
+            data-update={hasUpdate ? "true" : undefined}
+            data-error={checkingError ? "true" : undefined}
+            onClick={onCheckUpdate}
+            title={
+              checkingError
+                ? checkingError
+                : hasUpdate
+                  ? "Update available"
+                  : "Check for updates"
+            }
+          >
+            <Text as="span" className={styles.versionPillLabel}>
+              {version ?? "--"}
+            </Text>
+            {checkingError ? (
+              <WarningCircleIcon className={styles.versionPillStatus} />
+            ) : hasUpdate ? (
+              <span className={styles.versionPillStatus}>
+                <UpgradeIcon />
+                Update
+              </span>
+            ) : checking ? (
+              <Spinner className={styles.versionPillStatus} />
+            ) : (
+              <UpgradeIcon className={styles.versionPillStatus} />
+            )}
+          </button>
+        </Flex>
+      </Flex>
+      <div className={styles.pageBody}>
+        <div className={styles.layout}>
+          <Section
+            eyebrow="Appearance"
+            title="Visual"
+            description="Choose how the desktop app should look."
+          >
+            <RadioCards.Root
+              columns={{ initial: "1", sm: "3" }}
+              size="1"
+              value={appearance}
+              onValueChange={(value) => setAppearance(value as Appearance)}
+              className={styles.radioCardsGroup}
             >
-              <RadioCards.Root
-                columns={{ initial: "1", sm: "3" }}
-                size="1"
-                value={appearance}
-                onValueChange={(value) => setAppearance(value as Appearance)}
-              >
-                {APPEARANCE_OPTIONS.map((option) => (
-                  <RadioCards.Item key={option.value} value={option.value}>
-                    <Flex direction="column" width="100%">
-                      <Text weight="bold">{option.label}</Text>
-                      <Text color="gray" size="1" truncate>
-                        {option.hint}
-                      </Text>
-                    </Flex>
-                  </RadioCards.Item>
-                ))}
-              </RadioCards.Root>
-            </SettingSection>
+              {APPEARANCE_OPTIONS.map((option) => (
+                <RadioCards.Item key={option.value} value={option.value}>
+                  <Flex direction="column" width="100%">
+                    <Text weight="bold">{option.label}</Text>
+                    <Text color="gray" size="1" truncate>
+                      {option.hint}
+                    </Text>
+                  </Flex>
+                </RadioCards.Item>
+              ))}
+            </RadioCards.Root>
+          </Section>
 
-            <SettingSection
-              eyebrow="Security"
-              title="Data protection"
-              description="Manage local encryption and trusted hosts."
-            >
-              <SettingAction
-                icon={<KeyIcon />}
-                title="Local encryption"
-                description="Protect saved application data on this device."
-                value={
-                  <Switch
-                    checked={cryptoEnable}
-                    onCheckedChange={onCryptoEnableChange}
-                  />
-                }
-              />
-
-              {cryptoEnable && (
-                <SettingAction
+          <Section
+            eyebrow="Security"
+            title="Data protection"
+            description="Manage local encryption and trusted hosts."
+          >
+            <ActionRow
+              icon={<KeyIcon />}
+              title="Local encryption"
+              description="Protect saved application data on this device."
+              value={
+                <Switch
+                  checked={cryptoEnable}
+                  onCheckedChange={onCryptoEnableChange}
+                />
+              }
+            />
+            {cryptoEnable && (
+              <>
+                <div className={styles.actionDivider} />
+                <ActionRow
                   icon={<KeyIcon />}
                   title="Change encryption password"
                   description="Update the password for encrypted local data."
-                  onClick={() => setChangeCryptoPasswordIsOpen(true)}
-                  ctaLabel="Change"
+                  cta={{
+                    label: "Change",
+                    onClick: () => setChangeCryptoPasswordIsOpen(true),
+                  }}
                 />
-              )}
-            </SettingSection>
+              </>
+            )}
+          </Section>
 
-            <SettingSection
-              eyebrow="Application"
-              title="Updates and support"
-              description="Low-frequency actions and app information."
-            >
-              <SettingAction
-                icon={<LabelIcon />}
-                title="Check for updates"
-                description={
-                  hasUpdate
-                    ? "A new version is available."
-                    : "Look for a new release."
-                }
-                onClick={onCheckUpdate}
-                ctaLabel={hasUpdate ? "Open updater" : "Check now"}
-                value={checking ? "Checking..." : undefined}
-                disabled={!!checking}
-                tone="primary"
-                footer={renderUpdateFooter()}
-              />
+          <Section
+            eyebrow="Data"
+            title="Import and export"
+            description="Transfer your configuration data between devices."
+          >
+            <ActionRow
+              icon={<FileDownloadIcon />}
+              title="Export data"
+              description="Save all hosts, keys, and port forwardings to a file."
+              cta={{
+                label: "Export",
+                onClick: onExportData,
+              }}
+            />
+            <div className={styles.actionDivider} />
+            <ActionRow
+              icon={<FileUploadIcon />}
+              title="Import data"
+              description="Load hosts, keys, and port forwardings from a file."
+              cta={{
+                label: "Import",
+                onClick: onImportData,
+              }}
+            />
+          </Section>
 
-              <SettingAction
-                icon={<HostIcon />}
-                title="Project repository"
-                description="Open the GitHub repository."
-                onClick={() => openUrl("https://github.com/nashaofu/shell360")}
-                ctaLabel="Open"
-              />
-
-              <SettingAction
-                icon={<FileIcon />}
-                title="Documentation"
-                description="Open the project README."
-                onClick={() =>
+          <Section
+            eyebrow="Application"
+            title="About"
+            description="Project resources and links."
+          >
+            <ActionRow
+              icon={<HostIcon />}
+              title="Project repository"
+              description="Open the GitHub repository."
+              cta={{
+                label: "Open",
+                onClick: () => openUrl("https://github.com/nashaofu/shell360"),
+              }}
+            />
+            <div className={styles.actionDivider} />
+            <ActionRow
+              icon={<FileIcon />}
+              title="Documentation"
+              description="Open the project README."
+              cta={{
+                label: "Read",
+                onClick: () =>
                   openUrl(
                     "https://github.com/nashaofu/shell360/blob/master/README.md",
-                  )
-                }
-                ctaLabel="Read"
-              />
-            </SettingSection>
-          </div>
+                  ),
+              }}
+            />
+          </Section>
         </div>
 
         <InitCrypto
@@ -333,7 +417,7 @@ export default function Settings() {
           onCancel={() => setChangeCryptoPasswordIsOpen(false)}
           onOk={() => setChangeCryptoPasswordIsOpen(false)}
         />
-      </Page>
-    </div>
+      </div>
+    </section>
   );
 }
