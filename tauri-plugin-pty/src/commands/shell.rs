@@ -156,7 +156,7 @@ pub async fn shell_open<R: Runtime>(
 #[tauri::command]
 pub async fn shell_send<R: Runtime>(
   shell_id: ShellId,
-  data: Vec<u8>,
+  data: String,
   _app: AppHandle<R>,
   pty_manager: State<'_, PtyManager>,
 ) -> PtyResult<()> {
@@ -171,7 +171,7 @@ pub async fn shell_send<R: Runtime>(
   };
 
   if let Some(ref mut w) = writer {
-    w.write_all(&data)?;
+    w.write_all(data.as_bytes())?;
     w.flush()?;
   }
 

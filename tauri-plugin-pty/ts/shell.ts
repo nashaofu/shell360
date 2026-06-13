@@ -53,17 +53,13 @@ export class PtyShell {
     return result;
   }
 
-  send(data: string | Uint8Array): Promise<void> {
+  send(data: string): Promise<void> {
     if (!this.#opened) {
       return Promise.resolve();
     }
-    const bytes =
-      data instanceof Uint8Array
-        ? Array.from(data)
-        : [...new TextEncoder().encode(data)];
     return invoke("plugin:pty|shell_send", {
       shellId: this.shellId,
-      data: bytes,
+      data: data,
     });
   }
 
