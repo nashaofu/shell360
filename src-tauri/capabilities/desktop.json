@@ -46,6 +46,7 @@
     "store:default",
     "data:default",
     "ssh:default",
+    "pty:default",
     "machine-uid:default"
   ]
 }

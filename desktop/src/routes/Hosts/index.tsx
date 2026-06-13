@@ -82,6 +82,11 @@ export default function Hosts() {
     setEditHost(undefined);
   }, []);
 
+  const handleOpenLocalShell = useCallback(() => {
+    const [item] = terminalsAtomWithApi.addLocal();
+    activateTerminal(item.uuid);
+  }, [activateTerminal, terminalsAtomWithApi]);
+
   const onEditHost = useCallback((host: Host) => {
     setEditHost(host);
     setIsOpenAddHost(true);
@@ -143,14 +148,24 @@ export default function Hosts() {
             </HostTagsSelect>
           }
         >
-          <button
-            type="button"
-            className={clsx(panel.button, panel.buttonPrimary)}
-            onClick={() => setIsOpenAddHost(true)}
-          >
-            <AddIcon width="11" height="11" />
-            New Host
-          </button>
+          <div className={panel.splitButton}>
+            <button
+              type="button"
+              className={clsx(panel.button, panel.buttonPrimary)}
+              onClick={() => setIsOpenAddHost(true)}
+            >
+              <AddIcon width="11" height="11" />
+              New Host
+            </button>
+            <button
+              type="button"
+              className={panel.button}
+              onClick={handleOpenLocalShell}
+            >
+              <TerminalIcon width="11" height="11" />
+              Local Shell
+            </button>
+          </div>
         </ListToolbar>
         <div className={panel.content}>
           {items.length > 0 ? (

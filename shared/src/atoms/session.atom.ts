@@ -1,7 +1,7 @@
 import { useLatest, useMemoizedFn } from "ahooks";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useMemo } from "react";
-import type { Host } from "tauri-plugin-data";
+import { AuthenticationMethod, type Host } from "tauri-plugin-data";
 import { v4 as uuidV4 } from "uuid";
 
 import { useHosts } from "@/hooks/useHosts";
@@ -23,6 +23,7 @@ export type TerminalAtom = {
   status: "pending" | "success" | "failed";
   error?: unknown;
   type?: "terminal" | "sftp";
+  connectionType?: "ssh" | "local";
 };
 
 const terminalsAtom = atom<Map<string, TerminalAtom>>(new Map());
@@ -150,11 +151,49 @@ export function useTerminalsAtomWithApi() {
     addTerminalOfType(host, "sftp"),
   );
 
+  const addLocalTerminal = useMemoizedFn(
+    (): [TerminalAtom, Map<string, TerminalAtom>] => {
+      const uuid = uuidV4();
+      const map = new Map(stateRef.current);
+
+      const localTerminals = [...map.values()].filter(
+        (item) => item.connectionType === "local",
+      );
+      const name =
+        localTerminals.length === 0
+          ? "Local"
+          : `Local (${localTerminals.length})`;
+
+      const item: TerminalAtom = {
+        uuid,
+        host: {
+          id: "__local__",
+          name: "Local",
+          hostname: "localhost",
+          port: 0,
+          username: "",
+          authenticationMethod: AuthenticationMethod.Password,
+        } as Host,
+        name,
+        jumpHostChain: [],
+        status: "success",
+        type: "terminal",
+        connectionType: "local",
+      };
+
+      map.set(uuid, item);
+      setState(map);
+      stateRef.current = map;
+      return [item, map];
+    },
+  );
+
   return {
     state,
     getState,
     add: addTerminal,
     addSftp: addSftpTerminal,
+    addLocal: addLocalTerminal,
     update: updateTerminal,
     delete: deleteTerminal,
     establish: establishTerminal,

@@ -2,7 +2,17 @@
   position: fixed;
   inset: 0;
   z-index: 1199;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.35);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .panel {
@@ -11,61 +21,76 @@
   left: 0;
   bottom: 0;
   z-index: 1200;
-  width: 300px;
-  background: var(--color-background);
+  width: 280px;
+  max-width: 85vw;
+  background: var(--color-panel-solid);
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
+  animation: slideInLeft 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .header {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  margin-top: 8px;
-  gap: 8px;
+  padding: 12px 16px;
+  gap: 10px;
 }
 
 .logoWrap {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .logoText {
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .settingsBtn {
+  width: 36px;
+  height: 36px;
   background: none;
   border: none;
   cursor: pointer;
   color: inherit;
   display: flex;
   align-items: center;
-  padding: 6px;
+  justify-content: center;
   border-radius: 50%;
   flex-shrink: 0;
+  transition: background 0.15s ease;
 
-  &:hover {
-    background: rgba(128, 128, 128, 0.12);
+  &:active {
+    background: var(--gray-a4);
   }
 }
 
 .divider {
   margin: 0;
   border: none;
-  border-top: 1px solid var(--gray-a6);
+  border-top: 0.5px solid var(--gray-a4);
 }
 
 .scrollArea {

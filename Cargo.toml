@@ -4,6 +4,7 @@ members = [
   "tauri-plugin-mobile",
   "tauri-plugin-ssh",
   "tauri-plugin-data",
+  "tauri-plugin-pty",
 ]
 resolver = "2"
 

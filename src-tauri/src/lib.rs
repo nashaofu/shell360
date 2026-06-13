@@ -24,7 +24,6 @@ pub fn run() {
     .plugin(tauri_plugin_ssh::init())
     .invoke_handler(tauri::generate_handler![generate_key, open_url])
     .setup(|app| {
-      // only include this code on debug builds
       #[cfg(debug_assertions)]
       {
         if let Some(window) = app.get_webview_window("main") {
@@ -36,6 +35,9 @@ pub fn run() {
       app
         .handle()
         .plugin(tauri_plugin_updater::Builder::new().build())?;
+
+      #[cfg(desktop)]
+      app.handle().plugin(tauri_plugin_pty::init())?;
 
       #[cfg(mobile)]
       app.handle().plugin(tauri_plugin_mobile::init())?;

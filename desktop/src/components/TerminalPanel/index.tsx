@@ -1,5 +1,6 @@
 import type { IDockviewPanelProps } from "dockview-react";
 import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
+import LocalTerminal from "@/components/LocalTerminal";
 import SSHTerminal from "@/components/SSHTerminal";
 
 export default function TerminalPanel({
@@ -12,6 +13,19 @@ export default function TerminalPanel({
   const term = terminalsState.get(terminalId);
 
   if (!term) return null;
+
+  if (term.connectionType === "local") {
+    return (
+      <LocalTerminal
+        item={term}
+        style={{ width: "100%", height: "100%" }}
+        onClose={() => {
+          api.close();
+          terminalsApi.delete(terminalId);
+        }}
+      />
+    );
+  }
 
   return (
     <SSHTerminal

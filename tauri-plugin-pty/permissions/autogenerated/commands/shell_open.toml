@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-shell-open"
+description = "Enables the shell_open command without any pre-configured scope."
+commands.allow = ["shell_open"]
+
+[[permission]]
+identifier = "deny-shell-open"
+description = "Denies the shell_open command without any pre-configured scope."
+commands.deny = ["shell_open"]

@@ -1,0 +1,28 @@
+{
+  "name": "tauri-plugin-pty",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "types": "./dist/ts/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/ts/index.d.ts",
+      "import": "./ts/index.ts",
+      "default": "./ts/index.ts"
+    }
+  },
+  "scripts": {
+    "postinstall": "npm run build",
+    "dev": "rslib build --watch",
+    "build": "npm run tsc && rslib build",
+    "tsc": "tsc -b"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@rslib/core": "^0.22.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -44,6 +44,7 @@ webbrowser = "1.0.6"
 tauri-plugin-updater = { version = "2.9.0", default-features = false, features = [
   "native-tls-vendored",
 ] }
+tauri-plugin-pty = { path = "../tauri-plugin-pty" }
 
 [target.'cfg(any(target_os = "ios", target_os="android"))'.dependencies]
 tauri-plugin-mobile = { path = "../tauri-plugin-mobile" }

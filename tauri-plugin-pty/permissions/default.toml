@@ -1,0 +1,8 @@
+[default]
+description = "Default permissions for the pty plugin"
+permissions = [
+  "allow-shell-open",
+  "allow-shell-send",
+  "allow-shell-resize",
+  "allow-shell-close",
+]

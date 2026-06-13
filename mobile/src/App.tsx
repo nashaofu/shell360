@@ -42,6 +42,11 @@ const router = createBrowserRouter([
         ErrorBoundary: RouterErrorBoundary,
       },
       {
+        path: "/terminal/:uuid",
+        element: null,
+        ErrorBoundary: RouterErrorBoundary,
+      },
+      {
         path: "*",
         element: null,
         ErrorBoundary: RouterErrorBoundary,
@@ -54,15 +59,13 @@ export default function App() {
   const theme = useAtomValue(themeAtom);
 
   return (
-    <Theme {...theme}>
+    <Theme {...theme} className={styles.appShell}>
       <ModalProvider
         appearance={theme.appearance as "light" | "dark" | undefined}
       >
-        <div className={styles.appShell}>
-          <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-            <RouterProvider router={router} />
-          </ErrorBoundary>
-        </div>
+        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+          <RouterProvider router={router} />
+        </ErrorBoundary>
       </ModalProvider>
     </Theme>
   );

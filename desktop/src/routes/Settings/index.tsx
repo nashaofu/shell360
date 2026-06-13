@@ -19,15 +19,18 @@ import {
   FileUploadIcon,
   HostIcon,
   KeyIcon,
+  TerminalIcon,
   UpgradeIcon,
   useAppearance,
   WarningCircleIcon,
 } from "shared";
 import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
+import { useLocalTerminalSettings } from "@/atoms/localTerminalSettings.atom";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import InitCrypto from "@/components/InitCrypto";
+import LocalTerminalSettingsDialog from "@/components/LocalTerminalSettings";
 import useExportData from "@/hooks/useExportData";
 import useImportData from "@/hooks/useImportData";
 import useMessage from "@/hooks/useMessage";
@@ -156,6 +159,7 @@ export default function Settings() {
   const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
   const { hasUpdate, checking, checkUpdate, setOpenUpdateDialog } =
     useUpdateAtom();
+  const [localSettings] = useLocalTerminalSettings();
   const exportData = useExportData();
   const importData = useImportData();
   const message = useMessage();
@@ -165,6 +169,7 @@ export default function Settings() {
   const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
   const [changeCryptoPasswordIsOpen, setChangeCryptoPasswordIsOpen] =
     useState(false);
+  const [terminalSettingsOpen, setTerminalSettingsOpen] = useState(false);
 
   useEffect(() => {
     getVersion().then(setVersion);
@@ -255,7 +260,7 @@ export default function Settings() {
           </Text>
           <Heading size="6">Settings</Heading>
           <Text size="2" color="gray">
-            Adjust appearance, local security, and update behavior for the
+            Adjust appearance, terminal, security, and update behavior for the
             desktop workspace.
           </Text>
         </Flex>
@@ -317,6 +322,22 @@ export default function Settings() {
                 </RadioCards.Item>
               ))}
             </RadioCards.Root>
+          </Section>
+
+          <Section
+            eyebrow="Terminal"
+            title="Local"
+            description="Configure the built-in local terminal font, theme, and shell."
+          >
+            <ActionRow
+              icon={<TerminalIcon />}
+              title="Local terminal settings"
+              description={`${localSettings.fontFamily}, ${localSettings.fontSize}px, ${localSettings.theme}${localSettings.shell ? ` — Shell: ${localSettings.shell}` : ""}`}
+              cta={{
+                label: "Configure",
+                onClick: () => setTerminalSettingsOpen(true),
+              }}
+            />
           </Section>
 
           <Section
@@ -416,6 +437,10 @@ export default function Settings() {
           open={changeCryptoPasswordIsOpen}
           onCancel={() => setChangeCryptoPasswordIsOpen(false)}
           onOk={() => setChangeCryptoPasswordIsOpen(false)}
+        />
+        <LocalTerminalSettingsDialog
+          open={terminalSettingsOpen}
+          onCancel={() => setTerminalSettingsOpen(false)}
         />
       </div>
     </section>
