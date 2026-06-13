@@ -262,9 +262,9 @@ pub enum AuthenticationData {
   },
 }
 
-impl Into<MethodKind> for AuthenticationData {
-  fn into(self) -> MethodKind {
-    match self {
+impl From<AuthenticationData> for MethodKind {
+  fn from(val: AuthenticationData) -> Self {
+    match val {
       AuthenticationData::Password { .. } => MethodKind::Password,
       AuthenticationData::PublicKey { .. } => MethodKind::PublicKey,
       AuthenticationData::Certificate { .. } => MethodKind::HostBased,
@@ -341,7 +341,7 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by public key", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty"));
         }
 
         let password = passphrase.and_then(|passphrase| {
@@ -412,10 +412,10 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by certificate", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty"));
         }
         if certificate.is_empty() {
-          return Err(AuthenticationError::new("Certificate is empty").into());
+          return Err(AuthenticationError::new("Certificate is empty"));
         }
 
         let password = passphrase.and_then(|passphrase| {

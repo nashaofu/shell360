@@ -7,8 +7,8 @@ import TerminalContextMenu from "@/components/TerminalContextMenu";
 import { useLocalShell } from "@/hooks/useLocalShell";
 import { copy } from "@/utils/clipboard";
 import openUrl from "@/utils/openUrl";
-import { LocalTerminalLoading } from "./Loading";
 import styles from "./index.module.less";
+import { LocalTerminalLoading } from "./Loading";
 
 type LocalTerminalProps = {
   item: TerminalAtom;

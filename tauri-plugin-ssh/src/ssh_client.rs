@@ -16,7 +16,7 @@ use tokio::{io, net::TcpStream};
 use crate::{
   SSHError,
   commands::{
-     port_forwarding::{SSHPortForwarding, SSHPortForwardingId},
+    port_forwarding::{SSHPortForwarding, SSHPortForwardingId},
     session::{SSHSessionCheckServerKey, SSHSessionId, SessionIpcChannelData},
   },
   ssh_manager::SSHManager,
@@ -170,15 +170,13 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
           remote_port,
           ..
         } = ssh_port_forwarding
-        {
-          if self.ssh_session_id == *ssh_session_id
+          && self.ssh_session_id == *ssh_session_id
             && remote_address == connected_address
             && *remote_port == connected_port as u16
           {
             let addr = format!("{}:{}", local_address, local_port);
             return Some(addr);
           }
-        }
         None
       });
 
@@ -248,13 +246,12 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
         .collect();
 
       for id in ids {
-        if let Some(entry) = port_forwardings.remove(&id) {
-          if let SSHPortForwarding::Local { notify, .. }
+        if let Some(entry) = port_forwardings.remove(&id)
+          && let SSHPortForwarding::Local { notify, .. }
           | SSHPortForwarding::Dynamic { notify, .. } = &entry
           {
             notify.notify_last();
           }
-        }
       }
 
       if let Some(error) = return_error {

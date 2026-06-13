@@ -19,7 +19,11 @@ export interface UseLocalShellOpts {
   shell?: string;
 }
 
-export function useLocalShell({ onClose, onCopy, shell: shellPath }: UseLocalShellOpts) {
+export function useLocalShell({
+  onClose,
+  onCopy,
+  shell: shellPath,
+}: UseLocalShellOpts) {
   const [terminal, setTerminal] = useState<Terminal>();
 
   const shellRef = useRef<PtyShell | null>(null);

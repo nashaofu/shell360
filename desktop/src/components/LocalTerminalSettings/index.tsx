@@ -1,7 +1,14 @@
-import { Button, Dialog, Flex, Select, Text, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Dialog,
+  Flex,
+  Select,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { TERMINAL_THEMES, onInputChange } from "shared";
+import { onInputChange, TERMINAL_THEMES } from "shared";
 import { useLocalTerminalSettings } from "@/atoms/localTerminalSettings.atom";
 
 type FormValues = {
@@ -53,7 +60,12 @@ export default function LocalTerminalSettingsDialog({
   });
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onCancel();
+      }}
+    >
       <Dialog.Content style={{ maxWidth: 420 }}>
         <Dialog.Title>Local Terminal Settings</Dialog.Title>
         <Dialog.Description size="2" color="gray">
@@ -126,8 +138,14 @@ export default function LocalTerminalSettingsDialog({
                   <Text as="label" size="2" weight="medium">
                     Theme
                   </Text>
-                  <Select.Root value={field.value} onValueChange={field.onChange}>
-                    <Select.Trigger style={{ width: "100%" }} placeholder="Select theme" />
+                  <Select.Root
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <Select.Trigger
+                      style={{ width: "100%" }}
+                      placeholder="Select theme"
+                    />
                     <Select.Content>
                       {TERMINAL_THEMES.map((item) => (
                         <Select.Item key={item.name} value={item.name}>
