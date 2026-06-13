@@ -41,7 +41,6 @@
     "process:default",
     "dialog:allow-open",
     "dialog:allow-save",
-    "dialog:allow-destroy-path",
     "dialog:allow-ask",
     "store:default",
     "data:default",

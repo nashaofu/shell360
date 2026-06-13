@@ -8,6 +8,7 @@ import {
   MoreIcon,
   SSHLoading,
   type TerminalAtom,
+  TransferProgress,
   useSftpConnection,
   useSftpFileEditor,
 } from "shared";
@@ -95,7 +96,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
   );
 
   const {
-    progress,
+    transferInfo,
     uploadFile,
     uploadFileLoading,
     downloadFile,
@@ -255,12 +256,12 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
 
   const isLoading =
     readDirLoading ||
-    uploadFileLoading ||
-    downloadFileLoading ||
     renameLoading ||
     removeDirLoading ||
     removeFileLoading ||
     createLoading;
+
+  const isTransferring = uploadFileLoading || downloadFileLoading;
 
   const showConnection = connectionLoading || !!connectionError;
 
@@ -284,7 +285,6 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
           }}
           loading={isLoading}
           size={48}
-          progress={progress}
         >
           <div className={styles.toolbar}>
             <SftpBreadcrumbs
@@ -347,6 +347,9 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
             </div>
           </div>
         </Loading>
+        {isTransferring && transferInfo && (
+          <TransferProgress {...transferInfo} />
+        )}
       </div>
       {showConnection && (
         <SSHLoading

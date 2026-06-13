@@ -1,11 +1,20 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
-import { type MutableRefObject, useState } from "react";
+import { type MutableRefObject, useRef, useState } from "react";
 import { WarningCircleIcon } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 import { useFileTransfersActions } from "@/atoms/terminalView.atom";
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
+
+export type TransferInfo = {
+  type: "upload" | "download";
+  fileName: string;
+  progress: number;
+  total: number;
+  speed: number;
+  eta: number;
+};
 
 type UseSftpActionsOpts = {
   dirname?: string;
@@ -22,7 +31,8 @@ export default function useSftpActions({
   sftpRef,
   refreshDir,
 }: UseSftpActionsOpts) {
-  const [progress, setProgress] = useState(0);
+  const [transferInfo, setTransferInfo] = useState<TransferInfo | null>(null);
+  const lastUpdateRef = useRef({ time: 0, progress: 0 });
   const { startTransfer, finishTransfer } = useFileTransfersActions();
 
   const { loading: uploadFileLoading, run: uploadFile } = useRequest(
@@ -56,17 +66,47 @@ export default function useSftpActions({
           return true;
         }
       }
+
+      lastUpdateRef.current = { time: performance.now(), progress: 0 };
+      setTransferInfo({
+        type: "upload",
+        fileName: filename.split("/").pop() || "",
+        progress: 0,
+        total: 0,
+        speed: 0,
+        eta: -1,
+      });
+
       startTransfer();
       try {
         await sftpRef.current?.sftpUploadFile({
           localFilename: file,
           remoteFilename: filename,
           onProgress: ({ progress, total }) => {
-            setProgress(Math.round((progress / total) * 100));
+            const now = performance.now();
+            const dt = Math.max(
+              (now - lastUpdateRef.current.time) / 1000,
+              0.001,
+            );
+            const db = progress - lastUpdateRef.current.progress;
+            const speed = db / dt;
+            const remaining = total - progress;
+            const eta = speed > 0 ? remaining / speed : -1;
+            lastUpdateRef.current = { time: now, progress };
+
+            setTransferInfo({
+              type: "upload",
+              fileName: filename.split("/").pop() || "",
+              progress,
+              total,
+              speed,
+              eta,
+            });
           },
         });
       } finally {
         finishTransfer();
+        setTransferInfo(null);
       }
 
       return false;
@@ -99,17 +139,46 @@ export default function useSftpActions({
         return true;
       }
 
+      lastUpdateRef.current = { time: performance.now(), progress: 0 };
+      setTransferInfo({
+        type: "download",
+        fileName: name,
+        progress: 0,
+        total: 0,
+        speed: 0,
+        eta: -1,
+      });
+
       startTransfer();
       try {
         await sftpRef.current?.sftpDownloadFile({
           localFilename: file,
           remoteFilename: path,
           onProgress: ({ progress, total }) => {
-            setProgress(Math.round((progress / total) * 100));
+            const now = performance.now();
+            const dt = Math.max(
+              (now - lastUpdateRef.current.time) / 1000,
+              0.001,
+            );
+            const db = progress - lastUpdateRef.current.progress;
+            const speed = db / dt;
+            const remaining = total - progress;
+            const eta = speed > 0 ? remaining / speed : -1;
+            lastUpdateRef.current = { time: now, progress };
+
+            setTransferInfo({
+              type: "download",
+              fileName: name,
+              progress,
+              total,
+              speed,
+              eta,
+            });
           },
         });
       } finally {
         finishTransfer();
+        setTransferInfo(null);
       }
 
       return false;
@@ -168,7 +237,7 @@ export default function useSftpActions({
   );
 
   return {
-    progress,
+    transferInfo,
     uploadFile,
     uploadFileLoading,
     downloadFile,

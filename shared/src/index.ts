@@ -17,6 +17,7 @@ export * from "./components/PortForwardingForm";
 export * from "./components/PortForwardingLoading";
 export * from "./components/SSHLoading";
 export * from "./components/TextFieldPassword";
+export * from "./components/TransferProgress";
 export * from "./components/VirtualKeyboard";
 export * from "./components/XTerminal";
 // hooks
