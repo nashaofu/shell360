@@ -3,11 +3,10 @@ import {
   type MutableRefObject,
   type RefObject,
   useCallback,
-  useEffect,
   useState,
 } from "react";
 import { sanitizeSftpFilename } from "shared";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
+import type { SSHSftp } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
 import { getErrorMessage, getSftpBasename } from "./messages";
@@ -16,7 +15,6 @@ type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
   message: ReturnType<typeof useMessage>;
   dirname?: string;
-  files?: SSHSftpFile[];
   sftpRef: MutableRefObject<SSHSftp | null>;
   refreshDir: () => unknown;
 };
@@ -30,7 +28,6 @@ export default function useCreate({
   tableContainerRef,
   message,
   dirname,
-  files,
   sftpRef,
   refreshDir,
 }: UseCreateOpts) {
@@ -126,11 +123,6 @@ export default function useCreate({
     dirname,
     onCreateCancel,
   ]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets create state
-  useEffect(() => {
-    onCreateCancel();
-  }, [files]);
 
   return {
     creatingFilename,

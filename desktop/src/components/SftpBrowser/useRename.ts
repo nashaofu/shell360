@@ -1,5 +1,5 @@
 import { useRequest } from "ahooks";
-import { type MutableRefObject, useCallback, useEffect, useState } from "react";
+import { type MutableRefObject, useCallback, useState } from "react";
 import { sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
@@ -9,14 +9,12 @@ import { getErrorMessage, getSftpBasename } from "./messages";
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
   sftpRef: MutableRefObject<SSHSftp | null>;
-  files?: SSHSftpFile[];
   refreshDir: () => unknown;
 };
 
 export default function useRename({
   message,
   sftpRef,
-  files,
   refreshDir,
 }: UseRenameOpts) {
   const [editingFilename, setEditingFilename] = useState<string>();
@@ -76,11 +74,6 @@ export default function useRename({
     await rename(selectedFile.path, `${parent}/${editingFilename}`);
     onRenameCancel();
   }, [editingFilename, onRenameCancel, rename, selectedFile]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets rename state
-  useEffect(() => {
-    onRenameCancel();
-  }, [files]);
 
   return {
     renameLoading,

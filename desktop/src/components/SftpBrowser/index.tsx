@@ -96,6 +96,28 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
         }),
     },
   );
+  const isListEditingRef = useRef(false);
+  const pendingAutoRefreshRef = useRef(false);
+
+  const safeRefreshDir = useCallback(
+    (reason: "auto" | "manual" = "auto") => {
+      if (reason === "auto" && isListEditingRef.current) {
+        pendingAutoRefreshRef.current = true;
+        return;
+      }
+      pendingAutoRefreshRef.current = false;
+      refreshDir();
+    },
+    [refreshDir],
+  );
+
+  const flushPendingAutoRefresh = useCallback(() => {
+    if (!pendingAutoRefreshRef.current) {
+      return;
+    }
+    pendingAutoRefreshRef.current = false;
+    refreshDir();
+  }, [refreshDir]);
 
   const {
     transferInfo,
@@ -117,7 +139,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     message,
     modal,
     sftpRef,
-    refreshDir,
+    refreshDir: () => safeRefreshDir("auto"),
   });
 
   const onSelectDir = useCallback((item: SSHSftpFile) => {
@@ -133,17 +155,37 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     loadFileContent,
     saveFileContent,
     closeEditor,
-  } = useSftpFileEditor({ sftpRef, refreshDir });
+  } = useSftpFileEditor({ sftpRef, refreshDir: () => safeRefreshDir("auto") });
 
   const {
     renameLoading,
     selectedFile,
     editingFilename,
     onEditingFilenameChange,
-    onRename,
-    onRenameCancel,
-    onRenameOk,
-  } = useRename({ message, sftpRef, files, refreshDir });
+    onRename: startRename,
+    onRenameCancel: cancelRename,
+    onRenameOk: confirmRename,
+  } = useRename({ message, sftpRef, refreshDir: () => safeRefreshDir("auto") });
+
+  const onRename = useCallback(
+    (item: SSHSftpFile) => {
+      isListEditingRef.current = true;
+      startRename(item);
+    },
+    [startRename],
+  );
+
+  const onRenameCancel = useCallback(() => {
+    cancelRename();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [cancelRename, flushPendingAutoRefresh]);
+
+  const onRenameOk = useCallback(async () => {
+    await confirmRename();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [confirmRename, flushPendingAutoRefresh]);
 
   const cells = useCells({
     selectedFile,
@@ -176,11 +218,11 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
   const onSftpBreadcrumbsClick = useCallback(
     (dir: string) => {
       if (dir === dirname) {
-        return refreshDir();
+        return safeRefreshDir("manual");
       }
       setDirname(dir);
     },
-    [dirname, refreshDir],
+    [dirname, safeRefreshDir],
   );
 
   const onNavigatePath = useCallback(
@@ -217,18 +259,39 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     creatingFilename,
     onCreatingFilenameChange,
     createType,
-    onCreate,
-    onCreateCancel,
-    onCreateOk,
+    onCreate: startCreate,
+    onCreateCancel: cancelCreate,
+    onCreateOk: confirmCreate,
     createLoading,
   } = useCreate({
     tableContainerRef,
     message,
     dirname,
-    files,
     sftpRef,
-    refreshDir,
+    refreshDir: () => safeRefreshDir("auto"),
   });
+
+  isListEditingRef.current = !!selectedFile || !!creatingFilename;
+
+  const onCreate = useCallback(
+    (val: CreateType, filename: string) => {
+      isListEditingRef.current = true;
+      startCreate(val, filename);
+    },
+    [startCreate],
+  );
+
+  const onCreateCancel = useCallback(() => {
+    cancelCreate();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [cancelCreate, flushPendingAutoRefresh]);
+
+  const onCreateOk = useCallback(async () => {
+    await confirmCreate();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [confirmCreate, flushPendingAutoRefresh]);
 
   const actions = useMemo(() => {
     return [
@@ -245,7 +308,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       {
         label: "Refresh",
         value: "Refresh",
-        onClick: () => refreshDir(),
+        onClick: () => safeRefreshDir("manual"),
       },
       {
         label: isShowHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files",
@@ -253,7 +316,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
         onClick: () => setIsShowHiddenFiles(!isShowHiddenFiles),
       },
     ];
-  }, [isShowHiddenFiles, onCreate, refreshDir]);
+  }, [isShowHiddenFiles, onCreate, safeRefreshDir]);
 
   const isLoading =
     readDirLoading ||

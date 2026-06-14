@@ -30,7 +30,6 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   const uploadCount = activeFiles.filter((i) => i.type === "upload").length;
   const downloadCount = activeFiles.filter((i) => i.type === "download").length;
   const completedCount = queue.filter((i) => i.status === "completed").length;
-  const hasTransfers = queue.length > 0;
   const totalBytes =
     task?.overallTotal || queue.reduce((sum, i) => sum + i.total, 0);
   const progressBytes =
@@ -42,6 +41,9 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   );
   const activeQueue = queue.filter((i) =>
     transferActiveStatuses.includes(i.status),
+  );
+  const hasRunningTransfers = activeQueue.some(
+    (i) => i.status === "transferring",
   );
   const speed =
     task?.speed ||
@@ -83,7 +85,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
             {completedCount}
           </span>
         </div>
-        {hasTransfers && (
+        {hasRunningTransfers && (
           <div className={styles.transferSummary} title={summaryTitle}>
             <span className={styles.summaryTrack}>
               <span
