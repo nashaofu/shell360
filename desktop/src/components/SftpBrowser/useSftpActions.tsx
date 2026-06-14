@@ -175,7 +175,7 @@ export default function useSftpActions({
       const info = transferInfoRef.current;
       if (!info) return;
       const item = info.queue.find((i) => i.id === itemId);
-      if (!item || item.status !== "transferring") return;
+      if (item?.status !== "transferring") return;
 
       if (item.taskId) {
         sftpRef.current?.sftpPauseTask(item.taskId);
@@ -196,7 +196,7 @@ export default function useSftpActions({
       const info = transferInfoRef.current;
       if (!info) return;
       const item = info.queue.find((i) => i.id === itemId);
-      if (!item || item.status !== "paused") return;
+      if (item?.status !== "paused") return;
 
       if (item.taskId) {
         sftpRef.current?.sftpResumeTask(item.taskId);
@@ -212,6 +212,37 @@ export default function useSftpActions({
     [sftpRef, setTransferInfoWithRef],
   );
 
+  const removeFileItem = useCallback(
+    (itemId: string) => {
+      const info = transferInfoRef.current;
+      const item = info?.queue.find((i) => i.id === itemId);
+      if (
+        item?.taskId &&
+        (item.status === "transferring" ||
+          item.status === "paused" ||
+          item.status === "waiting")
+      ) {
+        sftpRef.current?.sftpCancelTask(item.taskId);
+      }
+
+      setTransferInfoWithRef((prev) => {
+        if (!prev) return null;
+        const q = prev.queue.filter((i) => i.id !== itemId);
+        if (q.length === 0) {
+          setTransferStatus(null);
+          return null;
+        }
+        return {
+          ...prev,
+          currentIndex: Math.min(prev.currentIndex, q.length - 1),
+          queue: q,
+          ...computeOverall(q),
+        };
+      });
+    },
+    [sftpRef, setTransferInfoWithRef],
+  );
+
   const { loading: uploadFileLoading, run: uploadFile } = useRequest(
     async () => {
       const filePaths = await open({ multiple: true, directory: false });
@@ -219,6 +250,7 @@ export default function useSftpActions({
 
       const items: TransferQueueItem[] = filePaths.map((p) => ({
         id: crypto.randomUUID(),
+        type: "upload",
         fileName: p.split(/(\/)|(\\)/).pop() || p,
         status: "waiting" as const,
         progress: 0,
@@ -231,19 +263,20 @@ export default function useSftpActions({
       filePathsRef.current = filePaths;
       abortRef.current = false;
       cancelCurrentRef.current = false;
-      setTransferInfoWithRef({
-        type: "upload",
-        dirname: dirnameRef.current,
-        fileName: items[0].fileName,
-        progress: 0,
-        total: 0,
-        speed: 0,
-        eta: -1,
-        overallProgress: 0,
-        overallTotal: 0,
-        overallProgressBytes: 0,
-        queue: items,
-        currentIndex: 0,
+      setTransferInfoWithRef((prev) => {
+        const q = [...(prev?.queue ?? []), ...items];
+        return {
+          type: "upload",
+          dirname: dirnameRef.current,
+          fileName: items[0].fileName,
+          progress: 0,
+          total: 0,
+          speed: 0,
+          eta: -1,
+          ...computeOverall(q),
+          queue: q,
+          currentIndex: q.findIndex((item) => item.id === items[0].id),
+        };
       });
       setTransferStatus("transferring");
       setPanelOpen(true);
@@ -253,10 +286,13 @@ export default function useSftpActions({
 
       for (let i = 0; i < filePaths.length; i++) {
         if (abortRef.current) {
+          const cancelledIds = new Set(items.slice(i).map((item) => item.id));
           setTransferInfoWithRef((prev) => {
             if (!prev) return null;
-            const q = prev.queue.map((item, j) =>
-              j >= i ? { ...item, status: "cancelled" as const } : item,
+            const q = prev.queue.map((item) =>
+              cancelledIds.has(item.id)
+                ? { ...item, status: "cancelled" as const }
+                : item,
             );
             cancelCurrentRef.current = false;
             return { ...prev, queue: q, ...computeOverall(q) };
@@ -264,7 +300,9 @@ export default function useSftpActions({
           break;
         }
 
-        const currentStatus = transferInfoRef.current?.queue[i]?.status;
+        const currentStatus = transferInfoRef.current?.queue.find(
+          (item) => item.id === items[i].id,
+        )?.status;
         if (
           currentStatus === "cancelled" ||
           currentStatus === "completed" ||
@@ -278,13 +316,15 @@ export default function useSftpActions({
 
         setTransferInfoWithRef((prev) => {
           if (!prev) return null;
-          const q = prev.queue.map((item, j) =>
-            j === i ? { ...item, status: "transferring" as const } : item,
+          const q = prev.queue.map((item) =>
+            item.id === items[i].id
+              ? { ...item, status: "transferring" as const }
+              : item,
           );
           return {
             ...prev,
             fileName: items[i].fileName,
-            currentIndex: i,
+            currentIndex: q.findIndex((item) => item.id === items[i].id),
             queue: q,
             ...computeOverall(q),
           };
@@ -309,8 +349,10 @@ export default function useSftpActions({
 
               setTransferInfoWithRef((prev) => {
                 if (!prev) return null;
-                const q = prev.queue.map((item, j) =>
-                  j === i ? { ...item, progress, total, speed, eta } : item,
+                const q = prev.queue.map((item) =>
+                  item.id === items[i].id
+                    ? { ...item, progress, total, speed, eta }
+                    : item,
                 );
                 const overall = computeOverall(q);
                 return {
@@ -329,8 +371,10 @@ export default function useSftpActions({
 
           setTransferInfoWithRef((prev) => {
             if (!prev) return null;
-            const q = prev.queue.map((item, j) =>
-              j === i ? { ...item, status: "completed" as const } : item,
+            const q = prev.queue.map((item) =>
+              item.id === items[i].id
+                ? { ...item, status: "completed" as const }
+                : item,
             );
             return { ...prev, queue: q, ...computeOverall(q) };
           });
@@ -340,16 +384,21 @@ export default function useSftpActions({
             cancelCurrentRef.current = false;
             setTransferInfoWithRef((prev) => {
               if (!prev) return null;
-              const q = prev.queue.map((item, j) =>
-                j === i ? { ...item, status: "cancelled" as const } : item,
+              const q = prev.queue.map((item) =>
+                item.id === items[i].id
+                  ? { ...item, status: "cancelled" as const }
+                  : item,
               );
               return { ...prev, queue: q, ...computeOverall(q) };
             });
           } else if (abortRef.current) {
+            const cancelledIds = new Set(items.slice(i).map((item) => item.id));
             setTransferInfoWithRef((prev) => {
               if (!prev) return null;
-              const q = prev.queue.map((item, j) =>
-                j >= i ? { ...item, status: "cancelled" as const } : item,
+              const q = prev.queue.map((item) =>
+                cancelledIds.has(item.id)
+                  ? { ...item, status: "cancelled" as const }
+                  : item,
               );
               return { ...prev, queue: q, ...computeOverall(q) };
             });
@@ -357,8 +406,8 @@ export default function useSftpActions({
           } else {
             setTransferInfoWithRef((prev) => {
               if (!prev) return null;
-              const q = prev.queue.map((item, j) =>
-                j === i
+              const q = prev.queue.map((item) =>
+                item.id === items[i].id
                   ? {
                       ...item,
                       status: "failed" as const,
@@ -399,6 +448,7 @@ export default function useSftpActions({
       const items: TransferQueueItem[] = [
         {
           id: crypto.randomUUID(),
+          type: "download",
           fileName: name,
           status: "waiting" as const,
           progress: 0,
@@ -412,19 +462,21 @@ export default function useSftpActions({
       abortRef.current = false;
       lastUpdateRef.current = { time: performance.now(), progress: 0 };
       incTransfer();
-      setTransferInfoWithRef({
-        type: "download",
-        dirname: dirnameRef.current,
-        fileName: name,
-        progress: 0,
-        total: 0,
-        speed: 0,
-        eta: -1,
-        overallProgress: 0,
-        overallTotal: 0,
-        overallProgressBytes: 0,
-        queue: [{ ...items[0], status: "transferring" }],
-        currentIndex: 0,
+      setTransferInfoWithRef((prev) => {
+        const transferItem = { ...items[0], status: "transferring" as const };
+        const q = [...(prev?.queue ?? []), transferItem];
+        return {
+          type: "download",
+          dirname: dirnameRef.current,
+          fileName: name,
+          progress: 0,
+          total: 0,
+          speed: 0,
+          eta: -1,
+          ...computeOverall(q),
+          queue: q,
+          currentIndex: q.findIndex((item) => item.id === transferItem.id),
+        };
       });
       setTransferStatus("transferring");
       setPanelOpen(true);
@@ -448,14 +500,13 @@ export default function useSftpActions({
 
             setTransferInfoWithRef((prev) => {
               if (!prev) return null;
-              const q = prev.queue.map((item) => ({
-                ...item,
-                progress,
-                total,
-                speed,
-                eta,
-              }));
+              const q = prev.queue.map((item) =>
+                item.id === items[0].id
+                  ? { ...item, progress, total, speed, eta }
+                  : item,
+              );
               return {
+                ...prev,
                 type: "download",
                 fileName: name,
                 progress,
@@ -464,14 +515,36 @@ export default function useSftpActions({
                 eta,
                 ...computeOverall(q),
                 queue: q,
-                currentIndex: 0,
+                currentIndex: q.findIndex((item) => item.id === items[0].id),
               };
             });
           },
         });
 
+        setTransferInfoWithRef((prev) => {
+          if (!prev) return null;
+          const q = prev.queue.map((item) =>
+            item.id === items[0].id
+              ? { ...item, status: "completed" as const }
+              : item,
+          );
+          return { ...prev, queue: q, ...computeOverall(q) };
+        });
         setTransferStatus("completed");
-      } catch {
+      } catch (err) {
+        setTransferInfoWithRef((prev) => {
+          if (!prev) return null;
+          const q = prev.queue.map((item) =>
+            item.id === items[0].id
+              ? {
+                  ...item,
+                  status: "failed" as const,
+                  error: (err as Error).message ?? "download failed",
+                }
+              : item,
+          );
+          return { ...prev, queue: q, ...computeOverall(q) };
+        });
         setTransferStatus("failed");
       } finally {
         decTransfer();
@@ -521,6 +594,7 @@ export default function useSftpActions({
     cancelFileItem,
     pauseFileItem,
     resumeFileItem,
+    removeFileItem,
     pauseTransfer,
     resumeTransfer,
     uploadFile,

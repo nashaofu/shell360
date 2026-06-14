@@ -101,12 +101,10 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     transferStatus,
     panelOpen,
     togglePanel,
-    cancelTransfer,
     cancelFileItem,
     pauseFileItem,
     resumeFileItem,
-    pauseTransfer,
-    resumeTransfer,
+    removeFileItem,
     uploadFile,
     downloadFile,
     removeDir,
@@ -287,6 +285,18 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     };
   }, [transferInfo, transferStatus]);
 
+  const transferPanelData = useMemo(() => {
+    const currentItem = task?.queue[task.currentIndex];
+    const queue = task?.queue ?? [];
+    const currentIndex = currentItem
+      ? queue.findIndex((item) => item.id === currentItem.id)
+      : -1;
+    return {
+      queue,
+      currentIndex: Math.max(currentIndex, 0),
+    };
+  }, [task]);
+
   return (
     <div className={styles.root}>
       <div
@@ -368,24 +378,17 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
             </div>
           </div>
         </Loading>
-        {task && panelOpen && (
+        {panelOpen && (
           <>
             <div className={styles.transferOverlay} onClick={togglePanel} />
             <div className={styles.transferPanel}>
               <TransferProgress
-                type={task.type}
-                overallProgress={task.overallProgress}
-                overallTotal={task.overallTotal}
-                overallProgressBytes={task.overallProgressBytes}
-                queue={task.queue}
-                currentIndex={task.currentIndex}
-                status={transferStatus ?? undefined}
-                onPause={pauseTransfer}
-                onResume={resumeTransfer}
-                onCancel={cancelTransfer}
+                queue={transferPanelData.queue}
+                currentIndex={transferPanelData.currentIndex}
                 onPauseItem={pauseFileItem}
                 onResumeItem={resumeFileItem}
                 onCancelItem={cancelFileItem}
+                onRemoveItem={removeFileItem}
                 onCollapse={togglePanel}
               />
             </div>

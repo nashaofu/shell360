@@ -23,18 +23,6 @@
   min-width: 0;
 }
 
-.directionIcon {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: var(--accent-a3);
-  color: var(--accent-11);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .direction {
   font-weight: 600;
   font-size: 13px;
@@ -60,11 +48,6 @@
   flex-shrink: 0;
 }
 
-.progressBar {
-  width: 100%;
-  flex-shrink: 0;
-}
-
 .overallStats {
   display: flex;
   align-items: center;
@@ -83,7 +66,7 @@
   flex-direction: column;
   gap: 2px;
   min-height: 0;
-  max-height: 260px;
+  max-height: 420px;
   overflow-y: auto;
   padding: 2px 0;
 }
@@ -91,7 +74,7 @@
 .fileRow {
   position: relative;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   column-gap: 8px;
   min-height: 42px;
@@ -122,44 +105,6 @@
 .fileRowCancelled {
   background: transparent;
   opacity: 0.5;
-}
-
-.statusIcon {
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--gray-9);
-}
-
-.statusIconActive {
-  color: var(--accent-11);
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-.statusIconDone {
-  color: var(--green-11);
-}
-
-.statusIconFailed {
-  color: var(--red-11);
-}
-
-.statusIconPaused {
-  color: var(--amber-11);
-}
-
-.statusIconCancelled {
-  color: var(--gray-9);
-}
-
-.waitingDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gray-9);
 }
 
 .fileMain {
@@ -198,13 +143,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
-  min-width: 58px;
+  gap: 6px;
+  min-width: 144px;
+}
+
+.textButton {
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gray-11);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  line-height: 20px;
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.textButton:hover {
+  background: var(--gray-a3);
+  color: var(--gray-12);
 }
 
 .fileProgressTrack {
   position: absolute;
-  left: 34px;
+  left: 8px;
   right: 8px;
   bottom: 3px;
   height: 2px;
@@ -219,14 +182,4 @@
   border-radius: inherit;
   background: var(--accent-9);
   transition: width 0.2s linear;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }

@@ -1,14 +1,3 @@
-import { Button, IconButton, Progress } from "@radix-ui/themes";
-
-import {
-  CloseIcon,
-  ErrorCircleIcon,
-  PauseIcon,
-  PlayIcon,
-  TransferCompleteIcon,
-  TransferDownloadIcon,
-  TransferUploadIcon,
-} from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
 import styles from "./index.module.less";
 
@@ -22,6 +11,7 @@ export type QueueItemStatus =
 
 export type TransferQueueItem = {
   id: string;
+  type?: "upload" | "download";
   fileName: string;
   status: QueueItemStatus;
   progress: number;
@@ -33,25 +23,16 @@ export type TransferQueueItem = {
 };
 
 export type TransferProgressProps = {
-  type: "upload" | "download";
-  overallProgress: number;
-  overallTotal: number;
-  overallProgressBytes: number;
   queue: TransferQueueItem[];
   currentIndex: number;
-  status?: QueueItemStatus;
-  onCancel?: () => void;
   onCancelItem?: (itemId: string) => void;
-  onPause?: () => void;
-  onResume?: () => void;
   onPauseItem?: (itemId: string) => void;
   onResumeItem?: (itemId: string) => void;
+  onRemoveItem?: (itemId: string) => void;
   onCollapse?: () => void;
 };
 
 const activeStatuses: QueueItemStatus[] = ["transferring", "waiting", "paused"];
-const hasActive = (q: TransferQueueItem[]) =>
-  q.some((i) => activeStatuses.includes(i.status));
 
 const statusLabels: Record<QueueItemStatus, string> = {
   waiting: "Waiting",
@@ -68,33 +49,20 @@ function formatEtaLabel(seconds: number) {
 }
 
 export function TransferProgress({
-  type,
-  overallProgress,
-  overallTotal,
-  overallProgressBytes,
   queue,
   currentIndex,
-  status,
-  onCancel,
   onCancelItem,
-  onPause,
-  onResume,
   onPauseItem,
   onResumeItem,
+  onRemoveItem,
   onCollapse,
 }: TransferProgressProps) {
-  const TransferIcon =
-    type === "upload" ? TransferUploadIcon : TransferDownloadIcon;
-  const direction =
-    type === "upload"
-      ? `Uploading ${queue.length} file${queue.length > 1 ? "s" : ""}`
-      : `Downloading ${queue.length} file${queue.length > 1 ? "s" : ""}`;
-  const canCancel = hasActive(queue);
+  const activeRecords = queue.filter((item) =>
+    activeStatuses.includes(item.status),
+  );
   const waitingCount = queue.filter((item) => item.status === "waiting").length;
   const pausedCount = queue.filter((item) => item.status === "paused").length;
-  const activeCount = queue.filter((item) =>
-    activeStatuses.includes(item.status),
-  ).length;
+  const activeCount = activeRecords.length;
   const completedCount = queue.filter(
     (item) => item.status === "completed",
   ).length;
@@ -102,52 +70,29 @@ export function TransferProgress({
   const cancelledCount = queue.filter(
     (item) => item.status === "cancelled",
   ).length;
-  const speed = queue
-    .filter((item) => item.status === "transferring")
-    .reduce((sum, item) => sum + item.speed, 0);
-  const remaining = overallTotal - overallProgressBytes;
-  const eta = speed > 0 ? remaining / speed : -1;
+  const recordsLabel = `${queue.length} transfer${queue.length === 1 ? "" : "s"}`;
 
   return (
     <div className={styles.panel}>
       <div className={styles.titleRow}>
         <div className={styles.titleMain}>
-          <span className={styles.directionIcon}>
-            <TransferIcon />
-          </span>
-          <span className={styles.direction}>{direction}</span>
-          <span className={styles.summaryPill}>{overallProgress}%</span>
+          <span className={styles.direction}>Transfer History</span>
+          <span className={styles.summaryPill}>{recordsLabel}</span>
         </div>
         <div className={styles.titleActions}>
-          {status === "paused" && onResume && (
-            <Button variant="ghost" size="1" onClick={onResume}>
-              <PlayIcon /> Resume All
-            </Button>
-          )}
-          {status === "transferring" && onPause && (
-            <Button variant="ghost" size="1" onClick={onPause}>
-              <PauseIcon /> Pause All
-            </Button>
-          )}
-          {canCancel && onCancel && (
-            <Button variant="ghost" color="red" size="1" onClick={onCancel}>
-              <CloseIcon /> Cancel All
-            </Button>
-          )}
           {onCollapse && (
-            <IconButton variant="ghost" size="1" onClick={onCollapse}>
-              <CloseIcon />
-            </IconButton>
+            <button
+              type="button"
+              className={styles.textButton}
+              onClick={onCollapse}
+              title="Collapse"
+            >
+              Collapse
+            </button>
           )}
         </div>
       </div>
-      <Progress value={overallProgress} className={styles.progressBar} />
       <div className={styles.overallStats}>
-        <span>
-          {formatBytes(overallProgressBytes)} / {formatBytes(overallTotal)}
-        </span>
-        {activeCount > 0 && <span>{formatSpeed(speed)}</span>}
-        {activeCount > 0 && <span>{formatEtaLabel(eta)}</span>}
         <span>{activeCount} active</span>
         {waitingCount > 0 && <span>{waitingCount} waiting</span>}
         {pausedCount > 0 && <span>{pausedCount} paused</span>}
@@ -189,27 +134,6 @@ export function TransferProgress({
                 .filter(Boolean)
                 .join(" ")}
             >
-              <span
-                className={[
-                  styles.statusIcon,
-                  isCurrent ? styles.statusIconActive : "",
-                  item.status === "completed" ? styles.statusIconDone : "",
-                  item.status === "failed" ? styles.statusIconFailed : "",
-                  item.status === "paused" ? styles.statusIconPaused : "",
-                  item.status === "cancelled" ? styles.statusIconCancelled : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                {item.status === "completed" && <TransferCompleteIcon />}
-                {item.status === "failed" && <ErrorCircleIcon />}
-                {item.status === "cancelled" && <CloseIcon />}
-                {item.status === "paused" && <PauseIcon />}
-                {item.status === "transferring" && <TransferIcon />}
-                {item.status === "waiting" && (
-                  <span className={styles.waitingDot} />
-                )}
-              </span>
               <span className={styles.fileMain}>
                 <span className={styles.fileName}>{item.fileName}</span>
                 <span className={styles.fileInfo}>{itemInfo}</span>
@@ -219,38 +143,48 @@ export function TransferProgress({
               </span>
               <span className={styles.fileActions}>
                 {item.status === "transferring" && onPauseItem && (
-                  <IconButton
-                    variant="ghost"
-                    size="1"
+                  <button
+                    type="button"
+                    className={styles.textButton}
                     onClick={() => onPauseItem(item.id)}
                     title="Pause"
                   >
-                    <PauseIcon />
-                  </IconButton>
+                    Pause
+                  </button>
                 )}
                 {item.status === "paused" && onResumeItem && (
-                  <IconButton
-                    variant="ghost"
-                    size="1"
+                  <button
+                    type="button"
+                    className={styles.textButton}
                     onClick={() => onResumeItem(item.id)}
                     title="Resume"
                   >
-                    <PlayIcon />
-                  </IconButton>
+                    Resume
+                  </button>
                 )}
                 {(item.status === "transferring" ||
                   item.status === "paused" ||
                   item.status === "waiting") &&
                   onCancelItem && (
-                    <IconButton
-                      variant="ghost"
-                      size="1"
+                    <button
+                      type="button"
+                      className={styles.textButton}
                       onClick={() => onCancelItem(item.id)}
                       title="Cancel"
                     >
-                      <CloseIcon />
-                    </IconButton>
+                      Cancel
+                    </button>
                   )}
+                {onRemoveItem && (
+                  <button
+                    type="button"
+                    className={styles.textButton}
+                    onClick={() => onRemoveItem(item.id)}
+                    title="Delete Record"
+                  >
+                    Delete
+                  </button>
+                )}
               </span>
               {(item.status === "transferring" || item.status === "paused") && (
                 <div className={styles.fileProgressTrack}>

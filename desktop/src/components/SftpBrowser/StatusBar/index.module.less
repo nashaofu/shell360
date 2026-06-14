@@ -16,49 +16,19 @@
   background: var(--gray-a2);
 }
 
-.progressFill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--accent-a3);
-  pointer-events: none;
-  transition: width 0.2s linear;
-}
-
 .content {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
   width: 100%;
-}
-
-.idle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.idleIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  color: var(--gray-10);
-}
-
-.idleText {
-  font-size: 12px;
-  line-height: 1;
-  color: var(--gray-10);
 }
 
 .counts {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-shrink: 0;
 }
 
@@ -71,10 +41,9 @@
   color: var(--gray-12);
 }
 
-.runningIcon,
-.doneIcon,
-.failedIcon,
-.cancelledIcon {
+.uploadIcon,
+.downloadIcon,
+.doneIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -82,29 +51,14 @@
   height: 16px;
 }
 
-.runningIcon {
+.uploadIcon {
   color: var(--accent-11);
+}
+
+.downloadIcon {
+  color: var(--blue-11);
 }
 
 .doneIcon {
   color: var(--green-11);
-}
-
-.failedIcon {
-  color: var(--red-11);
-}
-
-.cancelledIcon {
-  color: var(--gray-10);
-}
-
-.meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  font-size: 11px;
-  line-height: 1;
-  color: var(--gray-11);
-  font-variant-numeric: tabular-nums;
 }
