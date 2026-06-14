@@ -58,22 +58,24 @@ export default function FileEditorModal({
     };
   }, [open, file, onLoadContent, onClose, message]);
 
+  const filePath = file?.path ?? "";
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
       await onSave(content);
       message.success({
-        message: `Saved "${getSftpBasename(file?.path)}"`,
+        message: `Saved "${getSftpBasename(filePath)}"`,
       });
       onClose();
     } catch (err: unknown) {
       message.error({
-        message: `Failed to save "${getSftpBasename(file?.path)}": ${getErrorMessage(err)}`,
+        message: `Failed to save "${getSftpBasename(filePath)}": ${getErrorMessage(err)}`,
       });
     } finally {
       setSaving(false);
     }
-  }, [content, onSave, onClose, message]);
+  }, [content, filePath, onSave, onClose, message]);
 
   const handleCancel = useCallback(() => {
     setContent("");

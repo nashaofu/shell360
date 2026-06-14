@@ -1,5 +1,6 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
+import { throttle } from "lodash-es";
 import { type MutableRefObject, useCallback, useRef, useState } from "react";
 import { joinSftpPath, type TransferQueueItem } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
@@ -313,6 +314,34 @@ export default function useSftpActions({
           time: performance.now(),
           progress: 0,
         });
+        const latestProgress = { progress: 0, total: 0, speed: 0, eta: -1 };
+        const throttledRender = throttle(
+          () => {
+            setTransferInfoWithRef((prev) => {
+              if (!prev) return null;
+              const q = prev.queue.map((queueItem) =>
+                queueItem.id === item.id
+                  ? {
+                      ...queueItem,
+                      progress: latestProgress.progress,
+                      total: latestProgress.total,
+                      speed: latestProgress.speed,
+                      eta: latestProgress.eta,
+                    }
+                  : queueItem,
+              );
+              return {
+                ...prev,
+                fileName: item.fileName,
+                queue: q,
+                currentIndex: getCurrentTransferIndex(q, item.id),
+                ...computeOverall(q),
+              };
+            });
+          },
+          1000,
+          { leading: true, trailing: true },
+        );
         setTransferInfoWithRef((prev) => {
           if (!prev) return null;
           const q = prev.queue.map((queueItem) =>
@@ -347,21 +376,11 @@ export default function useSftpActions({
               const eta = speed > 0 ? remaining / speed : -1;
               batchProgress.set(item.id, { time: now, progress });
 
-              setTransferInfoWithRef((prev) => {
-                if (!prev) return null;
-                const q = prev.queue.map((queueItem) =>
-                  queueItem.id === item.id
-                    ? { ...queueItem, progress, total, speed, eta }
-                    : queueItem,
-                );
-                return {
-                  ...prev,
-                  fileName: item.fileName,
-                  queue: q,
-                  currentIndex: getCurrentTransferIndex(q, item.id),
-                  ...computeOverall(q),
-                };
-              });
+              latestProgress.progress = progress;
+              latestProgress.total = total;
+              latestProgress.speed = speed;
+              latestProgress.eta = eta;
+              throttledRender();
             },
           });
 
@@ -412,6 +431,8 @@ export default function useSftpActions({
             };
           });
         } finally {
+          throttledRender.flush();
+          throttledRender.cancel();
           batchProgress.delete(item.id);
         }
       };
@@ -522,6 +543,35 @@ export default function useSftpActions({
       ];
 
       let lastUpdate = { time: performance.now(), progress: 0 };
+      const latestProgress = { progress: 0, total: 0, speed: 0, eta: -1 };
+      const throttledRender = throttle(
+        () => {
+          setTransferInfoWithRef((prev) => {
+            if (!prev) return null;
+            const q = prev.queue.map((item) =>
+              item.id === items[0].id
+                ? {
+                    ...item,
+                    progress: latestProgress.progress,
+                    total: latestProgress.total,
+                    speed: latestProgress.speed,
+                    eta: latestProgress.eta,
+                  }
+                : item,
+            );
+            return {
+              ...prev,
+              type: "download",
+              fileName: name,
+              ...computeOverall(q),
+              queue: q,
+              currentIndex: getCurrentTransferIndex(q, items[0].id),
+            };
+          });
+        },
+        1000,
+        { leading: true, trailing: true },
+      );
       incTransfer();
       setTransferInfoWithRef((prev) => {
         const transferItem = { ...items[0], status: "transferring" as const };
@@ -552,24 +602,16 @@ export default function useSftpActions({
             const eta = speed > 0 ? remaining / speed : -1;
             lastUpdate = { time: now, progress };
 
-            setTransferInfoWithRef((prev) => {
-              if (!prev) return null;
-              const q = prev.queue.map((item) =>
-                item.id === items[0].id
-                  ? { ...item, progress, total, speed, eta }
-                  : item,
-              );
-              return {
-                ...prev,
-                type: "download",
-                fileName: name,
-                ...computeOverall(q),
-                queue: q,
-                currentIndex: getCurrentTransferIndex(q, items[0].id),
-              };
-            });
+            latestProgress.progress = progress;
+            latestProgress.total = total;
+            latestProgress.speed = speed;
+            latestProgress.eta = eta;
+            throttledRender();
           },
         });
+
+        throttledRender.flush();
+        throttledRender.cancel();
 
         {
           const base = transferInfoRef.current;
