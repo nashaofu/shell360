@@ -67,7 +67,7 @@ impl<R: Runtime> SSHManager<R> {
     let mut count = 0;
 
     for shell in shells.values() {
-      if shell.ssh_session_id == ssh_session_id && shell.id() == channel_id {
+      if shell.ssh_session_id == ssh_session_id && shell.shell_channel_id == channel_id {
         count += 1;
         shell
           .ipc_channel
@@ -87,7 +87,7 @@ impl<R: Runtime> SSHManager<R> {
 
     let mut count = 0;
     for shell in shells.values() {
-      if shell.ssh_session_id == ssh_session_id && shell.id() == channel_id {
+      if shell.ssh_session_id == ssh_session_id && shell.shell_channel_id == channel_id {
         count += 1;
         shell.ipc_channel.send(SHHShellIpcChannelData::Eof)?;
       }
@@ -104,7 +104,7 @@ impl<R: Runtime> SSHManager<R> {
     let mut shells = self.shells.lock().await;
 
     let extracted = shells.extract_if(|_shell_id, shell| {
-      shell.ssh_session_id == ssh_session_id && shell.id() == channel_id
+      shell.ssh_session_id == ssh_session_id && shell.shell_channel_id == channel_id
     });
 
     let mut count = 0;

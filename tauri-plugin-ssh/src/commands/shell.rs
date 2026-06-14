@@ -1,6 +1,6 @@
-use std::{collections::HashMap, env, ops::Deref, time::Duration};
+use std::{collections::HashMap, env, sync::Arc, time::Duration};
 
-use russh::{Channel as RusshChannel, client};
+use russh::{Channel as RusshChannel, ChannelId, client};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use strum::AsRefStr;
@@ -8,7 +8,7 @@ use tauri::{
   AppHandle, Runtime, State,
   ipc::{Channel, InvokeResponseBody, IpcResponse},
 };
-use tokio::time::timeout;
+use tokio::{sync::Mutex as AsyncMutex, time::timeout};
 use uuid::Uuid;
 
 use crate::{
@@ -45,8 +45,9 @@ pub struct SSHShell {
   pub ssh_session_id: SSHSessionId,
   #[allow(unused)]
   pub ssh_shell_id: SSHShellId,
+  pub shell_channel_id: ChannelId,
   pub ipc_channel: Channel<SHHShellIpcChannelData>,
-  pub shell_channel: RusshChannel<client::Msg>,
+  pub shell_channel: Arc<AsyncMutex<RusshChannel<client::Msg>>>,
 }
 
 impl SSHShell {
@@ -56,20 +57,15 @@ impl SSHShell {
     ipc_channel: Channel<SHHShellIpcChannelData>,
     shell_channel: RusshChannel<client::Msg>,
   ) -> Self {
+    let shell_channel_id = shell_channel.id();
+
     Self {
       ssh_session_id,
       ssh_shell_id,
+      shell_channel_id,
       ipc_channel,
-      shell_channel,
+      shell_channel: Arc::new(AsyncMutex::new(shell_channel)),
     }
-  }
-}
-
-impl Deref for SSHShell {
-  type Target = RusshChannel<client::Msg>;
-
-  fn deref(&self) -> &Self::Target {
-    &self.shell_channel
   }
 }
 
@@ -92,6 +88,16 @@ fn prepare_envs(custom_envs: HashMap<String, String>) -> HashMap<String, String>
   envs.extend(custom_envs);
 
   envs
+}
+
+async fn get_shell_channel<R: Runtime>(
+  ssh_manager: &SSHManager<R>,
+  ssh_shell_id: SSHShellId,
+) -> Option<Arc<AsyncMutex<RusshChannel<client::Msg>>>> {
+  let shells = ssh_manager.shells.lock().await;
+  shells
+    .get(&ssh_shell_id)
+    .map(|shell| shell.shell_channel.clone())
 }
 
 #[tauri::command]
@@ -132,7 +138,12 @@ pub async fn shell_open<R: Runtime>(
       envs
     );
     for (key, value) in envs {
-      shell.set_env(true, key.as_str(), value.as_str()).await?;
+      shell
+        .shell_channel
+        .lock()
+        .await
+        .set_env(true, key.as_str(), value.as_str())
+        .await?;
     }
 
     let term = term.unwrap_or("xterm-256color".to_string());
@@ -144,6 +155,9 @@ pub async fn shell_open<R: Runtime>(
       size
     );
     shell
+      .shell_channel
+      .lock()
+      .await
       .request_pty(
         true,
         &term,
@@ -160,7 +174,7 @@ pub async fn shell_open<R: Runtime>(
       ssh_session_id,
       ssh_shell_id
     );
-    shell.request_shell(true).await?;
+    shell.shell_channel.lock().await.request_shell(true).await?;
 
     {
       let mut shells = ssh_manager.shells.lock().await;
@@ -179,9 +193,8 @@ pub async fn shell_close<R: Runtime>(
   ssh_shell_id: SSHShellId,
 ) -> SSHResult<SSHShellId> {
   timeout(Duration::from_secs(5), async {
-    let shell_channels = ssh_manager.shells.lock().await;
-    if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
-      shell_channel.close().await?;
+    if let Some(shell_channel) = get_shell_channel(&ssh_manager, ssh_shell_id).await {
+      shell_channel.lock().await.close().await?;
     }
 
     Ok(ssh_shell_id)
@@ -197,10 +210,10 @@ pub async fn shell_resize<R: Runtime>(
   size: ShellSize,
 ) -> SSHResult<SSHShellId> {
   timeout(Duration::from_secs(5), async {
-    let shells = ssh_manager.shells.lock().await;
-
-    if let Some(shell) = shells.get(&ssh_shell_id) {
-      shell
+    if let Some(shell_channel) = get_shell_channel(&ssh_manager, ssh_shell_id).await {
+      shell_channel
+        .lock()
+        .await
         .window_change(size.col, size.row, size.width, size.height)
         .await?;
     }
@@ -218,9 +231,8 @@ pub async fn shell_send<R: Runtime>(
   data: Vec<u8>,
 ) -> SSHResult<SSHShellId> {
   timeout(Duration::from_secs(5), async {
-    let shell_channels = ssh_manager.shells.lock().await;
-    if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
-      shell_channel.data(&data[..]).await?;
+    if let Some(shell_channel) = get_shell_channel(&ssh_manager, ssh_shell_id).await {
+      shell_channel.lock().await.data(&data[..]).await?;
     }
 
     Ok(ssh_shell_id)
