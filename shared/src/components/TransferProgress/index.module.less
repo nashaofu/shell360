@@ -1,24 +1,56 @@
 .panel {
   background: var(--color-panel-solid);
   border-top: 1px solid var(--gray-a5);
-  padding: 8px 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   overflow: hidden;
-  max-height: 40%;
+  max-height: inherit;
 }
 
 .titleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.titleMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.directionIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--accent-a3);
+  color: var(--accent-11);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .direction {
   font-weight: 600;
   font-size: 13px;
   color: var(--gray-12);
+  white-space: nowrap;
+}
+
+.summaryPill {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--gray-a3);
+  color: var(--gray-11);
+  font-size: 11px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
 .titleActions {
@@ -34,34 +66,51 @@
 }
 
 .overallStats {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   font-size: 11px;
   color: var(--gray-11);
-  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .fileList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  max-height: 240px;
+  gap: 2px;
+  min-height: 0;
+  max-height: 260px;
   overflow-y: auto;
   padding: 2px 0;
 }
 
 .fileRow {
-  display: flex;
-  flex-wrap: wrap;
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--gray-a2);
+  column-gap: 8px;
+  min-height: 42px;
+  padding: 5px 8px 7px;
+  border-radius: 6px;
+  background: transparent;
   font-size: 12px;
+  overflow: hidden;
+}
+
+.fileRow:hover {
+  background: var(--gray-a2);
+}
+
+.fileRowCurrent {
+  background: var(--accent-a2);
 }
 
 .fileRowDone {
   background: transparent;
-  opacity: 0.65;
+  opacity: 0.72;
 }
 
 .fileRowFailed {
@@ -84,12 +133,24 @@
 }
 
 .statusIconActive {
-  color: var(--accent-9);
+  color: var(--accent-11);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
+.statusIconDone {
+  color: var(--green-11);
+}
+
 .statusIconFailed {
-  color: var(--red-9);
+  color: var(--red-11);
+}
+
+.statusIconPaused {
+  color: var(--amber-11);
+}
+
+.statusIconCancelled {
+  color: var(--gray-9);
 }
 
 .waitingDot {
@@ -97,6 +158,13 @@
   height: 6px;
   border-radius: 50%;
   background: var(--gray-9);
+}
+
+.fileMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .fileName {
@@ -109,15 +177,46 @@
 }
 
 .fileInfo {
-  flex-shrink: 0;
   color: var(--gray-11);
   font-size: 11px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 
-.fileProgressBar {
-  width: 100%;
-  flex-basis: 100%;
+.fileStatus {
+  color: var(--gray-10);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fileActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 58px;
+}
+
+.fileProgressTrack {
+  position: absolute;
+  left: 34px;
+  right: 8px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--gray-a4);
+  overflow: hidden;
+}
+
+.fileProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-9);
+  transition: width 0.2s linear;
 }
 
 @keyframes pulse {

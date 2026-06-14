@@ -92,12 +92,16 @@ pub async fn sftp_open<R: Runtime>(
   timeout(Duration::from_secs(5), async {
     log::info!("sftp open {:?} {:?}", ssh_session_id, ssh_sftp_id);
     let sftp_channel = {
-      let sessions = ssh_manager.sessions.lock().await;
-      let session = sessions
-        .get(&ssh_session_id)
-        .ok_or(SSHError::NotFoundSession)?;
+      let session = {
+        let sessions = ssh_manager.sessions.lock().await;
+        sessions
+          .get(&ssh_session_id)
+          .ok_or(SSHError::NotFoundSession)?
+          .handle_ssh_client
+          .clone()
+      };
 
-      session.channel_open_session().await?
+      session.lock().await.channel_open_session().await?
     };
 
     let sftp_channel_id = sftp_channel.id();

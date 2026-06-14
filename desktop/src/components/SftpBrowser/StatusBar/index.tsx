@@ -35,6 +35,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   const remaining =
     (task?.overallTotal ?? 0) - (task?.overallProgressBytes ?? 0);
   const eta = speed > 0 ? remaining / speed : -1;
+  const etaText = formatEta(eta);
 
   const DirectionIcon = task?.type === "download" ? ArrowDownIcon : ArrowUpIcon;
 
@@ -86,7 +87,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
               <div className={styles.meta}>
                 <span>{task?.overallProgress ?? 0}%</span>
                 <span>{formatSpeed(speed)}</span>
-                <span>{formatEta(eta)} left</span>
+                <span>{etaText === "--" ? etaText : `${etaText} left`}</span>
               </div>
             )}
           </>

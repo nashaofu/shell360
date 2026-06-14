@@ -95,6 +95,7 @@ fn prepare_envs(custom_envs: HashMap<String, String>) -> HashMap<String, String>
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn shell_open<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
@@ -108,11 +109,16 @@ pub async fn shell_open<R: Runtime>(
   timeout(Duration::from_secs(5), async {
     log::info!("shell open {:?} {:?}", ssh_session_id, ssh_shell_id);
     let shell = {
-      let sessions = ssh_manager.sessions.lock().await;
-      let session = sessions
-        .get(&ssh_session_id)
-        .ok_or(SSHError::NotFoundSession)?;
-      let shell_channel = session.channel_open_session().await?;
+      let session = {
+        let sessions = ssh_manager.sessions.lock().await;
+        sessions
+          .get(&ssh_session_id)
+          .ok_or(SSHError::NotFoundSession)?
+          .handle_ssh_client
+          .clone()
+      };
+
+      let shell_channel = session.lock().await.channel_open_session().await?;
 
       SSHShell::new(ssh_session_id, ssh_shell_id, ipc_channel, shell_channel)
     };
