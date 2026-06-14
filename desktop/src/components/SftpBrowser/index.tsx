@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FileUploadIcon,
   getSftpBrowserFiles,
+  getSftpDirname,
   Loading,
   MoreIcon,
   SSHLoading,
@@ -251,7 +252,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
 
   const onParentClick = useCallback(() => {
     if (dirname && !isRoot) {
-      setDirname(dirname.split("/").slice(0, -1).join("/") || "/");
+      setDirname(getSftpDirname(dirname));
     }
   }, [dirname, isRoot]);
 

@@ -173,7 +173,7 @@ export class SSHSftp {
   }
 
   sftpExists(path: string) {
-    return invoke<string>("plugin:ssh|sftp_exists", {
+    return invoke<boolean>("plugin:ssh|sftp_exists", {
       sshSftpId: this.sshSftpId,
       path,
     });
@@ -216,13 +216,6 @@ export class SSHSftp {
   sftpResumeTask(taskId: string) {
     return invoke<void>("plugin:ssh|sftp_resume_task", {
       taskId,
-    });
-  }
-
-  /** @deprecated Use sftpCancelTask(taskId) instead */
-  sftpCancelTransfer() {
-    return invoke<void>("plugin:ssh|sftp_cancel_task", {
-      taskId: this.sshSftpId,
     });
   }
 }

@@ -1,7 +1,7 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
 import { type MutableRefObject, useCallback, useRef, useState } from "react";
-import type { TransferQueueItem } from "shared";
+import { joinSftpPath, type TransferQueueItem } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 import { useFileTransfersActions } from "@/atoms/terminalView.atom";
 import type useMessage from "@/hooks/useMessage";
@@ -11,88 +11,17 @@ import {
   getErrorMessage,
   getSftpBasename,
 } from "./messages";
-
-type TransferStatus =
-  | "transferring"
-  | "paused"
-  | "completed"
-  | "failed"
-  | "cancelled";
+import {
+  computeOverall,
+  deriveTransferStatus,
+  getCurrentTransferIndex,
+  type TransferInfo,
+  type TransferStatus,
+} from "./transfer";
 
 const UPLOAD_CONCURRENCY = 6;
 
 type UploadBatch = { aborted: boolean };
-
-export type TransferInfo = {
-  type: "upload" | "download";
-  dirname?: string;
-  fileName: string;
-  progress: number;
-  total: number;
-  speed: number;
-  eta: number;
-  overallProgress: number;
-  overallTotal: number;
-  overallProgressBytes: number;
-  queue: TransferQueueItem[];
-  currentIndex: number;
-};
-
-function computeOverall(q: TransferQueueItem[]) {
-  const total = q.reduce((s, i) => s + i.total, 0);
-  const done = q.reduce((s, i) => s + i.progress, 0);
-  const speed = q.reduce(
-    (s, i) => (i.status === "transferring" ? s + i.speed : s),
-    0,
-  );
-  return {
-    progress: done,
-    total,
-    speed,
-    eta: speed > 0 && total > done ? (total - done) / speed : -1,
-    overallTotal: total,
-    overallProgressBytes: done,
-    overallProgress: total > 0 ? Math.round((done / total) * 100) : 0,
-  };
-}
-
-function deriveTransferStatus(q: TransferQueueItem[]): TransferStatus {
-  if (
-    q.some(
-      (item) => item.status === "transferring" || item.status === "waiting",
-    )
-  ) {
-    return "transferring";
-  }
-  if (q.some((item) => item.status === "paused")) {
-    return "paused";
-  }
-  if (q.some((item) => item.status === "completed")) {
-    return "completed";
-  }
-  if (q.some((item) => item.status === "failed")) {
-    return "failed";
-  }
-  if (q.some((item) => item.status === "cancelled")) {
-    return "cancelled";
-  }
-  return "completed";
-}
-
-function getCurrentTransferIndex(q: TransferQueueItem[], fallbackId?: string) {
-  const activeIndex = q.findIndex((item) => item.status === "transferring");
-  if (activeIndex >= 0) {
-    return activeIndex;
-  }
-  const pausedIndex = q.findIndex((item) => item.status === "paused");
-  if (pausedIndex >= 0) {
-    return pausedIndex;
-  }
-  const fallbackIndex = fallbackId
-    ? q.findIndex((item) => item.id === fallbackId)
-    : -1;
-  return Math.max(fallbackIndex, 0);
-}
 
 type UseSftpActionsOpts = {
   dirname?: string;
@@ -320,7 +249,7 @@ export default function useSftpActions({
         await Promise.all(
           items.map(async (item) => {
             const exists = await sftpRef.current?.sftpExists(
-              `${uploadDir}/${item.fileName}`,
+              joinSftpPath(uploadDir, item.fileName),
             );
             return exists ? item.fileName : null;
           }),
@@ -378,7 +307,7 @@ export default function useSftpActions({
         if (currentStatus !== "waiting") {
           return;
         }
-        const remoteName = `${dirnameRef.current}/${item.fileName}`;
+        const remoteName = joinSftpPath(dirnameRef.current, item.fileName);
         const localFilePath = filePaths[index] ?? item.fileName;
         batchProgress.set(item.id, {
           time: performance.now(),

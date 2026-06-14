@@ -1,10 +1,15 @@
 import { useRequest } from "ahooks";
 import { type MutableRefObject, useCallback, useState } from "react";
-import { sanitizeSftpFilename } from "shared";
+import {
+  getSftpBasename,
+  getSftpDirname,
+  joinSftpPath,
+  sanitizeSftpFilename,
+} from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
-import { getErrorMessage, getSftpBasename } from "./messages";
+import { getErrorMessage } from "./messages";
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
@@ -56,7 +61,7 @@ export default function useRename({
   }, []);
 
   const onRename = useCallback((item: SSHSftpFile) => {
-    const filename = item.path.split("/").pop();
+    const filename = getSftpBasename(item.path);
     setEditingFilename(filename);
     setSelectedFile(item);
   }, []);
@@ -67,11 +72,11 @@ export default function useRename({
   }, []);
 
   const onRenameOk = useCallback(async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !editingFilename) {
       return;
     }
-    const parent = selectedFile.path.split("/").slice(0, -1).join("/");
-    await rename(selectedFile.path, `${parent}/${editingFilename}`);
+    const parent = getSftpDirname(selectedFile.path);
+    await rename(selectedFile.path, joinSftpPath(parent, editingFilename));
     onRenameCancel();
   }, [editingFilename, onRenameCancel, rename, selectedFile]);
 
