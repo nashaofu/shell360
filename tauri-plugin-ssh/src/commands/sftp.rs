@@ -266,7 +266,7 @@ where
 {
   let mut progress = 0;
 
-  let mut buffer = vec![0; 1024 * 1024 * 10];
+  let mut buffer = vec![0; 1024 * 1024];
 
   loop {
     if control.cancel.load(std::sync::atomic::Ordering::Relaxed) {

@@ -71,20 +71,24 @@ export default function SftpBreadcrumbs({
           autoFocus
           placeholder="Enter path..."
         />
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={() => handleConfirmEdit()}
-        >
-          <SuccessCircleIcon />
-        </button>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={handleCancelEdit}
-        >
-          <CloseIcon />
-        </button>
+        <div className={styles.editActions}>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            title="Confirm"
+            onClick={() => handleConfirmEdit()}
+          >
+            <SuccessCircleIcon />
+          </button>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            title="Cancel"
+            onClick={handleCancelEdit}
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
     );
   }

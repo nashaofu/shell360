@@ -1,6 +1,7 @@
 import {
   formatEta,
   formatSpeed,
+  type QueueItemStatus,
   StatusCompleteIcon,
   StatusDownloadIcon,
   StatusUploadIcon,
@@ -9,7 +10,11 @@ import {
 
 import styles from "./index.module.less";
 
-const transferActiveStatuses = ["transferring", "paused", "waiting"] as const;
+const transferActiveStatuses: QueueItemStatus[] = [
+  "transferring",
+  "paused",
+  "waiting",
+];
 
 export type StatusBarProps = {
   task: TransferTask | null;
@@ -37,7 +42,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   const progressPercent = clampProgress(
     totalBytes > 0
       ? (progressBytes / totalBytes) * 100
-      : task?.overallProgress ?? 0,
+      : (task?.overallProgress ?? 0),
   );
   const activeQueue = queue.filter((i) =>
     transferActiveStatuses.includes(i.status),

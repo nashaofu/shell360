@@ -19,6 +19,10 @@ type TransferStatus =
   | "failed"
   | "cancelled";
 
+const UPLOAD_CONCURRENCY = 6;
+
+type UploadBatch = { aborted: boolean };
+
 export type TransferInfo = {
   type: "upload" | "download";
   dirname?: string;
@@ -78,7 +82,7 @@ type UseSftpActionsOpts = {
 export default function useSftpActions({
   dirname,
   message,
-  modal: _modal,
+  modal,
   sftpRef,
   refreshDir,
 }: UseSftpActionsOpts) {
@@ -87,13 +91,8 @@ export default function useSftpActions({
     null,
   );
   const [panelOpen, setPanelOpen] = useState(false);
-  const lastUpdateRef = useRef({ time: 0, progress: 0 });
-  const abortRef = useRef(false);
+  const activeUploadBatchesRef = useRef(new Set<UploadBatch>());
   const cancelledItemIdsRef = useRef(new Set<string>());
-  const filePathsRef = useRef<string[]>([]);
-  const uploadProgressRefs = useRef(
-    new Map<string, { time: number; progress: number }>(),
-  );
   const transferInfoRef = useRef<TransferInfo | null>(null);
   const dirnameRef = useRef(dirname);
   dirnameRef.current = dirname;
@@ -120,7 +119,9 @@ export default function useSftpActions({
   }, []);
 
   const cancelTransfer = useCallback(() => {
-    abortRef.current = true;
+    for (const batch of activeUploadBatchesRef.current) {
+      batch.aborted = true;
+    }
     const info = transferInfoRef.current;
     if (!info) return;
     for (const item of info.queue) {
@@ -291,10 +292,39 @@ export default function useSftpActions({
         taskId: crypto.randomUUID(),
       }));
 
-      filePathsRef.current = filePaths;
-      abortRef.current = false;
-      cancelledItemIdsRef.current.clear();
-      uploadProgressRefs.current.clear();
+      const uploadDir = dirnameRef.current;
+      const conflicts = (
+        await Promise.all(
+          items.map(async (item) => {
+            const exists = await sftpRef.current?.sftpExists(
+              `${uploadDir}/${item.fileName}`,
+            );
+            return exists ? item.fileName : null;
+          }),
+        )
+      ).filter((name): name is string => name !== null);
+
+      if (conflicts.length > 0) {
+        const preview = conflicts.slice(0, 5).join(", ");
+        const more =
+          conflicts.length > 5 ? ` and ${conflicts.length - 5} more` : "";
+        const confirmed = await modal.confirm({
+          title: "Overwrite existing files?",
+          content: `${formatTransferCount(conflicts.length, "file")} already exist in this folder and will be overwritten: ${preview}${more}`,
+          okText: "Overwrite",
+          danger: true,
+        });
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      const batch: UploadBatch = { aborted: false };
+      const batchProgress = new Map<
+        string,
+        { time: number; progress: number }
+      >();
+      activeUploadBatchesRef.current.add(batch);
       setTransferInfoWithRef((prev) => {
         const q = [...(prev?.queue ?? []), ...items];
         return {
@@ -314,7 +344,7 @@ export default function useSftpActions({
 
       const uploadOne = async (index: number) => {
         const item = items[index];
-        if (abortRef.current) {
+        if (batch.aborted) {
           return;
         }
         const currentStatus = transferInfoRef.current?.queue.find(
@@ -324,8 +354,8 @@ export default function useSftpActions({
           return;
         }
         const remoteName = `${dirnameRef.current}/${item.fileName}`;
-        const localFilePath = filePathsRef.current[index] ?? item.fileName;
-        uploadProgressRefs.current.set(item.id, {
+        const localFilePath = filePaths[index] ?? item.fileName;
+        batchProgress.set(item.id, {
           time: performance.now(),
           progress: 0,
         });
@@ -352,7 +382,7 @@ export default function useSftpActions({
             taskId: item.taskId,
             onProgress: ({ progress, total }) => {
               const now = performance.now();
-              const lastUpdate = uploadProgressRefs.current.get(item.id) ?? {
+              const lastUpdate = batchProgress.get(item.id) ?? {
                 time: now,
                 progress: 0,
               };
@@ -364,7 +394,7 @@ export default function useSftpActions({
               const speed = db / dt;
               const remaining = total - progress;
               const eta = speed > 0 ? remaining / speed : -1;
-              uploadProgressRefs.current.set(item.id, { time: now, progress });
+              batchProgress.set(item.id, { time: now, progress });
 
               setTransferInfoWithRef((prev) => {
                 if (!prev) return null;
@@ -405,7 +435,7 @@ export default function useSftpActions({
           });
         } catch (err) {
           const isCancelled =
-            abortRef.current || cancelledItemIdsRef.current.has(item.id);
+            batch.aborted || cancelledItemIdsRef.current.has(item.id);
           setTransferInfoWithRef((prev) => {
             if (!prev) return null;
             const q = prev.queue.map((queueItem) =>
@@ -431,13 +461,25 @@ export default function useSftpActions({
             };
           });
         } finally {
-          uploadProgressRefs.current.delete(item.id);
+          batchProgress.delete(item.id);
         }
       };
 
-      await Promise.all(items.map((_, index) => uploadOne(index)));
+      let nextIndex = 0;
+      const runWorker = async () => {
+        while (true) {
+          if (batch.aborted) return;
+          const index = nextIndex++;
+          if (index >= items.length) return;
+          await uploadOne(index);
+        }
+      };
+      const workerCount = Math.min(UPLOAD_CONCURRENCY, items.length);
+      await Promise.all(
+        Array.from({ length: workerCount }, () => runWorker()),
+      );
 
-      if (abortRef.current) {
+      if (batch.aborted) {
         setTransferInfoWithRef((prev) => {
           if (!prev) return null;
           const q = prev.queue.map((item) =>
@@ -457,6 +499,7 @@ export default function useSftpActions({
         });
       }
 
+      activeUploadBatchesRef.current.delete(batch);
       decTransfer();
       const uploadedItems =
         transferInfoRef.current?.queue.filter((item) =>
@@ -484,7 +527,7 @@ export default function useSftpActions({
         message.error({
           message: `Upload failed: ${formatTransferCount(failedCount, "file")} could not be uploaded`,
         });
-      } else if (cancelledCount > 0 || abortRef.current) {
+      } else if (cancelledCount > 0 || batch.aborted) {
         message.info({
           message: "Upload cancelled",
         });
@@ -529,8 +572,7 @@ export default function useSftpActions({
         },
       ];
 
-      abortRef.current = false;
-      lastUpdateRef.current = { time: performance.now(), progress: 0 };
+      let lastUpdate = { time: performance.now(), progress: 0 };
       incTransfer();
       setTransferInfoWithRef((prev) => {
         const transferItem = { ...items[0], status: "transferring" as const };
@@ -555,14 +597,14 @@ export default function useSftpActions({
           onProgress: ({ progress, total }) => {
             const now = performance.now();
             const dt = Math.max(
-              (now - lastUpdateRef.current.time) / 1000,
+              (now - lastUpdate.time) / 1000,
               0.001,
             );
-            const db = progress - lastUpdateRef.current.progress;
+            const db = progress - lastUpdate.progress;
             const speed = db / dt;
             const remaining = total - progress;
             const eta = speed > 0 ? remaining / speed : -1;
-            lastUpdateRef.current = { time: now, progress };
+            lastUpdate = { time: now, progress };
 
             setTransferInfoWithRef((prev) => {
               if (!prev) return null;

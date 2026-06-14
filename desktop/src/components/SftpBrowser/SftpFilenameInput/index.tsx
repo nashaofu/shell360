@@ -50,14 +50,16 @@ export default function SftpFilenameInput({
       <div className={styles.actions}>
         <button
           type="button"
-          className={styles.actionButton}
+          className={`${styles.actionButton} ${styles.cancelButton}`}
+          title="Cancel"
           onClick={() => onCancel()}
         >
           <CloseIcon />
         </button>
         <button
           type="button"
-          className={styles.actionButton}
+          className={`${styles.actionButton} ${styles.okButton}`}
+          title="Confirm"
           onClick={() => onOk()}
         >
           <CheckIcon />
