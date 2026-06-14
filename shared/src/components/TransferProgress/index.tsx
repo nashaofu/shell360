@@ -1,3 +1,12 @@
+import { IconButton } from "@radix-ui/themes";
+
+import {
+  CloseIcon,
+  DeleteIcon,
+  PauseIcon,
+  PlayIcon,
+  WindowMinimizeIcon,
+} from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
 import styles from "./index.module.less";
 
@@ -81,14 +90,14 @@ export function TransferProgress({
         </div>
         <div className={styles.titleActions}>
           {onCollapse && (
-            <button
-              type="button"
-              className={styles.textButton}
+            <IconButton
+              variant="ghost"
+              size="1"
               onClick={onCollapse}
               title="Collapse"
             >
-              Collapse
-            </button>
+              <WindowMinimizeIcon />
+            </IconButton>
           )}
         </div>
       </div>
@@ -143,47 +152,47 @@ export function TransferProgress({
               </span>
               <span className={styles.fileActions}>
                 {item.status === "transferring" && onPauseItem && (
-                  <button
-                    type="button"
-                    className={styles.textButton}
+                  <IconButton
+                    variant="ghost"
+                    size="1"
                     onClick={() => onPauseItem(item.id)}
                     title="Pause"
                   >
-                    Pause
-                  </button>
+                    <PauseIcon />
+                  </IconButton>
                 )}
                 {item.status === "paused" && onResumeItem && (
-                  <button
-                    type="button"
-                    className={styles.textButton}
+                  <IconButton
+                    variant="ghost"
+                    size="1"
                     onClick={() => onResumeItem(item.id)}
                     title="Resume"
                   >
-                    Resume
-                  </button>
+                    <PlayIcon />
+                  </IconButton>
                 )}
                 {(item.status === "transferring" ||
                   item.status === "paused" ||
                   item.status === "waiting") &&
                   onCancelItem && (
-                    <button
-                      type="button"
-                      className={styles.textButton}
+                    <IconButton
+                      variant="ghost"
+                      size="1"
                       onClick={() => onCancelItem(item.id)}
                       title="Cancel"
                     >
-                      Cancel
-                    </button>
+                      <CloseIcon />
+                    </IconButton>
                   )}
                 {onRemoveItem && (
-                  <button
-                    type="button"
-                    className={styles.textButton}
+                  <IconButton
+                    variant="ghost"
+                    size="1"
                     onClick={() => onRemoveItem(item.id)}
                     title="Delete Record"
                   >
-                    Delete
-                  </button>
+                    <DeleteIcon />
+                  </IconButton>
                 )}
               </span>
               {(item.status === "transferring" || item.status === "paused") && (

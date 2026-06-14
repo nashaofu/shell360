@@ -1,8 +1,8 @@
 import {
-  TransferCompleteIcon,
-  TransferDownloadIcon,
+  StatusCompleteIcon,
+  StatusDownloadIcon,
+  StatusUploadIcon,
   type TransferTask,
-  TransferUploadIcon,
 } from "shared";
 
 import styles from "./index.module.less";
@@ -28,19 +28,19 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
         <div className={styles.counts}>
           <span className={styles.stat}>
             <span className={styles.uploadIcon}>
-              <TransferUploadIcon />
+              <StatusUploadIcon />
             </span>
             {uploadCount}
           </span>
           <span className={styles.stat}>
             <span className={styles.downloadIcon}>
-              <TransferDownloadIcon />
+              <StatusDownloadIcon />
             </span>
             {downloadCount}
           </span>
           <span className={styles.stat}>
             <span className={styles.doneIcon}>
-              <TransferCompleteIcon />
+              <StatusCompleteIcon />
             </span>
             {completedCount}
           </span>
