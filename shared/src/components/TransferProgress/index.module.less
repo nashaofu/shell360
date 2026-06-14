@@ -153,8 +153,45 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  min-width: 92px;
+  gap: 10px;
+  min-width: 176px;
+}
+
+.actionButton {
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gray-11);
+  font-size: 11px;
+  line-height: 22px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.actionButton:hover {
+  background: var(--gray-a3);
+  color: var(--gray-12);
+}
+
+.cancelAction {
+  color: var(--orange-11);
+}
+
+.cancelAction:hover {
+  background: var(--orange-a3);
+  color: var(--orange-12);
+}
+
+.removeAction {
+  border-color: var(--gray-a5);
+  color: var(--gray-10);
+}
+
+.removeAction:hover {
+  background: var(--gray-a3);
+  color: var(--gray-12);
 }
 
 .fileProgressTrack {

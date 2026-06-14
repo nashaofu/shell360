@@ -1,10 +1,6 @@
 import { IconButton } from "@radix-ui/themes";
 
 import {
-  CloseIcon,
-  DeleteIcon,
-  PauseIcon,
-  PlayIcon,
   WindowMinimizeIcon,
 } from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
@@ -153,47 +149,47 @@ export function TransferProgress({
               </span>
               <span className={styles.fileActions}>
                 {item.status === "transferring" && onPauseItem && (
-                  <IconButton
-                    variant="ghost"
-                    size="1"
+                  <button
+                    className={styles.actionButton}
+                    type="button"
                     onClick={() => onPauseItem(item.id)}
                     title="Pause"
                   >
-                    <PauseIcon />
-                  </IconButton>
+                    Pause
+                  </button>
                 )}
                 {item.status === "paused" && onResumeItem && (
-                  <IconButton
-                    variant="ghost"
-                    size="1"
+                  <button
+                    className={styles.actionButton}
+                    type="button"
                     onClick={() => onResumeItem(item.id)}
                     title="Resume"
                   >
-                    <PlayIcon />
-                  </IconButton>
+                    Resume
+                  </button>
                 )}
                 {(item.status === "transferring" ||
                   item.status === "paused" ||
                   item.status === "waiting") &&
                   onCancelItem && (
-                    <IconButton
-                      variant="ghost"
-                      size="1"
+                    <button
+                      className={`${styles.actionButton} ${styles.cancelAction}`}
+                      type="button"
                       onClick={() => onCancelItem(item.id)}
-                      title="Cancel"
+                      title="Stop this transfer and keep the cancelled record"
                     >
-                      <CloseIcon />
-                    </IconButton>
+                      Cancel
+                    </button>
                   )}
                 {onRemoveItem && (
-                  <IconButton
-                    variant="ghost"
-                    size="1"
+                  <button
+                    className={`${styles.actionButton} ${styles.removeAction}`}
+                    type="button"
                     onClick={() => onRemoveItem(item.id)}
-                    title="Delete Record"
+                    title="Remove the local transfer record only"
                   >
-                    <DeleteIcon />
-                  </IconButton>
+                    Remove
+                  </button>
                 )}
               </span>
               {(item.status === "transferring" || item.status === "paused") && (
