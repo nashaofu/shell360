@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0",
+    "buffer": "^6.0.3",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

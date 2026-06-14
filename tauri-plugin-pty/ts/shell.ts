@@ -1,4 +1,5 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
+import { Buffer } from "buffer";
 import { v4 as uuidV4 } from "uuid";
 
 export type PtyShellSize = {
@@ -55,13 +56,15 @@ export class PtyShell {
     return result;
   }
 
-  send(data: string): Promise<void> {
+  send(data: string | Uint8Array): Promise<void> {
     if (!this.#opened) {
       return Promise.resolve();
     }
     return invoke("plugin:pty|shell_send", {
       shellId: this.shellId,
-      data: data,
+      data: Array.from(
+        typeof data === "string" ? Buffer.from(data, "utf8") : data,
+      ),
     });
   }
 

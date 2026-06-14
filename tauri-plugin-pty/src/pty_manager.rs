@@ -6,18 +6,25 @@ use std::sync::{Arc, Mutex};
 use portable_pty::{ChildKiller, MasterPty};
 
 type ShellId = String;
+pub type ShellWriter = Arc<Mutex<Box<dyn Write + Send>>>;
+pub type ShellKiller = Arc<Mutex<Box<dyn ChildKiller + Send + Sync>>>;
 
 pub struct ShellInstance {
   pub master: Box<dyn MasterPty + Send>,
-  pub writer: Option<Box<dyn Write + Send>>,
-  pub killer: Box<dyn ChildKiller + Send + Sync>,
-  pub shutdown: Arc<AtomicBool>,
+  pub writer: ShellWriter,
+  pub killer: ShellKiller,
+  pub cleanup_started: Arc<AtomicBool>,
 }
 
 impl ShellInstance {
-  pub fn kill(&mut self) {
-    self.shutdown.store(true, Ordering::SeqCst);
-    let _ = self.killer.kill();
+  pub fn kill(&self) -> std::io::Result<()> {
+    self
+      .killer
+      .lock()
+      .map_err(|e| std::io::Error::other(e.to_string()))?
+      .kill()?;
+    self.cleanup_started.store(true, Ordering::SeqCst);
+    Ok(())
   }
 }
 

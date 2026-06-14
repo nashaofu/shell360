@@ -1,7 +1,7 @@
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::async_runtime;
@@ -85,8 +85,6 @@ pub async fn shell_open<R: Runtime>(
     .spawn_command(cmd)
     .map_err(|e| PtyError::new(e.to_string()))?;
 
-  let killer = child.clone_killer();
-
   let reader = match pair.master.try_clone_reader() {
     Ok(r) => r,
     Err(e) => {
@@ -103,73 +101,86 @@ pub async fn shell_open<R: Runtime>(
     }
   };
 
-  let shutdown = Arc::new(AtomicBool::new(false));
-  let shutdown_reader = Arc::clone(&shutdown);
+  let cleanup_started = Arc::new(AtomicBool::new(false));
+  let writer = Arc::new(std::sync::Mutex::new(writer));
+  let killer = Arc::new(std::sync::Mutex::new(child.clone_killer()));
 
-  let channel = ipc_channel.clone();
-  let shell_id_clone = shell_id.clone();
-  let app_clone = app.clone();
+  let instance = ShellInstance {
+    master: pair.master,
+    writer: Arc::clone(&writer),
+    killer: Arc::clone(&killer),
+    cleanup_started: Arc::clone(&cleanup_started),
+  };
+
+  let existing = {
+    let mut shells = pty_manager
+      .shells
+      .lock()
+      .map_err(|e| PtyError::new(e.to_string()))?;
+    shells.insert(shell_id.clone(), instance)
+  };
+  if let Some(existing) = existing {
+    existing.kill()?;
+  }
+
+  let reader_channel = ipc_channel.clone();
+  let reader_shell_id = shell_id.clone();
+  let reader_app = app.clone();
+  let reader_cleanup = Arc::clone(&cleanup_started);
+  let reader_killer = Arc::clone(&killer);
 
   async_runtime::spawn_blocking(move || {
     let mut buf = [0u8; 65536];
     let mut reader: Box<dyn Read + Send> = reader;
 
-    // 读循环：进程退出后 PTY 关闭，read 会返回 EOF（0）。
     loop {
-      if shutdown_reader.load(Ordering::Relaxed) {
+      if reader_cleanup.load(Ordering::Relaxed) {
         break;
       }
 
       match reader.read(&mut buf) {
         Ok(0) => {
-          log::info!("pty shell {} EOF", shell_id_clone);
+          log::info!("pty shell {} EOF", reader_shell_id);
           break;
         }
         Ok(n) => {
           let data = buf[..n].to_vec();
-          if channel.send(PtyIpcEvent::Data(data)).is_err() {
+          if reader_channel.send(PtyIpcEvent::Data(data)).is_err() {
+            log::info!("pty shell {} ipc channel closed", reader_shell_id);
+            kill_shell(&reader_killer);
+            cleanup_shell(&reader_app, &reader_shell_id, &reader_cleanup);
             break;
           }
         }
         Err(e) => {
-          log::error!("pty shell {} read error: {}", shell_id_clone, e);
+          log::error!("pty shell {} read error: {}", reader_shell_id, e);
           break;
         }
       }
     }
+  });
 
-    // 等待子进程结束，拿到退出码后通知前端。
+  let wait_channel = ipc_channel.clone();
+  let wait_shell_id = shell_id.clone();
+  let wait_app = app.clone();
+  let wait_cleanup = Arc::clone(&cleanup_started);
+
+  async_runtime::spawn_blocking(move || {
     let code = match child.wait() {
       Ok(status) => {
-        log::info!(
-          "pty shell {} exited with status: {}",
-          shell_id_clone,
-          status
-        );
+        log::info!("pty shell {} exited with status: {}", wait_shell_id, status);
         Some(status.exit_code())
       }
       Err(e) => {
-        log::error!("pty shell {} wait error: {}", shell_id_clone, e);
+        log::error!("pty shell {} wait error: {}", wait_shell_id, e);
         None
       }
     };
 
-    let _ = channel.send(PtyIpcEvent::Exit { code });
-    remove_shell(&app_clone, &shell_id_clone);
+    if cleanup_shell(&wait_app, &wait_shell_id, &wait_cleanup) {
+      let _ = wait_channel.send(PtyIpcEvent::Exit { code });
+    }
   });
-
-  let instance = ShellInstance {
-    master: pair.master,
-    writer: Some(writer),
-    killer,
-    shutdown,
-  };
-
-  pty_manager
-    .shells
-    .lock()
-    .map_err(|e| PtyError::new(e.to_string()))?
-    .insert(shell_id.clone(), instance);
 
   Ok(shell_id)
 }
@@ -177,36 +188,25 @@ pub async fn shell_open<R: Runtime>(
 #[tauri::command]
 pub async fn shell_send<R: Runtime>(
   shell_id: ShellId,
-  data: String,
+  data: Vec<u8>,
   _app: AppHandle<R>,
   pty_manager: State<'_, PtyManager>,
 ) -> PtyResult<()> {
   let writer = {
-    let mut shells = pty_manager
+    let shells = pty_manager
       .shells
       .lock()
       .map_err(|e| PtyError::new(e.to_string()))?;
-    shells
-      .get_mut(&shell_id)
-      .and_then(|shell| shell.writer.take())
+    shells.get(&shell_id).map(|shell| Arc::clone(&shell.writer))
   };
 
-  let Some(mut writer) = writer else {
+  let Some(writer) = writer else {
     return Err(PtyError::new("Shell already closed"));
   };
 
-  writer.write_all(data.as_bytes())?;
+  let mut writer = writer.lock().map_err(|e| PtyError::new(e.to_string()))?;
+  writer.write_all(&data)?;
   writer.flush()?;
-
-  {
-    let mut shells = pty_manager
-      .shells
-      .lock()
-      .map_err(|e| PtyError::new(e.to_string()))?;
-    if let Some(shell) = shells.get_mut(&shell_id) {
-      shell.writer = Some(writer);
-    }
-  }
 
   Ok(())
 }
@@ -243,14 +243,54 @@ pub async fn shell_close<R: Runtime>(
   _app: AppHandle<R>,
   pty_manager: State<'_, PtyManager>,
 ) -> PtyResult<()> {
-  let mut shells = pty_manager
-    .shells
-    .lock()
-    .map_err(|e| PtyError::new(e.to_string()))?;
-  if let Some(mut instance) = shells.remove(&shell_id) {
-    instance.kill();
+  let shell = {
+    let shells = pty_manager
+      .shells
+      .lock()
+      .map_err(|e| PtyError::new(e.to_string()))?;
+    shells.get(&shell_id).map(|shell| {
+      (
+        Arc::clone(&shell.killer),
+        Arc::clone(&shell.cleanup_started),
+      )
+    })
+  };
+
+  if let Some((killer, cleanup_started)) = shell {
+    kill_shell_result(&killer)?;
+    cleanup_started.store(true, Ordering::SeqCst);
+    pty_manager
+      .shells
+      .lock()
+      .map_err(|e| PtyError::new(e.to_string()))?
+      .remove(&shell_id);
   }
+
   Ok(())
+}
+
+fn kill_shell(killer: &crate::pty_manager::ShellKiller) {
+  let _ = kill_shell_result(killer);
+}
+
+fn kill_shell_result(killer: &crate::pty_manager::ShellKiller) -> std::io::Result<()> {
+  killer
+    .lock()
+    .map_err(|e| std::io::Error::other(e.to_string()))?
+    .kill()
+}
+
+fn cleanup_shell<R: Runtime>(
+  app: &AppHandle<R>,
+  shell_id: &str,
+  cleanup_started: &AtomicBool,
+) -> bool {
+  if cleanup_started.swap(true, Ordering::SeqCst) {
+    return false;
+  }
+
+  remove_shell(app, shell_id);
+  true
 }
 
 fn remove_shell<R: Runtime>(app: &AppHandle<R>, shell_id: &str) {
