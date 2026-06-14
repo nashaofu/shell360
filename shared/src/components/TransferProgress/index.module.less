@@ -6,6 +6,7 @@
   flex-direction: column;
   gap: 8px;
   overflow: hidden;
+  min-height: 220px;
   max-height: inherit;
 }
 
@@ -48,6 +49,14 @@
   flex-shrink: 0;
 }
 
+.collapseButton {
+  color: var(--gray-11);
+}
+
+.collapseButton:hover {
+  color: var(--gray-12);
+}
+
 .overallStats {
   display: flex;
   align-items: center;
@@ -65,6 +74,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
   min-height: 0;
   max-height: 420px;
   overflow-y: auto;
@@ -143,8 +153,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
-  min-width: 76px;
+  gap: 8px;
+  min-width: 92px;
 }
 
 .fileProgressTrack {

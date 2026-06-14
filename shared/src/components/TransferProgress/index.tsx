@@ -91,6 +91,7 @@ export function TransferProgress({
         <div className={styles.titleActions}>
           {onCollapse && (
             <IconButton
+              className={styles.collapseButton}
               variant="ghost"
               size="1"
               onClick={onCollapse}
