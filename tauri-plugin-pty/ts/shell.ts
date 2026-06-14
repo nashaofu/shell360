@@ -1,4 +1,5 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
+import { Buffer } from "buffer";
 import { v4 as uuidV4 } from "uuid";
 
 export type PtyShellSize = {
@@ -15,11 +16,12 @@ export type PtyShellOpenOpts = {
 
 export type PtyShellOpts = {
   onData?: (data: Uint8Array) => unknown;
-  onClose?: () => unknown;
+  onExit?: (code: number | null) => unknown;
 };
 
 export type PtyShellIpcChannelEventJson = {
-  type: "Close";
+  type: "Exit";
+  code: number | null;
 };
 
 export type PtyShellIpcChannelEvent = ArrayBuffer | PtyShellIpcChannelEventJson;
@@ -44,8 +46,9 @@ export class PtyShell {
           this.opts.onData?.(new Uint8Array(data));
           return;
         }
-        if (data.type === "Close") {
-          this.opts.onClose?.();
+        if (data.type === "Exit") {
+          this.#opened = false;
+          this.opts.onExit?.(data.code);
         }
       }),
     });
@@ -53,13 +56,15 @@ export class PtyShell {
     return result;
   }
 
-  send(data: string): Promise<void> {
+  send(data: string | Uint8Array): Promise<void> {
     if (!this.#opened) {
       return Promise.resolve();
     }
     return invoke("plugin:pty|shell_send", {
       shellId: this.shellId,
-      data: data,
+      data: Array.from(
+        typeof data === "string" ? Buffer.from(data, "utf8") : data,
+      ),
     });
   }
 

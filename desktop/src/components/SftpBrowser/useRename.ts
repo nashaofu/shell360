@@ -1,21 +1,25 @@
 import { useRequest } from "ahooks";
-import { type MutableRefObject, useCallback, useEffect, useState } from "react";
-import { sanitizeSftpFilename } from "shared";
+import { type MutableRefObject, useCallback, useState } from "react";
+import {
+  getSftpBasename,
+  getSftpDirname,
+  joinSftpPath,
+  sanitizeSftpFilename,
+} from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
+import { getErrorMessage } from "./messages";
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
   sftpRef: MutableRefObject<SSHSftp | null>;
-  files?: SSHSftpFile[];
   refreshDir: () => unknown;
 };
 
 export default function useRename({
   message,
   sftpRef,
-  files,
   refreshDir,
 }: UseRenameOpts) {
   const [editingFilename, setEditingFilename] = useState<string>();
@@ -39,15 +43,15 @@ export default function useRename({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [, newPath]) => {
         message.success({
-          message: "rename success",
+          message: `Renamed to "${getSftpBasename(newPath)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "rename failed",
+          message: `Failed to rename: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -57,7 +61,7 @@ export default function useRename({
   }, []);
 
   const onRename = useCallback((item: SSHSftpFile) => {
-    const filename = item.path.split("/").pop();
+    const filename = getSftpBasename(item.path);
     setEditingFilename(filename);
     setSelectedFile(item);
   }, []);
@@ -68,18 +72,13 @@ export default function useRename({
   }, []);
 
   const onRenameOk = useCallback(async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !editingFilename) {
       return;
     }
-    const parent = selectedFile.path.split("/").slice(0, -1).join("/");
-    await rename(selectedFile.path, `${parent}/${editingFilename}`);
+    const parent = getSftpDirname(selectedFile.path);
+    await rename(selectedFile.path, joinSftpPath(parent, editingFilename));
     onRenameCancel();
   }, [editingFilename, onRenameCancel, rename, selectedFile]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets rename state
-  useEffect(() => {
-    onRenameCancel();
-  }, [files]);
 
   return {
     renameLoading,

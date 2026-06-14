@@ -334,6 +334,9 @@ importers:
       '@tauri-apps/api':
         specifier: ^2.11.0
         version: 2.11.0
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       uuid:
         specifier: ^14.0.0
         version: 14.0.0
@@ -350,6 +353,9 @@ importers:
       '@tauri-apps/api':
         specifier: ^2.11.0
         version: 2.11.0
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       uuid:
         specifier: ^14.0.0
         version: 14.0.0

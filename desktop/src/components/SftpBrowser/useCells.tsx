@@ -121,9 +121,11 @@ export default function useCells({
                     ></SftpFilenameInput>
                   </div>
                 ) : (
-                  <div className={styles.fileName}>{item.name}</div>
+                  <>
+                    <div className={styles.fileName}>{item.name}</div>
+                    <div className={styles.filePerms}>{item.permissions}</div>
+                  </>
                 )}
-                <div className={styles.filePerms}>{item.permissions}</div>
               </div>
             </div>
           );
@@ -180,13 +182,13 @@ export default function useCells({
               right: 0,
               zIndex: 3,
               borderLeft: "1px solid var(--gray-a5)",
-              backgroundColor: "var(--color-panel)",
+              backgroundColor: "var(--color-panel-solid)",
             };
           }
           return {
             position: "sticky",
             right: 0,
-            zIndex: 2,
+            zIndex: 1,
             borderLeft: "1px solid var(--gray-a5)",
           };
         },

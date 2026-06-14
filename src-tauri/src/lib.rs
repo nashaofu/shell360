@@ -15,6 +15,7 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_store::Builder::default().build())
     .plugin(tauri_plugin_clipboard_manager::init())
+    .plugin(tauri_plugin_machine_uid::init())
     .plugin(
       tauri_plugin_log::Builder::default()
         .level(LevelFilter::Info)

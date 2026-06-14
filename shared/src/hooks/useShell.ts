@@ -6,6 +6,7 @@ import { type SSHSession, SSHShell } from "tauri-plugin-ssh";
 import type { Terminal, TerminalSize } from "@/components/XTerminal";
 import { oscParse } from "@/utils/osc";
 import { sleep } from "@/utils/sleep";
+import { xtermBinaryToBytes } from "@/utils/terminal";
 
 export interface UseShellOpts {
   session?: SSHSession;
@@ -95,7 +96,7 @@ export function useShell({
     shellRef.current?.send(data);
   });
   const onTerminalBinaryData = useMemoizedFn((data: string) => {
-    shellRef.current?.send(data);
+    shellRef.current?.send(xtermBinaryToBytes(data));
   });
   const onTerminalResize = useMemoizedFn((size: TerminalSize) => {
     if (loading || error) {

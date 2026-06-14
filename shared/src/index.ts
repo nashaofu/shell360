@@ -1,5 +1,3 @@
-import "./styles/index.less";
-
 // atoms
 export * from "./atoms/appearance.atom";
 export * from "./atoms/portForwardings.atom";
@@ -45,4 +43,5 @@ export * from "./utils/sftp";
 export * from "./utils/sleep";
 export * from "./utils/ssh";
 export * from "./utils/style";
+export * from "./utils/terminal";
 export * from "./utils/umami";

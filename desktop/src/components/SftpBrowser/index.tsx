@@ -1,9 +1,10 @@
-import { Button, Dialog, DropdownMenu, Flex } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FileUploadIcon,
   getSftpBrowserFiles,
+  getSftpDirname,
   Loading,
   MoreIcon,
   SSHLoading,
@@ -17,6 +18,7 @@ import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
 import styles from "./index.module.less";
+import { getErrorMessage } from "./messages";
 import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
@@ -91,22 +93,42 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "read dir failed",
+          message: `Failed to load folder: ${getErrorMessage(err)}`,
         }),
     },
   );
+  const isListEditingRef = useRef(false);
+  const pendingAutoRefreshRef = useRef(false);
+
+  const safeRefreshDir = useCallback(
+    (reason: "auto" | "manual" = "auto") => {
+      if (reason === "auto" && isListEditingRef.current) {
+        pendingAutoRefreshRef.current = true;
+        return;
+      }
+      pendingAutoRefreshRef.current = false;
+      refreshDir();
+    },
+    [refreshDir],
+  );
+
+  const flushPendingAutoRefresh = useCallback(() => {
+    if (!pendingAutoRefreshRef.current) {
+      return;
+    }
+    pendingAutoRefreshRef.current = false;
+    refreshDir();
+  }, [refreshDir]);
 
   const {
     transferInfo,
     transferStatus,
     panelOpen,
     togglePanel,
-    cancelTransfer,
     cancelFileItem,
     pauseFileItem,
     resumeFileItem,
-    pauseTransfer,
-    resumeTransfer,
+    removeFileItem,
     uploadFile,
     downloadFile,
     removeDir,
@@ -118,7 +140,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     message,
     modal,
     sftpRef,
-    refreshDir,
+    refreshDir: () => safeRefreshDir("auto"),
   });
 
   const onSelectDir = useCallback((item: SSHSftpFile) => {
@@ -134,17 +156,37 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     loadFileContent,
     saveFileContent,
     closeEditor,
-  } = useSftpFileEditor({ sftpRef, refreshDir });
+  } = useSftpFileEditor({ sftpRef, refreshDir: () => safeRefreshDir("auto") });
 
   const {
     renameLoading,
     selectedFile,
     editingFilename,
     onEditingFilenameChange,
-    onRename,
-    onRenameCancel,
-    onRenameOk,
-  } = useRename({ message, sftpRef, files, refreshDir });
+    onRename: startRename,
+    onRenameCancel: cancelRename,
+    onRenameOk: confirmRename,
+  } = useRename({ message, sftpRef, refreshDir: () => safeRefreshDir("auto") });
+
+  const onRename = useCallback(
+    (item: SSHSftpFile) => {
+      isListEditingRef.current = true;
+      startRename(item);
+    },
+    [startRename],
+  );
+
+  const onRenameCancel = useCallback(() => {
+    cancelRename();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [cancelRename, flushPendingAutoRefresh]);
+
+  const onRenameOk = useCallback(async () => {
+    await confirmRename();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [confirmRename, flushPendingAutoRefresh]);
 
   const cells = useCells({
     selectedFile,
@@ -177,11 +219,11 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
   const onSftpBreadcrumbsClick = useCallback(
     (dir: string) => {
       if (dir === dirname) {
-        return refreshDir();
+        return safeRefreshDir("manual");
       }
       setDirname(dir);
     },
-    [dirname, refreshDir],
+    [dirname, safeRefreshDir],
   );
 
   const onNavigatePath = useCallback(
@@ -192,7 +234,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       try {
         const exists = await sftpRef.current.sftpExists(path);
         if (!exists) {
-          message.error({ message: `Path does not exist: ${path}` });
+          message.error({ message: `Folder not found: ${path}` });
           return false;
         }
         await sftpRef.current.sftpReadDir(path);
@@ -200,7 +242,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
         return true;
       } catch (err) {
         message.error({
-          message: `Cannot navigate to ${path}: ${(err as Error).message ?? "Unknown error"}`,
+          message: `Failed to open folder "${path}": ${getErrorMessage(err)}`,
         });
         return false;
       }
@@ -210,7 +252,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
 
   const onParentClick = useCallback(() => {
     if (dirname && !isRoot) {
-      setDirname(dirname.split("/").slice(0, -1).join("/") || "/");
+      setDirname(getSftpDirname(dirname));
     }
   }, [dirname, isRoot]);
 
@@ -218,18 +260,39 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     creatingFilename,
     onCreatingFilenameChange,
     createType,
-    onCreate,
-    onCreateCancel,
-    onCreateOk,
+    onCreate: startCreate,
+    onCreateCancel: cancelCreate,
+    onCreateOk: confirmCreate,
     createLoading,
   } = useCreate({
     tableContainerRef,
     message,
     dirname,
-    files,
     sftpRef,
-    refreshDir,
+    refreshDir: () => safeRefreshDir("auto"),
   });
+
+  isListEditingRef.current = !!selectedFile || !!creatingFilename;
+
+  const onCreate = useCallback(
+    (val: CreateType, filename: string) => {
+      isListEditingRef.current = true;
+      startCreate(val, filename);
+    },
+    [startCreate],
+  );
+
+  const onCreateCancel = useCallback(() => {
+    cancelCreate();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [cancelCreate, flushPendingAutoRefresh]);
+
+  const onCreateOk = useCallback(async () => {
+    await confirmCreate();
+    isListEditingRef.current = false;
+    flushPendingAutoRefresh();
+  }, [confirmCreate, flushPendingAutoRefresh]);
 
   const actions = useMemo(() => {
     return [
@@ -246,7 +309,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       {
         label: "Refresh",
         value: "Refresh",
-        onClick: () => refreshDir(),
+        onClick: () => safeRefreshDir("manual"),
       },
       {
         label: isShowHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files",
@@ -254,7 +317,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
         onClick: () => setIsShowHiddenFiles(!isShowHiddenFiles),
       },
     ];
-  }, [isShowHiddenFiles, onCreate, refreshDir]);
+  }, [isShowHiddenFiles, onCreate, safeRefreshDir]);
 
   const isLoading =
     readDirLoading ||
@@ -264,6 +327,40 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     createLoading;
 
   const showConnection = connectionLoading || !!connectionError;
+
+  const task = useMemo(() => {
+    if (!transferInfo || !transferStatus) {
+      return null;
+    }
+    return {
+      taskId: "",
+      sftpId: "",
+      dirname: transferInfo.dirname ?? "",
+      type: transferInfo.type,
+      status: transferStatus,
+      progress: transferInfo.progress,
+      total: transferInfo.total,
+      speed: transferInfo.speed,
+      eta: transferInfo.eta,
+      overallProgress: transferInfo.overallProgress,
+      overallTotal: transferInfo.overallTotal,
+      overallProgressBytes: transferInfo.overallProgressBytes,
+      queue: transferInfo.queue,
+      currentIndex: transferInfo.currentIndex,
+    };
+  }, [transferInfo, transferStatus]);
+
+  const transferPanelData = useMemo(() => {
+    const currentItem = task?.queue[task.currentIndex];
+    const queue = task?.queue ?? [];
+    const currentIndex = currentItem
+      ? queue.findIndex((item) => item.id === currentItem.id)
+      : -1;
+    return {
+      queue,
+      currentIndex: Math.max(currentIndex, 0),
+    };
+  }, [task]);
 
   return (
     <div className={styles.root}>
@@ -346,84 +443,25 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
             </div>
           </div>
         </Loading>
-        {transferInfo && transferStatus && (
-          <StatusBar
-            task={{
-              taskId: "",
-              sftpId: "",
-              dirname: transferInfo.dirname ?? "",
-              type: transferInfo.type,
-              status: transferStatus,
-              progress: transferInfo.progress,
-              total: transferInfo.total,
-              speed: transferInfo.speed,
-              eta: transferInfo.eta,
-              overallProgress: transferInfo.overallProgress,
-              overallTotal: transferInfo.overallTotal,
-              overallProgressBytes: transferInfo.overallProgressBytes,
-              queue: transferInfo.queue,
-              currentIndex: transferInfo.currentIndex,
-            }}
-            onExpand={togglePanel}
-          />
+        {panelOpen && (
+          <>
+            <div className={styles.transferOverlay} onClick={togglePanel} />
+            <div className={styles.transferPanel}>
+              <TransferProgress
+                queue={transferPanelData.queue}
+                currentIndex={transferPanelData.currentIndex}
+                onPauseItem={pauseFileItem}
+                onResumeItem={resumeFileItem}
+                onCancelItem={cancelFileItem}
+                onRemoveItem={removeFileItem}
+                onCollapse={togglePanel}
+              />
+            </div>
+          </>
         )}
+        <StatusBar task={task} onExpand={togglePanel} />
       </div>
-      {transferInfo && transferStatus && (
-        <Dialog.Root
-          open={panelOpen}
-          onOpenChange={(open) => {
-            if (!open) togglePanel();
-          }}
-        >
-          <Dialog.Content>
-            <Dialog.Title size="3">Files in Transfer</Dialog.Title>
-            <Flex gap="2" mb="3" wrap="wrap">
-              {transferStatus === "paused" && (
-                <Button variant="soft" size="1" onClick={resumeTransfer}>
-                  {"\u25B6"} Resume All
-                </Button>
-              )}
-              {transferStatus === "transferring" && (
-                <Button variant="soft" size="1" onClick={pauseTransfer}>
-                  {"\u23F8"} Pause All
-                </Button>
-              )}
-              {transferInfo.queue.some(
-                (i) =>
-                  i.status === "transferring" ||
-                  i.status === "paused" ||
-                  i.status === "waiting",
-              ) && (
-                <Button
-                  variant="soft"
-                  color="red"
-                  size="1"
-                  onClick={cancelTransfer}
-                >
-                  Cancel All
-                </Button>
-              )}
-            </Flex>
-            <TransferProgress
-              type={transferInfo.type}
-              overallProgress={transferInfo.overallProgress}
-              overallTotal={transferInfo.overallTotal}
-              overallProgressBytes={transferInfo.overallProgressBytes}
-              queue={transferInfo.queue}
-              currentIndex={transferInfo.currentIndex}
-              status={transferStatus}
-              onPauseItem={pauseFileItem}
-              onResumeItem={resumeFileItem}
-              onCancelItem={cancelFileItem}
-            />
-            <Flex justify="end" mt="3">
-              <Dialog.Close>
-                <Button>OK</Button>
-              </Dialog.Close>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Root>
-      )}
+
       {showConnection && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}

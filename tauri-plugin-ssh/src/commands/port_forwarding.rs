@@ -77,20 +77,25 @@ async fn connect_socks<'a, R: Runtime>(
   handler: &Handler<'a, R>,
   address: &SocksAddr,
 ) -> Result<ChannelStream<Msg>, SSHError> {
-  let channel = {
+  let session = {
     let sessions = handler.sessions.sessions.lock().await;
-    let session = sessions
+    sessions
       .get(&handler.ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
-    session
-      .channel_open_direct_tcpip(
-        address.domain(),
-        address.port() as u32,
-        handler.local_addr.ip().to_string(),
-        handler.local_addr.port() as u32,
-      )
-      .await?
+      .ok_or(SSHError::NotFoundSession)?
+      .handle_ssh_client
+      .clone()
   };
+
+  let channel = session
+    .lock()
+    .await
+    .channel_open_direct_tcpip(
+      address.domain(),
+      address.port() as u32,
+      handler.local_addr.ip().to_string(),
+      handler.local_addr.port() as u32,
+    )
+    .await?;
 
   Ok(channel.into_stream())
 }
@@ -148,6 +153,7 @@ impl<R: Runtime> Socks5Handler for Handler<'_, R> {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn port_forwarding_local_open<R: Runtime>(
   app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
@@ -189,18 +195,25 @@ pub async fn port_forwarding_local_open<R: Runtime>(
             let remote_address = remote_address.clone();
             async_runtime::spawn(async move {
               let ssh_manager = app.state::<SSHManager<R>>();
-              let channel = {
+              let session = {
                 let sessions = ssh_manager.sessions.lock().await;
-                let session = sessions.get(&ssh_session_id).ok_or(SSHError::NotFoundSession)?;
-                session
-                    .channel_open_direct_tcpip(
-                        remote_address,
-                        remote_port as u32,
-                        addr.ip().to_string(),
-                        addr.port() as u32,
-                    )
-                    .await?
+                sessions
+                  .get(&ssh_session_id)
+                  .ok_or(SSHError::NotFoundSession)?
+                  .handle_ssh_client
+                  .clone()
               };
+
+              let channel = session
+                  .lock()
+                  .await
+                  .channel_open_direct_tcpip(
+                      remote_address,
+                      remote_port as u32,
+                      addr.ip().to_string(),
+                      addr.port() as u32,
+                  )
+                  .await?;
 
               io::copy_bidirectional(&mut stream, &mut channel.into_stream()).await?;
               Ok::<(), SSHError>(())
@@ -240,6 +253,7 @@ pub async fn port_forwarding_local_close<R: Runtime>(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn port_forwarding_remote_open<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
@@ -251,12 +265,18 @@ pub async fn port_forwarding_remote_open<R: Runtime>(
   remote_port: u16,
 ) -> SSHResult<SSHSessionId> {
   {
-    let mut sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get_mut(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
+    let session = {
+      let sessions = ssh_manager.sessions.lock().await;
+      sessions
+        .get(&ssh_session_id)
+        .ok_or(SSHError::NotFoundSession)?
+        .handle_ssh_client
+        .clone()
+    };
 
     session
+      .lock()
+      .await
       .tcpip_forward(remote_address.clone(), remote_port as u32)
       .await?;
   }
@@ -297,12 +317,18 @@ pub async fn port_forwarding_remote_close<R: Runtime>(
     ..
   }) = ssh_port_forwarding
   {
-    let mut sessions = ssh_manager.sessions.lock().await;
-    let session = sessions
-      .get_mut(&ssh_session_id)
-      .ok_or(SSHError::NotFoundSession)?;
+    let session = {
+      let sessions = ssh_manager.sessions.lock().await;
+      sessions
+        .get(&ssh_session_id)
+        .ok_or(SSHError::NotFoundSession)?
+        .handle_ssh_client
+        .clone()
+    };
 
     session
+      .lock()
+      .await
       .cancel_tcpip_forward(remote_address, remote_port as u32)
       .await?;
   }

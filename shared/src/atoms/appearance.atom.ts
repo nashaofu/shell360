@@ -15,7 +15,7 @@ export const APP_RADIX_THEME = {
 
 export type Appearance = (typeof APPEARANCE_VALUES)[number];
 
-export const appearanceAtom = atomWithStorage<Appearance>(
+const appearanceAtom = atomWithStorage<Appearance>(
   "themeMode",
   "inherit",
   undefined,
@@ -32,7 +32,7 @@ export function useAppearanceValue() {
   }, [appearance]);
 }
 
-export function useSetAppearanceValue() {
+function useSetAppearanceValue() {
   const setAppearance = useSetAtom(appearanceAtom);
 
   return useCallback(
