@@ -15,11 +15,12 @@ export type PtyShellOpenOpts = {
 
 export type PtyShellOpts = {
   onData?: (data: Uint8Array) => unknown;
-  onClose?: () => unknown;
+  onExit?: (code: number | null) => unknown;
 };
 
 export type PtyShellIpcChannelEventJson = {
-  type: "Close";
+  type: "Exit";
+  code: number | null;
 };
 
 export type PtyShellIpcChannelEvent = ArrayBuffer | PtyShellIpcChannelEventJson;
@@ -44,8 +45,9 @@ export class PtyShell {
           this.opts.onData?.(new Uint8Array(data));
           return;
         }
-        if (data.type === "Close") {
-          this.opts.onClose?.();
+        if (data.type === "Exit") {
+          this.#opened = false;
+          this.opts.onExit?.(data.code);
         }
       }),
     });

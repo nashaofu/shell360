@@ -1,33 +1,105 @@
 .root {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
   height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
   background: var(--color-panel-solid);
   border-top: 1px solid var(--gray-a5);
   flex-shrink: 0;
   cursor: pointer;
   user-select: none;
+  overflow: hidden;
 }
 
 .root:hover {
   background: var(--gray-a2);
 }
 
-.icon {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent-a3);
+  pointer-events: none;
+  transition: width 0.2s linear;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.idle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.idleIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--gray-11);
+  width: 14px;
+  height: 14px;
+  color: var(--gray-10);
 }
 
-.count {
+.idleText {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--gray-10);
+}
+
+.counts {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   line-height: 1;
   color: var(--gray-12);
+}
+
+.runningIcon,
+.doneIcon,
+.failedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+.runningIcon {
+  color: var(--accent-11);
+}
+
+.doneIcon {
+  color: var(--green-11);
+}
+
+.failedIcon {
+  color: var(--red-11);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--gray-11);
+  font-variant-numeric: tabular-nums;
 }

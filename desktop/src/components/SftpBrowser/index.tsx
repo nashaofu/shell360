@@ -1,4 +1,4 @@
-import { Button, Dialog, DropdownMenu, Flex } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -265,6 +265,28 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
 
   const showConnection = connectionLoading || !!connectionError;
 
+  const task = useMemo(() => {
+    if (!transferInfo || !transferStatus) {
+      return null;
+    }
+    return {
+      taskId: "",
+      sftpId: "",
+      dirname: transferInfo.dirname ?? "",
+      type: transferInfo.type,
+      status: transferStatus,
+      progress: transferInfo.progress,
+      total: transferInfo.total,
+      speed: transferInfo.speed,
+      eta: transferInfo.eta,
+      overallProgress: transferInfo.overallProgress,
+      overallTotal: transferInfo.overallTotal,
+      overallProgressBytes: transferInfo.overallProgressBytes,
+      queue: transferInfo.queue,
+      currentIndex: transferInfo.currentIndex,
+    };
+  }, [transferInfo, transferStatus]);
+
   return (
     <div className={styles.root}>
       <div
@@ -346,84 +368,32 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
             </div>
           </div>
         </Loading>
-        {transferInfo && transferStatus && (
-          <StatusBar
-            task={{
-              taskId: "",
-              sftpId: "",
-              dirname: transferInfo.dirname ?? "",
-              type: transferInfo.type,
-              status: transferStatus,
-              progress: transferInfo.progress,
-              total: transferInfo.total,
-              speed: transferInfo.speed,
-              eta: transferInfo.eta,
-              overallProgress: transferInfo.overallProgress,
-              overallTotal: transferInfo.overallTotal,
-              overallProgressBytes: transferInfo.overallProgressBytes,
-              queue: transferInfo.queue,
-              currentIndex: transferInfo.currentIndex,
-            }}
-            onExpand={togglePanel}
-          />
+        {task && panelOpen && (
+          <>
+            <div className={styles.transferOverlay} onClick={togglePanel} />
+            <div className={styles.transferPanel}>
+              <TransferProgress
+                type={task.type}
+                overallProgress={task.overallProgress}
+                overallTotal={task.overallTotal}
+                overallProgressBytes={task.overallProgressBytes}
+                queue={task.queue}
+                currentIndex={task.currentIndex}
+                status={transferStatus ?? undefined}
+                onPause={pauseTransfer}
+                onResume={resumeTransfer}
+                onCancel={cancelTransfer}
+                onPauseItem={pauseFileItem}
+                onResumeItem={resumeFileItem}
+                onCancelItem={cancelFileItem}
+                onCollapse={togglePanel}
+              />
+            </div>
+          </>
         )}
+        <StatusBar task={task} onExpand={togglePanel} />
       </div>
-      {transferInfo && transferStatus && (
-        <Dialog.Root
-          open={panelOpen}
-          onOpenChange={(open) => {
-            if (!open) togglePanel();
-          }}
-        >
-          <Dialog.Content>
-            <Dialog.Title size="3">Files in Transfer</Dialog.Title>
-            <Flex gap="2" mb="3" wrap="wrap">
-              {transferStatus === "paused" && (
-                <Button variant="soft" size="1" onClick={resumeTransfer}>
-                  {"\u25B6"} Resume All
-                </Button>
-              )}
-              {transferStatus === "transferring" && (
-                <Button variant="soft" size="1" onClick={pauseTransfer}>
-                  {"\u23F8"} Pause All
-                </Button>
-              )}
-              {transferInfo.queue.some(
-                (i) =>
-                  i.status === "transferring" ||
-                  i.status === "paused" ||
-                  i.status === "waiting",
-              ) && (
-                <Button
-                  variant="soft"
-                  color="red"
-                  size="1"
-                  onClick={cancelTransfer}
-                >
-                  Cancel All
-                </Button>
-              )}
-            </Flex>
-            <TransferProgress
-              type={transferInfo.type}
-              overallProgress={transferInfo.overallProgress}
-              overallTotal={transferInfo.overallTotal}
-              overallProgressBytes={transferInfo.overallProgressBytes}
-              queue={transferInfo.queue}
-              currentIndex={transferInfo.currentIndex}
-              status={transferStatus}
-              onPauseItem={pauseFileItem}
-              onResumeItem={resumeFileItem}
-              onCancelItem={cancelFileItem}
-            />
-            <Flex justify="end" mt="3">
-              <Dialog.Close>
-                <Button>OK</Button>
-              </Dialog.Close>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Root>
-      )}
+
       {showConnection && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}

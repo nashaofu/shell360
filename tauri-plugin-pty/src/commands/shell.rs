@@ -28,15 +28,15 @@ pub struct ShellSize {
 #[derive(Debug, Clone)]
 pub enum PtyIpcEvent {
   Data(Vec<u8>),
-  Close,
+  Exit { code: Option<u32> },
 }
 
 impl IpcResponse for PtyIpcEvent {
   fn body(self) -> tauri::Result<InvokeResponseBody> {
     match self {
       PtyIpcEvent::Data(data) => Ok(InvokeResponseBody::Raw(data)),
-      PtyIpcEvent::Close => Ok(InvokeResponseBody::Json(
-        json!({"type": "Close"}).to_string(),
+      PtyIpcEvent::Exit { code } => Ok(InvokeResponseBody::Json(
+        json!({"type": "Exit", "code": code}).to_string(),
       )),
     }
   }
@@ -85,6 +85,8 @@ pub async fn shell_open<R: Runtime>(
     .spawn_command(cmd)
     .map_err(|e| PtyError::new(e.to_string()))?;
 
+  let killer = child.clone_killer();
+
   let reader = match pair.master.try_clone_reader() {
     Ok(r) => r,
     Err(e) => {
@@ -108,46 +110,19 @@ pub async fn shell_open<R: Runtime>(
   let shell_id_clone = shell_id.clone();
   let app_clone = app.clone();
 
-  // 把子进程移动到线程中，用于检测进程退出
-  let mut child_clone = child;
-
   async_runtime::spawn_blocking(move || {
     let mut buf = [0u8; 65536];
     let mut reader: Box<dyn Read + Send> = reader;
 
+    // 读循环：进程退出后 PTY 关闭，read 会返回 EOF（0）。
     loop {
       if shutdown_reader.load(Ordering::Relaxed) {
         break;
       }
 
-      // 检测子进程是否已经退出
-      match child_clone.try_wait() {
-        Ok(Some(status)) => {
-          log::info!(
-            "pty shell {} exited with status: {}",
-            shell_id_clone,
-            status
-          );
-          let _ = channel.send(PtyIpcEvent::Close);
-          remove_shell(&app_clone, &shell_id_clone);
-          break;
-        }
-        Ok(None) => {
-          // 进程还在运行，继续
-        }
-        Err(e) => {
-          log::error!("pty shell {} wait error: {}", shell_id_clone, e);
-          let _ = channel.send(PtyIpcEvent::Close);
-          remove_shell(&app_clone, &shell_id_clone);
-          break;
-        }
-      }
-
       match reader.read(&mut buf) {
         Ok(0) => {
           log::info!("pty shell {} EOF", shell_id_clone);
-          let _ = channel.send(PtyIpcEvent::Close);
-          remove_shell(&app_clone, &shell_id_clone);
           break;
         }
         Ok(n) => {
@@ -158,18 +133,35 @@ pub async fn shell_open<R: Runtime>(
         }
         Err(e) => {
           log::error!("pty shell {} read error: {}", shell_id_clone, e);
-          let _ = channel.send(PtyIpcEvent::Close);
-          remove_shell(&app_clone, &shell_id_clone);
           break;
         }
       }
     }
+
+    // 等待子进程结束，拿到退出码后通知前端。
+    let code = match child.wait() {
+      Ok(status) => {
+        log::info!(
+          "pty shell {} exited with status: {}",
+          shell_id_clone,
+          status
+        );
+        Some(status.exit_code())
+      }
+      Err(e) => {
+        log::error!("pty shell {} wait error: {}", shell_id_clone, e);
+        None
+      }
+    };
+
+    let _ = channel.send(PtyIpcEvent::Exit { code });
+    remove_shell(&app_clone, &shell_id_clone);
   });
 
   let instance = ShellInstance {
     master: pair.master,
     writer: Some(writer),
-    child: None, // child已经移动到线程中，不再需要在这里保存
+    killer,
     shutdown,
   };
 

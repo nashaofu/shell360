@@ -6,11 +6,40 @@
 }
 
 .browserLayer {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.transferOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
+.transferPanel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 5;
+  background: var(--color-panel-solid);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  animation: transferPanelIn 0.18s ease-out;
+}
+
+@keyframes transferPanelIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .iconButton {
@@ -77,6 +106,7 @@
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
 }

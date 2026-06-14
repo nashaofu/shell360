@@ -3,23 +3,21 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
-use portable_pty::MasterPty;
+use portable_pty::{ChildKiller, MasterPty};
 
 type ShellId = String;
 
 pub struct ShellInstance {
   pub master: Box<dyn MasterPty + Send>,
   pub writer: Option<Box<dyn Write + Send>>,
-  pub child: Option<Box<dyn portable_pty::Child + Send>>,
+  pub killer: Box<dyn ChildKiller + Send + Sync>,
   pub shutdown: Arc<AtomicBool>,
 }
 
 impl ShellInstance {
   pub fn kill(&mut self) {
     self.shutdown.store(true, Ordering::SeqCst);
-    if let Some(ref mut child) = self.child {
-      let _ = child.kill();
-    }
+    let _ = self.killer.kill();
   }
 }
 

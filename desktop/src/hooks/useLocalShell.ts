@@ -47,7 +47,7 @@ export function useLocalShell({
           oscParse(Buffer.from(data), { onCopy });
           terminal.write(data);
         },
-        onClose,
+        onExit: () => onClose?.(),
       });
       shellRef.current = shell;
 
