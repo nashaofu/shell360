@@ -31,7 +31,7 @@ export type TransferQueueItem = {
   error?: string;
 };
 
-export type TransferProgressProps = {
+type TransferProgressProps = {
   queue: TransferQueueItem[];
   currentIndex: number;
   onCancelItem?: (itemId: string) => void;

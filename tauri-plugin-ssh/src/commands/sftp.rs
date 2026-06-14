@@ -1,4 +1,4 @@
-use std::{ops::Deref, time::Duration};
+use std::{ops::Deref, sync::Arc, time::Duration};
 
 use russh::ChannelId;
 use russh_sftp::{
@@ -51,7 +51,7 @@ pub struct SSHSftp {
   #[allow(unused)]
   pub ssh_sftp_id: SSHSftpId,
   pub sftp_channel_id: ChannelId,
-  pub sftp_session: SftpSession,
+  pub sftp_session: Arc<SftpSession>,
   pub ipc_channel: Channel<SSHSftpIpcChannelData>,
 }
 
@@ -67,7 +67,7 @@ impl SSHSftp {
       ssh_session_id,
       ssh_sftp_id,
       sftp_channel_id,
-      sftp_session,
+      sftp_session: Arc::new(sftp_session),
       ipc_channel,
     }
   }
@@ -79,6 +79,15 @@ impl Deref for SSHSftp {
   fn deref(&self) -> &Self::Target {
     &self.sftp_session
   }
+}
+
+async fn get_sftp_session<R: Runtime>(
+  ssh_manager: &SSHManager<R>,
+  ssh_sftp_id: SSHSftpId,
+) -> SSHResult<Arc<SftpSession>> {
+  let sftps = ssh_manager.sftps.lock().await;
+  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
+  Ok(sftp.sftp_session.clone())
 }
 
 #[tauri::command]
@@ -155,8 +164,12 @@ pub async fn sftp_close<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
 ) -> SSHResult<SSHSftpId> {
   timeout(Duration::from_secs(5), async {
-    let mut sftps = ssh_manager.sftps.lock().await;
-    if let Some(sftp) = sftps.remove(&ssh_sftp_id) {
+    let sftp = {
+      let mut sftps = ssh_manager.sftps.lock().await;
+      sftps.remove(&ssh_sftp_id)
+    };
+
+    if let Some(sftp) = sftp {
       sftp.close().await?;
     }
 
@@ -207,9 +220,7 @@ pub async fn sftp_read_dir<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   dirname: String,
 ) -> SSHResult<Vec<SSHSftpFile>> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   let read_dir = sftp.read_dir(&dirname).await?;
   let files: Vec<SSHSftpFile> = read_dir
     .map(|file| {
@@ -334,11 +345,8 @@ async fn upload_file_inner<R: Runtime>(
   on_progress: Channel<SFTPProgressPayload>,
   control: TransferControl,
 ) -> SSHResult<()> {
-  let remote_file = {
-    let sftps = ssh_manager.sftps.lock().await;
-    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-    sftp.create(remote_filename).await?
-  };
+  let sftp = get_sftp_session(ssh_manager, ssh_sftp_id).await?;
+  let remote_file = sftp.create(remote_filename).await?;
 
   let mut local_file = fs::File::from_std(
     app_handle
@@ -404,11 +412,8 @@ async fn download_file_inner<R: Runtime>(
   on_progress: Channel<SFTPProgressPayload>,
   control: TransferControl,
 ) -> SSHResult<()> {
-  let mut remote_file = {
-    let sftps = ssh_manager.sftps.lock().await;
-    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-    sftp.open(remote_filename).await?
-  };
+  let sftp = get_sftp_session(ssh_manager, ssh_sftp_id).await?;
+  let mut remote_file = sftp.open(remote_filename).await?;
 
   let local_file = fs::File::from_std(
     app_handle.fs().open(
@@ -485,9 +490,7 @@ pub async fn sftp_create_file<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   filename: String,
 ) -> SSHResult<SSHSftpId> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   sftp.create(filename).await?;
 
   Ok(ssh_sftp_id)
@@ -500,9 +503,7 @@ pub async fn sftp_create_dir<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   dirname: String,
 ) -> SSHResult<SSHSftpId> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   sftp.create_dir(dirname).await?;
 
   Ok(ssh_sftp_id)
@@ -515,9 +516,7 @@ pub async fn sftp_remove_dir<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   dirname: String,
 ) -> SSHResult<SSHSftpId> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   sftp.remove_dir(dirname).await?;
 
   Ok(ssh_sftp_id)
@@ -530,9 +529,7 @@ pub async fn sftp_remove_file<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   filename: String,
 ) -> SSHResult<SSHSftpId> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   sftp.remove_file(filename).await?;
 
   Ok(ssh_sftp_id)
@@ -546,9 +543,7 @@ pub async fn sftp_rename<R: Runtime>(
   old_path: String,
   new_path: String,
 ) -> SSHResult<SSHSftpId> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   sftp.rename(old_path, new_path).await?;
 
   Ok(ssh_sftp_id)
@@ -561,9 +556,7 @@ pub async fn sftp_exists<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   path: String,
 ) -> SSHResult<bool> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   let is_exists = sftp.try_exists(path).await?;
 
   Ok(is_exists)
@@ -576,9 +569,7 @@ pub async fn sftp_canonicalize<R: Runtime>(
   ssh_sftp_id: SSHSftpId,
   path: String,
 ) -> SSHResult<String> {
-  let sftps = ssh_manager.sftps.lock().await;
-  let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
   let absolute_path = sftp.canonicalize(path).await?;
 
   Ok(absolute_path)
@@ -593,18 +584,15 @@ pub async fn sftp_read_text_file<R: Runtime>(
 ) -> SSHResult<String> {
   log::info!("sftp_read_text_file: Reading file {:?}", filename);
 
-  let mut remote_file = {
-    let sftps = ssh_manager.sftps.lock().await;
-    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-    sftp.open(&filename).await.map_err(|e| {
-      log::error!(
-        "sftp_read_text_file: Failed to open file {:?}: {:?}",
-        filename,
-        e
-      );
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
+  let mut remote_file = sftp.open(&filename).await.map_err(|e| {
+    log::error!(
+      "sftp_read_text_file: Failed to open file {:?}: {:?}",
+      filename,
       e
-    })?
-  };
+    );
+    e
+  })?;
 
   let mut content = String::new();
   remote_file
@@ -641,18 +629,15 @@ pub async fn sftp_write_text_file<R: Runtime>(
     filename
   );
 
-  let remote_file = {
-    let sftps = ssh_manager.sftps.lock().await;
-    let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
-    sftp.create(&filename).await.map_err(|e| {
-      log::error!(
-        "sftp_write_text_file: Failed to create file {:?}: {:?}",
-        filename,
-        e
-      );
+  let sftp = get_sftp_session(&ssh_manager, ssh_sftp_id).await?;
+  let remote_file = sftp.create(&filename).await.map_err(|e| {
+    log::error!(
+      "sftp_write_text_file: Failed to create file {:?}: {:?}",
+      filename,
       e
-    })?
-  };
+    );
+    e
+  })?;
 
   let mut writer = BufWriter::new(remote_file);
   writer.write_all(content.as_bytes()).await.map_err(|e| {
