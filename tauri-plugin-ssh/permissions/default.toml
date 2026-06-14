@@ -28,4 +28,8 @@ permissions = [
   "allow-sftp-canonicalize",
   "allow-sftp-read-text-file",
   "allow-sftp-write-text-file",
+  "allow-sftp-channel",
+  "allow-sftp-cancel-task",
+  "allow-sftp-pause-task",
+  "allow-sftp-resume-task"
 ]

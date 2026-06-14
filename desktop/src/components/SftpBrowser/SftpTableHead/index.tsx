@@ -1,6 +1,5 @@
-import styles from "./SftpTableHead.module.less";
-
-import { type SftpTableCell, SftpTableOrder } from "./types";
+import { type SftpTableCell, SftpTableOrder } from "../types";
+import styles from "./index.module.less";
 
 export type SftpTableHeadProps<T extends Record<string, unknown>> = {
   cells: SftpTableCell<T>[];

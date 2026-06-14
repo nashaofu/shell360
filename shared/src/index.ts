@@ -4,6 +4,7 @@ import "./styles/index.less";
 export * from "./atoms/appearance.atom";
 export * from "./atoms/portForwardings.atom";
 export * from "./atoms/session.atom";
+export * from "./atoms/transfer.atom";
 // components
 export * from "./components/EditHostForm";
 export * from "./components/EditKeyForm";

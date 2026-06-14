@@ -70,12 +70,20 @@ export function useLocalShell({
     setTerminal(terminal);
   });
 
-  const onTerminalData = useMemoizedFn((data: string) => {
-    shellRef.current?.send(data);
+  const onTerminalData = useMemoizedFn(async (data: string) => {
+    try {
+      await shellRef.current?.send(data);
+    } catch {
+      onClose?.();
+    }
   });
 
-  const onTerminalBinaryData = useMemoizedFn((data: string) => {
-    shellRef.current?.send(xtermBinaryToBytes(data));
+  const onTerminalBinaryData = useMemoizedFn(async (data: string) => {
+    try {
+      await shellRef.current?.send(xtermBinaryToBytes(data));
+    } catch {
+      onClose?.();
+    }
   });
 
   const onTerminalResize = useMemoizedFn((size: TerminalSize) => {

@@ -171,12 +171,12 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
           ..
         } = ssh_port_forwarding
           && self.ssh_session_id == *ssh_session_id
-            && remote_address == connected_address
-            && *remote_port == connected_port as u16
-          {
-            let addr = format!("{}:{}", local_address, local_port);
-            return Some(addr);
-          }
+          && remote_address == connected_address
+          && *remote_port == connected_port as u16
+        {
+          let addr = format!("{}:{}", local_address, local_port);
+          return Some(addr);
+        }
         None
       });
 
@@ -247,11 +247,11 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
 
       for id in ids {
         if let Some(entry) = port_forwardings.remove(&id)
-          && let SSHPortForwarding::Local { notify, .. }
-          | SSHPortForwarding::Dynamic { notify, .. } = &entry
-          {
-            notify.notify_last();
-          }
+          && let SSHPortForwarding::Local { notify, .. } | SSHPortForwarding::Dynamic { notify, .. } =
+            &entry
+        {
+          notify.notify_last();
+        }
       }
 
       if let Some(error) = return_error {

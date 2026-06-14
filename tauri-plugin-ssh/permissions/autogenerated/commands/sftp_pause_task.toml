@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-sftp-pause-task"
+description = "Enables the sftp_pause_task command without any pre-configured scope."
+commands.allow = ["sftp_pause_task"]
+
+[[permission]]
+identifier = "deny-sftp-pause-task"
+description = "Denies the sftp_pause_task command without any pre-configured scope."
+commands.deny = ["sftp_pause_task"]

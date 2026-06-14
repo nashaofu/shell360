@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { Button, Dialog, DropdownMenu, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -21,6 +21,7 @@ import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
 import { SftpTableHead } from "./SftpTableHead";
+import StatusBar from "./StatusBar";
 import { SftpTableOrder } from "./types";
 import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
@@ -97,10 +98,17 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
 
   const {
     transferInfo,
+    transferStatus,
+    panelOpen,
+    togglePanel,
+    cancelTransfer,
+    cancelFileItem,
+    pauseFileItem,
+    resumeFileItem,
+    pauseTransfer,
+    resumeTransfer,
     uploadFile,
-    uploadFileLoading,
     downloadFile,
-    downloadFileLoading,
     removeDir,
     removeDirLoading,
     removeFile,
@@ -181,18 +189,12 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       if (!sftpRef.current) {
         return false;
       }
-
       try {
-        // Try to check if path exists
         const exists = await sftpRef.current.sftpExists(path);
         if (!exists) {
-          message.error({
-            message: `Path does not exist: ${path}`,
-          });
+          message.error({ message: `Path does not exist: ${path}` });
           return false;
         }
-
-        // Try to read the directory to confirm it's accessible
         await sftpRef.current.sftpReadDir(path);
         setDirname(path);
         return true;
@@ -261,8 +263,6 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     removeFileLoading ||
     createLoading;
 
-  const isTransferring = uploadFileLoading || downloadFileLoading;
-
   const showConnection = connectionLoading || !!connectionError;
 
   return (
@@ -297,7 +297,6 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
               <button
                 type="button"
                 className={styles.iconButton}
-                disabled={uploadFileLoading}
                 onClick={uploadFile}
               >
                 <FileUploadIcon />
@@ -347,10 +346,84 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
             </div>
           </div>
         </Loading>
-        {isTransferring && transferInfo && (
-          <TransferProgress {...transferInfo} />
+        {transferInfo && transferStatus && (
+          <StatusBar
+            task={{
+              taskId: "",
+              sftpId: "",
+              dirname: transferInfo.dirname ?? "",
+              type: transferInfo.type,
+              status: transferStatus,
+              progress: transferInfo.progress,
+              total: transferInfo.total,
+              speed: transferInfo.speed,
+              eta: transferInfo.eta,
+              overallProgress: transferInfo.overallProgress,
+              overallTotal: transferInfo.overallTotal,
+              overallProgressBytes: transferInfo.overallProgressBytes,
+              queue: transferInfo.queue,
+              currentIndex: transferInfo.currentIndex,
+            }}
+            onExpand={togglePanel}
+          />
         )}
       </div>
+      {transferInfo && transferStatus && (
+        <Dialog.Root
+          open={panelOpen}
+          onOpenChange={(open) => {
+            if (!open) togglePanel();
+          }}
+        >
+          <Dialog.Content>
+            <Dialog.Title size="3">Files in Transfer</Dialog.Title>
+            <Flex gap="2" mb="3" wrap="wrap">
+              {transferStatus === "paused" && (
+                <Button variant="soft" size="1" onClick={resumeTransfer}>
+                  {"\u25B6"} Resume All
+                </Button>
+              )}
+              {transferStatus === "transferring" && (
+                <Button variant="soft" size="1" onClick={pauseTransfer}>
+                  {"\u23F8"} Pause All
+                </Button>
+              )}
+              {transferInfo.queue.some(
+                (i) =>
+                  i.status === "transferring" ||
+                  i.status === "paused" ||
+                  i.status === "waiting",
+              ) && (
+                <Button
+                  variant="soft"
+                  color="red"
+                  size="1"
+                  onClick={cancelTransfer}
+                >
+                  Cancel All
+                </Button>
+              )}
+            </Flex>
+            <TransferProgress
+              type={transferInfo.type}
+              overallProgress={transferInfo.overallProgress}
+              overallTotal={transferInfo.overallTotal}
+              overallProgressBytes={transferInfo.overallProgressBytes}
+              queue={transferInfo.queue}
+              currentIndex={transferInfo.currentIndex}
+              status={transferStatus}
+              onPauseItem={pauseFileItem}
+              onResumeItem={resumeFileItem}
+              onCancelItem={cancelFileItem}
+            />
+            <Flex justify="end" mt="3">
+              <Dialog.Close>
+                <Button>OK</Button>
+              </Dialog.Close>
+            </Flex>
+          </Dialog.Content>
+        </Dialog.Root>
+      )}
       {showConnection && (
         <SSHLoading
           host={currentJumpHostChainItem?.host || item.host}

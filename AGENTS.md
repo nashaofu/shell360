@@ -10,13 +10,14 @@ shell360/
 ├── mobile/               # Mobile app (React + Rsbuild)
 ├── shared/               # Shared components, hooks, atoms, utils (rslib → ESM)
 ├── src-tauri/            # Tauri Rust backend (lib.rs, command.rs, error.rs)
+├── tauri-plugin-pty/     # Local PTY shell plugin (Rust src/ + TS ts/)
 ├── tauri-plugin-ssh/     # SSH plugin (Rust src/ + TS ts/)
 ├── tauri-plugin-data/    # Encrypted storage + database plugin
 ├── tauri-plugin-mobile/  # Mobile-specific plugin
 └── resources/            # Static assets
 ```
 
-This is a **pnpm workspace** monorepo. Packages: `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-mobile`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
+This is a **pnpm workspace** monorepo. Packages: `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-mobile`, `tauri-plugin-pty`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
 
 ## Commands
 
@@ -50,7 +51,7 @@ pnpm tauri build
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
-  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-mobile/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-mobile/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.

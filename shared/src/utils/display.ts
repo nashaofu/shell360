@@ -25,6 +25,22 @@ export function getAvatarLabel(name: string) {
 
 export type TagTone = "Prod" | "Staging" | "Local" | "Accent";
 
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
+  const value = bytes / 1024 ** i;
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+export function formatSpeed(bytesPerSec: number): string {
+  if (bytesPerSec <= 0) return "--";
+  return `${formatBytes(bytesPerSec)}/s`;
+}
+
 export function getTagTone(value: string | undefined): TagTone {
   const normalized = (value || "").trim().toLowerCase();
   if (normalized.includes("prod")) {

@@ -31,6 +31,10 @@ Default permissions for the plugin
 - `allow-sftp-canonicalize`
 - `allow-sftp-read-text-file`
 - `allow-sftp-write-text-file`
+- `allow-sftp-channel`
+- `allow-sftp-cancel-task`
+- `allow-sftp-pause-task`
+- `allow-sftp-resume-task`
 
 ## Permission Table
 
@@ -434,6 +438,58 @@ Denies the session_disconnect command without any pre-configured scope.
 <tr>
 <td>
 
+`ssh:allow-sftp-cancel-task`
+
+</td>
+<td>
+
+Enables the sftp_cancel_task command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-cancel-task`
+
+</td>
+<td>
+
+Denies the sftp_cancel_task command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-sftp-cancel-transfer`
+
+</td>
+<td>
+
+Enables the sftp_cancel_transfer command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-cancel-transfer`
+
+</td>
+<td>
+
+Denies the sftp_cancel_transfer command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `ssh:allow-sftp-canonicalize`
 
 </td>
@@ -642,6 +698,32 @@ Denies the sftp_open command without any pre-configured scope.
 <tr>
 <td>
 
+`ssh:allow-sftp-pause-task`
+
+</td>
+<td>
+
+Enables the sftp_pause_task command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-pause-task`
+
+</td>
+<td>
+
+Denies the sftp_pause_task command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `ssh:allow-sftp-read-dir`
 
 </td>
@@ -765,6 +847,32 @@ Enables the sftp_rename command without any pre-configured scope.
 <td>
 
 Denies the sftp_rename command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:allow-sftp-resume-task`
+
+</td>
+<td>
+
+Enables the sftp_resume_task command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`ssh:deny-sftp-resume-task`
+
+</td>
+<td>
+
+Denies the sftp_resume_task command without any pre-configured scope.
 
 </td>
 </tr>

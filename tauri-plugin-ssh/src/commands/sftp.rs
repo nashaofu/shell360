@@ -23,7 +23,7 @@ use uuid::Uuid;
 use crate::{
   commands::session::SSHSessionId,
   error::{SSHError, SSHResult},
-  ssh_manager::SSHManager,
+  ssh_manager::{SSHManager, TransferControl},
 };
 
 #[derive(Debug, Clone, AsRefStr)]
@@ -43,6 +43,8 @@ impl IpcResponse for SSHSftpIpcChannelData {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct SSHSftpId(Uuid);
+
+pub type SSHTransferId = String;
 
 pub struct SSHSftp {
   pub ssh_session_id: SSHSessionId,
@@ -241,6 +243,7 @@ async fn write_file<R, W>(
   target_file: &mut W,
   total: usize,
   on_progress: Channel<SFTPProgressPayload>,
+  control: &TransferControl,
 ) -> SSHResult<()>
 where
   R: AsyncReadExt + Unpin,
@@ -251,6 +254,18 @@ where
   let mut buffer = vec![0; 1024 * 1024 * 10];
 
   loop {
+    if control.cancel.load(std::sync::atomic::Ordering::Relaxed) {
+      return Err(SSHError::TransferCancelled);
+    }
+
+    while control.pause.load(std::sync::atomic::Ordering::Relaxed) {
+      tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+
+    if control.cancel.load(std::sync::atomic::Ordering::Relaxed) {
+      return Err(SSHError::TransferCancelled);
+    }
+
     let size = source_file.read(&mut buffer).await?;
 
     if size == 0 {
@@ -277,7 +292,44 @@ pub async fn sftp_upload_file<R: Runtime>(
   local_filename: SafeFilePath,
   remote_filename: String,
   on_progress: Channel<SFTPProgressPayload>,
-) -> SSHResult<SSHSftpId> {
+  task_id: Option<String>,
+) -> SSHResult<SSHTransferId> {
+  let task_id = task_id.unwrap_or_else(|| Uuid::new_v4().to_string());
+  let control = TransferControl::new();
+  let control_clone = control.clone();
+  {
+    let mut controls = ssh_manager.transfer_controls.lock().await;
+    controls.insert(task_id.clone(), control);
+  }
+
+  let result = upload_file_inner(
+    app_handle,
+    &ssh_manager,
+    ssh_sftp_id,
+    local_filename,
+    remote_filename,
+    on_progress,
+    control_clone,
+  )
+  .await;
+
+  {
+    let mut controls = ssh_manager.transfer_controls.lock().await;
+    controls.remove(&task_id);
+  }
+
+  result.map(|_| task_id)
+}
+
+async fn upload_file_inner<R: Runtime>(
+  app_handle: AppHandle<R>,
+  ssh_manager: &SSHManager<R>,
+  ssh_sftp_id: SSHSftpId,
+  local_filename: SafeFilePath,
+  remote_filename: String,
+  on_progress: Channel<SFTPProgressPayload>,
+  control: TransferControl,
+) -> SSHResult<()> {
   let remote_file = {
     let sftps = ssh_manager.sftps.lock().await;
     let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
@@ -295,11 +347,11 @@ pub async fn sftp_upload_file<R: Runtime>(
 
   let mut writer = BufWriter::new(remote_file);
 
-  write_file(&mut local_file, &mut writer, total, on_progress).await?;
+  write_file(&mut local_file, &mut writer, total, on_progress, &control).await?;
 
   writer.flush().await?;
 
-  Ok(ssh_sftp_id)
+  Ok(())
 }
 
 #[tauri::command]
@@ -310,7 +362,44 @@ pub async fn sftp_download_file<R: Runtime>(
   local_filename: SafeFilePath,
   remote_filename: String,
   on_progress: Channel<SFTPProgressPayload>,
-) -> SSHResult<SSHSftpId> {
+  task_id: Option<String>,
+) -> SSHResult<SSHTransferId> {
+  let task_id = task_id.unwrap_or_else(|| Uuid::new_v4().to_string());
+  let control = TransferControl::new();
+  let control_clone = control.clone();
+  {
+    let mut controls = ssh_manager.transfer_controls.lock().await;
+    controls.insert(task_id.clone(), control);
+  }
+
+  let result = download_file_inner(
+    app_handle,
+    &ssh_manager,
+    ssh_sftp_id,
+    local_filename,
+    remote_filename,
+    on_progress,
+    control_clone,
+  )
+  .await;
+
+  {
+    let mut controls = ssh_manager.transfer_controls.lock().await;
+    controls.remove(&task_id);
+  }
+
+  result.map(|_| task_id)
+}
+
+async fn download_file_inner<R: Runtime>(
+  app_handle: AppHandle<R>,
+  ssh_manager: &SSHManager<R>,
+  ssh_sftp_id: SSHSftpId,
+  local_filename: SafeFilePath,
+  remote_filename: String,
+  on_progress: Channel<SFTPProgressPayload>,
+  control: TransferControl,
+) -> SSHResult<()> {
   let mut remote_file = {
     let sftps = ssh_manager.sftps.lock().await;
     let sftp = sftps.get(&ssh_sftp_id).ok_or(SSHError::NotFoundSftp)?;
@@ -333,11 +422,56 @@ pub async fn sftp_download_file<R: Runtime>(
 
   let mut writer = BufWriter::new(local_file);
 
-  write_file(&mut remote_file, &mut writer, total, on_progress).await?;
+  write_file(&mut remote_file, &mut writer, total, on_progress, &control).await?;
 
   writer.flush().await?;
 
-  Ok(ssh_sftp_id)
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn sftp_cancel_task<R: Runtime>(
+  _app_handle: AppHandle<R>,
+  ssh_manager: State<'_, SSHManager<R>>,
+  task_id: String,
+) -> SSHResult<()> {
+  let controls = ssh_manager.transfer_controls.lock().await;
+  if let Some(control) = controls.get(&task_id) {
+    control
+      .cancel
+      .store(true, std::sync::atomic::Ordering::Relaxed);
+  }
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn sftp_pause_task<R: Runtime>(
+  _app_handle: AppHandle<R>,
+  ssh_manager: State<'_, SSHManager<R>>,
+  task_id: String,
+) -> SSHResult<()> {
+  let controls = ssh_manager.transfer_controls.lock().await;
+  if let Some(control) = controls.get(&task_id) {
+    control
+      .pause
+      .store(true, std::sync::atomic::Ordering::Relaxed);
+  }
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn sftp_resume_task<R: Runtime>(
+  _app_handle: AppHandle<R>,
+  ssh_manager: State<'_, SSHManager<R>>,
+  task_id: String,
+) -> SSHResult<()> {
+  let controls = ssh_manager.transfer_controls.lock().await;
+  if let Some(control) = controls.get(&task_id) {
+    control
+      .pause
+      .store(false, std::sync::atomic::Ordering::Relaxed);
+  }
+  Ok(())
 }
 
 #[tauri::command]

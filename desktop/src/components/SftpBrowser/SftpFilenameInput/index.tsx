@@ -1,6 +1,6 @@
 import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
 import { CheckIcon, CloseIcon } from "shared";
-import styles from "./SftpFilenameInput.module.less";
+import styles from "./index.module.less";
 
 type SftpFilenameInputProps = {
   value?: string;

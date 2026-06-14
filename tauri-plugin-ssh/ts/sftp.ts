@@ -17,12 +17,14 @@ export type SSHSftpOnProgressOpts = {
 export type SSHSftpUploadFileOpts = {
   localFilename: string;
   remoteFilename: string;
+  taskId?: string;
   onProgress?: (opts: SSHSftpOnProgressOpts) => unknown;
 };
 
 export type SSHSftpDownloadFileOpts = {
   localFilename: string;
   remoteFilename: string;
+  taskId?: string;
   onProgress?: (opts: SSHSftpOnProgressOpts) => unknown;
 };
 
@@ -97,8 +99,9 @@ export class SSHSftp {
   sftpUploadFile({
     localFilename,
     remoteFilename,
+    taskId,
     onProgress,
-  }: SSHSftpUploadFileOpts) {
+  }: SSHSftpUploadFileOpts): Promise<string> {
     const progressChannel = new Channel<SSHSftpOnProgressOpts>();
     progressChannel.onmessage = (data) => {
       onProgress?.(data);
@@ -109,14 +112,16 @@ export class SSHSftp {
       localFilename,
       remoteFilename,
       onProgress: progressChannel,
+      taskId: taskId ?? null,
     });
   }
 
   sftpDownloadFile({
     localFilename,
     remoteFilename,
+    taskId,
     onProgress,
-  }: SSHSftpDownloadFileOpts) {
+  }: SSHSftpDownloadFileOpts): Promise<string> {
     const progressChannel = new Channel<SSHSftpOnProgressOpts>();
     progressChannel.onmessage = (data) => {
       onProgress?.(data);
@@ -127,6 +132,7 @@ export class SSHSftp {
       localFilename,
       remoteFilename,
       onProgress: progressChannel,
+      taskId: taskId ?? null,
     });
   }
 
@@ -192,6 +198,31 @@ export class SSHSftp {
       sshSftpId: this.sshSftpId,
       filename,
       content,
+    });
+  }
+
+  sftpCancelTask(taskId: string) {
+    return invoke<void>("plugin:ssh|sftp_cancel_task", {
+      taskId,
+    });
+  }
+
+  sftpPauseTask(taskId: string) {
+    return invoke<void>("plugin:ssh|sftp_pause_task", {
+      taskId,
+    });
+  }
+
+  sftpResumeTask(taskId: string) {
+    return invoke<void>("plugin:ssh|sftp_resume_task", {
+      taskId,
+    });
+  }
+
+  /** @deprecated Use sftpCancelTask(taskId) instead */
+  sftpCancelTransfer() {
+    return invoke<void>("plugin:ssh|sftp_cancel_task", {
+      taskId: this.sshSftpId,
     });
   }
 }

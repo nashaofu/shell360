@@ -161,6 +161,9 @@ pub enum SSHError {
   #[error("Not found sftp")]
   NotFoundSftp,
 
+  #[error("Transfer cancelled")]
+  TransferCancelled,
+
   #[error(transparent)]
   StdStrUtf8Error(#[from] std::str::Utf8Error),
 

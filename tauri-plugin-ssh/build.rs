@@ -24,6 +24,9 @@ const COMMANDS: &[&str] = &[
   "sftp_rename",
   "sftp_exists",
   "sftp_canonicalize",
+  "sftp_cancel_task",
+  "sftp_pause_task",
+  "sftp_resume_task",
 ];
 
 fn main() {

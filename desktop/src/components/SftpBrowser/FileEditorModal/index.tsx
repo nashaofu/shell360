@@ -3,7 +3,7 @@ import { CloseIcon, FileIcon } from "shared";
 import type { SSHSftpFile } from "tauri-plugin-ssh";
 
 import useMessage from "@/hooks/useMessage";
-import styles from "./FileEditorModal.module.less";
+import styles from "./index.module.less";
 
 type FileEditorModalProps = {
   open: boolean;

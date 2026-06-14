@@ -1,8 +1,8 @@
 import { FolderIcon } from "shared";
-import SftpFilenameInput from "./SftpFilenameInput";
-import styles from "./SftpTableBody.module.less";
-import type { SftpTableCell } from "./types";
-import type { CreateType } from "./useCreate";
+import SftpFilenameInput from "../SftpFilenameInput";
+import type { SftpTableCell } from "../types";
+import type { CreateType } from "../useCreate";
+import styles from "./index.module.less";
 
 export type SftpTableBodyProps<T extends Record<string, unknown>> = {
   dataKey: keyof T;

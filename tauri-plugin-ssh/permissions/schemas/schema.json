@@ -475,6 +475,30 @@
           "markdownDescription": "Denies the session_disconnect command without any pre-configured scope."
         },
         {
+          "description": "Enables the sftp_cancel_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-cancel-task",
+          "markdownDescription": "Enables the sftp_cancel_task command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_cancel_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-cancel-task",
+          "markdownDescription": "Denies the sftp_cancel_task command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the sftp_cancel_transfer command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-cancel-transfer",
+          "markdownDescription": "Enables the sftp_cancel_transfer command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_cancel_transfer command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-cancel-transfer",
+          "markdownDescription": "Denies the sftp_cancel_transfer command without any pre-configured scope."
+        },
+        {
           "description": "Enables the sftp_canonicalize command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sftp-canonicalize",
@@ -571,6 +595,18 @@
           "markdownDescription": "Denies the sftp_open command without any pre-configured scope."
         },
         {
+          "description": "Enables the sftp_pause_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-pause-task",
+          "markdownDescription": "Enables the sftp_pause_task command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_pause_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-pause-task",
+          "markdownDescription": "Denies the sftp_pause_task command without any pre-configured scope."
+        },
+        {
           "description": "Enables the sftp_read_dir command without any pre-configured scope.",
           "type": "string",
           "const": "allow-sftp-read-dir",
@@ -629,6 +665,18 @@
           "type": "string",
           "const": "deny-sftp-rename",
           "markdownDescription": "Denies the sftp_rename command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the sftp_resume_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-sftp-resume-task",
+          "markdownDescription": "Enables the sftp_resume_task command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the sftp_resume_task command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-sftp-resume-task",
+          "markdownDescription": "Denies the sftp_resume_task command without any pre-configured scope."
         },
         {
           "description": "Enables the sftp_upload_file command without any pre-configured scope.",
@@ -739,10 +787,10 @@
           "markdownDescription": "Denies the ssh_shell command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`\n- `allow-sftp-channel`\n- `allow-sftp-cancel-task`\n- `allow-sftp-pause-task`\n- `allow-sftp-resume-task`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-session-connect`\n- `allow-session-authenticate`\n- `allow-session-disconnect`\n- `allow-shell-open`\n- `allow-shell-close`\n- `allow-shell-resize`\n- `allow-shell-send`\n- `allow-port-forwarding-local-open`\n- `allow-port-forwarding-local-close`\n- `allow-port-forwarding-remote-open`\n- `allow-port-forwarding-remote-close`\n- `allow-port-forwarding-dynamic-open`\n- `allow-port-forwarding-dynamic-close`\n- `allow-sftp-open`\n- `allow-sftp-close`\n- `allow-sftp-read-dir`\n- `allow-sftp-upload-file`\n- `allow-sftp-download-file`\n- `allow-sftp-create-file`\n- `allow-sftp-create-dir`\n- `allow-sftp-remove-dir`\n- `allow-sftp-remove-file`\n- `allow-sftp-rename`\n- `allow-sftp-exists`\n- `allow-sftp-canonicalize`\n- `allow-sftp-read-text-file`\n- `allow-sftp-write-text-file`\n- `allow-sftp-channel`\n- `allow-sftp-cancel-task`\n- `allow-sftp-pause-task`\n- `allow-sftp-resume-task`"
         }
       ]
     }

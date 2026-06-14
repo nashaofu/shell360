@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useCallback, useMemo, useState } from "react";
 import { CloseIcon, EditIcon, SuccessCircleIcon } from "shared";
-import styles from "./SftpBreadcrumbs.module.less";
+import styles from "./index.module.less";
 
 type SftpBreadcrumbsProps = {
   dirname?: string;

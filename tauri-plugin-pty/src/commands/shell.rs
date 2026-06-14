@@ -4,6 +4,7 @@ use serde_json::json;
 use std::io::Read;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::async_runtime;
 use tauri::{
   AppHandle, Manager, Runtime, State,
   ipc::{Channel, InvokeResponseBody, IpcResponse},
@@ -107,13 +108,41 @@ pub async fn shell_open<R: Runtime>(
   let shell_id_clone = shell_id.clone();
   let app_clone = app.clone();
 
-  tokio::task::spawn_blocking(move || {
+  // 把子进程移动到线程中，用于检测进程退出
+  let mut child_clone = child;
+
+  async_runtime::spawn_blocking(move || {
     let mut buf = [0u8; 65536];
     let mut reader: Box<dyn Read + Send> = reader;
+
     loop {
       if shutdown_reader.load(Ordering::Relaxed) {
         break;
       }
+
+      // 检测子进程是否已经退出
+      match child_clone.try_wait() {
+        Ok(Some(status)) => {
+          log::info!(
+            "pty shell {} exited with status: {}",
+            shell_id_clone,
+            status
+          );
+          let _ = channel.send(PtyIpcEvent::Close);
+          remove_shell(&app_clone, &shell_id_clone);
+          break;
+        }
+        Ok(None) => {
+          // 进程还在运行，继续
+        }
+        Err(e) => {
+          log::error!("pty shell {} wait error: {}", shell_id_clone, e);
+          let _ = channel.send(PtyIpcEvent::Close);
+          remove_shell(&app_clone, &shell_id_clone);
+          break;
+        }
+      }
+
       match reader.read(&mut buf) {
         Ok(0) => {
           log::info!("pty shell {} EOF", shell_id_clone);
@@ -140,7 +169,7 @@ pub async fn shell_open<R: Runtime>(
   let instance = ShellInstance {
     master: pair.master,
     writer: Some(writer),
-    child: Some(child),
+    child: None, // child已经移动到线程中，不再需要在这里保存
     shutdown,
   };
 
@@ -160,7 +189,7 @@ pub async fn shell_send<R: Runtime>(
   _app: AppHandle<R>,
   pty_manager: State<'_, PtyManager>,
 ) -> PtyResult<()> {
-  let mut writer = {
+  let writer = {
     let mut shells = pty_manager
       .shells
       .lock()
@@ -170,18 +199,20 @@ pub async fn shell_send<R: Runtime>(
       .and_then(|shell| shell.writer.take())
   };
 
-  if let Some(ref mut w) = writer {
-    w.write_all(data.as_bytes())?;
-    w.flush()?;
-  }
+  let Some(mut writer) = writer else {
+    return Err(PtyError::new("Shell already closed"));
+  };
 
-  if let Some(w) = writer {
+  writer.write_all(data.as_bytes())?;
+  writer.flush()?;
+
+  {
     let mut shells = pty_manager
       .shells
       .lock()
       .map_err(|e| PtyError::new(e.to_string()))?;
     if let Some(shell) = shells.get_mut(&shell_id) {
-      shell.writer = Some(w);
+      shell.writer = Some(writer);
     }
   }
 

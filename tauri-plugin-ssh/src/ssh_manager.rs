@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::{Arc, atomic::AtomicBool};
 
 use russh::ChannelId;
 use tauri::Runtime;
@@ -19,11 +20,29 @@ pub type Shells = Mutex<HashMap<SSHShellId, SSHShell>>;
 pub type SftpChannels = Mutex<HashMap<SSHSftpId, SSHSftp>>;
 pub type PortForwardings = Mutex<HashMap<SSHPortForwardingId, SSHPortForwarding>>;
 
+#[derive(Clone)]
+pub struct TransferControl {
+  pub cancel: Arc<AtomicBool>,
+  pub pause: Arc<AtomicBool>,
+}
+
+impl TransferControl {
+  pub fn new() -> Self {
+    Self {
+      cancel: Arc::new(AtomicBool::new(false)),
+      pause: Arc::new(AtomicBool::new(false)),
+    }
+  }
+}
+
+pub type TransferControls = Mutex<HashMap<String, TransferControl>>;
+
 pub struct SSHManager<R: Runtime> {
   pub sessions: Sessions<R>,
   pub shells: Shells,
   pub sftps: SftpChannels,
   pub port_forwardings: PortForwardings,
+  pub transfer_controls: TransferControls,
 }
 
 impl<R: Runtime> SSHManager<R> {
@@ -33,6 +52,7 @@ impl<R: Runtime> SSHManager<R> {
       shells: Mutex::default(),
       sftps: Mutex::default(),
       port_forwardings: Mutex::default(),
+      transfer_controls: Mutex::default(),
     }
   }
 
