@@ -1,4 +1,5 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
+import { Buffer } from "buffer";
 import { v4 as uuidV4 } from "uuid";
 
 import type { SSHSession } from "./session";
@@ -69,10 +70,12 @@ export class SSHShell {
     });
   }
 
-  send(data: string): Promise<string> {
+  send(data: string | Uint8Array): Promise<string> {
     return invoke<string>("plugin:ssh|shell_send", {
       sshShellId: this.sshShellId,
-      data,
+      data: Array.from(
+        typeof data === "string" ? Buffer.from(data, "utf8") : data,
+      ),
     });
   }
 

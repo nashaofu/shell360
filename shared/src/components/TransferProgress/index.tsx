@@ -1,13 +1,13 @@
 import { Button, IconButton, Progress } from "@radix-ui/themes";
 
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CheckIcon,
   CloseIcon,
   ErrorCircleIcon,
   PauseIcon,
   PlayIcon,
+  TransferCompleteIcon,
+  TransferDownloadIcon,
+  TransferUploadIcon,
 } from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
 import styles from "./index.module.less";
@@ -83,12 +83,15 @@ export function TransferProgress({
   onResumeItem,
   onCollapse,
 }: TransferProgressProps) {
-  const DirectionIcon = type === "upload" ? ArrowUpIcon : ArrowDownIcon;
+  const TransferIcon =
+    type === "upload" ? TransferUploadIcon : TransferDownloadIcon;
   const direction =
     type === "upload"
       ? `Uploading ${queue.length} file${queue.length > 1 ? "s" : ""}`
       : `Downloading ${queue.length} file${queue.length > 1 ? "s" : ""}`;
   const canCancel = hasActive(queue);
+  const waitingCount = queue.filter((item) => item.status === "waiting").length;
+  const pausedCount = queue.filter((item) => item.status === "paused").length;
   const activeCount = queue.filter((item) =>
     activeStatuses.includes(item.status),
   ).length;
@@ -96,6 +99,9 @@ export function TransferProgress({
     (item) => item.status === "completed",
   ).length;
   const failedCount = queue.filter((item) => item.status === "failed").length;
+  const cancelledCount = queue.filter(
+    (item) => item.status === "cancelled",
+  ).length;
   const speed = queue
     .filter((item) => item.status === "transferring")
     .reduce((sum, item) => sum + item.speed, 0);
@@ -107,7 +113,7 @@ export function TransferProgress({
       <div className={styles.titleRow}>
         <div className={styles.titleMain}>
           <span className={styles.directionIcon}>
-            <DirectionIcon />
+            <TransferIcon />
           </span>
           <span className={styles.direction}>{direction}</span>
           <span className={styles.summaryPill}>{overallProgress}%</span>
@@ -143,8 +149,11 @@ export function TransferProgress({
         {activeCount > 0 && <span>{formatSpeed(speed)}</span>}
         {activeCount > 0 && <span>{formatEtaLabel(eta)}</span>}
         <span>{activeCount} active</span>
+        {waitingCount > 0 && <span>{waitingCount} waiting</span>}
+        {pausedCount > 0 && <span>{pausedCount} paused</span>}
         {completedCount > 0 && <span>{completedCount} done</span>}
         {failedCount > 0 && <span>{failedCount} failed</span>}
+        {cancelledCount > 0 && <span>{cancelledCount} cancelled</span>}
       </div>
       <div className={styles.fileList}>
         {queue.map((item, i) => {
@@ -192,11 +201,11 @@ export function TransferProgress({
                   .filter(Boolean)
                   .join(" ")}
               >
-                {item.status === "completed" && <CheckIcon />}
+                {item.status === "completed" && <TransferCompleteIcon />}
                 {item.status === "failed" && <ErrorCircleIcon />}
                 {item.status === "cancelled" && <CloseIcon />}
                 {item.status === "paused" && <PauseIcon />}
-                {item.status === "transferring" && <DirectionIcon />}
+                {item.status === "transferring" && <TransferIcon />}
                 {item.status === "waiting" && (
                   <span className={styles.waitingDot} />
                 )}

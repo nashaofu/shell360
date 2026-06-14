@@ -1,12 +1,13 @@
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CheckIcon,
+  CloseIcon,
   ErrorCircleIcon,
   formatEta,
   formatSpeed,
   TerminalIcon,
+  TransferCompleteIcon,
+  TransferDownloadIcon,
   type TransferTask,
+  TransferUploadIcon,
 } from "shared";
 
 import styles from "./index.module.less";
@@ -27,6 +28,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   ).length;
   const completedCount = queue.filter((i) => i.status === "completed").length;
   const failedCount = queue.filter((i) => i.status === "failed").length;
+  const cancelledCount = queue.filter((i) => i.status === "cancelled").length;
 
   const hasRunning = runningCount > 0;
   const speed = queue
@@ -37,7 +39,8 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
   const eta = speed > 0 ? remaining / speed : -1;
   const etaText = formatEta(eta);
 
-  const DirectionIcon = task?.type === "download" ? ArrowDownIcon : ArrowUpIcon;
+  const TransferIcon =
+    task?.type === "download" ? TransferDownloadIcon : TransferUploadIcon;
 
   return (
     <div className={styles.root} onClick={onExpand}>
@@ -61,7 +64,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
               {hasRunning && (
                 <span className={styles.stat}>
                   <span className={styles.runningIcon}>
-                    <DirectionIcon />
+                    <TransferIcon />
                   </span>
                   {runningCount}
                 </span>
@@ -69,7 +72,7 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
               {completedCount > 0 && (
                 <span className={styles.stat}>
                   <span className={styles.doneIcon}>
-                    <CheckIcon />
+                    <TransferCompleteIcon />
                   </span>
                   {completedCount}
                 </span>
@@ -80,6 +83,14 @@ export default function StatusBar({ task, onExpand }: StatusBarProps) {
                     <ErrorCircleIcon />
                   </span>
                   {failedCount}
+                </span>
+              )}
+              {cancelledCount > 0 && (
+                <span className={styles.stat}>
+                  <span className={styles.cancelledIcon}>
+                    <CloseIcon />
+                  </span>
+                  {cancelledCount}
                 </span>
               )}
             </div>

@@ -2,16 +2,8 @@ import { useMemoizedFn, useRequest, useUnmount } from "ahooks";
 import { Buffer } from "buffer";
 import { useRef, useState } from "react";
 import type { Terminal, TerminalSize } from "shared";
-import { oscParse } from "shared";
+import { oscParse, xtermBinaryToBytes } from "shared";
 import { PtyShell } from "tauri-plugin-pty";
-
-function xtermBinaryToBytes(data: string): Uint8Array {
-  const bytes = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    bytes[i] = data.charCodeAt(i);
-  }
-  return bytes;
-}
 
 export interface UseLocalShellOpts {
   onClose?: () => void;

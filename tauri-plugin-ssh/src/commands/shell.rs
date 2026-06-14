@@ -215,12 +215,12 @@ pub async fn shell_send<R: Runtime>(
   _app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
   ssh_shell_id: SSHShellId,
-  data: String,
+  data: Vec<u8>,
 ) -> SSHResult<SSHShellId> {
   timeout(Duration::from_secs(5), async {
     let shell_channels = ssh_manager.shells.lock().await;
     if let Some(shell_channel) = shell_channels.get(&ssh_shell_id) {
-      shell_channel.data(data.as_bytes()).await?;
+      shell_channel.data(&data[..]).await?;
     }
 
     Ok(ssh_shell_id)

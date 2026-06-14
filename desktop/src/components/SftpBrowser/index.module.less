@@ -22,23 +22,28 @@
 
 .transferPanel {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
+  width: min(640px, calc(100% - 32px));
   bottom: 28px;
   z-index: 5;
   max-height: min(360px, calc(100% - 64px));
   background: var(--color-panel-solid);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--gray-a5);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.14);
+  transform: translateX(-50%);
   animation: transferPanelIn 0.18s ease-out;
 }
 
 @keyframes transferPanelIn {
   from {
-    transform: translateY(100%);
+    transform: translate(-50%, 12px);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translate(-50%, 0);
     opacity: 1;
   }
 }

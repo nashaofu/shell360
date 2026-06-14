@@ -73,12 +73,13 @@
 
 .runningIcon,
 .doneIcon,
-.failedIcon {
+.failedIcon,
+.cancelledIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .runningIcon {
@@ -91,6 +92,10 @@
 
 .failedIcon {
   color: var(--red-11);
+}
+
+.cancelledIcon {
+  color: var(--gray-10);
 }
 
 .meta {
