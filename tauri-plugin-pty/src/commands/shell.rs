@@ -154,6 +154,8 @@ pub async fn shell_open<R: Runtime>(
         }
         Err(e) => {
           log::error!("pty shell {} read error: {}", reader_shell_id, e);
+          kill_shell(&reader_killer);
+          cleanup_shell(&reader_app, &reader_shell_id, &reader_cleanup);
           break;
         }
       }
