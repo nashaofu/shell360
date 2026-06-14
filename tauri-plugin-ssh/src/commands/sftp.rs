@@ -449,6 +449,9 @@ pub async fn sftp_cancel_task<R: Runtime>(
     control
       .cancel
       .store(true, std::sync::atomic::Ordering::Relaxed);
+    control
+      .pause
+      .store(false, std::sync::atomic::Ordering::Relaxed);
   }
   Ok(())
 }
