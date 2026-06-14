@@ -6,6 +6,11 @@ import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 import { useFileTransfersActions } from "@/atoms/terminalView.atom";
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
+import {
+  formatTransferCount,
+  getErrorMessage,
+  getSftpBasename,
+} from "./messages";
 
 type TransferStatus =
   | "transferring"
@@ -411,7 +416,7 @@ export default function useSftpActions({
                   ? {
                       ...item,
                       status: "failed" as const,
-                      error: (err as Error).message ?? "upload failed",
+                      error: getErrorMessage(err, "Upload failed"),
                     }
                   : item,
               );
@@ -424,10 +429,45 @@ export default function useSftpActions({
       }
 
       decTransfer();
-      if (anySucceeded) {
-        message.success({ message: "upload complete" });
+      const uploadedIds = new Set(items.map((item) => item.id));
+      const uploadedItems =
+        transferInfoRef.current?.queue.filter((item) =>
+          uploadedIds.has(item.id),
+        ) ?? [];
+      const succeededCount = uploadedItems.filter(
+        (item) => item.status === "completed",
+      ).length;
+      const failedCount = uploadedItems.filter(
+        (item) => item.status === "failed",
+      ).length;
+      const cancelledCount = uploadedItems.filter(
+        (item) => item.status === "cancelled",
+      ).length;
+
+      if (succeededCount > 0 && failedCount === 0 && cancelledCount === 0) {
+        message.success({
+          message: `Uploaded ${formatTransferCount(succeededCount, "file")} to ${dirnameRef.current}`,
+        });
+      } else if (succeededCount > 0) {
+        message.warning({
+          message: `Upload finished: ${succeededCount} uploaded, ${failedCount} failed, ${cancelledCount} cancelled`,
+        });
+      } else if (failedCount > 0) {
+        message.error({
+          message: `Upload failed: ${formatTransferCount(failedCount, "file")} could not be uploaded`,
+        });
+      } else if (cancelledCount > 0 || (!anySucceeded && abortRef.current)) {
+        message.info({
+          message: "Upload cancelled",
+        });
       }
-      setTransferStatus("completed");
+      if (failedCount > 0 && succeededCount === 0) {
+        setTransferStatus("failed");
+      } else if (cancelledCount > 0 && succeededCount === 0) {
+        setTransferStatus("cancelled");
+      } else {
+        setTransferStatus("completed");
+      }
     },
     {
       manual: true,
@@ -435,14 +475,16 @@ export default function useSftpActions({
         refreshDir();
       },
       onError: (err) =>
-        message.error({ message: err.message ?? "upload failed" }),
+        message.error({
+          message: `Failed to upload files: ${getErrorMessage(err)}`,
+        }),
     },
   );
 
   const { loading: downloadFileLoading, run: downloadFile } = useRequest(
     async ({ name, path }: SSHSftpFile) => {
       const file = await save({ defaultPath: name });
-      if (!file) return;
+      if (!file) return false;
 
       const taskId = crypto.randomUUID();
       const items: TransferQueueItem[] = [
@@ -539,23 +581,32 @@ export default function useSftpActions({
               ? {
                   ...item,
                   status: "failed" as const,
-                  error: (err as Error).message ?? "download failed",
+                  error: getErrorMessage(err, "Download failed"),
                 }
               : item,
           );
           return { ...prev, queue: q, ...computeOverall(q) };
         });
         setTransferStatus("failed");
+        throw err;
       } finally {
         decTransfer();
       }
+      return true;
     },
     {
       manual: true,
       onFinally: () => refreshDir(),
-      onSuccess: () => message.success({ message: "download file success" }),
-      onError: (err) =>
-        message.error({ message: err.message ?? "download file failed" }),
+      onSuccess: (completed, [{ name }]) => {
+        if (!completed) {
+          return;
+        }
+        message.success({ message: `Downloaded "${name}"` });
+      },
+      onError: (err, [{ name }]) =>
+        message.error({
+          message: `Failed to download "${name}": ${getErrorMessage(err)}`,
+        }),
     },
   );
 
@@ -566,9 +617,14 @@ export default function useSftpActions({
     {
       manual: true,
       onFinally: () => refreshDir(),
-      onSuccess: () => message.success({ message: "remove file success" }),
-      onError: (err) =>
-        message.error({ message: err.message ?? "remove file failed" }),
+      onSuccess: (_, [{ path }]) =>
+        message.success({
+          message: `Removed file "${getSftpBasename(path)}"`,
+        }),
+      onError: (err, [{ path }]) =>
+        message.error({
+          message: `Failed to remove file "${getSftpBasename(path)}": ${getErrorMessage(err)}`,
+        }),
     },
   );
 
@@ -579,9 +635,14 @@ export default function useSftpActions({
     {
       manual: true,
       onFinally: () => refreshDir(),
-      onSuccess: () => message.success({ message: "remove dir success" }),
-      onError: (err) =>
-        message.error({ message: err.message ?? "remove dir failed" }),
+      onSuccess: (_, [{ path }]) =>
+        message.success({
+          message: `Removed folder "${getSftpBasename(path)}"`,
+        }),
+      onError: (err, [{ path }]) =>
+        message.error({
+          message: `Failed to remove folder "${getSftpBasename(path)}": ${getErrorMessage(err)}`,
+        }),
     },
   );
 

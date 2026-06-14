@@ -3,6 +3,7 @@ import { CloseIcon, FileIcon } from "shared";
 import type { SSHSftpFile } from "tauri-plugin-ssh";
 
 import useMessage from "@/hooks/useMessage";
+import { getErrorMessage, getSftpBasename } from "../messages";
 import styles from "./index.module.less";
 
 type FileEditorModalProps = {
@@ -43,7 +44,7 @@ export default function FileEditorModal({
           return;
         }
         message.error({
-          message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
+          message: `Failed to load "${getSftpBasename(file.path)}": ${getErrorMessage(err)}`,
         });
         onClose();
       })
@@ -62,12 +63,12 @@ export default function FileEditorModal({
     try {
       await onSave(content);
       message.success({
-        message: "File saved successfully",
+        message: `Saved "${getSftpBasename(file?.path)}"`,
       });
       onClose();
     } catch (err: unknown) {
       message.error({
-        message: `Failed to save file: ${(err as Error).message ?? "Unknown error"}`,
+        message: `Failed to save "${getSftpBasename(file?.path)}": ${getErrorMessage(err)}`,
       });
     } finally {
       setSaving(false);

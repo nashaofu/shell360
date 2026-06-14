@@ -10,6 +10,7 @@ import { sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
+import { getErrorMessage, getSftpBasename } from "./messages";
 
 type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
@@ -46,15 +47,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create file success",
+          message: `Created file "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create file failed",
+          message: `Failed to create file: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -70,15 +71,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create dir success",
+          message: `Created folder "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create dir failed",
+          message: `Failed to create folder: ${getErrorMessage(err)}`,
         }),
     },
   );

@@ -17,6 +17,7 @@ import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
 import styles from "./index.module.less";
+import { getErrorMessage } from "./messages";
 import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
@@ -91,7 +92,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "read dir failed",
+          message: `Failed to load folder: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -190,7 +191,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
       try {
         const exists = await sftpRef.current.sftpExists(path);
         if (!exists) {
-          message.error({ message: `Path does not exist: ${path}` });
+          message.error({ message: `Folder not found: ${path}` });
           return false;
         }
         await sftpRef.current.sftpReadDir(path);
@@ -198,7 +199,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
         return true;
       } catch (err) {
         message.error({
-          message: `Cannot navigate to ${path}: ${(err as Error).message ?? "Unknown error"}`,
+          message: `Failed to open folder "${path}": ${getErrorMessage(err)}`,
         });
         return false;
       }

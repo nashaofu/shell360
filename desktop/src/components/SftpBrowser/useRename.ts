@@ -4,6 +4,7 @@ import { sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
+import { getErrorMessage, getSftpBasename } from "./messages";
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;
@@ -39,15 +40,15 @@ export default function useRename({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [, newPath]) => {
         message.success({
-          message: "rename success",
+          message: `Renamed to "${getSftpBasename(newPath)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "rename failed",
+          message: `Failed to rename: ${getErrorMessage(err)}`,
         }),
     },
   );

@@ -1,6 +1,10 @@
 import { IconButton } from "@radix-ui/themes";
 
 import {
+  CloseIcon,
+  DeleteIcon,
+  PauseIcon,
+  PlayIcon,
   WindowMinimizeIcon,
 } from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
@@ -75,6 +79,7 @@ export function TransferProgress({
   const cancelledCount = queue.filter(
     (item) => item.status === "cancelled",
   ).length;
+  const hasRecords = queue.length > 0;
   const recordsLabel = `${queue.length} transfer${queue.length === 1 ? "" : "s"}`;
 
   return (
@@ -98,111 +103,131 @@ export function TransferProgress({
           )}
         </div>
       </div>
-      <div className={styles.overallStats}>
-        <span>{activeCount} active</span>
-        {waitingCount > 0 && <span>{waitingCount} waiting</span>}
-        {pausedCount > 0 && <span>{pausedCount} paused</span>}
-        {completedCount > 0 && <span>{completedCount} done</span>}
-        {failedCount > 0 && <span>{failedCount} failed</span>}
-        {cancelledCount > 0 && <span>{cancelledCount} cancelled</span>}
-      </div>
+      {hasRecords && (
+        <div className={styles.overallStats}>
+          <span>{activeCount} active</span>
+          {waitingCount > 0 && <span>{waitingCount} waiting</span>}
+          {pausedCount > 0 && <span>{pausedCount} paused</span>}
+          {completedCount > 0 && <span>{completedCount} done</span>}
+          {failedCount > 0 && <span>{failedCount} failed</span>}
+          {cancelledCount > 0 && <span>{cancelledCount} cancelled</span>}
+        </div>
+      )}
       <div className={styles.fileList}>
-        {queue.map((item, i) => {
-          const pct =
-            item.total > 0 ? Math.round((item.progress / item.total) * 100) : 0;
-          const isCurrent =
-            i === currentIndex &&
-            (item.status === "transferring" || item.status === "paused");
-          const itemInfo = (() => {
-            if (item.status === "completed") return formatBytes(item.total);
-            if (item.status === "transferring") {
-              return `${pct}% · ${formatBytes(item.progress)} / ${formatBytes(item.total)} · ${formatSpeed(item.speed)} · ${formatEtaLabel(item.eta)}`;
-            }
-            if (item.status === "paused") {
-              return `${pct}% · ${formatBytes(item.progress)} / ${formatBytes(item.total)}`;
-            }
-            if (item.status === "failed") {
-              return item.error ? item.error.slice(0, 56) : "failed";
-            }
-            return statusLabels[item.status].toLowerCase();
-          })();
+        {!hasRecords && (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyTitle}>No transfers yet</span>
+            <span className={styles.emptyDescription}>
+              Upload or download files to track progress here.
+            </span>
+          </div>
+        )}
+        {hasRecords &&
+          queue.map((item, i) => {
+            const pct =
+              item.total > 0
+                ? Math.round((item.progress / item.total) * 100)
+                : 0;
+            const isCurrent =
+              i === currentIndex &&
+              (item.status === "transferring" || item.status === "paused");
+            const canCancel = activeStatuses.includes(item.status);
+            const itemInfo = (() => {
+              if (item.status === "completed") return formatBytes(item.total);
+              if (item.status === "transferring") {
+                return `${pct}% · ${formatBytes(item.progress)} / ${formatBytes(item.total)} · ${formatSpeed(item.speed)} · ${formatEtaLabel(item.eta)}`;
+              }
+              if (item.status === "paused") {
+                return `${pct}% · ${formatBytes(item.progress)} / ${formatBytes(item.total)}`;
+              }
+              if (item.status === "failed") {
+                return item.error ? item.error.slice(0, 56) : "failed";
+              }
+              return statusLabels[item.status].toLowerCase();
+            })();
 
-          return (
-            <div
-              key={item.id}
-              className={[
-                styles.fileRow,
-                isCurrent ? styles.fileRowCurrent : "",
-                item.status === "failed" ? styles.fileRowFailed : "",
-                item.status === "cancelled" ? styles.fileRowCancelled : "",
-                item.status === "completed" ? styles.fileRowDone : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <span className={styles.fileMain}>
-                <span className={styles.fileName}>{item.fileName}</span>
-                <span className={styles.fileInfo}>{itemInfo}</span>
-              </span>
-              <span className={styles.fileStatus}>
-                {statusLabels[item.status]}
-              </span>
-              <span className={styles.fileActions}>
-                {item.status === "transferring" && onPauseItem && (
-                  <button
-                    className={styles.actionButton}
-                    type="button"
-                    onClick={() => onPauseItem(item.id)}
-                    title="Pause"
-                  >
-                    Pause
-                  </button>
-                )}
-                {item.status === "paused" && onResumeItem && (
-                  <button
-                    className={styles.actionButton}
-                    type="button"
-                    onClick={() => onResumeItem(item.id)}
-                    title="Resume"
-                  >
-                    Resume
-                  </button>
-                )}
-                {(item.status === "transferring" ||
-                  item.status === "paused" ||
-                  item.status === "waiting") &&
-                  onCancelItem && (
-                    <button
-                      className={`${styles.actionButton} ${styles.cancelAction}`}
-                      type="button"
-                      onClick={() => onCancelItem(item.id)}
-                      title="Stop this transfer and keep the cancelled record"
+            return (
+              <div
+                key={item.id}
+                className={[
+                  styles.fileRow,
+                  isCurrent ? styles.fileRowCurrent : "",
+                  item.status === "failed" ? styles.fileRowFailed : "",
+                  item.status === "cancelled" ? styles.fileRowCancelled : "",
+                  item.status === "completed" ? styles.fileRowDone : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span className={styles.fileMain}>
+                  <span className={styles.fileName}>{item.fileName}</span>
+                  <span className={styles.fileInfo}>{itemInfo}</span>
+                </span>
+                <span className={styles.fileStatus}>
+                  {statusLabels[item.status]}
+                </span>
+                <span className={styles.fileActions}>
+                  {item.status === "transferring" && onPauseItem && (
+                    <IconButton
+                      className={styles.actionIconButton}
+                      variant="ghost"
+                      size="1"
+                      onClick={() => onPauseItem(item.id)}
+                      aria-label="Pause"
+                      title="Pause"
                     >
-                      Cancel
-                    </button>
+                      <PauseIcon />
+                    </IconButton>
                   )}
-                {onRemoveItem && (
-                  <button
-                    className={`${styles.actionButton} ${styles.removeAction}`}
-                    type="button"
-                    onClick={() => onRemoveItem(item.id)}
-                    title="Remove the local transfer record only"
-                  >
-                    Remove
-                  </button>
+                  {item.status === "paused" && onResumeItem && (
+                    <IconButton
+                      className={styles.actionIconButton}
+                      variant="ghost"
+                      size="1"
+                      onClick={() => onResumeItem(item.id)}
+                      aria-label="Resume"
+                      title="Resume"
+                    >
+                      <PlayIcon />
+                    </IconButton>
+                  )}
+                  {canCancel && onCancelItem && (
+                    <IconButton
+                      className={`${styles.actionIconButton} ${styles.cancelAction}`}
+                      variant="ghost"
+                      size="1"
+                      onClick={() => onCancelItem(item.id)}
+                      aria-label="Cancel transfer"
+                      title="Cancel transfer"
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  )}
+                  {!canCancel && onRemoveItem && (
+                    <IconButton
+                      className={`${styles.actionIconButton} ${styles.removeAction}`}
+                      variant="ghost"
+                      size="1"
+                      onClick={() => onRemoveItem(item.id)}
+                      aria-label="Remove record"
+                      title="Remove record"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </span>
+                {(item.status === "transferring" ||
+                  item.status === "paused") && (
+                  <div className={styles.fileProgressTrack}>
+                    <span
+                      className={styles.fileProgressFill}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 )}
-              </span>
-              {(item.status === "transferring" || item.status === "paused") && (
-                <div className={styles.fileProgressTrack}>
-                  <span
-                    className={styles.fileProgressFill}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
       </div>
     </div>
   );

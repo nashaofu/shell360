@@ -81,6 +81,34 @@
   padding: 2px 0;
 }
 
+.emptyState {
+  flex: 1;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 12px 24px;
+  border: 1px dashed var(--gray-a5);
+  border-radius: 8px;
+  background: var(--gray-a2);
+  text-align: center;
+}
+
+.emptyTitle {
+  color: var(--gray-12);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyDescription {
+  max-width: 280px;
+  color: var(--gray-10);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .fileRow {
   position: relative;
   display: grid;
@@ -154,24 +182,14 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  min-width: 176px;
+  min-width: 92px;
 }
 
-.actionButton {
-  height: 24px;
-  padding: 0 7px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
+.actionIconButton {
   color: var(--gray-11);
-  font-size: 11px;
-  line-height: 22px;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
-.actionButton:hover {
-  background: var(--gray-a3);
+.actionIconButton:hover {
   color: var(--gray-12);
 }
 
@@ -180,17 +198,14 @@
 }
 
 .cancelAction:hover {
-  background: var(--orange-a3);
   color: var(--orange-12);
 }
 
 .removeAction {
-  border-color: var(--gray-a5);
   color: var(--gray-10);
 }
 
 .removeAction:hover {
-  background: var(--gray-a3);
   color: var(--gray-12);
 }
 
