@@ -1,4 +1,10 @@
-import { type ChangeEvent, type KeyboardEvent, useCallback } from "react";
+import {
+  type ChangeEvent,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { CheckIcon, CloseIcon } from "shared";
 import styles from "./index.module.less";
 
@@ -15,6 +21,20 @@ export default function SftpFilenameInput({
   onCancel,
   onOk,
 }: SftpFilenameInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    input.focus();
+    const name = input.value;
+    const dotIndex = name.lastIndexOf(".");
+    const end = dotIndex > 0 ? dotIndex : name.length;
+    input.setSelectionRange(0, end);
+  }, []);
+
   const onInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       onChange(e.target.value);
@@ -22,10 +42,14 @@ export default function SftpFilenameInput({
     [onChange],
   );
 
+  const canConfirm = !!value?.trim();
+
   const onKeyUp = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.code === "Enter") {
-        onOk();
+        if (value?.trim()) {
+          onOk();
+        }
         return;
       }
 
@@ -34,35 +58,37 @@ export default function SftpFilenameInput({
         return;
       }
     },
-    [onCancel, onOk],
+    [onCancel, onOk, value],
   );
 
   return (
     <div className={styles.root}>
       <input
+        ref={inputRef}
         className={styles.input}
         value={value || ""}
         onChange={onInputChange}
         onKeyUp={onKeyUp}
+        spellCheck={false}
         autoComplete="off"
-        autoFocus
       />
       <div className={styles.actions}>
         <button
           type="button"
-          className={`${styles.actionButton} ${styles.cancelButton}`}
+          className={styles.confirmButton}
+          title="Confirm"
+          disabled={!canConfirm}
+          onClick={() => onOk()}
+        >
+          <CheckIcon />
+        </button>
+        <button
+          type="button"
+          className={styles.cancelButton}
           title="Cancel"
           onClick={() => onCancel()}
         >
           <CloseIcon />
-        </button>
-        <button
-          type="button"
-          className={`${styles.actionButton} ${styles.okButton}`}
-          title="Confirm"
-          onClick={() => onOk()}
-        >
-          <CheckIcon />
         </button>
       </div>
     </div>

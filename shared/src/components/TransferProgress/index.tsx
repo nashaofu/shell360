@@ -5,6 +5,11 @@ import {
   DeleteIcon,
   PauseIcon,
   PlayIcon,
+  StatusCompleteIcon,
+  StatusDownloadIcon,
+  StatusFailedIcon,
+  StatusUploadIcon,
+  StatusWaitingIcon,
   WindowMinimizeIcon,
 } from "@/components/Icon";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/display";
@@ -66,28 +71,66 @@ export function TransferProgress({
   onRemoveItem,
   onCollapse,
 }: TransferProgressProps) {
-  const activeRecords = queue.filter((item) =>
-    activeStatuses.includes(item.status),
+  const transferringItems = queue.filter(
+    (item) => item.status === "transferring",
   );
+  const uploadingCount = transferringItems.filter(
+    (item) => item.type === "upload",
+  ).length;
+  const downloadingCount = transferringItems.filter(
+    (item) => item.type === "download",
+  ).length;
   const waitingCount = queue.filter((item) => item.status === "waiting").length;
   const pausedCount = queue.filter((item) => item.status === "paused").length;
-  const activeCount = activeRecords.length;
   const completedCount = queue.filter(
     (item) => item.status === "completed",
   ).length;
   const failedCount = queue.filter((item) => item.status === "failed").length;
-  const cancelledCount = queue.filter(
-    (item) => item.status === "cancelled",
-  ).length;
   const hasRecords = queue.length > 0;
-  const recordsLabel = `${queue.length} transfer${queue.length === 1 ? "" : "s"}`;
 
   return (
     <div className={styles.panel}>
       <div className={styles.titleRow}>
         <div className={styles.titleMain}>
-          <span className={styles.direction}>Transfer History</span>
-          <span className={styles.summaryPill}>{recordsLabel}</span>
+          <span className={styles.direction}>Transfers</span>
+          <span className={styles.stats}>
+            <span className={styles.stat} title="Uploading">
+              <span className={styles.uploadIcon}>
+                <StatusUploadIcon />
+              </span>
+              {uploadingCount}
+            </span>
+            <span className={styles.stat} title="Downloading">
+              <span className={styles.downloadIcon}>
+                <StatusDownloadIcon />
+              </span>
+              {downloadingCount}
+            </span>
+            <span className={styles.stat} title="Paused">
+              <span className={styles.pauseIcon}>
+                <PauseIcon />
+              </span>
+              {pausedCount}
+            </span>
+            <span className={styles.stat} title="Waiting">
+              <span className={styles.waitingIcon}>
+                <StatusWaitingIcon />
+              </span>
+              {waitingCount}
+            </span>
+            <span className={styles.stat} title="Completed">
+              <span className={styles.doneIcon}>
+                <StatusCompleteIcon />
+              </span>
+              {completedCount}
+            </span>
+            <span className={styles.stat} title="Failed">
+              <span className={styles.failedIcon}>
+                <StatusFailedIcon />
+              </span>
+              {failedCount}
+            </span>
+          </span>
         </div>
         <div className={styles.titleActions}>
           {onCollapse && (
@@ -103,16 +146,6 @@ export function TransferProgress({
           )}
         </div>
       </div>
-      {hasRecords && (
-        <div className={styles.overallStats}>
-          <span>{activeCount} active</span>
-          {waitingCount > 0 && <span>{waitingCount} waiting</span>}
-          {pausedCount > 0 && <span>{pausedCount} paused</span>}
-          {completedCount > 0 && <span>{completedCount} done</span>}
-          {failedCount > 0 && <span>{failedCount} failed</span>}
-          {cancelledCount > 0 && <span>{cancelledCount} cancelled</span>}
-        </div>
-      )}
       <div className={styles.fileList}>
         {!hasRecords && (
           <div className={styles.emptyState}>

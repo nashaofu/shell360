@@ -24,7 +24,6 @@ serde_json.workspace = true
 strum = { version = "0.28.0", features = ["derive"] }
 russh-sftp = "2.3.0"
 rusocks = "0.0.7"
-percent-encoding = "2.3.2"
 tauri-plugin-fs.workspace = true
 
 [build-dependencies]

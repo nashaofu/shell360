@@ -56,6 +56,29 @@ function computeOverall(q: TransferQueueItem[]) {
   };
 }
 
+function deriveTransferStatus(q: TransferQueueItem[]): TransferStatus {
+  if (
+    q.some(
+      (item) => item.status === "transferring" || item.status === "waiting",
+    )
+  ) {
+    return "transferring";
+  }
+  if (q.some((item) => item.status === "paused")) {
+    return "paused";
+  }
+  if (q.some((item) => item.status === "completed")) {
+    return "completed";
+  }
+  if (q.some((item) => item.status === "failed")) {
+    return "failed";
+  }
+  if (q.some((item) => item.status === "cancelled")) {
+    return "cancelled";
+  }
+  return "completed";
+}
+
 function getCurrentTransferIndex(q: TransferQueueItem[], fallbackId?: string) {
   const activeIndex = q.findIndex((item) => item.status === "transferring");
   if (activeIndex >= 0) {
@@ -325,8 +348,8 @@ export default function useSftpActions({
         { time: number; progress: number }
       >();
       activeUploadBatchesRef.current.add(batch);
-      setTransferInfoWithRef((prev) => {
-        const q = [...(prev?.queue ?? []), ...items];
+      const queuedInfo: TransferInfo = (() => {
+        const q = [...(transferInfoRef.current?.queue ?? []), ...items];
         return {
           type: "upload",
           dirname: dirnameRef.current,
@@ -335,7 +358,9 @@ export default function useSftpActions({
           queue: q,
           currentIndex: q.findIndex((item) => item.id === items[0].id),
         };
-      });
+      })();
+      transferInfoRef.current = queuedInfo;
+      setTransferInfoWithRef(queuedInfo);
       setTransferStatus("transferring");
       setPanelOpen(true);
       incTransfer();
@@ -386,10 +411,7 @@ export default function useSftpActions({
                 time: now,
                 progress: 0,
               };
-              const dt = Math.max(
-                (now - lastUpdate.time) / 1000,
-                0.001,
-              );
+              const dt = Math.max((now - lastUpdate.time) / 1000, 0.001);
               const db = progress - lastUpdate.progress;
               const speed = db / dt;
               const remaining = total - progress;
@@ -475,9 +497,7 @@ export default function useSftpActions({
         }
       };
       const workerCount = Math.min(UPLOAD_CONCURRENCY, items.length);
-      await Promise.all(
-        Array.from({ length: workerCount }, () => runWorker()),
-      );
+      await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
 
       if (batch.aborted) {
         setTransferInfoWithRef((prev) => {
@@ -596,10 +616,7 @@ export default function useSftpActions({
           taskId,
           onProgress: ({ progress, total }) => {
             const now = performance.now();
-            const dt = Math.max(
-              (now - lastUpdate.time) / 1000,
-              0.001,
-            );
+            const dt = Math.max((now - lastUpdate.time) / 1000, 0.001);
             const db = progress - lastUpdate.progress;
             const speed = db / dt;
             const remaining = total - progress;
@@ -619,37 +636,55 @@ export default function useSftpActions({
                 fileName: name,
                 ...computeOverall(q),
                 queue: q,
-                currentIndex: q.findIndex((item) => item.id === items[0].id),
+                currentIndex: getCurrentTransferIndex(q, items[0].id),
               };
             });
           },
         });
 
-        setTransferInfoWithRef((prev) => {
-          if (!prev) return null;
-          const q = prev.queue.map((item) =>
-            item.id === items[0].id
-              ? { ...item, status: "completed" as const }
-              : item,
-          );
-          return { ...prev, queue: q, ...computeOverall(q) };
-        });
-        setTransferStatus("completed");
+        {
+          const base = transferInfoRef.current;
+          if (base) {
+            const q = base.queue.map((item) =>
+              item.id === items[0].id
+                ? { ...item, status: "completed" as const, speed: 0, eta: -1 }
+                : item,
+            );
+            const next: TransferInfo = {
+              ...base,
+              queue: q,
+              currentIndex: getCurrentTransferIndex(q),
+              ...computeOverall(q),
+            };
+            transferInfoRef.current = next;
+            setTransferInfoWithRef(next);
+            setTransferStatus(deriveTransferStatus(q));
+          }
+        }
       } catch (err) {
-        setTransferInfoWithRef((prev) => {
-          if (!prev) return null;
-          const q = prev.queue.map((item) =>
+        const base = transferInfoRef.current;
+        if (base) {
+          const q = base.queue.map((item) =>
             item.id === items[0].id
               ? {
                   ...item,
                   status: "failed" as const,
+                  speed: 0,
+                  eta: -1,
                   error: getErrorMessage(err, "Download failed"),
                 }
               : item,
           );
-          return { ...prev, queue: q, ...computeOverall(q) };
-        });
-        setTransferStatus("failed");
+          const next: TransferInfo = {
+            ...base,
+            queue: q,
+            currentIndex: getCurrentTransferIndex(q),
+            ...computeOverall(q),
+          };
+          transferInfoRef.current = next;
+          setTransferInfoWithRef(next);
+          setTransferStatus(deriveTransferStatus(q));
+        }
         throw err;
       } finally {
         decTransfer();

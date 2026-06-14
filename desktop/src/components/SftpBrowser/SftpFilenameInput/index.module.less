@@ -1,63 +1,68 @@
 .root {
   display: flex;
   align-items: center;
+  gap: 6px;
   width: 100%;
-  height: 32px;
-  border: 1px solid var(--gray-a6);
-  border-radius: 6px;
-  background: var(--color-surface);
-  transition: border-color 0.12s, box-shadow 0.12s;
-}
-
-.root:focus-within {
-  border-color: var(--accent-8);
-  box-shadow: 0 0 0 1px var(--accent-a5);
 }
 
 .input {
   flex: 1;
   min-width: 0;
-  height: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--gray-12);
+  height: 28px;
+  border: 1px solid var(--gray-a6);
+  border-radius: 6px;
   padding: 0 10px;
-  font-size: 13px;
+  font-family: monospace;
+  font-size: 14px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--gray-12);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.input:focus {
+  border-color: var(--accent-8);
+  box-shadow: 0 0 0 1px var(--accent-a5);
 }
 
 .actions {
   display: inline-flex;
   align-items: center;
-  height: 100%;
   gap: 4px;
-  padding-right: 4px;
+  flex-shrink: 0;
 }
 
-.actionButton {
-  width: 26px;
-  height: 26px;
+.confirmButton,
+.cancelButton {
+  width: 28px;
+  height: 28px;
   border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   transition: background-color 0.1s, color 0.1s, border-color 0.1s;
 }
 
-.okButton {
+.confirmButton {
   background: var(--accent-9);
   color: var(--accent-contrast);
 }
 
-.okButton:hover {
+.confirmButton:hover {
   background: var(--accent-10);
 }
 
+.confirmButton:disabled {
+  background: var(--gray-a4);
+  color: var(--gray-a8);
+  cursor: not-allowed;
+}
+
 .cancelButton {
+  background: transparent;
   border-color: var(--gray-a6);
   color: var(--gray-11);
 }

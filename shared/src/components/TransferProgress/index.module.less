@@ -20,8 +20,10 @@
 .titleMain {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 
 .direction {
@@ -31,15 +33,44 @@
   white-space: nowrap;
 }
 
-.summaryPill {
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--gray-a3);
-  color: var(--gray-11);
-  font-size: 11px;
-  line-height: 18px;
+.stats {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  row-gap: 4px;
   font-variant-numeric: tabular-nums;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--gray-12);
+}
+
+.uploadIcon,
+.downloadIcon,
+.pauseIcon,
+.waitingIcon,
+.doneIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: var(--gray-11);
+}
+
+.failedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: var(--red-11);
 }
 
 .titleActions {
@@ -55,19 +86,6 @@
 
 .collapseButton:hover {
   color: var(--gray-12);
-}
-
-.overallStats {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 12px;
-  row-gap: 4px;
-  font-size: 11px;
-  color: var(--gray-11);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .fileList {

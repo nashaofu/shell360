@@ -121,9 +121,11 @@ export default function useCells({
                     ></SftpFilenameInput>
                   </div>
                 ) : (
-                  <div className={styles.fileName}>{item.name}</div>
+                  <>
+                    <div className={styles.fileName}>{item.name}</div>
+                    <div className={styles.filePerms}>{item.permissions}</div>
+                  </>
                 )}
-                <div className={styles.filePerms}>{item.permissions}</div>
               </div>
             </div>
           );

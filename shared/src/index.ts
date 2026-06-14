@@ -1,5 +1,3 @@
-import "./styles/index.less";
-
 // atoms
 export * from "./atoms/appearance.atom";
 export * from "./atoms/portForwardings.atom";

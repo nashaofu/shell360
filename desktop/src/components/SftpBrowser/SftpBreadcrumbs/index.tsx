@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useCallback, useMemo, useState } from "react";
-import { CloseIcon, EditIcon, SuccessCircleIcon } from "shared";
+import { CheckIcon, CloseIcon, EditIcon } from "shared";
 import styles from "./index.module.less";
 
 type SftpBreadcrumbsProps = {
@@ -78,7 +78,7 @@ export default function SftpBreadcrumbs({
             title="Confirm"
             onClick={() => handleConfirmEdit()}
           >
-            <SuccessCircleIcon />
+            <CheckIcon />
           </button>
           <button
             type="button"
