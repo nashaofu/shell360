@@ -6,6 +6,7 @@ import {
   FileUploadIcon,
   FolderIcon,
   getSftpBrowserFiles,
+  getSftpDirname,
   Loading,
   MoreIcon,
   useSftp,
@@ -206,7 +207,7 @@ export default function Sftp({ session }: SftpProps) {
 
   const onParentClick = useCallback(() => {
     if (dirname && !isRoot) {
-      setDirname(dirname.split("/").slice(0, -1).join("/") || "/");
+      setDirname(getSftpDirname(dirname));
     }
   }, [dirname, isRoot]);
 

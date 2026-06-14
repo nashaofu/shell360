@@ -1,7 +1,7 @@
-use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use ssh_key::{
   private::{EcdsaKeypair, Ed25519Keypair, KeypairData, RsaKeypair},
+  rand_core::OsRng,
   EcdsaCurve, LineEnding, PrivateKey,
 };
 

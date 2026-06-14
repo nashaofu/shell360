@@ -1,44 +1,56 @@
 .card {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   cursor: pointer;
-  background: var(--color-background, #fff);
-}
+  background: var(--color-panel-solid);
+  border: 1px solid var(--gray-a4);
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 
-.cardOutlined {
-  border: 1px solid var(--gray-6, #d4d4d8);
+  &:active {
+    transform: scale(0.985);
+    border-color: var(--gray-a6);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border-color: var(--gray-a6);
+    }
+  }
 }
 
 .iconWrap {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
-  border-radius: 8px;
+  font-size: 28px;
+  border-radius: 10px;
   color: #fff;
-  background: var(--accent-10, #2563eb);
-  overflow: hidden;
+  background: linear-gradient(135deg, var(--accent-9), var(--accent-10));
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent-9) 30%, transparent);
 }
 
 .content {
-  flex-grow: 1;
-  flex-shrink: 1;
+  flex: 1;
   overflow: hidden;
   user-select: text;
   margin-left: 12px;
   margin-right: 12px;
+  min-width: 0;
 }
 
 .title {
   font-size: 14px;
   font-weight: 600;
-  word-break: break-all;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -46,11 +58,11 @@
 
 .desc {
   font-size: 12px;
-  color: var(--gray-10, #6b7280);
-  word-break: break-all;
+  color: var(--gray-10);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 .extra {

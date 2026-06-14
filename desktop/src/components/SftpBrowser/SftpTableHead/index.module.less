@@ -1,0 +1,41 @@
+.headerCell {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-panel-solid);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-10);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--gray-a5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+.sortButton {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  padding: 0;
+  transition: color 0.12s;
+}
+
+.sortButton:hover {
+  color: var(--gray-12);
+}
+
+.sortButtonActive {
+  color: var(--accent-11);
+}
+
+.sortIcon {
+  font-size: 8px;
+  line-height: 1;
+  opacity: 0.8;
+}

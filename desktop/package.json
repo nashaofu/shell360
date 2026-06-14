@@ -18,6 +18,7 @@
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-apps/plugin-updater": "^2.10.1",
     "ahooks": "^3.9.7",
+    "buffer": "^6.0.3",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.21",
     "dockview-react": "^6.6.1",
@@ -29,6 +30,7 @@
     "react-router-dom": "^7.16.0",
     "shared": "workspace:*",
     "tauri-plugin-data": "workspace:*",
+    "tauri-plugin-pty": "workspace:*",
     "tauri-plugin-ssh": "workspace:*"
   },
   "devDependencies": {

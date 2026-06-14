@@ -61,7 +61,6 @@ export default function SSHTerminal({
     >
       <div
         className={`${styles.terminalLayer} ${showLoading ? styles.terminalLayerHidden : ""}`}
-        data-paste="true"
       >
         <TerminalContextMenu terminal={terminal}>
           <XTerminal

@@ -37,3 +37,28 @@ export function getSftpBrowserFiles({
 export function sanitizeSftpFilename(filename: string) {
   return filename.replace(/[\\/]/g, "");
 }
+
+export function normalizeSftpPath(path: string) {
+  const normalized = path.replace(/\\/g, "/").replace(/\/+/g, "/");
+  return normalized.length > 1 ? normalized.replace(/\/+$/g, "") : normalized;
+}
+
+export function joinSftpPath(dirname: string | undefined, filename: string) {
+  return normalizeSftpPath(`${dirname || "/"}/${filename}`);
+}
+
+export function getSftpBasename(path: string | undefined) {
+  if (!path) {
+    return "";
+  }
+  const normalized = normalizeSftpPath(path);
+  return normalized.split("/").filter(Boolean).pop() || normalized;
+}
+
+export function getSftpDirname(path: string | undefined) {
+  if (!path || path === "/") {
+    return "/";
+  }
+  const normalized = normalizeSftpPath(path);
+  return normalized.split("/").slice(0, -1).join("/") || "/";
+}

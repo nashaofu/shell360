@@ -1,0 +1,35 @@
+.root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel-solid);
+}
+
+.panel {
+  width: min(400px, 90vw);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.title {
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-medium);
+}
+
+.progressWrap {
+  padding: 0 var(--space-4);
+}
+
+.errorSection {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}

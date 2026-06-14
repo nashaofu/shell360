@@ -1,12 +1,17 @@
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
   background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
+  transition: background 0.2s ease;
 }
 
 *::-webkit-scrollbar-corner {
@@ -14,20 +19,29 @@
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: #7f7f7f;
+  background: var(--gray-a6, rgba(128, 128, 128, 0.3));
 }
 
 html,
 body,
 #root {
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   user-select: none;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  margin: 0;
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
 }
 
 input {

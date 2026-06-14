@@ -37,7 +37,6 @@
     "clipboard-manager:allow-write-text",
     "dialog:allow-open",
     "dialog:allow-save",
-    "dialog:allow-destroy-path",
     "dialog:allow-ask",
     "store:default",
     "mobile:default",

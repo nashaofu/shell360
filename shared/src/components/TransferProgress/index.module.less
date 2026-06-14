@@ -1,0 +1,247 @@
+.panel {
+  background: var(--color-panel-solid);
+  border-top: 0;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  min-height: 220px;
+  max-height: inherit;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.direction {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gray-12);
+  white-space: nowrap;
+}
+
+.stats {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  row-gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--gray-12);
+}
+
+.uploadIcon,
+.downloadIcon,
+.pauseIcon,
+.waitingIcon,
+.doneIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: var(--gray-11);
+}
+
+.failedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: var(--red-11);
+}
+
+.titleActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.collapseButton {
+  color: var(--gray-11);
+}
+
+.collapseButton:hover {
+  color: var(--gray-12);
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+.emptyState {
+  flex: 1;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 12px 24px;
+  border: 1px dashed var(--gray-a5);
+  border-radius: 8px;
+  background: var(--gray-a2);
+  text-align: center;
+}
+
+.emptyTitle {
+  color: var(--gray-12);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyDescription {
+  max-width: 280px;
+  color: var(--gray-10);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fileRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 42px;
+  padding: 5px 8px 7px;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.fileRow:hover {
+  background: var(--gray-a2);
+}
+
+.fileRowCurrent {
+  background: var(--accent-a2);
+}
+
+.fileRowDone {
+  background: transparent;
+  opacity: 0.72;
+}
+
+.fileRowFailed {
+  background: var(--red-a2);
+}
+
+.fileRowCancelled {
+  background: transparent;
+  opacity: 0.5;
+}
+
+.fileMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fileName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gray-12);
+  min-width: 0;
+}
+
+.fileInfo {
+  color: var(--gray-11);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.fileStatus {
+  color: var(--gray-10);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fileActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 92px;
+}
+
+.actionIconButton {
+  color: var(--gray-11);
+}
+
+.actionIconButton:hover {
+  color: var(--gray-12);
+}
+
+.cancelAction {
+  color: var(--orange-11);
+}
+
+.cancelAction:hover {
+  color: var(--orange-12);
+}
+
+.removeAction {
+  color: var(--gray-10);
+}
+
+.removeAction:hover {
+  color: var(--gray-12);
+}
+
+.fileProgressTrack {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--gray-a4);
+  overflow: hidden;
+}
+
+.fileProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-9);
+  transition: width 0.2s linear;
+}

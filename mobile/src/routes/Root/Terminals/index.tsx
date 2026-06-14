@@ -10,6 +10,7 @@ import {
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
+import styles from "./index.module.less";
 
 export default function Terminals() {
   const match = useMatch("/terminal/:uuid");
@@ -65,66 +66,20 @@ export default function Terminals() {
   }, [terminalsAtomWithApi.state.size, navigate]);
 
   return (
-    <div
-      style={{
-        flexGrow: 1,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div
-        style={{
-          paddingTop: "env(safe-area-inset-top)",
-          minHeight: 56,
-          display: "flex",
-          alignItems: "center",
-          paddingLeft: 12,
-          paddingRight: 12,
-          borderBottom: "1px solid var(--gray-a6)",
-          background: "var(--color-panel-solid)",
-          color: "var(--gray-12)",
-          gap: 8,
-        }}
-      >
+    <div className={styles.container}>
+      <div className={styles.header}>
         <button
           type="button"
-          style={{
-            background: "none",
-            border: "none",
-            color: "inherit",
-            cursor: "pointer",
-            padding: 4,
-          }}
+          className={styles.menuBtn}
           onClick={globalStateAtomWithApi.openSidebar}
+          aria-label="Open menu"
         >
           <MenuIcon />
         </button>
-        <div
-          style={{
-            flex: 1,
-            fontSize: 18,
-            fontWeight: 500,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {activeTerminal?.name || "Shell360"}
-        </div>
+        <div className={styles.name}>{activeTerminal?.name || "Shell360"}</div>
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <button
-              type="button"
-              style={{
-                marginLeft: 8,
-                background: "none",
-                border: "none",
-                color: "inherit",
-                cursor: "pointer",
-                padding: 4,
-              }}
-            >
+            <button type="button" className={styles.moreBtn}>
               <MoreIcon />
             </button>
           </DropdownMenu.Trigger>
@@ -147,8 +102,7 @@ export default function Terminals() {
             key={item.uuid}
             style={{
               display: visible ? "flex" : "none",
-              flexGrow: 1,
-              flexShrink: 0,
+              flex: 1,
             }}
             item={item}
             onClose={() => onClose(item)}

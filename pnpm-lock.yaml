@@ -56,6 +56,9 @@ importers:
       ahooks:
         specifier: ^3.9.7
         version: 3.9.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -89,6 +92,9 @@ importers:
       tauri-plugin-data:
         specifier: workspace:*
         version: link:../tauri-plugin-data
+      tauri-plugin-pty:
+        specifier: workspace:*
+        version: link:../tauri-plugin-pty
       tauri-plugin-ssh:
         specifier: workspace:*
         version: link:../tauri-plugin-ssh
@@ -323,11 +329,33 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  tauri-plugin-pty:
+    dependencies:
+      '@tauri-apps/api':
+        specifier: ^2.11.0
+        version: 2.11.0
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
+      uuid:
+        specifier: ^14.0.0
+        version: 14.0.0
+    devDependencies:
+      '@rslib/core':
+        specifier: ^0.22.0
+        version: 0.22.0(core-js@3.46.0)(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   tauri-plugin-ssh:
     dependencies:
       '@tauri-apps/api':
         specifier: ^2.11.0
         version: 2.11.0
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       uuid:
         specifier: ^14.0.0
         version: 14.0.0

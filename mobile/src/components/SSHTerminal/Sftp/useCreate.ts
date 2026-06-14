@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { sanitizeSftpFilename } from "shared";
+import { joinSftpPath, sanitizeSftpFilename } from "shared";
 import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
@@ -110,7 +110,7 @@ export default function useCreate({
       return;
     }
 
-    const filename = `${dirname}/${creatingFilename}`;
+    const filename = joinSftpPath(dirname, creatingFilename);
     if (createType === CreateType.File) {
       await createFile(filename);
     } else if (createType === CreateType.Dir) {

@@ -12,6 +12,7 @@
   "references": [
     { "path": "../shared" },
     { "path": "../tauri-plugin-ssh" },
-    { "path": "../tauri-plugin-data" }
+    { "path": "../tauri-plugin-data" },
+    { "path": "../tauri-plugin-pty" }
   ]
 }

@@ -3,19 +3,18 @@ import {
   type MutableRefObject,
   type RefObject,
   useCallback,
-  useEffect,
   useState,
 } from "react";
-import { sanitizeSftpFilename } from "shared";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
+import { joinSftpPath, sanitizeSftpFilename } from "shared";
+import type { SSHSftp } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
+import { getErrorMessage, getSftpBasename } from "./messages";
 
 type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
   message: ReturnType<typeof useMessage>;
   dirname?: string;
-  files?: SSHSftpFile[];
   sftpRef: MutableRefObject<SSHSftp | null>;
   refreshDir: () => unknown;
 };
@@ -29,7 +28,6 @@ export default function useCreate({
   tableContainerRef,
   message,
   dirname,
-  files,
   sftpRef,
   refreshDir,
 }: UseCreateOpts) {
@@ -46,15 +44,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create file success",
+          message: `Created file "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create file failed",
+          message: `Failed to create file: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -70,15 +68,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create dir success",
+          message: `Created folder "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create dir failed",
+          message: `Failed to create folder: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -110,7 +108,7 @@ export default function useCreate({
       return;
     }
 
-    const filename = `${dirname}/${creatingFilename}`;
+    const filename = joinSftpPath(dirname, creatingFilename);
     if (createType === CreateType.File) {
       await createFile(filename);
     } else if (createType === CreateType.Dir) {
@@ -125,11 +123,6 @@ export default function useCreate({
     dirname,
     onCreateCancel,
   ]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files change resets create state
-  useEffect(() => {
-    onCreateCancel();
-  }, [files]);
 
   return {
     creatingFilename,

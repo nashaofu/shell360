@@ -1,8 +1,4 @@
-use std::{
-  ops::{Deref, DerefMut},
-  sync::Arc,
-  time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use russh::{
   Disconnect, Error as RusshError, MethodKind,
@@ -11,7 +7,7 @@ use russh::{
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Runtime, State, ipc::Channel};
-use tokio::time::timeout;
+use tokio::{sync::Mutex as AsyncMutex, time::timeout};
 use uuid::Uuid;
 
 use crate::{
@@ -39,7 +35,7 @@ pub struct SSHSession<R: Runtime> {
   #[allow(unused)]
   pub ssh_session_id: SSHSessionId,
   pub ipc_channel: Channel<SessionIpcChannelData>,
-  pub handle_ssh_client: Handle<SSHClient<R>>,
+  pub handle_ssh_client: Arc<AsyncMutex<Handle<SSHClient<R>>>>,
 }
 
 impl<R: Runtime> SSHSession<R> {
@@ -51,22 +47,8 @@ impl<R: Runtime> SSHSession<R> {
     Self {
       ssh_session_id,
       ipc_channel,
-      handle_ssh_client,
+      handle_ssh_client: Arc::new(AsyncMutex::new(handle_ssh_client)),
     }
-  }
-}
-
-impl<R: Runtime> Deref for SSHSession<R> {
-  type Target = Handle<SSHClient<R>>;
-
-  fn deref(&self) -> &Self::Target {
-    &self.handle_ssh_client
-  }
-}
-
-impl<R: Runtime> DerefMut for SSHSession<R> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.handle_ssh_client
   }
 }
 
@@ -77,6 +59,7 @@ pub enum SSHSessionCheckServerKey {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn session_connect<R: Runtime>(
   app_handle: AppHandle<R>,
   ssh_manager: State<'_, SSHManager<R>>,
@@ -116,17 +99,20 @@ pub async fn session_connect<R: Runtime>(
         port,
         jump_host_ssh_session_id
       );
-      let channel = {
+      let jump_host_session = {
         let sessions = ssh_manager.sessions.lock().await;
-
-        let jump_host_session = sessions
+        sessions
           .get(&jump_host_ssh_session_id)
-          .ok_or(SSHError::NotFoundJumpHostSession)?;
-
-        jump_host_session
-          .channel_open_direct_tcpip(&hostname, port as u32, "127.0.0.1", 0)
-          .await?
+          .ok_or(SSHError::NotFoundJumpHostSession)?
+          .handle_ssh_client
+          .clone()
       };
+
+      let channel = jump_host_session
+        .lock()
+        .await
+        .channel_open_direct_tcpip(&hostname, port as u32, "127.0.0.1", 0)
+        .await?;
 
       client::connect_stream(config, channel.into_stream(), ssh_client)
         .await
@@ -169,12 +155,12 @@ pub async fn session_connect<R: Runtime>(
 }
 
 async fn authenticate_with_keyboard_interactive<R: Runtime>(
-  session: &mut SSHSession<R>,
+  session: &mut Handle<SSHClient<R>>,
+  ssh_session_id: SSHSessionId,
   username: &str,
   password: Option<String>,
   prompts: Option<Vec<String>>,
 ) -> Result<(), AuthenticationError> {
-  let ssh_session_id = session.ssh_session_id;
   log::info!(
     "authenticate session {:?} by keyboard interactive",
     ssh_session_id
@@ -262,9 +248,9 @@ pub enum AuthenticationData {
   },
 }
 
-impl Into<MethodKind> for AuthenticationData {
-  fn into(self) -> MethodKind {
-    match self {
+impl From<AuthenticationData> for MethodKind {
+  fn from(val: AuthenticationData) -> Self {
+    match val {
       AuthenticationData::Password { .. } => MethodKind::Password,
       AuthenticationData::PublicKey { .. } => MethodKind::PublicKey,
       AuthenticationData::Certificate { .. } => MethodKind::HostBased,
@@ -282,10 +268,15 @@ pub async fn session_authenticate<R: Runtime>(
   authentication_data: AuthenticationData,
 ) -> Result<SSHSessionId, AuthenticationError> {
   log::info!("authenticate session {:?}", ssh_session_id);
-  let mut sessions = ssh_manager.sessions.lock().await;
-  let session = sessions
-    .get_mut(&ssh_session_id)
-    .ok_or(AuthenticationError::NotFoundSession)?;
+  let session = {
+    let sessions = ssh_manager.sessions.lock().await;
+    sessions
+      .get(&ssh_session_id)
+      .ok_or(AuthenticationError::NotFoundSession)?
+      .handle_ssh_client
+      .clone()
+  };
+  let mut session = session.lock().await;
 
   if session.is_closed() {
     return Err(AuthenticationError::SessionClosed);
@@ -312,15 +303,21 @@ pub async fn session_authenticate<R: Runtime>(
         } = auth_res
         {
           if remaining_methods.contains(&MethodKind::KeyboardInteractive) {
-            authenticate_with_keyboard_interactive(session, username, Some(password.clone()), None)
-              .await
-              .map_err(|err| {
-                if let AuthenticationError::KeyboardInteractiveInfoRequest(_) = err {
-                  err
-                } else {
-                  AuthenticationError::Password(remaining_methods, partial_success)
-                }
-              })?;
+            authenticate_with_keyboard_interactive(
+              &mut session,
+              ssh_session_id,
+              username,
+              Some(password.clone()),
+              None,
+            )
+            .await
+            .map_err(|err| {
+              if let AuthenticationError::KeyboardInteractiveInfoRequest(_) = err {
+                err
+              } else {
+                AuthenticationError::Password(remaining_methods, partial_success)
+              }
+            })?;
           } else {
             return Err(AuthenticationError::Password(
               remaining_methods,
@@ -341,7 +338,7 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by public key", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty"));
         }
 
         let password = passphrase.and_then(|passphrase| {
@@ -412,10 +409,10 @@ pub async fn session_authenticate<R: Runtime>(
         log::info!("authenticate session {:?} by certificate", ssh_session_id);
 
         if private_key.is_empty() {
-          return Err(AuthenticationError::new("Private key is empty").into());
+          return Err(AuthenticationError::new("Private key is empty"));
         }
         if certificate.is_empty() {
-          return Err(AuthenticationError::new("Certificate is empty").into());
+          return Err(AuthenticationError::new("Certificate is empty"));
         }
 
         let password = passphrase.and_then(|passphrase| {
@@ -476,7 +473,14 @@ pub async fn session_authenticate<R: Runtime>(
       .await?
     }
     AuthenticationData::KeyboardInteractive { prompts } => {
-      authenticate_with_keyboard_interactive(session, username, None, prompts.clone()).await?;
+      authenticate_with_keyboard_interactive(
+        &mut session,
+        ssh_session_id,
+        username,
+        None,
+        prompts.clone(),
+      )
+      .await?;
       Ok(ssh_session_id)
     }
   }
@@ -490,9 +494,14 @@ pub async fn session_disconnect<R: Runtime>(
 ) -> SSHResult<SSHSessionId> {
   timeout(Duration::from_secs(5), async {
     log::info!("disconnect session {:?}", ssh_session_id);
-    let mut sessions = ssh_manager.sessions.lock().await;
-    if let Some(session) = sessions.remove(&ssh_session_id) {
-      session
+    let session = {
+      let mut sessions = ssh_manager.sessions.lock().await;
+      sessions.remove(&ssh_session_id)
+    };
+
+    if let Some(session) = session {
+      let handle = session.handle_ssh_client.lock().await;
+      handle
         .disconnect(Disconnect::ByApplication, "", "English")
         .await?;
     }
