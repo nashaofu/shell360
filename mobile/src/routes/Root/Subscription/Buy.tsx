@@ -153,7 +153,7 @@ export default function Buy({ offerings, onLoadingChange }: BuyProps) {
               textDecoration: "underline",
             }}
             onClick={() =>
-              openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
+              openUrl("https://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
           >
             Terms of Use

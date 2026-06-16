@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "postinstall": "pnpm run build && npm run tsc",
+    "postinstall": "pnpm run build && pnpm run tsc",
     "dev": "rslib build --watch",
     "build": "rslib build",
     "tsc": "tsc -b",

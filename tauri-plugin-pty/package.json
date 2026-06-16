@@ -12,9 +12,9 @@
     }
   },
   "scripts": {
-    "postinstall": "npm run build",
+    "postinstall": "pnpm run build",
     "dev": "rslib build --watch",
-    "build": "npm run tsc && rslib build",
+    "build": "pnpm run tsc && rslib build",
     "tsc": "tsc -b"
   },
   "dependencies": {
