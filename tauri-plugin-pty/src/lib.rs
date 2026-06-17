@@ -1,6 +1,7 @@
 pub(crate) mod commands;
 pub(crate) mod error;
 pub(crate) mod pty_manager;
+pub(crate) mod utils;
 
 use pty_manager::PtyManager;
 use tauri::{

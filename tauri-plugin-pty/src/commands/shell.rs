@@ -1,4 +1,4 @@
-use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
+use portable_pty::{NativePtySystem, PtySize, PtySystem};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::{Read, Write};
@@ -13,6 +13,7 @@ use tauri::{
 use crate::{
   error::{PtyError, PtyResult},
   pty_manager::{PtyManager, ShellInstance},
+  utils::{build_shell_command, detect_shell},
 };
 
 type ShellId = String;
@@ -39,16 +40,6 @@ impl IpcResponse for PtyIpcEvent {
         json!({"type": "Exit", "code": code}).to_string(),
       )),
     }
-  }
-}
-
-fn detect_shell() -> String {
-  if cfg!(target_os = "windows") {
-    "powershell.exe".to_string()
-  } else if cfg!(target_os = "macos") {
-    std::env::var("SHELL").unwrap_or_else(|_| "zsh".to_string())
-  } else {
-    std::env::var("SHELL").unwrap_or_else(|_| "bash".to_string())
   }
 }
 
@@ -79,7 +70,7 @@ pub async fn shell_open<R: Runtime>(
     .map_err(|e| PtyError::new(e.to_string()))?;
 
   let shell_cmd = shell.unwrap_or_else(detect_shell);
-  let cmd = CommandBuilder::new(&shell_cmd);
+  let cmd = build_shell_command(&shell_cmd);
   let mut child = pair
     .slave
     .spawn_command(cmd)
