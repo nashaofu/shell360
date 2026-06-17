@@ -221,7 +221,7 @@ export default function Settings() {
             label="Terms of Use"
             icon={<ArrowRightIcon />}
             onClick={() =>
-              openUrl("http://www.apple.com/legal/itunes/appstore/dev/stdeula")
+              openUrl("https://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
           />
         )}

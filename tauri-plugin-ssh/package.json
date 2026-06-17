@@ -12,9 +12,9 @@
     }
   },
   "scripts": {
-    "postinstall": "npm run build",
+    "postinstall": "pnpm run build",
     "dev": "rslib build --watch",
-    "build": "npm run tsc && rslib build",
+    "build": "pnpm run tsc && rslib build",
     "tsc": "tsc -b"
   },
   "dependencies": {
@@ -23,7 +23,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@rslib/core": "^0.22.0",
+    "@rslib/core": "^0.22.1",
     "typescript": "^6.0.3"
   }
 }
