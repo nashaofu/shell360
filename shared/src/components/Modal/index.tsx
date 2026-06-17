@@ -176,7 +176,7 @@ function ModalInstance({ config }: { config: InternalModal }) {
         onEscapeKeyDown={(e) => {
           if (config.maskClosable === false) e.preventDefault();
         }}
-        onInteractOutside={(e) => {
+        onPointerDownOutside={(e) => {
           if (config.maskClosable === false) e.preventDefault();
         }}
       >
