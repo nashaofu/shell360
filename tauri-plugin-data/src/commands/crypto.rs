@@ -119,7 +119,7 @@ async fn update_database<R: Runtime>(
     host
       .into_active_model(crypto_manager)
       .await?
-      .update(&data_manager.database_connection)
+      .update(&tx)
       .await?;
   }
 
@@ -127,7 +127,7 @@ async fn update_database<R: Runtime>(
     key
       .into_active_model(crypto_manager)
       .await?
-      .update(&data_manager.database_connection)
+      .update(&tx)
       .await?;
   }
 
@@ -135,7 +135,7 @@ async fn update_database<R: Runtime>(
     port_forwarding
       .into_active_model(crypto_manager)
       .await?
-      .update(&data_manager.database_connection)
+      .update(&tx)
       .await?;
   }
 
