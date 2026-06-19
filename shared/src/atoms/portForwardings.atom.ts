@@ -49,6 +49,10 @@ export function usePortForwardingsAtomWithApi() {
     ((portForwardingId: string) => Promise<void>) | undefined
   >(undefined);
 
+  const handlePortForwardingServerDisconnectRef = useRef<
+    ((portForwardingId: string) => void) | undefined
+  >(undefined);
+
   const createRuntime = useMemoizedFn(
     (
       portForwarding: PortForwarding,
@@ -65,8 +69,18 @@ export function usePortForwardingsAtomWithApi() {
 
       const jumpHostChain = resolveJumpHostChain(host, {
         hostsMap,
-        onDisconnect: () => {
-          handlePortForwardingReconnectRef.current?.(portForwarding.id);
+        onDisconnect: (event) => {
+          // A fully established forwarding dropped unexpectedly. Only a
+          // network/protocol error (TCP drop, timeout) should auto-reconnect;
+          // a server-initiated disconnect (kicked, forwarding closed
+          // server-side) must surface as a failure instead of looping.
+          if (event.data.type === "error") {
+            handlePortForwardingReconnectRef.current?.(portForwarding.id);
+          } else {
+            handlePortForwardingServerDisconnectRef.current?.(
+              portForwarding.id,
+            );
+          }
         },
       }).map((chainItem) => {
         const previous = options?.previousJumpHostChain?.find(
@@ -202,9 +216,35 @@ export function usePortForwardingsAtomWithApi() {
     },
   );
 
+  const handlePortForwardingServerDisconnect = useMemoizedFn(
+    (portForwardingId: string) => {
+      const currentItem = stateRef.current.get(portForwardingId);
+      if (!currentItem) {
+        return;
+      }
+
+      if (currentItem.status !== "success") {
+        return;
+      }
+
+      stopPortForwardingRuntime(currentItem).catch(() => {
+        // ignore close errors; the backend session is already gone.
+      });
+
+      updatePortForwarding({
+        ...currentItem,
+        status: "failed",
+        error: { kind: "ServerDisconnect", message: "Disconnected by server" },
+        isReconnecting: false,
+      });
+    },
+  );
+
   useEffect(() => {
     handlePortForwardingReconnectRef.current = handlePortForwardingReconnect;
-  }, [handlePortForwardingReconnect]);
+    handlePortForwardingServerDisconnectRef.current =
+      handlePortForwardingServerDisconnect;
+  }, [handlePortForwardingReconnect, handlePortForwardingServerDisconnect]);
 
   const addPortForwarding = useMemoizedFn(
     (
@@ -261,6 +301,54 @@ export function usePortForwardingsAtomWithApi() {
     },
   );
 
+  const submitKeyboardInteractivePortForwarding = useMemoizedFn(
+    async (portForwardingId: string, answers: string[]) => {
+      const currentItem = stateRef.current.get(portForwardingId);
+      if (!currentItem) {
+        return;
+      }
+
+      const currentChainItem = currentItem.jumpHostChain.find(
+        (it) => it.status !== "authenticated",
+      );
+      if (!currentChainItem) {
+        return;
+      }
+
+      const nextItem: PortForwardingsAtom = {
+        ...currentItem,
+        status: "pending",
+        error: undefined,
+        jumpHostChain: currentItem.jumpHostChain.map((it) =>
+          it.host.id === currentChainItem.host.id
+            ? {
+                ...it,
+                keyboardInteractivePrompts: answers,
+                error: undefined,
+              }
+            : it,
+        ),
+      };
+      updatePortForwarding(nextItem);
+
+      try {
+        await establishPortForwarding(nextItem, keysMap, (updated) => {
+          updatePortForwarding(updated);
+        });
+      } catch (error) {
+        const failedItem = stateRef.current.get(portForwardingId);
+        if (failedItem) {
+          updatePortForwarding({
+            ...failedItem,
+            status: "failed",
+            error,
+            isReconnecting: false,
+          });
+        }
+      }
+    },
+  );
+
   return {
     state,
     getState,
@@ -268,6 +356,7 @@ export function usePortForwardingsAtomWithApi() {
     update: updatePortForwarding,
     delete: deletePortForwarding,
     restart: restartPortForwarding,
+    submitKeyboardInteractive: submitKeyboardInteractivePortForwarding,
   };
 }
 

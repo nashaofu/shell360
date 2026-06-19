@@ -17,6 +17,7 @@ type PortForwardingLoadingOverlayProps = {
   onOpenAddKey: () => void;
   onReAuth: (hostData: Host) => void;
   onReConnect: (checkServerKey?: SSHSessionCheckServerKey) => void;
+  onSubmitKeyboardInteractive: (answers: string[]) => void;
   onRetry: () => void;
 };
 
@@ -29,6 +30,7 @@ export default function PortForwardingLoadingOverlay({
   onOpenAddKey,
   onReAuth,
   onReConnect,
+  onSubmitKeyboardInteractive,
   onRetry,
 }: PortForwardingLoadingOverlayProps) {
   if (!isLoading) {
@@ -46,6 +48,7 @@ export default function PortForwardingLoadingOverlay({
               error={currentJumpHostChainItem.error}
               onReConnect={onReConnect}
               onReAuth={onReAuth}
+              onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
               onRetry={onRetry}
               onClose={onClose}
               onOpenAddKey={onOpenAddKey}

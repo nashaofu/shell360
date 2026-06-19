@@ -13,15 +13,60 @@ import {
   AuthenticationForm,
   type AuthenticationFormFields,
 } from "./AuthenticationForm";
+import {
+  type KeyboardInteractiveData,
+  KeyboardInteractivePromptForm,
+} from "./KeyboardInteractivePromptForm";
+
+function protocolEquivalent(method: AuthenticationMethod): string {
+  if (method === AuthenticationMethod.Password) {
+    return "Password";
+  }
+  if (method === AuthenticationMethod.KeyboardInteractive) {
+    return "KeyboardInteractive";
+  }
+  return "PublicKey";
+}
+
+function resolveAuthenticationMethod(
+  hostMethod: AuthenticationMethod,
+  error: unknown,
+): AuthenticationMethod {
+  const methodSet = (get(error, "methodSet", []) as string[]) ?? [];
+  if (
+    methodSet.length === 0 ||
+    methodSet.includes(protocolEquivalent(hostMethod))
+  ) {
+    return hostMethod;
+  }
+  if (methodSet.includes("PublicKey")) {
+    return AuthenticationMethod.PublicKey;
+  }
+  if (methodSet.includes("Password")) {
+    return AuthenticationMethod.Password;
+  }
+  if (methodSet.includes("KeyboardInteractive")) {
+    return AuthenticationMethod.KeyboardInteractive;
+  }
+  return hostMethod;
+}
 
 export default function AuthenticationError({
   host,
   error,
   onReAuth,
+  onSubmitKeyboardInteractive,
   onClose,
   onOpenAddKey,
 }: ErrorProps) {
   const { refresh: refreshHosts } = useHosts();
+
+  const keyboardInteractiveData =
+    get(error, "kind") === "KeyboardInteractiveInfoRequest"
+      ? (get(error, "keyboardInteractiveData") as
+          | KeyboardInteractiveData
+          | undefined)
+      : undefined;
 
   const formApi = useForm<AuthenticationFormFields>({
     defaultValues: {
@@ -32,10 +77,15 @@ export default function AuthenticationError({
     },
     values: {
       username: host?.username ?? "",
-      authenticationMethod:
+      authenticationMethod: resolveAuthenticationMethod(
         host?.authenticationMethod ?? AuthenticationMethod.Password,
+        error,
+      ),
       password: host?.password ?? "",
       keyId: host?.keyId ?? "",
+    },
+    resetOptions: {
+      keepDirtyValues: true,
     },
   });
 
@@ -44,18 +94,22 @@ export default function AuthenticationError({
     const message = get(error, "message");
     if (kind === "Password" || kind === "PublicKey" || kind === "Certificate") {
       const methodSet = get(error, "methodSet", []) as string[];
+      const isSupported = methodSet.includes(
+        protocolEquivalent(kind as AuthenticationMethod),
+      );
 
       return {
         title: message,
-        message: methodSet.includes(kind) ? (
-          message
-        ) : (
-          <>
-            The <b>{kind}</b> authentication method is not supported. The server
-            only supports the <b>{methodSet.join(", ")}</b> authentication
-            method.
-          </>
-        ),
+        message:
+          isSupported || methodSet.length === 0 ? (
+            message
+          ) : (
+            <>
+              The <b>{kind}</b> authentication method is not supported. The
+              server only supports the <b>{methodSet.join(", ")}</b>{" "}
+              authentication method.
+            </>
+          ),
       };
     }
     return {
@@ -92,6 +146,16 @@ export default function AuthenticationError({
     [host, onReAuth, refreshHosts],
   );
 
+  if (keyboardInteractiveData && onSubmitKeyboardInteractive) {
+    return (
+      <KeyboardInteractivePromptForm
+        data={keyboardInteractiveData}
+        onSubmit={onSubmitKeyboardInteractive}
+        onClose={onClose}
+      />
+    );
+  }
+
   return (
     <form className={styles.authForm} noValidate autoComplete="off">
       <ErrorText title={errorInfo.title} message={errorInfo.message} />
@@ -102,6 +166,7 @@ export default function AuthenticationError({
         </StatusButton>
         <div className={styles.splitButtonGroup}>
           <Button
+            type="button"
             className={styles.splitPrimaryButton}
             onClick={formApi.handleSubmit((values) =>
               onContinue(values, false),
@@ -111,7 +176,7 @@ export default function AuthenticationError({
           </Button>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <Button className={styles.splitMenuButton}>
+              <Button type="button" className={styles.splitMenuButton}>
                 <MoreIcon />
               </Button>
             </DropdownMenu.Trigger>

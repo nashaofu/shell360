@@ -50,6 +50,12 @@ pub enum AuthenticationError {
   KeyboardInteractive(MethodSet, bool),
   #[error("Keyboard interactive need response")]
   KeyboardInteractiveInfoRequest(KeyboardInteractiveData),
+  #[error("Authentication failed with SSH agent")]
+  Agent(MethodSet, bool),
+  #[error("No identities found in SSH agent")]
+  AgentNoIdentities,
+  #[error("Failed to connect to SSH agent")]
+  AgentConnectFailed,
   #[error("{0}")]
   Error(String),
 }
@@ -69,6 +75,7 @@ impl Serialize for AuthenticationError {
       AuthenticationError::Password(method_set, partial_success)
       | AuthenticationError::PublicKey(method_set, partial_success)
       | AuthenticationError::Certificate(method_set, partial_success)
+      | AuthenticationError::Agent(method_set, partial_success)
       | AuthenticationError::KeyboardInteractive(method_set, partial_success) => json!({
         "type": "AuthenticationError",
         "message": self.to_string(),
