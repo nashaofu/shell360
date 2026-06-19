@@ -6,6 +6,7 @@
   gap: 8px;
   background: var(--gray-3);
   border-bottom: 1px solid var(--gray-a3);
+  app-region: drag;
   -webkit-app-region: drag;
   flex-shrink: 0;
   position: relative;
@@ -16,6 +17,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  app-region: no-drag;
   -webkit-app-region: no-drag;
   flex-shrink: 0;
 }
@@ -125,6 +127,7 @@
   width: min(40vw, 440px);
   display: flex;
   justify-content: center;
+  app-region: no-drag;
   -webkit-app-region: no-drag;
 }
 
@@ -203,6 +206,7 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  app-region: no-drag;
   -webkit-app-region: no-drag;
 }
 

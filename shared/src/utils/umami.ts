@@ -3,6 +3,7 @@ import {
   type MachineUidResponse,
   type Result,
 } from "@skipperndt/plugin-machine-uid";
+import { getVersion } from "@tauri-apps/api/app";
 import { v4 as uuidV4 } from "uuid";
 
 function getDeviceUidFromLocalStorage() {
@@ -38,5 +39,7 @@ export async function getDeviceUid(): Promise<string> {
 }
 
 export async function identify() {
-  window.umami.identify(await getDeviceUid());
+  window.umami.identify(await getDeviceUid(), {
+    version: await getVersion(),
+  });
 }
