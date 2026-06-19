@@ -248,17 +248,6 @@ pub enum AuthenticationData {
   },
 }
 
-impl From<AuthenticationData> for MethodKind {
-  fn from(val: AuthenticationData) -> Self {
-    match val {
-      AuthenticationData::Password { .. } => MethodKind::Password,
-      AuthenticationData::PublicKey { .. } => MethodKind::PublicKey,
-      AuthenticationData::Certificate { .. } => MethodKind::HostBased,
-      AuthenticationData::KeyboardInteractive { .. } => MethodKind::KeyboardInteractive,
-    }
-  }
-}
-
 #[tauri::command]
 pub async fn session_authenticate<R: Runtime>(
   _app_handle: AppHandle<R>,

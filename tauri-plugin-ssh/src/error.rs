@@ -77,7 +77,7 @@ impl Serialize for AuthenticationError {
             MethodKind::None => "None",
             MethodKind::Password => "Password",
             MethodKind::PublicKey => "PublicKey",
-            MethodKind::HostBased => "Certificate",
+            MethodKind::HostBased => "HostBased",
             MethodKind::KeyboardInteractive => "KeyboardInteractive"
         }).collect::<Vec<&str>>(),
         "partialSuccess": partial_success,
