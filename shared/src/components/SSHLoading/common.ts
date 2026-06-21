@@ -10,6 +10,7 @@ export type ErrorProps = {
   error?: unknown;
   onReConnect: (checkServerKey?: SSHSessionCheckServerKey) => unknown;
   onReAuth: (host: Host) => unknown;
+  onSubmitKeyboardInteractive?: (answers: string[]) => unknown;
   onRetry: () => unknown;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
@@ -17,6 +18,7 @@ export type ErrorProps = {
 
 type StatusButtonProps = {
   variant?: "outlined" | "contained";
+  type?: "button" | "submit" | "reset";
   disabled?: boolean;
   children: ReactNode;
   onClick?: () => unknown;
@@ -24,6 +26,7 @@ type StatusButtonProps = {
 
 export function StatusButton({
   variant = "contained",
+  type = "button",
   disabled,
   children,
   onClick,
@@ -33,6 +36,7 @@ export function StatusButton({
     {
       className: styles.statusButton,
       variant: variant === "outlined" ? "outline" : "solid",
+      type,
       disabled,
       onClick,
     },

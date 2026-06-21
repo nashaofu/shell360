@@ -19,7 +19,12 @@ export interface JumpHostChainItem {
   loading: boolean;
   status: "connecting" | "connected" | "authenticated";
   checkServerKey?: SSHSessionCheckServerKey;
+  keyboardInteractivePrompts?: string[];
   error?: unknown;
+}
+
+export function isKeyboardInteractiveInfoRequest(error: unknown): boolean {
+  return get(error, "kind") === "KeyboardInteractiveInfoRequest";
 }
 
 export function getActiveSession(
@@ -100,7 +105,16 @@ export async function establishJumpHostChainConnections(
       if (item.status === "connected") {
         const key = keysMap.get(item.host.keyId as string);
 
-        if (item.host.authenticationMethod === AuthenticationMethod.Password) {
+        if (item.keyboardInteractivePrompts) {
+          const prompts = item.keyboardInteractivePrompts;
+          item.keyboardInteractivePrompts = undefined;
+          await item.session.authenticate_keyboard_interactive({
+            username: item.host.username,
+            prompts,
+          });
+        } else if (
+          item.host.authenticationMethod === AuthenticationMethod.Password
+        ) {
           await item.session.authenticate_password({
             username: item.host.username,
             password: item.host.password || "",
@@ -122,10 +136,15 @@ export async function establishJumpHostChainConnections(
             passphrase: key?.passphrase || "",
             certificate: key?.certificate || "",
           });
+        } else if (
+          item.host.authenticationMethod === AuthenticationMethod.Agent
+        ) {
+          await item.session.authenticate_agent({
+            username: item.host.username,
+          });
         } else {
           await item.session.authenticate_keyboard_interactive({
             username: item.host.username,
-            prompts: [],
           });
         }
 
@@ -266,7 +285,9 @@ export async function establishPortForwarding(
         isReconnecting: false, // 清除重连标志
       });
     }
-    await stopPortForwardingRuntime(portForwardingsAtom);
+    if (!isKeyboardInteractiveInfoRequest(error)) {
+      await stopPortForwardingRuntime(portForwardingsAtom);
+    }
     throw error;
   }
 }

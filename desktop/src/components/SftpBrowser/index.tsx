@@ -53,6 +53,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
+    onSubmitKeyboardInteractive,
     onRetry,
   } = useSftpConnection({
     item,
@@ -476,6 +477,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
           }}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
+          onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
           onRetry={onRetry}
           onClose={onClose}
           onOpenAddKey={onOpenAddKey}

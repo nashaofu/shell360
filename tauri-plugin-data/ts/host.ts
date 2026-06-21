@@ -10,6 +10,8 @@ export enum AuthenticationMethod {
   Password = "Password",
   PublicKey = "PublicKey",
   Certificate = "Certificate",
+  Agent = "Agent",
+  KeyboardInteractive = "KeyboardInteractive",
 }
 
 export interface Env {

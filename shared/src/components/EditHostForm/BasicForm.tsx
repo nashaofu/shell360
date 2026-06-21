@@ -396,6 +396,12 @@ export default function BasicForm({
                 <Select.Item value={AuthenticationMethod.Certificate}>
                   Certificate
                 </Select.Item>
+                <Select.Item value={AuthenticationMethod.Agent}>
+                  SSH Agent
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.KeyboardInteractive}>
+                  Keyboard Interactive
+                </Select.Item>
               </Select.Content>
             </Select.Root>
             {fieldState.invalid && (

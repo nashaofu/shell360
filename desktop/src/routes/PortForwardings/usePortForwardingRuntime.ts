@@ -25,6 +25,7 @@ export type PortForwardingRuntime = {
   onDelete: () => void;
   onReAuth: (hostData: Host) => void;
   onReConnect: (checkServerKey?: SSHSessionCheckServerKey) => void;
+  onSubmitKeyboardInteractive: (answers: string[]) => void;
   onRetry: () => void;
   onToggle: () => Promise<void>;
   status?: PortForwardingsAtom["status"];
@@ -99,6 +100,12 @@ export function usePortForwardingRuntime() {
           return;
         }
         portForwardingsAtomWithApi.restart(item.id, { checkServerKey });
+      },
+      onSubmitKeyboardInteractive: (answers: string[]) => {
+        if (!portForwardingsAtomWithApi.state.has(item.id)) {
+          return;
+        }
+        portForwardingsAtomWithApi.submitKeyboardInteractive(item.id, answers);
       },
       onRetry: () => {
         if (!portForwardingsAtomWithApi.state.has(item.id)) {

@@ -62,6 +62,7 @@ export default function PortForwardingItem({
       onOpenAddKey={onOpenAddKey}
       onReAuth={runtime.onReAuth}
       onReConnect={runtime.onReConnect}
+      onSubmitKeyboardInteractive={runtime.onSubmitKeyboardInteractive}
       onRetry={runtime.onRetry}
     />
   );

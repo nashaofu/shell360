@@ -35,6 +35,7 @@ export default function SSHTerminal({
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
+    onSubmitKeyboardInteractive,
     onRetry,
     terminal,
     onTerminalReady,
@@ -117,6 +118,7 @@ export default function SSHTerminal({
           }}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
+          onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
           onRetry={onRetry}
           onClose={onClose}
           onOpenAddKey={onOpenAddKey}

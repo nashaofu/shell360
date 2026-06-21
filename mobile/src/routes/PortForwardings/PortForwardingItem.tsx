@@ -166,6 +166,15 @@ export default function PortForwardingItem({
     portForwardingsAtomWithApi.restart(item.id, { hostData });
   });
 
+  const onSubmitKeyboardInteractive = useMemoizedFn((answers: string[]) => {
+    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!portForwardingsAtom) {
+      return;
+    }
+
+    portForwardingsAtomWithApi.submitKeyboardInteractive(item.id, answers);
+  });
+
   const onRetry = useMemoizedFn(() => {
     const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (!portForwardingsAtom) {
@@ -245,6 +254,7 @@ export default function PortForwardingItem({
                 error={currentJumpHostChainItem.error}
                 onReConnect={onReConnect}
                 onReAuth={onReAuth}
+                onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
                 onRetry={onRetry}
                 onClose={onClose}
                 onOpenAddKey={onOpenAddKey}

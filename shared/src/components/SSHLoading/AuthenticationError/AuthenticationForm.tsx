@@ -51,7 +51,7 @@ export function AuthenticationForm({
               Authentication method
             </Text>
             <Select.Root
-              value={field.value || AuthenticationMethod.Password}
+              value={field.value}
               onValueChange={(value) => field.onChange(value)}
             >
               <Select.Trigger style={{ width: "100%" }} />
@@ -64,6 +64,12 @@ export function AuthenticationForm({
                 </Select.Item>
                 <Select.Item value={AuthenticationMethod.Certificate}>
                   Certificate
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.Agent}>
+                  SSH Agent
+                </Select.Item>
+                <Select.Item value={AuthenticationMethod.KeyboardInteractive}>
+                  Keyboard Interactive
                 </Select.Item>
               </Select.Content>
             </Select.Root>
