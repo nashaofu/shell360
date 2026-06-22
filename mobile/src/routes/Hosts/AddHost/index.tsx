@@ -1,7 +1,6 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import {
   DEFAULT_TERMINAL_FONT_FAMILY,
   DEFAULT_TERMINAL_FONT_SIZE,
@@ -23,6 +22,7 @@ import {
 } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import PageDrawer from "@/components/PageDrawer";
+import useActivateTerminal from "@/hooks/useActivateTerminal";
 
 type AddHostProps = {
   open?: boolean;
@@ -32,9 +32,9 @@ type AddHostProps = {
 };
 
 export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
-  const navigate = useNavigate();
   const { refresh: refreshHosts } = useHosts();
   const [addKeyOpen, setAddKeyOpen] = useState(false);
+  const activateTerminal = useActivateTerminal();
 
   const formApi = useForm<EditHostFormFields>({
     defaultValues: {
@@ -138,9 +138,9 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
       onOk();
 
       const [item] = terminalsAtomWithApi.add(savedHost);
-      navigate(`/terminal/${item.uuid}`, { replace: true });
+      activateTerminal(item.uuid);
     },
-    [navigate, onOk, save, refreshHosts, terminalsAtomWithApi],
+    [onOk, save, refreshHosts, activateTerminal, terminalsAtomWithApi],
   );
 
   const onSave = useCallback(

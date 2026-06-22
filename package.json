@@ -15,8 +15,8 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
-    "@dotenvx/dotenvx": "^1.71.3",
-    "@tauri-apps/cli": "^2.11.2",
+    "@dotenvx/dotenvx": "^1.75.1",
+    "@tauri-apps/cli": "^2.11.3",
     "glob": "^13.0.6",
     "got": "^15.0.5",
     "typescript": "^6.0.3"

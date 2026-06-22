@@ -1,7 +1,6 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   AddIcon,
   ContentCopyIcon,
@@ -22,6 +21,7 @@ import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
+import useActivateTerminal from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 
@@ -31,7 +31,7 @@ export default function Hosts() {
   const [keyword, setKeyword] = useState("");
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
-  const navigate = useNavigate();
+  const activateTerminal = useActivateTerminal();
 
   const modal = useModal();
   const message = useMessage();
@@ -66,9 +66,9 @@ export default function Hosts() {
   const onOpenChannel = useCallback(
     (host: Host) => {
       const [item] = terminalsAtomWithApi.add(host);
-      navigate(`/terminal/${item.uuid}`);
+      activateTerminal(item.uuid);
     },
-    [navigate, terminalsAtomWithApi],
+    [activateTerminal, terminalsAtomWithApi],
   );
 
   const onAddHostButtonClick = useCallback(() => {

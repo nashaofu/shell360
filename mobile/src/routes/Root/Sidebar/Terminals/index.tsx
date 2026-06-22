@@ -1,10 +1,14 @@
 import { useCallback } from "react";
-import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import {
   type TerminalAtom,
   TerminalIcon,
   useTerminalsAtomWithApi,
 } from "shared";
+import {
+  useSetTerminalActiveId,
+  useSetTerminalViewVisible,
+  useTerminalActiveId,
+} from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
 type TerminalsProps = {
@@ -12,25 +16,24 @@ type TerminalsProps = {
 };
 
 export default function Terminals({ onClick }: TerminalsProps) {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
+  const [activeTerminalId] = useTerminalActiveId();
+  const setActiveTerminalId = useSetTerminalActiveId();
+  const setTerminalViewVisible = useSetTerminalViewVisible();
 
   const onListItemClick = useCallback(
     (item: TerminalAtom) => {
-      navigate(`/terminal/${item.uuid}`);
+      setActiveTerminalId(item.uuid);
+      setTerminalViewVisible(true);
       onClick?.();
     },
-    [navigate, onClick],
+    [onClick, setActiveTerminalId, setTerminalViewVisible],
   );
 
   return (
     <ul className={styles.list}>
       {[...terminalsAtomWithApi.state.values()].map((item) => {
-        const isActive = !!matchPath(
-          { path: `/terminal/${item.uuid}`, end: true },
-          pathname,
-        );
+        const isActive = activeTerminalId === item.uuid;
         return (
           <li key={item.uuid} className={styles.item}>
             <button

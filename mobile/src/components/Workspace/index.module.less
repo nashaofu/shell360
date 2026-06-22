@@ -1,0 +1,31 @@
+.root {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--color-background);
+  z-index: 20;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: flex;
+}
+
+.dockview {
+  flex: 1;
+  min-height: 0;
+  background: var(--color-background);
+}
+
+.watermark {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-10);
+  font-size: 14px;
+}
