@@ -308,10 +308,10 @@ export function usePortForwardingsAtomWithApi() {
         return;
       }
 
-      const currentChainItem = currentItem.jumpHostChain.find(
+      const currentChainItemIndex = currentItem.jumpHostChain.findIndex(
         (it) => it.status !== "authenticated",
       );
-      if (!currentChainItem) {
+      if (currentChainItemIndex === -1) {
         return;
       }
 
@@ -319,8 +319,8 @@ export function usePortForwardingsAtomWithApi() {
         ...currentItem,
         status: "pending",
         error: undefined,
-        jumpHostChain: currentItem.jumpHostChain.map((it) =>
-          it.host.id === currentChainItem.host.id
+        jumpHostChain: currentItem.jumpHostChain.map((it, index) =>
+          index === currentChainItemIndex
             ? {
                 ...it,
                 keyboardInteractivePrompts: answers,

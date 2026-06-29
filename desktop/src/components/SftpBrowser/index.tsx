@@ -57,6 +57,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     onRetry,
   } = useSftpConnection({
     item,
+    onClose,
     onSuccess: async (sftp) => {
       const dirname = await sftp.sftpCanonicalize(".");
       setDirname(dirname);

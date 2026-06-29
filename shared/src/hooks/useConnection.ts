@@ -92,11 +92,17 @@ export function useConnection({
       if (!currentItem) {
         return;
       }
+      const currentJumpHostChainItemIndex = currentItem.jumpHostChain.findIndex(
+        (it) => it.status !== "authenticated",
+      );
+      if (currentJumpHostChainItemIndex === -1) {
+        return;
+      }
 
       currentItem = {
         ...currentItem,
-        jumpHostChain: currentItem.jumpHostChain.map((it) => {
-          return it.host.id === currentJumpHostChainItem.host.id
+        jumpHostChain: currentItem.jumpHostChain.map((it, index) => {
+          return index === currentJumpHostChainItemIndex
             ? { ...it, keyboardInteractivePrompts: answers, error: undefined }
             : it;
         }),

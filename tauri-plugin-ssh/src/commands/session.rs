@@ -16,6 +16,8 @@ use crate::{
   ssh_manager::SSHManager,
 };
 
+const KEYBOARD_INTERACTIVE_MFA_TIMEOUT: Duration = Duration::from_secs(120);
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct SSHSessionId(Uuid);
 
@@ -243,7 +245,7 @@ fn should_continue_keyboard_interactive(
   partial_success && remaining_methods.contains(&MethodKind::KeyboardInteractive)
 }
 
-// Keyboard-interactive continuation must run under its own 30s budget instead of
+// Keyboard-interactive continuation must run under its own MFA budget instead of
 // the initial method's short timeout, since the server can prompt or push an MFA
 // challenge that takes longer than the initial password/public key/agent attempt.
 async fn run_keyboard_interactive_continuation<R: Runtime>(
@@ -252,7 +254,7 @@ async fn run_keyboard_interactive_continuation<R: Runtime>(
   username: &str,
   password: Option<String>,
 ) -> Result<SSHSessionId, AuthenticationError> {
-  timeout(Duration::from_secs(30), async {
+  timeout(KEYBOARD_INTERACTIVE_MFA_TIMEOUT, async {
     authenticate_with_keyboard_interactive(session, ssh_session_id, username, password, None)
       .await?;
     Ok(ssh_session_id)
@@ -649,7 +651,7 @@ pub async fn session_authenticate<R: Runtime>(
       finish_with_keyboard_interactive_if_needed(&mut session, ssh_session_id, username, next).await
     }
     AuthenticationData::KeyboardInteractive { prompts } => {
-      timeout(Duration::from_secs(30), async {
+      timeout(KEYBOARD_INTERACTIVE_MFA_TIMEOUT, async {
         authenticate_with_keyboard_interactive(
           &mut session,
           ssh_session_id,

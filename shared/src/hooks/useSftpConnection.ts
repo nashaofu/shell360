@@ -12,10 +12,15 @@ import { useSftp } from "./useSftp";
 
 export interface UseSftpConnectionOpts {
   item: TerminalAtom;
+  onClose?: () => unknown;
   onSuccess?: (sftp: SSHSftp) => unknown;
 }
 
-export function useSftpConnection({ item, onSuccess }: UseSftpConnectionOpts) {
+export function useSftpConnection({
+  item,
+  onClose,
+  onSuccess,
+}: UseSftpConnectionOpts) {
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
   const session = useMemo(() => {
@@ -29,6 +34,7 @@ export function useSftpConnection({ item, onSuccess }: UseSftpConnectionOpts) {
     runAsync: sftpRunAsync,
   } = useSftp({
     session,
+    onClose,
     onBefore: () => {
       terminalsAtomWithApi.update({
         ...item,
