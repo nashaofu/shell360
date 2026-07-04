@@ -82,6 +82,37 @@ export function useConnection({
     terminalsAtomWithApi.establish(currentItem);
   });
 
+  const onSubmitKeyboardInteractive = useMemoizedFn(
+    async (answers: string[]) => {
+      if (!currentJumpHostChainItem) {
+        return;
+      }
+      const map = terminalsAtomWithApi.getState();
+      let currentItem = map.get(item.uuid);
+      if (!currentItem) {
+        return;
+      }
+      const currentJumpHostChainItemIndex = currentItem.jumpHostChain.findIndex(
+        (it) => it.status !== "authenticated",
+      );
+      if (currentJumpHostChainItemIndex === -1) {
+        return;
+      }
+
+      currentItem = {
+        ...currentItem,
+        jumpHostChain: currentItem.jumpHostChain.map((it, index) => {
+          return index === currentJumpHostChainItemIndex
+            ? { ...it, keyboardInteractivePrompts: answers, error: undefined }
+            : it;
+        }),
+      };
+
+      terminalsAtomWithApi.update(currentItem);
+      terminalsAtomWithApi.establish(currentItem);
+    },
+  );
+
   const onRetry = useMemoizedFn(async () => {
     const map = terminalsAtomWithApi.getState();
     const currentItem = map.get(item.uuid);
@@ -118,6 +149,7 @@ export function useConnection({
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
+    onSubmitKeyboardInteractive,
     onRetry,
   };
 }

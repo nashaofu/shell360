@@ -2,6 +2,7 @@ import { useLatest, useMemoizedFn } from "ahooks";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { AuthenticationMethod, type Host } from "tauri-plugin-data";
+import type { SSHSessionDisconnectEvent } from "tauri-plugin-ssh";
 import { v4 as uuidV4 } from "uuid";
 
 import { useHosts } from "@/hooks/useHosts";
@@ -103,6 +104,50 @@ export function useTerminalsAtomWithApi() {
     },
   );
 
+  const handleDisconnect = useMemoizedFn(
+    (uuid: string, event: SSHSessionDisconnectEvent) => {
+      const current = stateRef.current.get(uuid);
+      if (!current) {
+        return;
+      }
+
+      // User-initiated disconnects never reach here: session_disconnect removes
+      // the backend session before russh fires its callback, so no event is
+      // sent. Anything that arrives here is therefore an unexpected disconnect.
+      const reason = event.data;
+
+      if (current.status !== "success") {
+        // Disconnect during the connect/auth phase (e.g. the server drops the
+        // connection after auth fails with no remaining methods). Keep the tab
+        // so the error UI stays visible, and reset any not-yet-authenticated
+        // hop to "connecting" so the next retry reconnects from scratch, since
+        // the backend session has already been removed.
+        updateTerminal({
+          ...current,
+          jumpHostChain: current.jumpHostChain.map((it) =>
+            it.status === "authenticated"
+              ? it
+              : { ...it, status: "connecting" },
+          ),
+        });
+        return;
+      }
+
+      // A fully established session dropped unexpectedly.
+      if (reason.type === "error") {
+        // Network/protocol error (TCP drop, timeout). This is the case we want
+        // to auto-reconnect in the future. For now, close the terminal as
+        // before.
+        deleteTerminal(uuid);
+        return;
+      }
+
+      // reason.type === "server": the server sent SSH_MSG_DISCONNECT
+      // (kicked, idle timeout, server restart). Close the terminal.
+      deleteTerminal(uuid);
+    },
+  );
+
   const addTerminalOfType = useMemoizedFn(
     (
       host: Host,
@@ -123,7 +168,7 @@ export function useTerminalsAtomWithApi() {
 
       const jumpHostChain = resolveJumpHostChain(host, {
         hostsMap,
-        onDisconnect: () => deleteTerminal(uuid),
+        onDisconnect: (event) => handleDisconnect(uuid, event),
       });
 
       const item: TerminalAtom = {

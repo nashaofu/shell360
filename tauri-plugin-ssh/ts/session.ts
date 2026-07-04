@@ -1,9 +1,13 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { v4 as uuidV4 } from "uuid";
 
+export type SSHSessionDisconnectReason =
+  | { type: "server" }
+  | { type: "error"; message: string };
+
 export type SSHSessionDisconnectEvent = {
   type: "disconnect";
-  data: string;
+  data: SSHSessionDisconnectReason;
 };
 
 export type SSHSessionOpts = {
@@ -28,6 +32,7 @@ export enum AuthenticationMethod {
   PublicKey = "PublicKey",
   Certificate = "Certificate",
   KeyboardInteractive = "KeyboardInteractive",
+  Agent = "Agent",
 }
 
 export type SSHSessionAuthenticatePasswordOpts = {
@@ -49,6 +54,10 @@ export type SSHSessionAuthenticateCertificateOpts = {
 export type SSHSessionAuthenticateKeyboardInteractiveOpts = {
   username: string;
   prompts?: string[];
+};
+
+export type SSHSessionAuthenticateAgentOpts = {
+  username: string;
 };
 
 export class SSHSession {
@@ -127,6 +136,16 @@ export class SSHSession {
       authenticationData: {
         authenticationMethod: AuthenticationMethod.KeyboardInteractive,
         prompts: opts.prompts,
+      },
+      sshSessionId: this.sshSessionId,
+    });
+  }
+
+  authenticate_agent(opts: SSHSessionAuthenticateAgentOpts): Promise<string> {
+    return invoke<string>("plugin:ssh|session_authenticate", {
+      username: opts.username,
+      authenticationData: {
+        authenticationMethod: AuthenticationMethod.Agent,
       },
       sshSessionId: this.sshSessionId,
     });

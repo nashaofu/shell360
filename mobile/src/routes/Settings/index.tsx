@@ -1,6 +1,5 @@
 import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
-import { useAtom } from "jotai";
 import {
   type CSSProperties,
   type ReactNode,
@@ -12,10 +11,10 @@ import {
   ArrowRightIcon,
   FileDownloadIcon,
   FileUploadIcon,
+  useAppearance,
   WarningCircleIcon,
 } from "shared";
 import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
-import { ThemeMode, themeModeAtom } from "@/atoms/theme.atom";
 import Page from "@/components/Page";
 import useExportData from "@/hooks/useExportData";
 import useImportData from "@/hooks/useImportData";
@@ -82,7 +81,7 @@ function IOSIAP() {
 }
 
 export default function Settings() {
-  const [themeMode, setThemeMode] = useAtom(themeModeAtom);
+  const [appearance, setAppearance] = useAppearance();
   const [version, setVersion] = useState<string>();
   const exportData = useExportData();
   const importData = useImportData();
@@ -175,18 +174,14 @@ export default function Settings() {
         >
           <Text size="2">Theme Mode</Text>
           <SegmentedControl.Root
-            value={themeMode}
-            onValueChange={(value) => setThemeMode(value as ThemeMode)}
+            value={appearance}
+            onValueChange={(value) =>
+              setAppearance(value as "inherit" | "light" | "dark")
+            }
           >
-            <SegmentedControl.Item value={ThemeMode.Auto}>
-              Auto
-            </SegmentedControl.Item>
-            <SegmentedControl.Item value={ThemeMode.Light}>
-              Light
-            </SegmentedControl.Item>
-            <SegmentedControl.Item value={ThemeMode.Dark}>
-              Dark
-            </SegmentedControl.Item>
+            <SegmentedControl.Item value="inherit">Auto</SegmentedControl.Item>
+            <SegmentedControl.Item value="light">Light</SegmentedControl.Item>
+            <SegmentedControl.Item value="dark">Dark</SegmentedControl.Item>
           </SegmentedControl.Root>
         </Flex>
         <SettingsActionRow

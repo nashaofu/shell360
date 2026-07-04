@@ -1,16 +1,13 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Heading, Spinner, Text } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
-import { useSetAtom } from "jotai";
 import { type KeyboardEvent, useCallback, useState } from "react";
-import { Loading, TextFieldPassword } from "shared";
+import { LockIcon, TextFieldPassword } from "shared";
 import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
-import { authAtom } from "@/atoms/auth.atom";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import styles from "./index.module.less";
 
-export default function UnlockVault() {
-  const setIsAuth = useSetAtom(authAtom);
+export default function Unlock() {
   const [password, setPassword] = useState("");
   const message = useMessage();
   const modal = useModal();
@@ -19,9 +16,6 @@ export default function UnlockVault() {
     () => loadCryptoByPassword({ password }),
     {
       manual: true,
-      onSuccess: () => {
-        setIsAuth(true);
-      },
       onError: () => {
         message.error({
           message: "Unlock failed, please confirm the password is correct",
@@ -76,32 +70,57 @@ export default function UnlockVault() {
   return (
     <div className={styles.root}>
       <div className={styles.panel}>
-        <Loading loading={loading} size={48}>
-          <h2 className={styles.title}>
-            Enter your password to unlock application data
-          </h2>
-          <div className={styles.passwordWrap}>
-            <TextFieldPassword
-              fullWidth
-              placeholder="Please enter the password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyUp={onEnter}
-            ></TextFieldPassword>
+        {loading && (
+          <div className={styles.overlay}>
+            <Spinner size="3" />
           </div>
-          <div className={styles.actions}>
-            <Button className={styles.actionButton} onClick={onUnlock}>
-              Unlock
-            </Button>
-            <Button
-              className={styles.actionButton}
-              color="red"
-              onClick={onReset}
-            >
-              Reset APP
-            </Button>
-          </div>
-        </Loading>
+        )}
+        <div className={styles.iconWrap}>
+          <LockIcon />
+        </div>
+        <Heading size="5" align="center" as="h2">
+          Application Locked
+        </Heading>
+        <Text
+          as="p"
+          size="2"
+          align="center"
+          color="gray"
+          className={styles.hint}
+        >
+          Enter your password to unlock
+        </Text>
+        <div className={styles.passwordWrap}>
+          <TextFieldPassword
+            fullWidth
+            placeholder="Please enter the password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyUp={onEnter}
+            disabled={loading}
+          />
+        </div>
+        <div className={styles.actions}>
+          <Button
+            className={styles.actionButton}
+            onClick={onUnlock}
+            disabled={loading}
+          >
+            {loadCryptoLoading && <Spinner />}
+            {loadCryptoLoading ? "Unlocking..." : "Unlock"}
+          </Button>
+        </div>
+        <div className={styles.resetWrap}>
+          <Button
+            variant="ghost"
+            color="gray"
+            size="1"
+            onClick={onReset}
+            disabled={loading}
+          >
+            Reset all data
+          </Button>
+        </div>
       </div>
     </div>
   );

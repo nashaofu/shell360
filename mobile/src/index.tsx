@@ -5,7 +5,7 @@ import { identify } from "shared";
 import "@radix-ui/themes/styles.css";
 import "./styles/index.less";
 
-import App from "./App";
+import App from "./app";
 
 identify();
 

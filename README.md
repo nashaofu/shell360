@@ -65,7 +65,8 @@ Join our [TestFlight](https://testflight.apple.com/join/teqJZCRm) Or [Google Pla
 
 ### 🔐 Secure Connection
 
-- Advanced SSH client with support for password, public key, and certificate authentication methods
+- Advanced SSH client with support for password, public key, certificate, SSH Agent, and keyboard-interactive authentication methods
+- Multi-factor authentication (MFA) support
 - Support for ED25519, RSA, and ECDSA SSH keys
 - Application data encryption for enhanced security
 - Support for jump host connection, convenient cross-server management

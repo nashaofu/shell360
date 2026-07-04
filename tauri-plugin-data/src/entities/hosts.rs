@@ -38,6 +38,10 @@ pub enum AuthenticationMethod {
   PublicKey,
   #[sea_orm(num_value = 2)]
   Certificate,
+  #[sea_orm(num_value = 3)]
+  Agent,
+  #[sea_orm(num_value = 4)]
+  KeyboardInteractive,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

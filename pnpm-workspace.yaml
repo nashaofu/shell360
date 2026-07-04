@@ -8,6 +8,3 @@ packages:
   - tauri-plugin-pty
 allowBuilds:
   core-js: true
-minimumReleaseAgeExclude:
-  - '@rsbuild/core@2.0.15'
-  - '@rstest/core@0.10.5'

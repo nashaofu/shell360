@@ -53,9 +53,11 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
     currentJumpHostChainItem,
     onReConnect,
     onReAuth,
+    onSubmitKeyboardInteractive,
     onRetry,
   } = useSftpConnection({
     item,
+    onClose,
     onSuccess: async (sftp) => {
       const dirname = await sftp.sftpCanonicalize(".");
       setDirname(dirname);
@@ -476,6 +478,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
           }}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
+          onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
           onRetry={onRetry}
           onClose={onClose}
           onOpenAddKey={onOpenAddKey}

@@ -2,22 +2,34 @@ import { Portal } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { SettingsIcon } from "shared";
+import { WorkspaceIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
+import {
+  useSetTerminalActiveId,
+  useSetTerminalViewVisible,
+} from "@/atoms/terminalView.atom";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 import logo from "./logo.svg";
 import Menus from "./Menus";
-import Terminals from "./Terminals";
 
 export default function Sidebar() {
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
   const navigate = useNavigate();
+  const setActiveTerminalId = useSetTerminalActiveId();
+  const setTerminalViewVisible = useSetTerminalViewVisible();
 
-  const goSettings = useCallback(() => {
-    navigate("/settings", { replace: true });
+  const goWorkspace = useCallback(() => {
+    setActiveTerminalId(null);
+    setTerminalViewVisible(false);
+    navigate("/", { replace: true });
     globalStateAtomWithApi.closeSidebar();
-  }, [globalStateAtomWithApi, navigate]);
+  }, [
+    globalStateAtomWithApi,
+    navigate,
+    setActiveTerminalId,
+    setTerminalViewVisible,
+  ]);
 
   useEffect(() => {
     if (globalStateAtomWithApi.isOpenSidebar) {
@@ -48,24 +60,20 @@ export default function Sidebar() {
             <img className={styles.avatar} src={logo} alt="logo" />
             <span className={styles.logoText}>Shell360</span>
           </div>
-          <button
-            type="button"
-            className={styles.settingsBtn}
-            onClick={goSettings}
-          >
-            <SettingsIcon />
-          </button>
         </div>
+
+        <button
+          type="button"
+          className={styles.workspaceBtn}
+          onClick={goWorkspace}
+        >
+          <WorkspaceIcon className={styles.workspaceIcon} />
+          <span className={styles.workspaceText}>Workspace</span>
+        </button>
 
         <hr className={styles.divider} />
 
         <Menus onClick={globalStateAtomWithApi.closeSidebar} />
-
-        <hr className={styles.divider} />
-
-        <div className={styles.scrollArea}>
-          <Terminals onClick={globalStateAtomWithApi.closeSidebar} />
-        </div>
       </div>
     </Portal>
   );
