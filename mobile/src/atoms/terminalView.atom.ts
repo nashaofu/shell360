@@ -1,5 +1,4 @@
 import { atom, useAtom, useSetAtom } from "jotai";
-import { useCallback } from "react";
 
 export const terminalActiveIdAtom = atom<string | null>(null);
 export const terminalViewVisibleAtom = atom(false);
