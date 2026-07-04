@@ -22,7 +22,7 @@ import {
 } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import PageDrawer from "@/components/PageDrawer";
-import useActivateTerminal from "@/hooks/useActivateTerminal";
+import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 
 type AddHostProps = {
   open?: boolean;

@@ -21,7 +21,7 @@ import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
-import useActivateTerminal from "@/hooks/useActivateTerminal";
+import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 
