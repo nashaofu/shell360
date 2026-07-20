@@ -300,10 +300,62 @@ async fn connect_ssh_agent() -> Result<
   AgentClient<Box<dyn russh::keys::agent::client::AgentStream + Send + Unpin>>,
   AuthenticationError,
 > {
-  let agent = AgentClient::connect_env()
-    .await
-    .map_err(|_| AuthenticationError::AgentConnectFailed)?;
-  Ok(agent.dynamic())
+  // Try SSH_AUTH_SOCK first
+  if let Ok(agent) = AgentClient::connect_env().await {
+    log::debug!("connected to ssh agent via SSH_AUTH_SOCK");
+    return Ok(agent.dynamic());
+  }
+
+  // Fallback: scan common agent socket paths
+  let candidates = glob_agent_sockets().await;
+  for path in &candidates {
+    log::debug!("trying agent socket: {:?}", path);
+    if let Ok(agent) = AgentClient::connect_uds(path.as_os_str()).await {
+      return Ok(agent.dynamic());
+    }
+  }
+
+  Err(AuthenticationError::AgentConnectFailed)
+}
+
+#[cfg(unix)]
+async fn glob_agent_sockets() -> Vec<std::path::PathBuf> {
+  let mut paths = Vec::new();
+
+  // /tmp/ssh-*/agent.* (standard ssh-agent)
+  if let Ok(mut entries) = tokio::fs::read_dir("/tmp").await {
+    let mut tasks = Vec::new();
+    while let Ok(Some(entry)) = entries.next_entry().await {
+      let name = entry.file_name();
+      let name = name.to_string_lossy();
+      if name.starts_with("ssh-") {
+        tasks.push(entry.path());
+      }
+    }
+    for dir in tasks {
+      if let Ok(mut sub) = tokio::fs::read_dir(&dir).await {
+        while let Ok(Some(entry)) = sub.next_entry().await {
+          let fname = entry.file_name();
+          let fname = fname.to_string_lossy();
+          if fname.starts_with("agent.") {
+            paths.push(entry.path());
+          }
+        }
+      }
+    }
+  }
+
+  // /run/user/*/keyring/ssh (gnome-keyring / ssh-agent)
+  if let Ok(mut entries) = tokio::fs::read_dir("/run/user").await {
+    while let Ok(Some(entry)) = entries.next_entry().await {
+      let keyring = entry.path().join("keyring/ssh");
+      if tokio::fs::try_exists(&keyring).await.unwrap_or(false) {
+        paths.push(keyring);
+      }
+    }
+  }
+
+  paths
 }
 
 #[cfg(windows)]
