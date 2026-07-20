@@ -36,6 +36,21 @@
   font-size: 11px;
 }
 
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gray-8);
+
+  &[data-status="active"] {
+    background: var(--green-9);
+  }
+
+  &[data-status="failed"] {
+    background: var(--red-9);
+  }
+}
+
 .statusRunning {
   color: var(--green-11);
 }
@@ -187,4 +202,26 @@
   .grid {
     grid-template-columns: 1fr;
   }
+}
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+
+.toolbarPrimaryButton {
+  height: 28px;
+  padding-inline: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  background: color-mix(in srgb, var(--accent-9) 15%, transparent);
+  color: var(--accent-11);
+  font-size: 11px;
 }

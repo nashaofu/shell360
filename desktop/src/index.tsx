@@ -1,3 +1,4 @@
+import { installBridgeBackend } from "bridge/runtime";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { identify } from "shared";
@@ -6,10 +7,14 @@ import "./styles/index.css";
 
 import App from "./app";
 
-identify();
+async function main() {
+  await installBridgeBackend();
+  void identify();
+  createRoot(document.getElementById("root") as HTMLElement).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+void main();

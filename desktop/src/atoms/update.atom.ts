@@ -1,5 +1,5 @@
-import { relaunch } from "@tauri-apps/plugin-process";
-import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "bridge/process";
+import { check, type Update } from "bridge/updater";
 import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -187,7 +187,7 @@ export function useUpdateAtom() {
   const install = useCallback(() => {
     const update = store.get(updateAtom).update;
     update?.install().finally(() => {
-      if (import.meta.env.TAURI_ENV_PLATFORM === "darwin") {
+      if (import.meta.env.ENV_PLATFORM === "darwin") {
         relaunch();
       }
     });

@@ -1,0 +1,142 @@
+.group + .group {
+  margin-top: 20px;
+}
+
+.headerAction {
+  width: 40px;
+  height: 40px;
+}
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--mobile-text-muted);
+
+  svg {
+    font-size: 14px;
+  }
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.swipeRow {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.deleteAction {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: var(--mobile-status-error);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  svg {
+    font-size: 15px;
+  }
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 0 12px;
+  border: none;
+  background: var(--mobile-bg-surface);
+  border-radius: 10px;
+  text-align: left;
+  color: var(--mobile-text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.12s ease,
+    transform 0.2s ease;
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+
+  &.active {
+    background: var(--mobile-accent-soft);
+    color: var(--mobile-accent-text);
+  }
+
+  &.revealed {
+    transform: translateX(-88px);
+  }
+}
+
+.statusDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mobile-status-offline);
+
+  &.pending {
+    background: var(--mobile-status-warning);
+  }
+
+  &.success {
+    background: var(--mobile-status-success);
+  }
+
+  &.failed {
+    background: var(--mobile-status-error);
+  }
+}
+
+.itemMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemName {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemSub {
+  font-size: 12px;
+  color: var(--mobile-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--mobile-accent);
+}

@@ -1,18 +1,26 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Callout, IconButton } from "@radix-ui/themes";
+import { hasCapability } from "bridge/capabilities";
+import type { PortForwarding } from "bridge/data";
 import { useCallback, useMemo, useState } from "react";
-import { AddIcon, useHosts, usePortForwardings } from "shared";
-import type { PortForwarding } from "tauri-plugin-data";
+import {
+  AddIcon,
+  useHosts,
+  usePortForwardings,
+  usePortForwardingsAtomWithApi,
+} from "shared";
 import AddKey from "@/components/AddKey";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import Page from "@/components/Page";
-
+import SearchToolbar from "@/components/SearchToolbar";
 import AddPortForwarding from "./AddPortForwarding";
+import styles from "./index.module.less";
 import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
+  const canStartPortForwarding = hasCapability("portForwarding");
   const { data: hosts } = useHosts();
   const { data: portForwardings } = usePortForwardings();
+  const portForwardingsAtomWithApi = usePortForwardingsAtomWithApi();
 
   const [keyword, setKeyword] = useState("");
   const [isOpenAddPortForwarding, setIsOpenAddPortForwarding] = useState(false);
@@ -43,6 +51,20 @@ export default function PortForwardings() {
     });
   }, [hostsMap, keyword, portForwardings]);
 
+  const { activeItems, inactiveItems } = useMemo(() => {
+    const active: PortForwarding[] = [];
+    const inactive: PortForwarding[] = [];
+    filteredItems.forEach((item) => {
+      const atom = portForwardingsAtomWithApi.state.get(item.id);
+      if (atom) {
+        active.push(item);
+      } else {
+        inactive.push(item);
+      }
+    });
+    return { activeItems: active, inactiveItems: inactive };
+  }, [filteredItems, portForwardingsAtomWithApi.state]);
+
   const onAddPortForwardingClose = useCallback(() => {
     setIsOpenAddPortForwarding(false);
     setEditItem(undefined);
@@ -53,43 +75,12 @@ export default function PortForwardings() {
     setIsOpenAddPortForwarding(true);
   }, []);
 
-  return (
-    <Page title="Tunnels">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
-          <input
-            className="rt-reset rt-TextFieldInput"
-            value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
-        <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-          <AddIcon />
-          Add
-        </Button>
-      </div>
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-          mt: 2,
-        }}
-        itemWidth={360}
-      >
-        {filteredItems.map((item) => (
+  const renderGroup = (label: string, items: PortForwarding[]) => {
+    if (!items.length) return null;
+    return (
+      <div className={styles.tunnelGroup}>
+        <h2 className={styles.tunnelGroupLabel}>{label}</h2>
+        {items.map((item) => (
           <PortForwardingItem
             key={item.id}
             item={item}
@@ -98,7 +89,43 @@ export default function PortForwardings() {
             onOpenAddKey={() => setAddKeyOpen(true)}
           />
         ))}
-      </AutoRepeatGrid>
+      </div>
+    );
+  };
+
+  return (
+    <Page
+      title="Tunnels"
+      headerRight={
+        <IconButton
+          type="button"
+          size="3"
+          variant="ghost"
+          className={styles.headerAction}
+          onClick={() => setIsOpenAddPortForwarding(true)}
+          aria-label="New Tunnel"
+        >
+          <AddIcon />
+        </IconButton>
+      }
+    >
+      {!canStartPortForwarding && (
+        <Callout.Root color="gray" style={{ margin: "12px 0" }}>
+          <Callout.Text>
+            Tunnels can be configured here, but starting them is not available
+            on this platform yet.
+          </Callout.Text>
+        </Callout.Root>
+      )}
+      <SearchToolbar
+        value={keyword}
+        placeholder="Search tunnels"
+        onChange={setKeyword}
+      />
+
+      {renderGroup("Active", activeItems)}
+      {renderGroup("Inactive", inactiveItems)}
+
       {!filteredItems.length && (
         <Empty
           desc={
@@ -107,8 +134,14 @@ export default function PortForwardings() {
               : "There is no tunnel yet, add it now."
           }
         >
-          <Button onClick={() => setIsOpenAddPortForwarding(true)}>
-            Add tunnel
+          <Button
+            type="button"
+            size="3"
+            className={styles.emptyPrimary}
+            onClick={() => setIsOpenAddPortForwarding(true)}
+          >
+            <AddIcon />
+            New tunnel
           </Button>
         </Empty>
       )}

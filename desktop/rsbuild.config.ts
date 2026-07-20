@@ -16,7 +16,7 @@ export default defineConfig({
   ],
   source: {
     define: {
-      "import.meta.env.TAURI_ENV_PLATFORM": JSON.stringify(
+      "import.meta.env.ENV_PLATFORM": JSON.stringify(
         process.env.TAURI_ENV_PLATFORM,
       ),
     },
@@ -24,7 +24,7 @@ export default defineConfig({
   html: {
     template: "./index.html",
     templateParameters: {
-      TAURI_ENV_PLATFORM: process.env.TAURI_ENV_PLATFORM,
+      ENV_PLATFORM: process.env.TAURI_ENV_PLATFORM,
     },
   },
   server: {

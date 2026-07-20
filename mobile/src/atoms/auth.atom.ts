@@ -1,5 +1,5 @@
+import { checkIsAuthed, onAuthedChange } from "bridge/data";
 import { atom } from "jotai";
-import { checkIsAuthed, onAuthedChange } from "tauri-plugin-data";
 
 export const authAtom = atom<boolean>();
 

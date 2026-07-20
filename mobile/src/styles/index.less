@@ -44,4 +44,58 @@ body {
     sans-serif;
 }
 
+/* ==========================================================================
+   Mobile semantic design tokens (mobile-ui-design-spec.md §12)
+   Scoped under .light / .dark classes applied by Radix Theme.
+   ========================================================================== */
 
+:root,
+.light {
+  --mobile-bg-page: #f5f7f5;
+  --mobile-bg-frame: #edf1ee;
+  --mobile-bg-surface: #ffffff;
+  --mobile-bg-subtle: #f0f3f1;
+  --mobile-bg-pressed: #e6ebe8;
+  --mobile-border-subtle: #e0e5e2;
+  --mobile-border-strong: #cdd5d0;
+  --mobile-text-primary: #17201b;
+  --mobile-text-secondary: #5f6b63;
+  --mobile-text-muted: #89938d;
+  --mobile-accent: #2f9e68;
+  --mobile-accent-hover: #278858;
+  --mobile-accent-soft: #edf8f1;
+  --mobile-accent-border: #68bd8d;
+  --mobile-accent-text: #237a4e;
+}
+
+.dark {
+  --mobile-bg-page: #121613;
+  --mobile-bg-frame: #191e1b;
+  --mobile-bg-surface: #1c221e;
+  --mobile-bg-subtle: #232a25;
+  --mobile-bg-pressed: #2a332c;
+  --mobile-border-subtle: #29322c;
+  --mobile-border-strong: #374239;
+  --mobile-text-primary: #edf3ef;
+  --mobile-text-secondary: #aab5ae;
+  --mobile-text-muted: #748078;
+  --mobile-accent: #62c894;
+  --mobile-accent-hover: #79d6a5;
+  --mobile-accent-soft: #1d3326;
+  --mobile-accent-border: #4b9f70;
+  --mobile-accent-text: #9be0b8;
+}
+
+/* Status colors must always be paired with text/icon, not color alone. */
+:root {
+  --mobile-accent: #2f9e68;
+  --mobile-accent-hover: #278858;
+  --mobile-accent-soft: #edf8f1;
+  --mobile-accent-border: #68bd8d;
+  --mobile-accent-text: #237a4e;
+  --mobile-status-success: var(--green-9);
+  --mobile-status-warning: var(--amber-9);
+  --mobile-status-error: var(--red-9);
+  --mobile-status-info: var(--blue-9);
+  --mobile-status-offline: var(--gray-9);
+}

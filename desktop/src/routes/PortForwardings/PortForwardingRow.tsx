@@ -1,4 +1,4 @@
-import type { Host, PortForwarding } from "tauri-plugin-data";
+import type { Host, PortForwarding } from "bridge/data";
 import styles from "./index.module.less";
 import PortForwardingActions from "./PortForwardingActions";
 import {

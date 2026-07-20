@@ -1,206 +1,254 @@
+import { Button, DropdownMenu } from "@radix-ui/themes";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  type AddPanelOptions,
-  type DockviewApi,
-  DockviewReact,
-  type DockviewReadyEvent,
-} from "dockview-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import "dockview-react/dist/styles/dockview.css";
-import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
+  ArrowDownIcon,
+  HostIcon,
+  MenuIcon,
+  MoreIcon,
+  useTerminalsAtomValue,
+  useTerminalsAtomWithApi,
+} from "shared";
+import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
+import { useSftpDirValue } from "@/atoms/sftpDir.atom";
 import {
   useTerminalActiveId,
   useTerminalViewVisible,
 } from "@/atoms/terminalView.atom";
 import AddKey from "@/components/AddKey";
-import TerminalPanel from "@/components/TerminalPanel";
+import SftpBrowser from "@/components/SftpBrowser";
+import SSHTerminal from "@/components/SSHTerminal";
+import WorkspaceSessionSheet from "@/components/WorkspaceSessionSheet";
+import useMediaQuery from "@/hooks/useMediaQuery";
+import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
-import Tab from "./Tab";
 
-const PANEL_MIN_WIDTH = 220;
-const PANEL_MIN_HEIGHT = 120;
-
-type PanelParams = {
-  terminalId: string;
-  onOpenAddKey: () => void;
-  type?: string;
-};
-
-function getAddPanelOptions(
-  api: DockviewApi,
-  id: string,
-  title: string,
-  inactive: boolean,
-  params: PanelParams,
-): AddPanelOptions<PanelParams> {
-  return {
-    id,
-    title,
-    inactive,
-    component: "terminal",
-    params,
-    position: {
-      referenceGroup: api.activeGroup as NonNullable<typeof api.activeGroup>,
-      direction: "within" as const,
-    },
-    minimumWidth: PANEL_MIN_WIDTH,
-    minimumHeight: PANEL_MIN_HEIGHT,
-  };
+function simplifyPath(path: string): string {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length <= 2) {
+    return path;
+  }
+  const tail = segments.slice(-2).join("/");
+  return `…/${tail}`;
 }
 
-const components = {
-  terminal: TerminalPanel,
-};
-
 export default function Workspace() {
-  const terminalsState = useTerminalsAtomValue();
+  const terminals = useTerminalsAtomValue();
   const terminalsApi = useTerminalsAtomWithApi();
   const [visible, setVisible] = useTerminalViewVisible();
   const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const [openAddKey, setOpenAddKey] = useState(false);
-  const apiRef = useRef<DockviewApi | null>(null);
-  const disposablesRef = useRef<Array<{ dispose(): void }>>([]);
-  const addedIdsRef = useRef<Set<string>>(new Set());
-  const syncingRef = useRef<Set<string>>(new Set());
-  const terminalsRef = useRef(terminalsState);
-  terminalsRef.current = terminalsState;
-  const activeIdRef = useRef(activeTerminalId);
-  activeIdRef.current = activeTerminalId;
+  const [openSessionSheet, setOpenSessionSheet] = useState(false);
+  const { openSidebar, toggleSidebar } = useGlobalStateAtomWithApi();
+  const isTablet = useMediaQuery("(min-width: 840px)");
+  const navigate = useNavigate();
+  const terminalItems = useMemo(() => [...terminals.values()], [terminals]);
+  const activeTerminal = activeTerminalId
+    ? terminals.get(activeTerminalId)
+    : undefined;
+  const sftpDir = useSftpDirValue(activeTerminalId ?? undefined);
 
-  const openAddKeyModal = useCallback(() => setOpenAddKey(true), []);
-  const closeAddKeyModal = useCallback(() => setOpenAddKey(false), []);
+  const hideWorkspace = useCallback(() => {
+    setVisible(false);
+  }, [setVisible]);
 
-  const onReady = useCallback(
-    (event: DockviewReadyEvent) => {
-      const { api } = event;
+  const closeSessionSheet = useCallback(() => setOpenSessionSheet(false), []);
 
-      for (const d of disposablesRef.current) {
-        d.dispose();
-      }
-      apiRef.current = api;
+  const closeTerminal = useCallback(
+    (terminalId: string) => {
+      const [, remaining] = terminalsApi.delete(terminalId);
 
-      const disposables: Array<{ dispose(): void }> = [];
+      if (terminalId !== activeTerminalId) return;
 
-      for (const [uuid, term] of terminalsRef.current) {
-        api.addPanel(
-          getAddPanelOptions(
-            api,
-            uuid,
-            term.name,
-            uuid !== activeIdRef.current,
-            {
-              terminalId: uuid,
-              onOpenAddKey: openAddKeyModal,
-              type: term.type,
-            },
-          ),
-        );
-        addedIdsRef.current.add(uuid);
-      }
-
-      disposables.push(
-        api.onDidActivePanelChange((panel) => {
-          if (panel) setActiveTerminalId(panel.id);
-        }),
-      );
-
-      disposables.push(
-        api.onDidRemovePanel((panel) => {
-          const id = panel.id;
-          const synced = syncingRef.current.has(id);
-          syncingRef.current.delete(id);
-          addedIdsRef.current.delete(id);
-          if (!synced) terminalsApi.delete(id);
-        }),
-      );
-
-      disposablesRef.current = disposables;
+      const nextTerminal = remaining.values().next().value;
+      setActiveTerminalId(nextTerminal?.uuid ?? null);
+      if (!nextTerminal) setVisible(false);
     },
-    [setActiveTerminalId, terminalsApi, openAddKeyModal],
+    [activeTerminalId, setActiveTerminalId, setVisible, terminalsApi],
   );
 
-  useEffect(() => {
-    return () => {
-      for (const d of disposablesRef.current) {
-        d.dispose();
-      }
-      apiRef.current = null;
-      addedIdsRef.current.clear();
-      syncingRef.current.clear();
-      disposablesRef.current = [];
-    };
-  }, []);
+  const sessionSubtitle = useMemo(() => {
+    if (!activeTerminal) return "";
+    if (activeTerminal.type === "sftp") {
+      const dir =
+        sftpDir || activeTerminal.host.hostname || activeTerminal.name;
+      return `SFTP · ${simplifyPath(dir)}`;
+    }
+    const state =
+      activeTerminal.status === "pending"
+        ? "Connecting"
+        : activeTerminal.status === "failed"
+          ? "Failed"
+          : "Connected";
+    return `Terminal · ${state}`;
+  }, [activeTerminal, sftpDir]);
 
   useEffect(() => {
-    if (terminalsState.size === 0) setVisible(false);
-  }, [terminalsState, setVisible]);
-
-  useEffect(() => {
-    if (!activeTerminalId || !terminalsState.has(activeTerminalId)) {
-      const first = terminalsState.values().next().value;
-      setActiveTerminalId(first?.uuid ?? null);
+    if (!terminalItems.length) {
+      setActiveTerminalId(null);
+      setOpenSessionSheet(false);
       return;
     }
-    apiRef.current?.getPanel(activeTerminalId)?.api.setActive();
-  }, [terminalsState, activeTerminalId, setActiveTerminalId]);
+
+    if (!activeTerminal) {
+      setActiveTerminalId(terminalItems[0].uuid);
+    }
+  }, [activeTerminal, setActiveTerminalId, terminalItems]);
 
   useEffect(() => {
-    const api = apiRef.current;
-    if (!api) return;
+    if (openSessionSheet) {
+      overlay.add(closeSessionSheet);
+    } else {
+      overlay.delete(closeSessionSheet);
+    }
+  }, [closeSessionSheet, openSessionSheet]);
 
-    const currentIds = new Set(terminalsState.keys());
-    const addedIds = addedIdsRef.current;
-
-    for (const id of [...addedIds]) {
-      if (!currentIds.has(id)) {
-        const panel = api.getPanel(id);
-        if (panel) {
-          syncingRef.current.add(id);
-          panel.api.close();
-        } else {
-          addedIds.delete(id);
-        }
-      }
+  useEffect(() => {
+    if (visible) {
+      overlay.add(hideWorkspace);
+    } else {
+      overlay.delete(hideWorkspace);
     }
 
-    for (const [id, term] of terminalsState) {
-      if (!addedIds.has(id)) {
-        api.addPanel(
-          getAddPanelOptions(api, id, term.name, false, {
-            terminalId: id,
-            onOpenAddKey: openAddKeyModal,
-            type: term.type,
-          }),
-        );
-        addedIds.add(id);
-        continue;
-      }
-      const panel = api.getPanel(id);
-      if (panel?.title !== term.name) panel?.api.setTitle(term.name);
-    }
-  }, [terminalsState, openAddKeyModal]);
+    return () => overlay.delete(hideWorkspace);
+  }, [hideWorkspace, visible]);
+
+  const isEmpty = !terminalItems.length;
 
   return (
     <div
       className={`${styles.root} ${visible ? styles.visible : styles.hidden}`}
+      aria-hidden={!visible}
     >
-      <DockviewReact
-        components={components}
-        defaultTabComponent={Tab}
-        onReady={onReady}
-        className={styles.dockview}
-        watermarkComponent={() => (
-          <div className={styles.watermark}>
-            <span>No terminals open</span>
+      <header className={styles.header}>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => (isTablet ? toggleSidebar() : openSidebar())}
+          aria-label="Open menu"
+        >
+          <MenuIcon />
+        </button>
+
+        <button
+          type="button"
+          className={`${styles.sessionButton}${isEmpty ? ` ${styles.sessionBtnEmpty}` : ""}`}
+          onClick={() => {
+            if (!isEmpty) setOpenSessionSheet(true);
+          }}
+          aria-label={isEmpty ? "Workspace" : "Switch session"}
+        >
+          <span className={styles.titleRow}>
+            <span className={styles.sessionName}>
+              {activeTerminal?.name ?? "Workspace"}
+            </span>
+            {!isEmpty && (
+              <ArrowDownIcon className={styles.chevron} aria-hidden="true" />
+            )}
+          </span>
+          {sessionSubtitle && (
+            <span className={styles.sessionSub}>{sessionSubtitle}</span>
+          )}
+        </button>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label="Session actions"
+              disabled={isEmpty}
+            >
+              <MoreIcon />
+            </button>
+          </DropdownMenu.Trigger>
+          {!isEmpty && (
+            <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+              <DropdownMenu.Item
+                onSelect={() => {
+                  if (activeTerminalId) closeTerminal(activeTerminalId);
+                }}
+              >
+                Close session
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          )}
+        </DropdownMenu.Root>
+      </header>
+
+      {isEmpty ? (
+        <main className={styles.emptyState}>
+          <div className={styles.emptyIcon}>
+            <HostIcon aria-hidden="true" />
           </div>
-        )}
-        disableFloatingGroups
-        singleTabMode="default"
-        dndStrategy="pointer"
-      />
+          <h2 className={styles.emptyTitle}>No active sessions</h2>
+          <p className={styles.emptyDesc}>Open a host terminal to begin.</p>
+          <div className={styles.emptyActions}>
+            <Button
+              type="button"
+              size="3"
+              className={styles.emptyPrimary}
+              onClick={() => {
+                setVisible(false);
+                navigate("/");
+              }}
+            >
+              Browse Hosts
+            </Button>
+          </div>
+        </main>
+      ) : (
+        <main className={styles.content}>
+          {terminalItems.map((item) => {
+            const active = item.uuid === activeTerminalId;
+
+            return (
+              <div
+                key={item.uuid}
+                className={`${styles.session} ${active ? styles.sessionActive : ""}`}
+                aria-hidden={!active}
+              >
+                {item.type === "sftp" ? (
+                  <div className={styles.sftpSession}>
+                    <SftpBrowser
+                      item={item}
+                      loadingClassName={styles.sftpLoadingSquare}
+                      onClose={() => closeTerminal(item.uuid)}
+                      onOpenAddKey={() => setOpenAddKey(true)}
+                    />
+                  </div>
+                ) : (
+                  <SSHTerminal
+                    item={item}
+                    style={{ width: "100%", height: "100%" }}
+                    onClose={() => closeTerminal(item.uuid)}
+                    onOpenAddKey={() => setOpenAddKey(true)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </main>
+      )}
+
+      {!isEmpty && (
+        <WorkspaceSessionSheet
+          open={openSessionSheet}
+          onClose={() => setOpenSessionSheet(false)}
+          sessions={terminalItems}
+          activeId={activeTerminalId}
+          onSelect={(id) => {
+            setActiveTerminalId(id);
+            setOpenSessionSheet(false);
+          }}
+          onCloseSession={(id) => closeTerminal(id)}
+        />
+      )}
+
       <AddKey
         open={openAddKey}
-        onCancel={closeAddKeyModal}
-        onOk={closeAddKeyModal}
+        onCancel={() => setOpenAddKey(false)}
+        onOk={() => setOpenAddKey(false)}
       />
     </div>
   );

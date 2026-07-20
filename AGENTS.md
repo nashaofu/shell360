@@ -6,18 +6,18 @@ A cross-platform SSH and SFTP client built with Tauri, React, and TypeScript. Su
 
 ```
 shell360/
+├── android/              # Native Android WebView host (Compose + Gradle)
+├── crates/               # Rust libraries, UniFFI boundary, and Tauri plugins
 ├── desktop/              # Tauri desktop app (React + Rsbuild)
 ├── mobile/               # Mobile app (React + Rsbuild)
-├── shared/               # Shared components, hooks, atoms, utils (rslib → ESM)
+├── packages/             # Shared JS packages (bridge, jsb, shared; rslib → ESM)
 ├── src-tauri/            # Tauri Rust backend (lib.rs, command.rs, error.rs)
-├── tauri-plugin-pty/     # Local PTY shell plugin (Rust src/ + TS ts/)
-├── tauri-plugin-ssh/     # SSH plugin (Rust src/ + TS ts/)
-├── tauri-plugin-data/    # Encrypted storage + database plugin
-├── tauri-plugin-mobile/  # Mobile-specific plugin
 └── resources/            # Static assets
 ```
 
-This is a **pnpm workspace** monorepo. Packages: `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-mobile`, `tauri-plugin-pty`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
+The Tauri plugin packages live in `crates/tauri-plugin-ssh`, `crates/tauri-plugin-data`, and `crates/tauri-plugin-pty`; each contains Rust `src/` and TypeScript `ts/` code.
+
+This is a **pnpm workspace** monorepo. Packages: `bridge`, `jsb`, and `shared` under `packages/`; `desktop` and `mobile` at the root; and `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-pty` under `crates/`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
 
 ## Commands
 
@@ -45,13 +45,33 @@ pnpm run build
 
 # Tauri build
 pnpm tauri build
+
+# Native Android (requires Android SDK/NDK, JAVA_HOME, and Rust Android targets)
+# rustup target add aarch64-linux-android x86_64-linux-android
+# Set ANDROID_HOME to an existing SDK directory; adb does not need to be in PATH.
+# Install the NDK version configured by shell360NativeBuild in the Android SDK.
+# android:dev accepts --host and --port. Host defaults to this machine's LAN IPv4
+# address and port defaults to 1421; devices must share the network.
+pnpm run android:dev      # select device, start dev server, install and launch
+pnpm run android:build    # release APK
+
+# iOS (macOS + Xcode)
+# ios:dev accepts --device (simulator name or UDID) and --port (dev server port,
+# defaults to 1421). The dev server port is passed to the app via the
+# SHELL360_WEBVIEW_URL launch environment variable.
+pnpm run ios:dev           # select/boot simulator, start mobile dev server, build and launch
+pnpm run ios:build         # create a Release device archive; signs when iOS signing env vars are set
+pnpm run ios:build-native --platform iphonesimulator --configuration Debug --archs arm64
 ```
+
+Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared paths and environment variables; `adb.ts`, `devices.ts`, and `emulator.ts` handle device discovery and startup; `gradle.ts` runs the wrapper; `commands.ts` coordinates build and development lifecycles; and `index.ts` provides the CLI.
 
 ## Agent Workflow
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
-  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-mobile/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat`; `ANDROID_HOME` must point to an existing SDK directory containing the NDK version configured by `shell360NativeBuild`.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.
@@ -71,10 +91,17 @@ pnpm tauri build
 
 ## Frontend ↔ Backend Communication
 
-- Frontend calls Rust via Tauri `invoke`.
+- Frontend business code imports backend APIs and models from capability subpaths. Tauri APIs mirror their package/module suffixes, such as `bridge/fs`, `bridge/dialog`, `bridge/window`, `bridge/store`, and `bridge/updater`. Project domains use `bridge/data`, `bridge/ssh`, and `bridge/pty`; custom Rust commands use `bridge/core`.
+- `desktop/src/index.tsx` installs the Tauri backend. `mobile/src/index.tsx` selects `bridge/native` when hosted by the native Android WebView and otherwise installs `bridge/tauri`.
+- Backend-neutral contracts and facade classes live in `packages/bridge/src/`; Tauri-specific calls live only in `packages/bridge/src/tauri.ts` and the low-level `tauri-plugin-*` packages.
+- A different backend can implement `BridgeBackend` and be installed with `setBridgeBackend()` without changing `shared`, `desktop`, or `mobile` business code.
 - Backend exposes async functions marked `#[tauri::command]`.
 - Plugin TS wrappers (in each plugin's `ts/` folder) wrap `invoke` from `@tauri-apps/api/core` using namespaced command IDs like `plugin:ssh|shell_open`, `plugin:ssh|sftp_read_dir`. App code calls these wrappers, **not** `invoke` directly.
 - Long-lived connections (SSH shell, SFTP streams) use `Channel` for streaming.
+- The top-level `android/` project is the native Android host. Do not modify generated `src-tauri/gen/android` while the migration is in progress.
+- The Android WebView bridge uses `WebViewBuilder` with `RestrictionAllowlist` to inject `window.__JSB__` only for the configured origin. Require `WEBVIEW_BUILDER_EXPERIMENTAL_V1`, `CREATE_WEB_MESSAGE_CHANNEL`, and `POST_WEB_MESSAGE`, and show a diagnosable UI when the installed WebView provider lacks them. Keep external navigation on an explicit scheme allowlist and handle missing or rejected activities without crashing the host.
+- The iOS document-start adapter keeps JSB control messages as strings through `WKScriptMessageHandler`. Independent Channel binary data uses raw request bodies and responses through the `shell360-binary` `WKURLSchemeHandler`; Native-to-JS delivery is a readiness callback followed by a JS GET drain. Keep this transport confined to `ios/`: do not change `packages/jsb`, the Rust interfaces, or mix binary payloads into the public JSON invoke protocol.
+- The iOS Release WebView loads bundled `WebAssets` through the separate `shell360-app://localhost/` `WKURLSchemeHandler`, so root-relative frontend assets resolve inside the app bundle. Keep its path traversal checks and MIME responses separate from `shell360-binary`.
 
 ## Conventions
 
@@ -87,7 +114,7 @@ pnpm tauri build
 
 ### Components
 
-- Shared components go in `shared/src/components/`
+- Shared components go in `packages/shared/src/components/`
 - Desktop-specific components go in `desktop/src/components/`
 - Folder-per-component: `index.tsx` + colocated `index.module.less`
 - Use Radix Themes components where possible
@@ -95,7 +122,7 @@ pnpm tauri build
 ### State Management
 
 - Global state via Jotai atoms; file-per-domain named `*.atom.ts`
-  - Shared: `shared/src/atoms/` (e.g. `session.atom.ts`, `portForwardings.atom.ts`, `appearance.atom.ts`)
+  - Shared: `packages/shared/src/atoms/` (e.g. `session.atom.ts`, `portForwardings.atom.ts`, `appearance.atom.ts`)
   - Desktop: `desktop/src/atoms/` (e.g. `auth.atom.ts`, `crypto.atom.ts`, `modals.atom.ts`)
 - Pattern: `atom(...)` plus exported custom hooks, often combined with ahooks (`useMemoizedFn`, `useLatest`)
 - Local state via React hooks; form state via react-hook-form
@@ -109,15 +136,20 @@ pnpm tauri build
 
 ### Icons
 
-- All icons live in `shared/src/components/Icon/svgs/`
-- Re-exported from `shared/src/components/Icon/index.ts` as `<Name>Icon` (svgr `ReactComponent`)
+- All icons live in `packages/shared/src/components/Icon/svgs/`
+- Re-exported from `packages/shared/src/components/Icon/index.ts` as `<Name>Icon` (svgr `ReactComponent`)
 - SVG attrs required: `width="1em" height="1em" fill="currentColor" viewBox="..." xmlns="http://www.w3.org/2000/svg"`
 - No duplicate attributes
 
 ### Shared Package Rules
 
 - `shared/` compiles to ESM and is imported by `desktop`/`mobile`
-- Do **not** import Tauri APIs in `shared/` (breaks the build) — keep Tauri logic in `desktop/src/` or `mobile/src/`
+- Do **not** import Tauri APIs or `tauri-plugin-*` packages in `shared/`, `desktop/`, or `mobile/`; import from the matching `bridge/*` domain subpath instead.
+- The `bridge` package has no root entry point. Every public API must be exposed through an explicit package export such as `bridge/fs` or `bridge/ssh`.
+- Keep backend-specific implementations behind a backend-specific subpath such as `bridge/tauri`.
+- Bridge capability types and facades are colocated in their public module; do not recreate aggregate `types.ts`, `runtime.ts`, or `index.ts` files.
+- Alternative backends implement and register `BridgeBackend` through `bridge/backend`.
+- `BridgeBackend` capability keys mirror public export suffixes (`fs`, `dialog`, `window`, etc.); do not introduce a catch-all platform object.
 
 ### Rust
 
@@ -125,6 +157,22 @@ pnpm tauri build
 - Async command functions use `#[tauri::command]`
 - Plugin managers hold state as `Mutex<HashMap<Id, Data>>` (see `SSHManager`)
 - Cross-platform splits via `#[cfg(desktop)]` / `#[cfg(mobile)]`
+
+## Commit Message Requirements
+
+- Commit messages must use Semantic Commit Messages (Conventional Commits) format: `<type>(<scope>): <subject>`.
+- Preferred types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, and `revert`.
+- Keep the subject concise, imperative, and preferably under 72 characters.
+- Use a body only when extra context is helpful, and keep it focused on the why and impact of the change.
+- For breaking changes, append `!` to the type/scope or add a `BREAKING CHANGE:` footer.
+
+Examples:
+
+- `feat(ssh): add support for inline command execution`
+- `fix(pty): handle shell resize on Windows`
+- `docs(readme): update installation instructions`
+
+Avoid vague messages such as `update`, `fix bug`, or `misc changes`.
 
 ## Type Checking
 

@@ -1,7 +1,7 @@
-import { Portal } from "@radix-ui/themes";
 import { type ReactNode, useEffect } from "react";
 import { ArrowLeftIcon, CloseIcon, Loading } from "shared";
 
+import ThemedPortal from "@/components/ThemedPortal";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 
@@ -13,6 +13,10 @@ type PageDrawerProps = {
   footer?: ReactNode;
   onCancel: () => unknown;
 };
+
+export function PageDrawerActions({ children }: { children: ReactNode }) {
+  return <div className={styles.actions}>{children}</div>;
+}
 
 export default function PageDrawer({
   loading,
@@ -37,7 +41,7 @@ export default function PageDrawer({
   if (!open) return null;
 
   return (
-    <Portal>
+    <ThemedPortal>
       <div className={styles.overlay} onClick={onCancel}>
         <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
           <div className={styles.toolbar}>
@@ -47,7 +51,7 @@ export default function PageDrawer({
               disabled={!!loading}
               onClick={onCancel}
             >
-              <ArrowLeftIcon />
+              <ArrowLeftIcon className={styles.toolbarIcon} />
             </button>
             <h6 className={styles.title}>{title}</h6>
             <button
@@ -56,7 +60,7 @@ export default function PageDrawer({
               disabled={!!loading}
               onClick={onCancel}
             >
-              <CloseIcon />
+              <CloseIcon className={styles.toolbarIcon} />
             </button>
           </div>
           <hr className={styles.divider} />
@@ -80,6 +84,6 @@ export default function PageDrawer({
           )}
         </div>
       </div>
-    </Portal>
+    </ThemedPortal>
   );
 }

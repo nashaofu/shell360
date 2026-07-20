@@ -16,15 +16,13 @@ export default defineConfig({
   ],
   source: {
     define: {
-      "import.meta.env.TAURI_ENV_PLATFORM": JSON.stringify(
-        process.env.TAURI_ENV_PLATFORM,
-      ),
+      "import.meta.env.ENV_PLATFORM": JSON.stringify(process.env.ENV_PLATFORM),
     },
   },
   html: {
     template: "./index.html",
     templateParameters: {
-      TAURI_ENV_PLATFORM: process.env.TAURI_ENV_PLATFORM,
+      ENV_PLATFORM: process.env.ENV_PLATFORM,
     },
   },
   server: {

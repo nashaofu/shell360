@@ -1,5 +1,5 @@
+import { Button, Flex } from "@radix-ui/themes";
 import clsx from "clsx";
-import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
 
 type PortForwardingActionsProps = {
@@ -17,18 +17,12 @@ export default function PortForwardingActions({
   onEdit,
   onToggle,
 }: PortForwardingActionsProps) {
-  const containerClass =
-    variant === "card" ? styles.cardActions : panel.actionGroup;
-  const actionClass =
-    variant === "card" ? styles.primaryBtn : panel.actionButton;
-  const dangerClass =
-    variant === "card" ? styles.dangerBtn : panel.dangerButton;
-  const deleteClass =
-    variant === "card"
-      ? styles.dangerBtn
-      : clsx(panel.actionButton, panel.dangerButton);
+  const containerClass = variant === "card" ? styles.cardActions : undefined;
+  const actionClass = variant === "card" ? styles.primaryBtn : undefined;
+  const dangerClass = variant === "card" ? styles.dangerBtn : undefined;
+  const deleteClass = variant === "card" ? styles.dangerBtn : undefined;
 
-  return (
+  return variant === "card" ? (
     <div className={containerClass}>
       <button
         type="button"
@@ -44,5 +38,23 @@ export default function PortForwardingActions({
         Delete
       </button>
     </div>
+  ) : (
+    <Flex gap="1">
+      <Button size="1" variant="ghost" type="button" onClick={onToggle}>
+        {isRunning ? "Stop" : "Start"}
+      </Button>
+      <Button size="1" variant="ghost" type="button" onClick={onEdit}>
+        Edit
+      </Button>
+      <Button
+        size="1"
+        variant="ghost"
+        color="red"
+        type="button"
+        onClick={onDelete}
+      >
+        Delete
+      </Button>
+    </Flex>
   );
 }

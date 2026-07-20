@@ -1,0 +1,29 @@
+{
+  "name": "tauri-plugin-ssh",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "types": "./dist/ts/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/ts/index.d.ts",
+      "import": "./ts/index.ts",
+      "default": "./ts/index.ts"
+    }
+  },
+  "scripts": {
+    "postinstall": "npm run build",
+    "dev": "rslib build --watch",
+    "build": "npm run tsc && rslib build",
+    "tsc": "tsc -b"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "buffer": "^6.0.3",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "@rslib/core": "^1.0.0",
+    "typescript": "^7.0.2"
+  }
+}

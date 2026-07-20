@@ -4,13 +4,13 @@ Thank you for considering contributing to the Shell360 project! This guide will 
 
 ## Project Overview
 
-Shell360 is a cross-platform SSH and SFTP client built with the Tauri framework, supporting Windows, macOS, and Android. The project uses a monorepo structure with the following main components:
+Shell360 is a cross-platform SSH and SFTP client built with the Tauri framework, supporting Windows, macOS, Linux, Android, iOS, and HarmonyOS. The project uses a monorepo structure with the following main components:
 
 - **desktop**: Desktop application code
 - **mobile**: Mobile application code
 - **shared**: Shared codebase
 - **src-tauri**: Tauri backend code
-- **tauri-plugin-***: Custom Tauri plugins
+- **tauri-plugin-\***: Custom Tauri plugins
 
 ## Development Environment Setup
 
@@ -22,21 +22,87 @@ When developing Windows applications on Windows, you need to install the latest 
 
 ### Android Development Specific Requirements
 
-Android development requires installing Android Studio and configuring environment variables:
+Android development requires Android Studio with the Android SDK, SDK Platform-Tools,
+Android Emulator, and NDK (Side by side) installed. Rust must also be installed as
+described in the Tauri prerequisites. Before the first Android build, install the Rust
+targets used by the project:
 
 ```shell
-# Linux environment variables configuration example
-export ANDROID_HOME="~/Android/Sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
-export JAVA_HOME="/opt/android-studio/jbr"
-export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-export PATH="$ANDROID_HOME/tools/bin:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-export PATH="$JAVA_HOME/bin:$PATH"
+rustup target add aarch64-linux-android x86_64-linux-android
 ```
 
-For Windows or macOS, adjust the paths and environment variable settings accordingly.
+The Android APK currently includes both `arm64-v8a` and `x86_64` native libraries.
+If either target is missing, its Cargo cross-compilation task will fail. Verify the
+installed targets with:
+
+```shell
+rustup target list --installed
+```
+
+The project reads the following environment variables:
+
+- `ANDROID_HOME`: the Android SDK directory.
+- `JAVA_HOME`: the JDK directory. Android Studio's bundled JetBrains Runtime is recommended.
+
+`ANDROID_HOME` is required by the project scripts. The project fixes the NDK version in
+the `shell360NativeBuild` Gradle configuration and locates it below `ANDROID_HOME/ndk`. The scripts locate
+`adb` and the emulator below `ANDROID_HOME`, so adding them to `PATH` is optional.
+
+The examples below use NDK `30.0.15729638` to keep local and CI builds consistent.
+Install this exact version from Android Studio's SDK Manager before configuring the
+environment variables.
+
+Android `versionName` is read from `src-tauri/tauri.conf.json`, so update the Tauri
+version there when releasing. Android `versionCode` is derived from the first three
+numeric SemVer components as `major * 1,000,000 + minor * 1,000 + patch`.
+
+#### macOS (zsh)
+
+Add the following to `~/.zshrc`:
+
+```shell
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+Reload the shell with `source ~/.zshrc`.
+
+#### Linux (bash)
+
+Add the following to `~/.bashrc`:
+
+```shell
+export ANDROID_HOME="$HOME/Android/Sdk"
+export JAVA_HOME="/opt/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+Reload the shell with `source ~/.bashrc`. If Android Studio was installed elsewhere,
+adjust `JAVA_HOME` to its `jbr` directory.
+
+#### Windows (PowerShell)
+
+The following example saves user-level environment variables. Restart PowerShell and
+Android Studio after running it:
+
+```powershell
+$androidHome = "$env:LOCALAPPDATA\Android\Sdk"
+$javaHome = "C:\Program Files\Android\Android Studio\jbr"
+
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
+[Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;$androidHome\cmdline-tools\latest\bin"
+[Environment]::SetEnvironmentVariable("Path", "$androidPath;$userPath", "User")
+```
+
+Verify the configuration in a new terminal:
+
+```shell
+node -e "for (const name of ['ANDROID_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<not set>'))"
+```
 
 ## Project Setup
 
@@ -55,32 +121,38 @@ pnpm install
 
 ## Development Testing
 
-After setting up the project, run the following commands to start the project locally:
+After setting up the project, choose the relevant platform guide from the [documentation center](./README.md). The command index is:
 
 ```bash
 # Desktop
 pnpm tauri dev
 
 # Android
-pnpm tauri android dev
+pnpm run android:dev
+
+# HarmonyOS
+pnpm run harmonyos:dev
 
 # iOS
-pnpm tauri ios dev
+pnpm run ios:dev
 ```
 
 ## Build Guide
 
-For local build testing, use the following commands:
+For local build testing, see the [platform guides](./README.md):
 
 ```bash
 # Desktop
 pnpm tauri build
 
 # Android
-pnpm tauri android build
+pnpm run android:build
+
+# HarmonyOS
+pnpm run harmonyos:build
 
 # iOS
-pnpm tauri ios build
+pnpm run ios:build
 ```
 
 To build distributable application versions, you need to complete the relevant configurations according to [MacOS Signing Configuration](https://tauri.app/distribute/sign/macos/), [iOS Signing Configuration](https://tauri.app/distribute/sign/ios/), [Android Signing Configuration](https://tauri.app/distribute/sign/android/), and [Application Update Configuration](https://tauri.app/plugin/updater/). Then add the following `.env` file in the project root directory and fill in the relevant configurations:
@@ -135,7 +207,6 @@ Certificates and Provisioning Profile files for MacOS and iOS signing can be obt
 2. Log in with your Apple ID in Xcode accounts, add the required certificate types in Xcode, then export the certificate as a [p12 file](https://en.wikipedia.org/wiki/PKCS_12) in Xcode or Keychain. For detailed steps, refer to: https://help.apple.com/xcode/mac/current/#/dev154b28f09. The p12 file contains the key (private key) and cer (certificate). The Apple developer website only allows downloading certificates; the private key is stored in the system keychain. Please keep the p12 file secure, do not share it with others, and make backups.
 
 3. Certificate type description: https://developer.apple.com/help/account/reference/certificate-types. This document uses Developer ID Application certificates for MacOS distribution signing and Apple Distribution certificates for iOS distribution signing.
-
    - Developer ID Application: Used to sign Mac apps distributed outside the Mac App Store.
    - Apple Distribution: Distribute your iOS, macOS, Apple tvOS, or watchOS apps to designated devices for testing or submit them to the App Store.
    - iOS Distribution (App Store Connect and Ad Hoc): Distribute your iOS, Apple tvOS, or watchOS apps to designated devices for testing or submit them to the App Store.
@@ -153,9 +224,8 @@ openssl base64 -A -in <p12 file path> -out <p12 file base64 encoded file path>
 
 The project includes three custom Tauri plugins:
 
-- **tauri-plugin-mobile**: Mobile-specific functionality
-- **tauri-plugin-ssh**: SSH connection functionality
-- **tauri-plugin-data**: Data management functionality
+- **crates/tauri-plugin-ssh**: SSH connection functionality
+- **crates/tauri-plugin-data**: Data management functionality
 
 To develop plugins, modify the code in the corresponding directories and update dependencies as needed.
 

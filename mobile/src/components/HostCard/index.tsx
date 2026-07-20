@@ -1,0 +1,104 @@
+import type { Host } from "bridge/data";
+import type { ReactNode } from "react";
+
+import {
+  getAvatarColor,
+  getAvatarLabel,
+  getHostDesc,
+  getHostName,
+} from "shared";
+import styles from "./index.module.less";
+
+export type ConnectionErrorInfo = {
+  message?: string;
+  onRetry: () => void;
+};
+
+type HostCardProps = {
+  host: Host;
+  onOpenSsh: () => void;
+  onOpenSftp: () => void;
+  actions?: ReactNode;
+  sshPending?: boolean;
+  sftpPending?: boolean;
+  sshError?: ConnectionErrorInfo;
+  sftpError?: ConnectionErrorInfo;
+};
+
+export default function HostCard({
+  host,
+  onOpenSsh,
+  onOpenSftp,
+  actions,
+  sshPending,
+  sftpPending,
+  sshError,
+  sftpError,
+}: HostCardProps) {
+  const title = getHostName(host);
+  const avatarBg = getAvatarColor(title);
+  const avatarLabel = getAvatarLabel(title);
+
+  const sshLabel = sshPending ? "Connecting…" : sshError ? "Failed" : "SSH";
+  const sftpLabel = sftpPending ? "Connecting…" : sftpError ? "Failed" : "SFTP";
+
+  const renderActionBtn = (
+    label: string,
+    onClick: () => void,
+    isSsh: boolean,
+    disabled: boolean,
+    error?: ConnectionErrorInfo,
+  ) => (
+    <button
+      type="button"
+      className={`${isSsh ? styles.sshBtn : styles.sftpBtn}${error ? ` ${styles.errorBtn}` : ""}`}
+      onClick={error ? error.onRetry : onClick}
+      disabled={disabled && !error}
+      aria-label={`${label} for ${title}`}
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.info}>
+        <span
+          className={styles.avatar}
+          style={{
+            background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
+            color: avatarBg,
+          }}
+          aria-hidden="true"
+        >
+          {avatarLabel}
+        </span>
+        <span className={styles.infoMain}>
+          <span className={styles.nameRow}>
+            <span className={styles.name}>{title}</span>
+            <span className={styles.statusDot} aria-hidden="true" />
+          </span>
+          <span className={styles.address}>{getHostDesc(host)}</span>
+        </span>
+        {actions && <span className={styles.more}>{actions}</span>}
+      </div>
+
+      {(sshError?.message || sftpError?.message) && (
+        <span className={styles.errorText}>
+          {sshError?.message || sftpError?.message || "Connection failed"}
+        </span>
+      )}
+
+      <div className={styles.actions}>
+        {renderActionBtn(sshLabel, onOpenSsh, true, !!sshPending, sshError)}
+        {renderActionBtn(
+          sftpLabel,
+          onOpenSftp,
+          false,
+          !!sftpPending,
+          sftpError,
+        )}
+      </div>
+    </div>
+  );
+}

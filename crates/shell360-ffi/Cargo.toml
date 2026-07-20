@@ -1,0 +1,22 @@
+[package]
+name = "shell360-ffi"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi_bindgen.rs"
+
+[dependencies]
+jsb-core = { path = "../jsb-core" }
+log.workspace = true
+shell360-runtime = { path = "../shell360-runtime" }
+serde_json.workspace = true
+thiserror.workspace = true
+uniffi = { version = "0.32.0", features = ["cli"] }
+
+[dev-dependencies]
+tempfile = "3.26.0"

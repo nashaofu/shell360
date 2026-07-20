@@ -1,4 +1,4 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "bridge/window";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import {
@@ -12,7 +12,7 @@ import logo from "@/assets/logo.svg";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import styles from "./index.module.less";
 
-const platform = import.meta.env.TAURI_ENV_PLATFORM;
+const platform = import.meta.env.ENV_PLATFORM;
 const isMacos = platform === "darwin";
 
 export default function AuthTitleBar() {

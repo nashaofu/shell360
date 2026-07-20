@@ -8,7 +8,8 @@ import {
   Switch,
   Text,
 } from "@radix-ui/themes";
-import { getVersion } from "@tauri-apps/api/app";
+import { getVersion } from "bridge/app";
+import { changeCryptoEnable } from "bridge/data";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -24,8 +25,10 @@ import {
   useAppearance,
   WarningCircleIcon,
 } from "shared";
-import { changeCryptoEnable } from "tauri-plugin-data";
-import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
+import {
+  cryptoIsEnableAtom,
+  useUpdateCryptoIsEnable,
+} from "@/atoms/crypto.atom";
 import { useLocalTerminalSettings } from "@/atoms/localTerminalSettings.atom";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
@@ -157,6 +160,7 @@ export default function Settings() {
   const [version, setVersion] = useState<string>();
   const [appearance, setAppearance] = useAppearance();
   const cryptoEnable = !!useAtomValue(cryptoIsEnableAtom);
+  const updateCryptoIsEnable = useUpdateCryptoIsEnable();
   const { hasUpdate, checking, checkUpdate, setOpenUpdateDialog } =
     useUpdateAtom();
   const [localSettings] = useLocalTerminalSettings();
@@ -175,13 +179,17 @@ export default function Settings() {
     getVersion().then(setVersion);
   }, []);
 
-  const onCryptoEnableChange = useCallback((checked: boolean) => {
-    if (checked) {
-      setInitCryptoIsOpen(true);
-      return;
-    }
-    changeCryptoEnable({ cryptoEnable: false });
-  }, []);
+  const onCryptoEnableChange = useCallback(
+    async (checked: boolean) => {
+      if (checked) {
+        setInitCryptoIsOpen(true);
+        return;
+      }
+      await changeCryptoEnable({ cryptoEnable: false });
+      await updateCryptoIsEnable();
+    },
+    [updateCryptoIsEnable],
+  );
 
   const onCheckUpdate = useCallback(async () => {
     if (hasUpdate) {

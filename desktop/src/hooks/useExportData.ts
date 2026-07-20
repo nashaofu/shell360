@@ -1,5 +1,5 @@
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { save } from "bridge/dialog";
+import { writeTextFile } from "bridge/fs";
 import { useCallback } from "react";
 import { useHosts, useKeys, usePortForwardings } from "shared";
 

@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { useCallback } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -13,76 +14,109 @@ import {
 } from "@/atoms/terminalView.atom";
 import styles from "./index.module.less";
 
-const MENU_SECTIONS = [
-  {
-    id: "main",
-    items: [
-      { icon: HostIcon, text: "Hosts", to: "/" },
-      {
-        icon: SiteMapIcon,
-        text: "Tunnels",
-        to: "/port-forwardings",
-      },
-      { icon: KeyIcon, text: "Keys", to: "/keys" },
-      {
-        icon: FingerprintIcon,
-        text: "Known Hosts",
-        to: "/known-hosts",
-      },
-    ],
-  },
-  {
-    id: "system",
-    items: [{ icon: SettingsIcon, text: "Settings", to: "/settings" }],
-  },
-];
-
-type MenusProps = {
-  onClick?: () => unknown;
+type MenuItem = {
+  icon: typeof HostIcon;
+  label: string;
+  to: string;
 };
 
-export default function Menus({ onClick }: MenusProps) {
+type MenuSection = {
+  label: string;
+  items: readonly MenuItem[];
+};
+
+const MANAGE_SECTION: MenuSection = {
+  label: "Manage",
+  items: [
+    { icon: HostIcon, label: "Hosts", to: "/" },
+    { icon: SiteMapIcon, label: "Tunnels", to: "/port-forwardings" },
+    { icon: KeyIcon, label: "Keys", to: "/keys" },
+    { icon: FingerprintIcon, label: "Known Hosts", to: "/known-hosts" },
+  ],
+};
+
+const SETTINGS_ITEM: MenuItem = {
+  icon: SettingsIcon,
+  label: "Settings",
+  to: "/settings",
+};
+
+const SETTINGS_ITEMS = [SETTINGS_ITEM] as const;
+
+type MenusProps = {
+  compact?: boolean;
+  onNavigate?: () => void;
+};
+
+type MenuListProps = {
+  items: readonly MenuItem[];
+  pathname: string;
+  onSelect: (to: string) => void;
+};
+
+function MenuList({ items, pathname, onSelect }: MenuListProps) {
+  return (
+    <ul className={styles.list}>
+      {items.map(({ icon: Icon, label, to }) => {
+        const isActive = Boolean(matchPath({ path: to, end: true }, pathname));
+
+        return (
+          <li key={to} className={styles.item}>
+            <button
+              type="button"
+              className={clsx(styles.itemBtn, { [styles.active]: isActive })}
+              onClick={() => onSelect(to)}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={label}
+              title={label}
+            >
+              <Icon className={styles.itemIcon} aria-hidden="true" />
+              <span className={styles.itemText}>{label}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export default function Menus({ compact, onNavigate }: MenusProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const setActiveTerminalId = useSetTerminalActiveId();
   const setTerminalViewVisible = useSetTerminalViewVisible();
 
-  const onListItemClick = useCallback(
+  const navigateTo = useCallback(
     (to: string) => {
       setActiveTerminalId(null);
       setTerminalViewVisible(false);
       navigate(to);
-      onClick?.();
+      onNavigate?.();
     },
-    [navigate, onClick, setActiveTerminalId, setTerminalViewVisible],
+    [navigate, onNavigate, setActiveTerminalId, setTerminalViewVisible],
   );
 
   return (
-    <nav className={styles.nav} aria-label="Main navigation">
-      {MENU_SECTIONS.map((section) => (
-        <ul className={styles.list} key={section.id}>
-          {section.items.map((item) => {
-            const isActive = !!matchPath(
-              { path: item.to, end: true },
-              pathname,
-            );
-            const Icon = item.icon;
+    <nav
+      className={clsx(styles.nav, { [styles.compact]: compact })}
+      aria-label="Main navigation"
+    >
+      <div className={styles.manage}>
+        <p className={styles.groupLabel}>{MANAGE_SECTION.label}</p>
+        <MenuList
+          items={MANAGE_SECTION.items}
+          pathname={pathname}
+          onSelect={navigateTo}
+        />
+      </div>
 
-            return (
-              <li key={item.to} className={styles.item}>
-                <button
-                  type="button"
-                  className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
-                  onClick={() => onListItemClick(item.to)}
-                >
-                  <Icon className={styles.itemIcon} />
-                  <span className={styles.itemText}>{item.text}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ))}
+      <div className={styles.settings}>
+        <MenuList
+          items={SETTINGS_ITEMS}
+          pathname={pathname}
+          onSelect={navigateTo}
+        />
+      </div>
     </nav>
   );
 }

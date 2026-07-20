@@ -40,9 +40,6 @@ pub fn run() {
       #[cfg(desktop)]
       app.handle().plugin(tauri_plugin_pty::init())?;
 
-      #[cfg(mobile)]
-      app.handle().plugin(tauri_plugin_mobile::init())?;
-
       Ok(())
     })
     .run(tauri::generate_context!())

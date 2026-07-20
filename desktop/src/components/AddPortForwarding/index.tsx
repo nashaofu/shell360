@@ -1,3 +1,9 @@
+import {
+  addPortForwarding,
+  type PortForwarding,
+  PortForwardingType,
+  updatePortForwarding,
+} from "bridge/data";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -5,12 +11,6 @@ import {
   type PortForwardingFormFields,
   usePortForwardings,
 } from "shared";
-import {
-  addPortForwarding,
-  type PortForwarding,
-  PortForwardingType,
-  updatePortForwarding,
-} from "tauri-plugin-data";
 
 import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";

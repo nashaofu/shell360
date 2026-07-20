@@ -1,5 +1,5 @@
-import { open } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
+import { open } from "bridge/dialog";
+import { readTextFile } from "bridge/fs";
 import { useCallback } from "react";
 import { useImportAppData } from "shared";
 

@@ -39,9 +39,6 @@
       "windows": {
         "installMode": "passive"
       }
-    },
-    "mobile": {
-      "revenueCatKey": "appl_LeCIYsNTZzjQRLYCtWVpurvuiok"
     }
   },
   "bundle": {

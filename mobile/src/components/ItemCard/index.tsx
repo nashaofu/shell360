@@ -17,7 +17,10 @@ export default function ItemCard({
   onClick,
 }: ItemCardProps) {
   return (
-    <div className={`${styles.card} ${styles.cardOutlined}`} onClick={onClick}>
+    <div
+      className={`${styles.card}${onClick ? ` ${styles.interactive}` : ""}`}
+      onClick={onClick}
+    >
       <div className={styles.iconWrap}>{icon}</div>
       <div className={styles.content}>
         <div className={styles.title}>{title}</div>

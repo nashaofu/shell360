@@ -119,6 +119,7 @@ Your privacy is important to us. Please review our [Privacy Policy](./docs/Priva
 ## Contributing
 
 We welcome contributions from the community! Please read our [Contribution Guidelines](./docs/CONTRIBUTING.md) to get started.
+See the [documentation center](./docs/README.md) for platform and architecture guides.
 
 ## License
 

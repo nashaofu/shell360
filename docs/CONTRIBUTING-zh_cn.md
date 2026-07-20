@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构建，支持在 Windows、macOS 和 Android 上运行。项目采用 monorepo 结构，包含以下主要部分：
+Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构建，支持 Windows、macOS、Linux、Android、iOS 和 HarmonyOS。项目采用 monorepo 结构，包含以下主要部分：
 
 - **desktop**: 桌面端应用代码
 - **mobile**: 移动端应用代码
@@ -22,21 +22,83 @@ Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构�
 
 ### Android 开发特定要求
 
-安卓开发需要安装 Android Studio，并配置环境变量：
+Android 开发需要安装 Android Studio，并通过 SDK Manager 安装 Android SDK、SDK
+Platform-Tools、Android Emulator 和 NDK (Side by side)。此外，需要按照 Tauri 前置要求安装
+Rust，并通过 rustup 安装项目构建的 Android targets：
 
 ```shell
-# Linux 环境变量配置示例
-export ANDROID_HOME="~/Android/Sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
-export JAVA_HOME="/opt/android-studio/jbr"
-export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-export PATH="$ANDROID_HOME/tools/bin:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-export PATH="$JAVA_HOME/bin:$PATH"
+rustup target add aarch64-linux-android x86_64-linux-android
 ```
 
-对于 Windows 或 macOS，请相应地调整路径和环境变量设置。
+当前 Android APK 同时包含 `arm64-v8a` 和 `x86_64` 原生库；缺少任一 target 都会导致对应的
+Cargo 交叉编译任务失败。可用以下命令确认 targets 已安装：
+
+```shell
+rustup target list --installed
+```
+
+项目使用以下环境变量：
+
+- `ANDROID_HOME`：Android SDK 目录。
+- `JAVA_HOME`：JDK 目录，推荐使用 Android Studio 内置的 JetBrains Runtime。
+
+项目脚本要求配置 `ANDROID_HOME`。项目在 `shell360NativeBuild` Gradle 配置中固定 NDK 版本，
+并从 `ANDROID_HOME/ndk` 定位它。脚本会直接从 `ANDROID_HOME` 定位 `adb`
+和模拟器，因此是否将它们加入 `PATH` 均可。
+
+下面的示例统一使用 NDK `30.0.15729638`，以保证本地和 CI 构建环境一致。配置环境变量前，
+请先通过 Android Studio 的 SDK Manager 安装这个确切版本。
+
+Android 的 `versionName` 会读取 `src-tauri/tauri.conf.json`，发布新版本时只需修改
+Tauri 配置中的版本号。Android 的 `versionCode` 根据 SemVer 的前三段计算：
+`major * 1,000,000 + minor * 1,000 + patch`。
+
+#### macOS（zsh）
+
+将以下内容添加到 `~/.zshrc`：
+
+```shell
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+运行 `source ~/.zshrc` 使配置在当前终端生效。
+
+#### Linux（bash）
+
+将以下内容添加到 `~/.bashrc`：
+
+```shell
+export ANDROID_HOME="$HOME/Android/Sdk"
+export JAVA_HOME="/opt/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+运行 `source ~/.bashrc` 使配置在当前终端生效。如果 Android Studio 安装在其他位置，需将
+`JAVA_HOME` 调整为对应的 `jbr` 目录。
+
+#### Windows（PowerShell）
+
+以下示例会保存用户级环境变量。执行后需要重新打开 PowerShell 和 Android Studio：
+
+```powershell
+$androidHome = "$env:LOCALAPPDATA\Android\Sdk"
+$javaHome = "C:\Program Files\Android\Android Studio\jbr"
+
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
+[Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;$androidHome\cmdline-tools\latest\bin"
+[Environment]::SetEnvironmentVariable("Path", "$androidPath;$userPath", "User")
+```
+
+在新终端中检查配置：
+
+```shell
+node -e "for (const name of ['ANDROID_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<未设置>'))"
+```
 
 ## 项目设置
 
@@ -55,32 +117,38 @@ pnpm install
 
 ## 开发测试
 
-完成项目设置后，运行下面的命令，即可在本地启动项目：
+完成项目设置后，请根据[文档中心](./README.md)选择对应的平台说明。命令索引如下：
 
 ```bash
 # 桌面端
 pnpm tauri dev
 
 # Android
-pnpm tauri android dev
+pnpm run android:dev
+
+# HarmonyOS
+pnpm run harmonyos:dev
 
 # iOS
-pnpm tauri ios dev
+pnpm run ios:dev
 ```
 
 ## 构建指南
 
-本地构建测试可以使用如下命令：
+本地构建测试请参阅[各平台说明](./README.md)：
 
 ```bash
 # 桌面端
 pnpm tauri build
 
 # Android
-pnpm tauri android build
+pnpm run android:build
+
+# HarmonyOS
+pnpm run harmonyos:build
 
 # iOS
-pnpm tauri ios build
+pnpm run ios:build
 ```
 
 如需要构建出可发行版本的应用，需要根据[MacOS 签名配置](https://tauri.app/distribute/sign/macos/)、[iOS 签名配置](https://tauri.app/distribute/sign/ios/)、[Android 签名配置](https://tauri.app/distribute/sign/android/)以及[应用更新配置](https://tauri.app/plugin/updater/)完成相关配置，然后在项目根目录下添加如下`.env`文件，并把相关配置填写到文件中：
@@ -134,7 +202,6 @@ MacOS 与 iOS 签名相关证书以及 Provisioning Profile 文件可按照下�
 2. 在 xcode 中 accounts 里面登录 Apple ID，并在 xcode 中添加需要的证书类型，然后在 xcode 中或钥匙串中导出证书为 [p12 文件](https://zh.wikipedia.org/wiki/PKCS_12)，操作步骤可参考：https://help.apple.com/xcode/mac/current/#/dev154b28f09。p12 文件包含 key(私钥) 与 cer(证书)，Apple 开发者网站只能下载证书，私钥保存在系统钥匙串中，请保管好 p12 文件，不要泄露给他人，并做好备份。
 
 3. 证书类型说明：https://developer.apple.com/cn/help/account/reference/certificate-types。本文档在 MacOS 分发签名使用的 Developer ID Application 证书，iOS 分发签名使用的 Apple Distribution 证书。
-
    - Developer ID Application: 用于在 Mac App Store 以外分发 Mac App 时对其进行签名。
    - Apple Distribution: 向指定设备分发你的 iOS、macOS、Apple tvOS 或 watchOS App 以进行测试或将其提交到 App Store。
    - iOS Distribution (App Store Connect and Ad Hoc): 向指定设备分发你的 iOS、Apple tvOS 或 watchOS App 以进行测试或将其提交到 App Store。
@@ -152,9 +219,8 @@ openssl base64 -A -in <p12 文件路径> -out <p12 文件 base64 编码后的文
 
 项目包含三个自定义 Tauri 插件：
 
-- **tauri-plugin-mobile**: 移动端特定功能
-- **tauri-plugin-ssh**: SSH 连接功能
-- **tauri-plugin-data**: 数据管理功能
+- **crates/tauri-plugin-ssh**: SSH 连接功能
+- **crates/tauri-plugin-data**: 数据管理功能
 
 要开发插件，请修改相应目录下的代码，并在需要时更新其依赖关系。
 

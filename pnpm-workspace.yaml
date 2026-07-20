@@ -1,10 +1,12 @@
 packages:
   - desktop
   - mobile
-  - shared
-  - tauri-plugin-mobile
-  - tauri-plugin-ssh
-  - tauri-plugin-data
-  - tauri-plugin-pty
+  - packages/jsb
+  - packages/bridge
+  - packages/shared
+  - crates/tauri-plugin-ssh
+  - crates/tauri-plugin-data
+  - crates/tauri-plugin-pty
 allowBuilds:
+  '@deveco/deveco-cli': true
   core-js: true
