@@ -311,6 +311,10 @@ async fn connect_ssh_agent() -> Result<
   AgentClient<Box<dyn russh::keys::agent::client::AgentStream + Send + Unpin>>,
   AuthenticationError,
 > {
+  // Try: Windows OpenSSH Agent (named pipe) > PuTTY Pageant
+  if let Ok(agent) = AgentClient::connect_named_pipe(r"\\.\pipe\openssh-ssh-agent").await {
+    return Ok(agent.dynamic());
+  }
   let agent = AgentClient::connect_pageant()
     .await
     .map_err(|_| AuthenticationError::AgentConnectFailed)?;
