@@ -1,11 +1,11 @@
 import { Portal, Theme } from "@radix-ui/themes";
+import type { Host, PortForwarding } from "bridge/data";
+import type { SSHSessionCheckServerKey } from "bridge/ssh";
 import {
   type JumpHostChainItem,
   PortForwardingLoading,
   SSHLoading,
 } from "shared";
-import type { Host, PortForwarding } from "tauri-plugin-data";
-import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 import styles from "./index.module.less";
 
 type PortForwardingLoadingOverlayProps = {

@@ -1,4 +1,4 @@
-import { getKeys } from "tauri-plugin-data";
+import { getKeys } from "bridge/data";
 
 import { useSWR } from "./useSWR";
 

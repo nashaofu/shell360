@@ -1,4 +1,5 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
+import { addHost, deleteHost, type Host } from "bridge/data";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -15,8 +16,6 @@ import {
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
-import { addHost, deleteHost, type Host } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
@@ -38,8 +37,6 @@ export default function Hosts() {
 
   const { data: hosts, refresh: refreshHosts } = useHosts();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
-  const isSubscription = useIsSubscription();
-  const [, setOpen] = useIsShowPaywallAtom();
 
   const [selectedTag, setSelectedTag] = useState<string>();
   const items = useMemo(() => {
@@ -72,13 +69,8 @@ export default function Hosts() {
   );
 
   const onAddHostButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个host
-    if (!isSubscription && hosts.length >= 3) {
-      setOpen(true);
-      return;
-    }
     setIsOpenAddHost(true);
-  }, [isSubscription, hosts.length, setOpen]);
+  }, []);
 
   const onAddHostClose = useCallback(() => {
     setIsOpenAddHost(false);
@@ -88,11 +80,6 @@ export default function Hosts() {
 
   const onCopyHost = useCallback(
     async (host: Host) => {
-      if (!isSubscription && hosts.length >= 3) {
-        setOpen(true);
-        return;
-      }
-
       try {
         const copiedHost = await addHost({
           ...omit(host, ["id"]),
@@ -108,7 +95,7 @@ export default function Hosts() {
         });
       }
     },
-    [hosts.length, isSubscription, message, refreshHosts, setOpen],
+    [message, refreshHosts],
   );
 
   const onDeleteHost = useCallback(

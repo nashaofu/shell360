@@ -5857,7 +5857,6 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-log",
  "tauri-plugin-machine-uid",
- "tauri-plugin-mobile",
  "tauri-plugin-process",
  "tauri-plugin-pty",
  "tauri-plugin-ssh",
@@ -6873,16 +6872,6 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-specta",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "tauri-plugin-mobile"
-version = "0.0.0"
-dependencies = [
- "serde",
- "tauri",
- "tauri-plugin",
  "thiserror 2.0.18",
 ]
 

@@ -1,8 +1,8 @@
 packages:
+  - bridge
   - desktop
   - mobile
   - shared
-  - tauri-plugin-mobile
   - tauri-plugin-ssh
   - tauri-plugin-data
   - tauri-plugin-pty

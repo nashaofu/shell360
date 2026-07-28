@@ -6,7 +6,7 @@ import {
   type Host,
   type Key,
   type PortForwarding,
-} from "tauri-plugin-data";
+} from "bridge/data";
 
 import { useHosts } from "./useHosts";
 import { useKeys } from "./useKeys";

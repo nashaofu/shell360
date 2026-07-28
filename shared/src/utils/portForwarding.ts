@@ -2,7 +2,7 @@ import {
   type Host,
   type PortForwarding,
   PortForwardingType,
-} from "tauri-plugin-data";
+} from "bridge/data";
 
 export function getPortForwardingDesc(
   item: PortForwarding,

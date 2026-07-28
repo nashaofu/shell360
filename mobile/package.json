@@ -10,11 +10,8 @@
   },
   "dependencies": {
     "@radix-ui/themes": "^3.3.0",
-    "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-fs": "^2.5.1",
-    "@tauri-apps/plugin-store": "^2.4.3",
     "ahooks": "^3.9.7",
+    "bridge": "workspace:*",
     "dayjs": "^1.11.21",
     "dockview-react": "^6.6.1",
     "jotai": "^2.20.1",
@@ -24,10 +21,7 @@
     "react-error-boundary": "^6.1.2",
     "react-hook-form": "^7.80.0",
     "react-router-dom": "^7.18.0",
-    "shared": "workspace:*",
-    "tauri-plugin-data": "workspace:*",
-    "tauri-plugin-mobile": "workspace:*",
-    "tauri-plugin-ssh": "workspace:*"
+    "shared": "workspace:*"
   },
   "devDependencies": {
     "@rsbuild/core": "^2.0.15",

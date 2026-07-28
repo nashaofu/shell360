@@ -1,4 +1,5 @@
 import { useRequest } from "ahooks";
+import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
 import { type MutableRefObject, useCallback, useEffect, useState } from "react";
 import {
   getSftpBasename,
@@ -6,7 +7,6 @@ import {
   joinSftpPath,
   sanitizeSftpFilename,
 } from "shared";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 
 import type useMessage from "@/hooks/useMessage";
 

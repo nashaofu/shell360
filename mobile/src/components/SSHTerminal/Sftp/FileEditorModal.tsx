@@ -1,6 +1,6 @@
+import type { SSHSftpFile } from "bridge/ssh";
 import { useCallback, useEffect, useState } from "react";
 import { CloseIcon, FileIcon } from "shared";
-import type { SSHSftpFile } from "tauri-plugin-ssh";
 import useMessage from "@/hooks/useMessage";
 import styles from "./FileEditorModal.module.less";
 

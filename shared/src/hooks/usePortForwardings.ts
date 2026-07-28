@@ -1,4 +1,4 @@
-import { getPortForwardings } from "tauri-plugin-data";
+import { getPortForwardings } from "bridge/data";
 
 import { useSWR } from "./useSWR";
 

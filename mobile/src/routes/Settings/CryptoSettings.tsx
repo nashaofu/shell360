@@ -1,8 +1,8 @@
 import { Button, Flex, Switch, Text } from "@radix-ui/themes";
+import { changeCryptoEnable } from "bridge/data";
 import { useAtomValue } from "jotai";
 import { type CSSProperties, useCallback, useState } from "react";
 import { ArrowRightIcon } from "shared";
-import { changeCryptoEnable } from "tauri-plugin-data";
 import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import IniCrypto from "@/components/InitCrypto";

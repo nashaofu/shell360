@@ -1,9 +1,5 @@
-import {
-  commands,
-  type MachineUidResponse,
-  type Result,
-} from "@skipperndt/plugin-machine-uid";
-import { getVersion } from "@tauri-apps/api/app";
+import { getVersion } from "bridge/app";
+import { getMachineUid } from "bridge/machine-uid";
 import { v4 as uuidV4 } from "uuid";
 
 function getDeviceUidFromLocalStorage() {
@@ -20,16 +16,7 @@ function getDeviceUidFromLocalStorage() {
 export async function getDeviceUid(): Promise<string> {
   let device_id: string | undefined;
 
-  const getMachineUidResult = await commands.getMachineUid().catch((error) => {
-    return {
-      status: "error",
-      error,
-    } as Result<MachineUidResponse, Error>;
-  });
-
-  if (getMachineUidResult.status === "ok") {
-    device_id = getMachineUidResult.data.id || undefined;
-  }
+  device_id = await getMachineUid().catch(() => undefined);
 
   if (!device_id) {
     device_id = getDeviceUidFromLocalStorage();

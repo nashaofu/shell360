@@ -1,5 +1,5 @@
-import { relaunch } from "@tauri-apps/plugin-process";
-import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "bridge/process";
+import { check, type Update } from "bridge/updater";
 import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 

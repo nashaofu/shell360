@@ -1,7 +1,7 @@
+import type { PortForwarding } from "bridge/data";
 import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { AddIcon, useHosts, usePortForwardings } from "shared";
-import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import AddPortForwarding from "@/components/AddPortForwarding";
 import Empty from "@/components/Empty";

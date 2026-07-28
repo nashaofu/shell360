@@ -1,4 +1,5 @@
 import { IconButton } from "@radix-ui/themes";
+import { addHost, deleteHost, type Host } from "bridge/data";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
@@ -18,7 +19,6 @@ import {
   useHosts,
   useTerminalsAtomWithApi,
 } from "shared";
-import { addHost, deleteHost, type Host } from "tauri-plugin-data";
 
 import AddHost from "@/components/AddHost";
 import Empty from "@/components/Empty";

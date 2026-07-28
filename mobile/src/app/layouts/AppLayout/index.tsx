@@ -3,7 +3,6 @@ import { Outlet, useBlocker } from "react-router-dom";
 import { useHosts, useKeys, usePortForwardings } from "shared";
 import Workspace from "@/components/Workspace";
 import Sidebar from "@/routes/Root/Sidebar";
-import Subscription from "@/routes/Root/Subscription";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 
@@ -31,7 +30,6 @@ export default function AppLayout() {
       </div>
       <Workspace />
       <Sidebar />
-      {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <Subscription />}
     </>
   );
 }

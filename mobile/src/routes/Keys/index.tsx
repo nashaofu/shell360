@@ -1,4 +1,5 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
+import { deleteKey, type Key } from "bridge/data";
 import { get } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -9,8 +10,6 @@ import {
   MoreIcon,
   useKeys,
 } from "shared";
-import { deleteKey, type Key } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
@@ -31,9 +30,6 @@ export default function Keys() {
   const message = useMessage();
   const { data: keys, refresh: refreshKeys } = useKeys();
 
-  const isSubscription = useIsSubscription();
-  const [, setOpen] = useIsShowPaywallAtom();
-
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
@@ -49,22 +45,12 @@ export default function Keys() {
   }, []);
 
   const onAddKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
-    if (!isSubscription && keys.length >= 1) {
-      setOpen(true);
-      return;
-    }
     setIsOpenAddKey(true);
-  }, [isSubscription, keys.length, setOpen]);
+  }, []);
 
   const onGenerateKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
-    if (!isSubscription && keys.length >= 1) {
-      setOpen(true);
-      return;
-    }
     setIsOpenGenerateKey(true);
-  }, [isSubscription, keys.length, setOpen]);
+  }, []);
 
   const menus = useMemo(
     () => [

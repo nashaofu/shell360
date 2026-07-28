@@ -1,6 +1,6 @@
+import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
+import { SSHSftpFileType } from "bridge/ssh";
 import { type MutableRefObject, useCallback, useState } from "react";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
-import { SSHSftpFileType } from "tauri-plugin-ssh";
 
 type UseSftpFileEditorOpts = {
   sftpRef: MutableRefObject<SSHSftp | null>;

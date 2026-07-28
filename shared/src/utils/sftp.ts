@@ -1,4 +1,4 @@
-import type { SSHSftpFile } from "tauri-plugin-ssh";
+import type { SSHSftpFile } from "bridge/ssh";
 
 type SftpSortCell = {
   compare?: (a: SSHSftpFile, b: SSHSftpFile) => number;

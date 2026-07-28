@@ -1,6 +1,6 @@
 import { Button, Flex } from "@radix-ui/themes";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ask } from "bridge/dialog";
+import { getCurrentWindow } from "bridge/window";
 import { get } from "lodash-es";
 import { useCallback } from "react";
 import styles from "./index.module.less";

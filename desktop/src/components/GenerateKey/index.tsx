@@ -1,10 +1,10 @@
 import { Button, Flex } from "@radix-ui/themes";
-import { invoke } from "@tauri-apps/api/core";
+import { generateKey } from "bridge/core";
+import { addKey } from "bridge/data";
 import { get } from "lodash-es";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { GenerateKeyForm, type GenerateKeyFormFields, useKeys } from "shared";
-import { addKey } from "tauri-plugin-data";
 
 import PageDrawer from "@/components/PageDrawer";
 import useMessage from "@/hooks/useMessage";
@@ -38,10 +38,7 @@ export default function GenerateKey({
     async (values: GenerateKeyFormFields) => {
       setLoading(true);
       try {
-        const { privateKey, publicKey } = await invoke<{
-          privateKey: string;
-          publicKey: string;
-        }>("generate_key", {
+        const { privateKey, publicKey } = await generateKey({
           algorithm: {
             type: values.algorithm,
             bitSize: values.bitSize,

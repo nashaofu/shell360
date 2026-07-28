@@ -1,7 +1,7 @@
 import { IconButton, Select, Text, TextField } from "@radix-ui/themes";
+import { AuthenticationMethod } from "bridge/data";
 import { type KeyboardEvent, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
-import { AuthenticationMethod } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { useKeys } from "@/hooks/useKeys";

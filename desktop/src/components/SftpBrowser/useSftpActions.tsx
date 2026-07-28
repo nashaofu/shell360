@@ -1,9 +1,9 @@
-import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
+import { open, save } from "bridge/dialog";
+import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
 import { throttle } from "lodash-es";
 import { type MutableRefObject, useCallback, useRef, useState } from "react";
 import { joinSftpPath, type TransferQueueItem } from "shared";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 import { useFileTransfersActions } from "@/atoms/terminalView.atom";
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";

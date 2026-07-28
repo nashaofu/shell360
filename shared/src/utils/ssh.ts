@@ -1,15 +1,15 @@
-import { cloneDeep, get } from "lodash-es";
 import {
   AuthenticationMethod,
   type Host,
   type Key,
   PortForwardingType,
-} from "tauri-plugin-data";
+} from "bridge/data";
 import {
   SSHSession,
   type SSHSessionCheckServerKey,
   type SSHSessionDisconnectEvent,
-} from "tauri-plugin-ssh";
+} from "bridge/ssh";
+import { cloneDeep, get } from "lodash-es";
 
 import type { PortForwardingsAtom } from "../atoms/portForwardings.atom";
 

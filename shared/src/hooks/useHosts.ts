@@ -1,4 +1,4 @@
-import { getHosts } from "tauri-plugin-data";
+import { getHosts } from "bridge/data";
 
 import { useSWR } from "./useSWR";
 

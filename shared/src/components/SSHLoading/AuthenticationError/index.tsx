@@ -1,8 +1,8 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
+import { AuthenticationMethod, updateHost } from "bridge/data";
 import { get } from "lodash-es";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { AuthenticationMethod, updateHost } from "tauri-plugin-data";
 import { useHosts } from "@/hooks/useHosts";
 import { MoreIcon } from "../../Icon";
 import { type ErrorProps, StatusButton } from "../common";

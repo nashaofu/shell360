@@ -1,8 +1,4 @@
-import {
-  BaseDirectory,
-  readTextFile,
-  writeTextFile,
-} from "@tauri-apps/plugin-fs";
+import { BaseDirectory, readTextFile, writeTextFile } from "bridge/fs";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import {
   DeleteIcon,

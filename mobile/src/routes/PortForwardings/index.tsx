@@ -1,7 +1,7 @@
 import { Button } from "@radix-ui/themes";
+import type { PortForwarding } from "bridge/data";
 import { useCallback, useMemo, useState } from "react";
 import { AddIcon, useHosts, usePortForwardings } from "shared";
-import type { PortForwarding } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";

@@ -1,9 +1,9 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
+import { changeCryptoPassword } from "bridge/data";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
-import { changeCryptoPassword } from "tauri-plugin-data";
 
 import useMessage from "@/hooks/useMessage";
 

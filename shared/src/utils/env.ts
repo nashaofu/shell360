@@ -1,4 +1,4 @@
-import type { Env } from "tauri-plugin-data";
+import type { Env } from "bridge/data";
 
 export function parseEnvs(value: string | undefined): Env[] {
   if (!value) {

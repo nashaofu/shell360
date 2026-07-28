@@ -1,3 +1,4 @@
+import { installTauriBackend } from "bridge/tauri";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { identify } from "shared";
@@ -7,6 +8,7 @@ import "./styles/index.less";
 
 import App from "./app";
 
+installTauriBackend();
 identify();
 
 createRoot(document.getElementById("root") as HTMLElement).render(
