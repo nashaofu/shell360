@@ -27,11 +27,11 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  desktop:
+  bridge:
     dependencies:
-      '@radix-ui/themes':
-        specifier: ^3.3.0
-        version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@skipperndt/plugin-machine-uid':
+        specifier: ^0.1.3
+        version: 0.1.3
       '@tauri-apps/api':
         specifier: ^2.11.1
         version: 2.11.1
@@ -53,9 +53,34 @@ importers:
       '@tauri-apps/plugin-updater':
         specifier: ^2.10.1
         version: 2.10.1
+      tauri-plugin-data:
+        specifier: workspace:*
+        version: link:../tauri-plugin-data
+      tauri-plugin-pty:
+        specifier: workspace:*
+        version: link:../tauri-plugin-pty
+      tauri-plugin-ssh:
+        specifier: workspace:*
+        version: link:../tauri-plugin-ssh
+    devDependencies:
+      '@rslib/core':
+        specifier: ^0.23.0
+        version: 0.23.0(core-js@3.46.0)(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  desktop:
+    dependencies:
+      '@radix-ui/themes':
+        specifier: ^3.3.0
+        version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       ahooks:
         specifier: ^3.9.7
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      bridge:
+        specifier: workspace:*
+        version: link:../bridge
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -89,15 +114,6 @@ importers:
       shared:
         specifier: workspace:*
         version: link:../shared
-      tauri-plugin-data:
-        specifier: workspace:*
-        version: link:../tauri-plugin-data
-      tauri-plugin-pty:
-        specifier: workspace:*
-        version: link:../tauri-plugin-pty
-      tauri-plugin-ssh:
-        specifier: workspace:*
-        version: link:../tauri-plugin-ssh
     devDependencies:
       '@rsbuild/core':
         specifier: ^2.0.15
@@ -132,21 +148,12 @@ importers:
       '@radix-ui/themes':
         specifier: ^3.3.0
         version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tauri-apps/api':
-        specifier: ^2.11.1
-        version: 2.11.1
-      '@tauri-apps/plugin-dialog':
-        specifier: ^2.7.1
-        version: 2.7.1
-      '@tauri-apps/plugin-fs':
-        specifier: ^2.5.1
-        version: 2.5.1
-      '@tauri-apps/plugin-store':
-        specifier: ^2.4.3
-        version: 2.4.3
       ahooks:
         specifier: ^3.9.7
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      bridge:
+        specifier: workspace:*
+        version: link:../bridge
       dayjs:
         specifier: ^1.11.21
         version: 1.11.21
@@ -177,15 +184,6 @@ importers:
       shared:
         specifier: workspace:*
         version: link:../shared
-      tauri-plugin-data:
-        specifier: workspace:*
-        version: link:../tauri-plugin-data
-      tauri-plugin-mobile:
-        specifier: workspace:*
-        version: link:../tauri-plugin-mobile
-      tauri-plugin-ssh:
-        specifier: workspace:*
-        version: link:../tauri-plugin-ssh
     devDependencies:
       '@rsbuild/core':
         specifier: ^2.0.15
@@ -220,18 +218,6 @@ importers:
       '@radix-ui/themes':
         specifier: ^3.3.0
         version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@skipperndt/plugin-machine-uid':
-        specifier: ^0.1.3
-        version: 0.1.3
-      '@tauri-apps/api':
-        specifier: ^2.11.1
-        version: 2.11.1
-      '@tauri-apps/plugin-dialog':
-        specifier: ^2.7.1
-        version: 2.7.1
-      '@tauri-apps/plugin-fs':
-        specifier: ^2.5.1
-        version: 2.5.1
       '@xterm/addon-fit':
         specifier: ^0.11.0
         version: 0.11.0
@@ -250,6 +236,9 @@ importers:
       ahooks:
         specifier: ^3.9.7
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      bridge:
+        specifier: workspace:*
+        version: link:../bridge
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -271,12 +260,6 @@ importers:
       react-hook-form:
         specifier: ^7.80.0
         version: 7.80.0(react@19.2.7)
-      tauri-plugin-data:
-        specifier: workspace:*
-        version: link:../tauri-plugin-data
-      tauri-plugin-ssh:
-        specifier: workspace:*
-        version: link:../tauri-plugin-ssh
       uuid:
         specifier: ^14.0.1
         version: 14.0.1
@@ -310,19 +293,6 @@ importers:
         version: 6.0.3
 
   tauri-plugin-data:
-    dependencies:
-      '@tauri-apps/api':
-        specifier: ^2.11.1
-        version: 2.11.1
-    devDependencies:
-      '@rslib/core':
-        specifier: ^0.23.0
-        version: 0.23.0(core-js@3.46.0)(typescript@6.0.3)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
-  tauri-plugin-mobile:
     dependencies:
       '@tauri-apps/api':
         specifier: ^2.11.1
@@ -1567,9 +1537,6 @@ packages:
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
-
-  '@tauri-apps/api@2.11.0':
-    resolution: {integrity: sha512-7CinYODhky9lmO23xHnUFv0Xt43fbtWMyxZcLcRBlFkcgXKuEirBvHpmtJ89YMhyeGcq20Wuc47Fa4XjyniywA==}
 
   '@tauri-apps/api@2.11.1':
     resolution: {integrity: sha512-M2FPuYND2m+wh5hfW9ZpSdxMPdEJovPBWwoHJmwUpysTYNHaOkVFN419m/K0LIgjb/7KU2vBgsUepJWugQCvAA==}
@@ -3768,7 +3735,7 @@ snapshots:
 
   '@skipperndt/plugin-machine-uid@0.1.3':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@svgr/babel-plugin-add-jsx-attribute@8.0.0(@babel/core@7.29.7)':
     dependencies:
@@ -3853,8 +3820,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tauri-apps/api@2.11.0': {}
-
   '@tauri-apps/api@2.11.1': {}
 
   '@tauri-apps/cli-darwin-arm64@2.11.3':
@@ -3906,27 +3871,27 @@ snapshots:
 
   '@tauri-apps/plugin-clipboard-manager@2.3.2':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tauri-apps/plugin-dialog@2.7.1':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tauri-apps/plugin-fs@2.5.1':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tauri-apps/plugin-process@2.3.1':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tauri-apps/plugin-store@2.4.3':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tauri-apps/plugin-updater@2.10.1':
     dependencies:
-      '@tauri-apps/api': 2.11.0
+      '@tauri-apps/api': 2.11.1
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
