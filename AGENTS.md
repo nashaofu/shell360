@@ -6,6 +6,7 @@ A cross-platform SSH and SFTP client built with Tauri, React, and TypeScript. Su
 
 ```
 shell360/
+├── bridge/               # Backend-neutral frontend API + Tauri adapter
 ├── desktop/              # Tauri desktop app (React + Rsbuild)
 ├── mobile/               # Mobile app (React + Rsbuild)
 ├── shared/               # Shared components, hooks, atoms, utils (rslib → ESM)
@@ -13,11 +14,10 @@ shell360/
 ├── tauri-plugin-pty/     # Local PTY shell plugin (Rust src/ + TS ts/)
 ├── tauri-plugin-ssh/     # SSH plugin (Rust src/ + TS ts/)
 ├── tauri-plugin-data/    # Encrypted storage + database plugin
-├── tauri-plugin-mobile/  # Mobile-specific plugin
 └── resources/            # Static assets
 ```
 
-This is a **pnpm workspace** monorepo. Packages: `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-mobile`, `tauri-plugin-pty`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
+This is a **pnpm workspace** monorepo. Packages: `bridge`, `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-pty`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
 
 ## Commands
 
@@ -51,7 +51,7 @@ pnpm tauri build
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
-  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-mobile/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.
@@ -71,7 +71,10 @@ pnpm tauri build
 
 ## Frontend ↔ Backend Communication
 
-- Frontend calls Rust via Tauri `invoke`.
+- Frontend business code imports backend APIs and models from capability subpaths. Tauri APIs mirror their package/module suffixes, such as `bridge/fs`, `bridge/dialog`, `bridge/window`, `bridge/store`, and `bridge/updater`. Project domains use `bridge/data`, `bridge/ssh`, and `bridge/pty`; custom Rust commands use `bridge/core`.
+- `desktop/src/index.tsx` and `mobile/src/index.tsx` install the current backend with `installTauriBackend()` from `bridge/tauri`.
+- Backend-neutral contracts and facade classes live in `bridge/src/`; Tauri-specific calls live only in `bridge/src/tauri.ts` and the low-level `tauri-plugin-*` packages.
+- A different backend can implement `BridgeBackend` and be installed with `setBridgeBackend()` without changing `shared`, `desktop`, or `mobile` business code.
 - Backend exposes async functions marked `#[tauri::command]`.
 - Plugin TS wrappers (in each plugin's `ts/` folder) wrap `invoke` from `@tauri-apps/api/core` using namespaced command IDs like `plugin:ssh|shell_open`, `plugin:ssh|sftp_read_dir`. App code calls these wrappers, **not** `invoke` directly.
 - Long-lived connections (SSH shell, SFTP streams) use `Channel` for streaming.
@@ -117,7 +120,12 @@ pnpm tauri build
 ### Shared Package Rules
 
 - `shared/` compiles to ESM and is imported by `desktop`/`mobile`
-- Do **not** import Tauri APIs in `shared/` (breaks the build) — keep Tauri logic in `desktop/src/` or `mobile/src/`
+- Do **not** import Tauri APIs or `tauri-plugin-*` packages in `shared/`, `desktop/`, or `mobile/`; import from the matching `bridge/*` domain subpath instead.
+- The `bridge` package has no root entry point. Every public API must be exposed through an explicit package export such as `bridge/fs` or `bridge/ssh`.
+- Keep backend-specific implementations behind a backend-specific subpath such as `bridge/tauri`.
+- Bridge capability types and facades are colocated in their public module; do not recreate aggregate `types.ts`, `runtime.ts`, or `index.ts` files.
+- Alternative backends implement and register `BridgeBackend` through `bridge/backend`.
+- `BridgeBackend` capability keys mirror public export suffixes (`fs`, `dialog`, `window`, etc.); do not introduce a catch-all platform object.
 
 ### Rust
 

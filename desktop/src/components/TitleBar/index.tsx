@@ -1,4 +1,4 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "bridge/window";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import {

@@ -1,3 +1,4 @@
+import { type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
 import dayjs from "dayjs";
 import { useCallback, useMemo } from "react";
 import {
@@ -8,7 +9,6 @@ import {
   FolderIcon,
   SymlinkIcon,
 } from "shared";
-import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 
 import type useModal from "@/hooks/useModal";
 import SftpFilenameInput from "./SftpFilenameInput";

@@ -1,11 +1,8 @@
 import { useLatest, useMemoizedFn } from "ahooks";
+import type { Host, PortForwarding } from "bridge/data";
+import { SSHPortForwarding, type SSHSessionCheckServerKey } from "bridge/ssh";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef } from "react";
-import type { Host, PortForwarding } from "tauri-plugin-data";
-import {
-  SSHPortForwarding,
-  type SSHSessionCheckServerKey,
-} from "tauri-plugin-ssh";
 import { useHosts } from "@/hooks/useHosts";
 import { useKeys } from "@/hooks/useKeys";
 import {

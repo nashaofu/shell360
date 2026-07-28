@@ -1,10 +1,10 @@
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
+import { addKey, type Key, updateKey } from "bridge/data";
+import { open as openDialog } from "bridge/dialog";
+import { readTextFile } from "bridge/fs";
 import { get } from "lodash-es";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { EditKeyForm, type EditKeyFormFields, useKeys } from "shared";
-import { addKey, type Key, updateKey } from "tauri-plugin-data";
 
 import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";

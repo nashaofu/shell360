@@ -1,6 +1,6 @@
 import { useRequest, useUnmount } from "ahooks";
+import { type SSHSession, SSHSftp } from "bridge/ssh";
 import { useRef } from "react";
-import { type SSHSession, SSHSftp } from "tauri-plugin-ssh";
 
 export interface UseSftpOpts {
   session?: SSHSession;

@@ -1,7 +1,7 @@
 import { Select, Text } from "@radix-ui/themes";
+import { AuthenticationMethod } from "bridge/data";
 import type { ChangeEvent } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import { AuthenticationMethod } from "tauri-plugin-data";
 
 import { useKeys } from "@/hooks/useKeys";
 import { TextFieldPassword } from "../../TextFieldPassword";

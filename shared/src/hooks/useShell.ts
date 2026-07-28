@@ -1,8 +1,8 @@
 import { useMemoizedFn, useRequest, useUnmount } from "ahooks";
+import type { Host } from "bridge/data";
+import { type SSHSession, SSHShell } from "bridge/ssh";
 import { Buffer } from "buffer";
 import { useRef, useState } from "react";
-import type { Host } from "tauri-plugin-data";
-import { type SSHSession, SSHShell } from "tauri-plugin-ssh";
 import type { Terminal, TerminalSize } from "@/components/XTerminal";
 import { oscParse } from "@/utils/osc";
 import { sleep } from "@/utils/sleep";

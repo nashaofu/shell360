@@ -153,7 +153,6 @@ openssl base64 -A -in <p12 file path> -out <p12 file base64 encoded file path>
 
 The project includes three custom Tauri plugins:
 
-- **tauri-plugin-mobile**: Mobile-specific functionality
 - **tauri-plugin-ssh**: SSH connection functionality
 - **tauri-plugin-data**: Data management functionality
 

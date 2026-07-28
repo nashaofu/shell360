@@ -1,6 +1,6 @@
 import { Select, Text, TextField } from "@radix-ui/themes";
+import { PortForwardingType } from "bridge/data";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import { PortForwardingType } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { onInputChange } from "@/utils/form";

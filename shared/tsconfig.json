@@ -20,8 +20,5 @@
     }
   },
   "include": ["src"],
-  "references": [
-    { "path": "../tauri-plugin-data" },
-    { "path": "../tauri-plugin-ssh" }
-  ]
+  "references": [{ "path": "../bridge" }]
 }

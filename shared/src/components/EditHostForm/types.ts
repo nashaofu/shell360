@@ -1,5 +1,5 @@
+import type { Host } from "bridge/data";
 import type { UseFormReturn } from "react-hook-form";
-import type { Host } from "tauri-plugin-data";
 
 export type JumpHostsFormFields = {
   jumpHostEnabled?: boolean;

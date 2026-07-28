@@ -1,4 +1,5 @@
 import { DropdownMenu } from "@radix-ui/themes";
+import { addKey, deleteKey, type Key } from "bridge/data";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
@@ -11,7 +12,6 @@ import {
   MoreIcon,
   useKeys,
 } from "shared";
-import { addKey, deleteKey, type Key } from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import Empty from "@/components/Empty";
 import GenerateKey from "@/components/GenerateKey";

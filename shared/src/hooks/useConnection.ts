@@ -1,7 +1,7 @@
 import { useMemoizedFn } from "ahooks";
+import type { Host } from "bridge/data";
+import type { SSHSessionCheckServerKey } from "bridge/ssh";
 import { useMemo } from "react";
-import type { Host } from "tauri-plugin-data";
-import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 
 import {
   type TerminalAtom,

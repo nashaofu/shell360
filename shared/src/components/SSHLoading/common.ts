@@ -1,7 +1,7 @@
 import { Button } from "@radix-ui/themes";
+import type { Host } from "bridge/data";
+import type { SSHSessionCheckServerKey } from "bridge/ssh";
 import { createElement, type ReactNode } from "react";
-import type { Host } from "tauri-plugin-data";
-import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 import styles from "./styles.module.less";
 
 export type ErrorProps = {

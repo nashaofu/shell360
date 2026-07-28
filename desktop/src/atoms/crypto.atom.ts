@@ -1,7 +1,7 @@
-import { LazyStore } from "@tauri-apps/plugin-store";
+import { checkIsInitCrypto } from "bridge/data";
+import { LazyStore } from "bridge/store";
 import { atom, useSetAtom } from "jotai";
 import { useCallback } from "react";
-import { checkIsInitCrypto } from "tauri-plugin-data";
 
 const store = new LazyStore("config.json");
 

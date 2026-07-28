@@ -20,16 +20,13 @@
   },
   "dependencies": {
     "@radix-ui/themes": "^3.3.0",
-    "@skipperndt/plugin-machine-uid": "^0.1.3",
-    "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-fs": "^2.5.1",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-unicode11": "^0.9.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/addon-webgl": "^0.19.0",
     "@xterm/xterm": "^6.0.0",
     "ahooks": "^3.9.7",
+    "bridge": "workspace:*",
     "buffer": "^6.0.3",
     "clsx": "^2.1.1",
     "jotai": "^2.20.1",
@@ -37,8 +34,6 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.80.0",
-    "tauri-plugin-data": "workspace:*",
-    "tauri-plugin-ssh": "workspace:*",
     "uuid": "^14.0.1"
   },
   "devDependencies": {

@@ -1,4 +1,10 @@
 import { useMemoizedFn } from "ahooks";
+import {
+  deletePortForwarding,
+  type Host,
+  type PortForwarding,
+} from "bridge/data";
+import type { SSHSessionCheckServerKey } from "bridge/ssh";
 import { useCallback, useMemo } from "react";
 import {
   establishPortForwarding as establishPortForwardingUtil,
@@ -8,12 +14,6 @@ import {
   usePortForwardings,
   usePortForwardingsAtomWithApi,
 } from "shared";
-import {
-  deletePortForwarding,
-  type Host,
-  type PortForwarding,
-} from "tauri-plugin-data";
-import type { SSHSessionCheckServerKey } from "tauri-plugin-ssh";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 
 export type PortForwardingRuntime = {

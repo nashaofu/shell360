@@ -1,5 +1,5 @@
 import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
-import { getVersion } from "@tauri-apps/api/app";
+import { getVersion } from "bridge/app";
 import {
   type CSSProperties,
   type ReactNode,
@@ -14,7 +14,6 @@ import {
   useAppearance,
   WarningCircleIcon,
 } from "shared";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import Page from "@/components/Page";
 import useExportData from "@/hooks/useExportData";
 import useImportData from "@/hooks/useImportData";
@@ -65,21 +64,6 @@ function SettingsActionRow({
   );
 }
 
-function IOSIAP() {
-  const [, setOpen] = useIsShowPaywallAtom();
-
-  return (
-    <Card size="2" style={sectionStyle}>
-      <SettingsActionRow
-        label="Subscription"
-        icon={<ArrowRightIcon />}
-        onClick={() => setOpen(true)}
-        bordered={false}
-      />
-    </Card>
-  );
-}
-
 export default function Settings() {
   const [appearance, setAppearance] = useAppearance();
   const [version, setVersion] = useState<string>();
@@ -87,16 +71,8 @@ export default function Settings() {
   const importData = useImportData();
   const modal = useModal();
   const message = useMessage();
-  const isSubscription = useIsSubscription();
-  const [, setOpen] = useIsShowPaywallAtom();
 
   const onExportData = useCallback(async () => {
-    // Export requires subscription.
-    if (!isSubscription) {
-      setOpen(true);
-      return;
-    }
-
     try {
       const path = await exportData();
       if (!path) {
@@ -115,15 +91,9 @@ export default function Settings() {
         ),
       });
     }
-  }, [exportData, isSubscription, message, setOpen]);
+  }, [exportData, message]);
 
   const onImportData = useCallback(async () => {
-    // Import requires subscription.
-    if (!isSubscription) {
-      setOpen(true);
-      return;
-    }
-
     await new Promise<void>((resolve) => {
       modal.confirm({
         title: "Warning",
@@ -156,7 +126,7 @@ export default function Settings() {
         ),
       });
     }
-  }, [isSubscription, setOpen, modal, importData, message]);
+  }, [modal, importData, message]);
 
   useEffect(() => {
     getVersion().then((ver) => {
@@ -232,8 +202,6 @@ export default function Settings() {
           </Text>
         </Flex>
       </Card>
-
-      {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <IOSIAP />}
     </Page>
   );
 }

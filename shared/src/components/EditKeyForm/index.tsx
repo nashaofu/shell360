@@ -1,7 +1,7 @@
 import { IconButton, Text, TextArea, TextField } from "@radix-ui/themes";
+import type { Key } from "bridge/data";
 import { useCallback } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import type { Key } from "tauri-plugin-data";
 
 import { onInputChange, onTextareaChange } from "@/utils/form";
 import { FileUploadIcon } from "../Icon";

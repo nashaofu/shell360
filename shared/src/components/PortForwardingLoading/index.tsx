@@ -1,7 +1,7 @@
 import { Button, Progress } from "@radix-ui/themes";
+import type { PortForwarding } from "bridge/data";
 import { get } from "lodash-es";
 import { useMemo } from "react";
-import type { PortForwarding } from "tauri-plugin-data";
 
 import { useHosts } from "@/hooks/useHosts";
 import { getPortForwardingDesc } from "@/utils/portForwarding";

@@ -1,4 +1,10 @@
 import { Button, DropdownMenu } from "@radix-ui/themes";
+import {
+  AuthenticationMethod,
+  addHost,
+  type Host,
+  updateHost,
+} from "bridge/data";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import {
@@ -15,12 +21,6 @@ import {
   useKeys,
   useTerminalsAtomWithApi,
 } from "shared";
-import {
-  AuthenticationMethod,
-  addHost,
-  type Host,
-  updateHost,
-} from "tauri-plugin-data";
 import AddKey from "@/components/AddKey";
 import DrawerFooter from "@/components/DrawerFooter";
 import PageDrawer from "@/components/PageDrawer";

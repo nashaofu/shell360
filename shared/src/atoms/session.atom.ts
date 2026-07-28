@@ -1,8 +1,8 @@
 import { useLatest, useMemoizedFn } from "ahooks";
+import { AuthenticationMethod, type Host } from "bridge/data";
+import type { SSHSessionDisconnectEvent } from "bridge/ssh";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { AuthenticationMethod, type Host } from "tauri-plugin-data";
-import type { SSHSessionDisconnectEvent } from "tauri-plugin-ssh";
 import { v4 as uuidV4 } from "uuid";
 
 import { useHosts } from "@/hooks/useHosts";

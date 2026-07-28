@@ -1,5 +1,5 @@
+import type { SSHSftp } from "bridge/ssh";
 import { useMemo } from "react";
-import type { SSHSftp } from "tauri-plugin-ssh";
 
 import {
   type TerminalAtom,

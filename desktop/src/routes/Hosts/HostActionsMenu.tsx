@@ -1,7 +1,7 @@
 import { DropdownMenu } from "@radix-ui/themes";
+import type { Host } from "bridge/data";
 import type { ReactNode } from "react";
 import { ContentCopyIcon, DeleteIcon, EditIcon, MoreIcon } from "shared";
-import type { Host } from "tauri-plugin-data";
 
 type HostActionsMenuProps = {
   host: Host;

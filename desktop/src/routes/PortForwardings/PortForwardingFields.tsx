@@ -1,5 +1,5 @@
+import type { Host } from "bridge/data";
 import clsx from "clsx";
-import type { Host } from "tauri-plugin-data";
 import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
 

@@ -1,5 +1,6 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
+import { type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FileUploadIcon,
@@ -13,7 +14,6 @@ import {
   useSftpConnection,
   useSftpFileEditor,
 } from "shared";
-import { type SSHSftpFile, SSHSftpFileType } from "tauri-plugin-ssh";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";

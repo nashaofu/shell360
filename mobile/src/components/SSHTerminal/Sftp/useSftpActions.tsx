@@ -1,8 +1,8 @@
-import { open, save } from "@tauri-apps/plugin-dialog";
 import { useRequest } from "ahooks";
+import { open, save } from "bridge/dialog";
+import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
 import { type MutableRefObject, useState } from "react";
 import { getSftpBasename, joinSftpPath, WarningCircleIcon } from "shared";
-import type { SSHSftp, SSHSftpFile } from "tauri-plugin-ssh";
 import type useMessage from "@/hooks/useMessage";
 import type useModal from "@/hooks/useModal";
 

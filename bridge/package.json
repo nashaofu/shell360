@@ -1,0 +1,106 @@
+{
+  "name": "bridge",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./app": {
+      "types": "./dist/src/app.d.ts",
+      "import": "./src/app.ts",
+      "default": "./src/app.ts"
+    },
+    "./backend": {
+      "types": "./dist/src/backend.d.ts",
+      "import": "./src/backend.ts",
+      "default": "./src/backend.ts"
+    },
+    "./clipboard-manager": {
+      "types": "./dist/src/clipboard-manager.d.ts",
+      "import": "./src/clipboard-manager.ts",
+      "default": "./src/clipboard-manager.ts"
+    },
+    "./core": {
+      "types": "./dist/src/core.d.ts",
+      "import": "./src/core.ts",
+      "default": "./src/core.ts"
+    },
+    "./data": {
+      "types": "./dist/src/data.d.ts",
+      "import": "./src/data.ts",
+      "default": "./src/data.ts"
+    },
+    "./dialog": {
+      "types": "./dist/src/dialog.d.ts",
+      "import": "./src/dialog.ts",
+      "default": "./src/dialog.ts"
+    },
+    "./fs": {
+      "types": "./dist/src/fs.d.ts",
+      "import": "./src/fs.ts",
+      "default": "./src/fs.ts"
+    },
+    "./machine-uid": {
+      "types": "./dist/src/machine-uid.d.ts",
+      "import": "./src/machine-uid.ts",
+      "default": "./src/machine-uid.ts"
+    },
+    "./process": {
+      "types": "./dist/src/process.d.ts",
+      "import": "./src/process.ts",
+      "default": "./src/process.ts"
+    },
+    "./pty": {
+      "types": "./dist/src/pty.d.ts",
+      "import": "./src/pty.ts",
+      "default": "./src/pty.ts"
+    },
+    "./ssh": {
+      "types": "./dist/src/ssh.d.ts",
+      "import": "./src/ssh.ts",
+      "default": "./src/ssh.ts"
+    },
+    "./store": {
+      "types": "./dist/src/store.d.ts",
+      "import": "./src/store.ts",
+      "default": "./src/store.ts"
+    },
+    "./tauri": {
+      "types": "./dist/src/tauri.d.ts",
+      "import": "./src/tauri.ts",
+      "default": "./src/tauri.ts"
+    },
+    "./updater": {
+      "types": "./dist/src/updater.d.ts",
+      "import": "./src/updater.ts",
+      "default": "./src/updater.ts"
+    },
+    "./window": {
+      "types": "./dist/src/window.d.ts",
+      "import": "./src/window.ts",
+      "default": "./src/window.ts"
+    }
+  },
+  "scripts": {
+    "postinstall": "pnpm run build",
+    "dev": "rslib build --watch",
+    "build": "pnpm run tsc && rslib build",
+    "tsc": "tsc -b"
+  },
+  "dependencies": {
+    "@skipperndt/plugin-machine-uid": "^0.1.3",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-store": "^2.4.3",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "tauri-plugin-data": "workspace:*",
+    "tauri-plugin-pty": "workspace:*",
+    "tauri-plugin-ssh": "workspace:*"
+  },
+  "devDependencies": {
+    "@rslib/core": "^0.23.0",
+    "typescript": "^6.0.3"
+  }
+}

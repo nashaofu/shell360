@@ -1,6 +1,6 @@
 import { Button, IconButton, Select, Text } from "@radix-ui/themes";
+import type { Host } from "bridge/data";
 import { useMemo, useState } from "react";
-import type { Host } from "tauri-plugin-data";
 import { useHosts } from "../../hooks/useHosts";
 import { getHostName } from "../../utils/host";
 import { resolveSpacing } from "../../utils/style";
