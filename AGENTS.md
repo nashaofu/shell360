@@ -134,6 +134,22 @@ pnpm tauri build
 - Plugin managers hold state as `Mutex<HashMap<Id, Data>>` (see `SSHManager`)
 - Cross-platform splits via `#[cfg(desktop)]` / `#[cfg(mobile)]`
 
+## Commit Message Requirements
+
+- Use Conventional Commits style: `<type>(<scope>): <subject>`.
+- Preferred types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, and `revert`.
+- Keep the subject concise, imperative, and preferably under 72 characters.
+- Use a body only when extra context is helpful, and keep it focused on the why and impact of the change.
+- For breaking changes, append `!` to the type/scope or add a `BREAKING CHANGE:` footer.
+
+Examples:
+
+- `feat(ssh): add support for inline command execution`
+- `fix(pty): handle shell resize on Windows`
+- `docs(readme): update installation instructions`
+
+Avoid vague messages such as `update`, `fix bug`, or `misc changes`.
+
 ## Type Checking
 
 ```bash
