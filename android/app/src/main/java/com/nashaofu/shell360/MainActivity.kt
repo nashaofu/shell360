@@ -51,6 +51,18 @@ class MainActivity : ComponentActivity() {
                     finishAndRemoveTask()
                 }
             },
+            resetApplication = {
+                runOnUiThread {
+                    window.decorView.postDelayed(
+                        {
+                            rustBridge.shutdown()
+                            finishAndRemoveTask()
+                            android.os.Process.killProcess(android.os.Process.myPid())
+                        },
+                        250,
+                    )
+                }
+            },
         )
 
         setContent {

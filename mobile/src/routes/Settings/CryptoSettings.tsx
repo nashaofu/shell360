@@ -3,7 +3,10 @@ import { changeCryptoEnable } from "bridge/data";
 import { useAtomValue } from "jotai";
 import { type CSSProperties, useCallback, useState } from "react";
 import { ArrowRightIcon } from "shared";
-import { cryptoIsEnableAtom } from "@/atoms/crypto.atom";
+import {
+  cryptoIsEnableAtom,
+  useUpdateCryptoIsEnable,
+} from "@/atoms/crypto.atom";
 import ChangeCryptoPassword from "@/components/ChangeCryptoPassword";
 import IniCrypto from "@/components/InitCrypto";
 
@@ -18,18 +21,23 @@ const rowBorderStyle: CSSProperties = {
 
 export default function CryptoSettings() {
   const cryptoEnable = useAtomValue(cryptoIsEnableAtom);
+  const updateCryptoIsEnable = useUpdateCryptoIsEnable();
 
   const [initCryptoIsOpen, setInitCryptoIsOpen] = useState(false);
 
-  const onCryptoEnableChange = useCallback((checked: boolean) => {
-    if (checked) {
-      setInitCryptoIsOpen(true);
-    } else {
-      changeCryptoEnable({
-        cryptoEnable: false,
-      });
-    }
-  }, []);
+  const onCryptoEnableChange = useCallback(
+    async (checked: boolean) => {
+      if (checked) {
+        setInitCryptoIsOpen(true);
+      } else {
+        await changeCryptoEnable({
+          cryptoEnable: false,
+        });
+        await updateCryptoIsEnable();
+      }
+    },
+    [updateCryptoIsEnable],
+  );
 
   const onInitCryptoCancel = useCallback(() => {
     setInitCryptoIsOpen(false);

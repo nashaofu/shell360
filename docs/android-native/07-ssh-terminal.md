@@ -10,6 +10,30 @@
 - P0 全部方案。
 - [06-data.md](./06-data.md) 提供 Host 和 Key 数据；SSH 库本身不依赖 data。
 
+## 实施状态
+
+截至 2026-07-29，本方案的 Android Session 和 Shell 链路已落地：
+
+- 新增无 Tauri 依赖的 `shell360-ssh`，支持直接连接、跳板连接、known_hosts、
+  四种 Android 认证方式和交互式 Shell。
+- `shell360-ffi` 暴露统一 `invokeSsh(method, clientId, paramsJson)`，错误携带稳定
+  `code`、`reason` 和可选 `details`。
+- Android Router 已转发全部 `ssh.session.*` 和 `ssh.shell.*` 方法；
+  `bridge/native` 已映射 Session/Shell API 和四类定向事件。
+- Shell 数据使用有界队列，按 16ms 或 32KB 批量发送，在 FFI 边界使用 Base64；
+  resize 使用 watch 通道合并为最新尺寸。
+- Session、Shell 和跳板 Session 均校验 `clientId` 所有权；`releaseClient`、disconnect
+  和 close 支持重复调用并级联清理。
+- `SSH_AGENT_UNSUPPORTED` 在 Android 后端稳定返回。
+
+现有 `tauri-plugin-ssh` 暂时保留原 Session/Shell 实现。SFTP 和端口转发仍直接依赖
+插件内部的 `russh::Handle`，只迁移 Session 会破坏桌面功能；待这些能力一并下沉时再将
+插件改为 `shell360-ssh` 适配层。桌面命令和行为因此保持不变。
+
+本地已通过 Rust 单测、Clippy、全仓 TypeScript、Biome、UniFFI Kotlin 生成，以及
+包含 arm64-v8a 和 x86_64 Rust 库的 Android Debug APK 构建。真实 SSH 服务器上的密码、
+密钥、证书、MFA、跳板机和网络断线场景仍需集成测试或真机验收。
+
 ## shell360-ssh 范围
 
 - 直接连接和跳板机连接。

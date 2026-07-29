@@ -1,7 +1,23 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{
+  collections::HashMap,
+  path::PathBuf,
+  sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
+  },
+};
 
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use serde::Deserialize;
+use shell360_data::{
+  DataEventSink, DataOptions, DataService, Host, HostBase, Key, KeyBase, PortForwarding,
+  PortForwardingBase,
+};
 use shell360_keygen::Algorithm;
+use shell360_ssh::{
+  AuthenticationData, CheckServerKey, ShellOpenOptions, ShellSize, SshEvent, SshEventPayload,
+  SshEventSink, SshOptions, SshService,
+};
 use thiserror::Error;
 
 uniffi::setup_scaffolding!();
@@ -14,6 +30,16 @@ pub enum FfiError {
   Keygen(String),
   #[error("Response serialization failed: {0}")]
   Serialization(String),
+  #[error("Data operation failed ({code}): {reason}")]
+  Data { code: String, reason: String },
+  #[error("SSH operation failed ({code}): {reason}")]
+  Ssh {
+    code: String,
+    reason: String,
+    details: Option<String>,
+  },
+  #[error("Runtime initialization failed: {0}")]
+  Runtime(String),
 }
 
 #[uniffi::export(callback_interface)]
@@ -25,7 +51,10 @@ pub trait FfiEventSink: Send + Sync {
 pub struct Shell360Runtime {
   app_data_dir: PathBuf,
   cache_dir: PathBuf,
-  event_sink: Box<dyn FfiEventSink>,
+  event_sink: Arc<dyn FfiEventSink>,
+  runtime: tokio::runtime::Runtime,
+  data_service: DataService,
+  ssh_service: SshService,
 }
 
 #[derive(Deserialize)]
@@ -35,6 +64,134 @@ struct GenerateKeyRequest {
   passphrase: Option<String>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct InitCryptoPasswordRequest {
+  password: String,
+  confirm_password: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LoadCryptoPasswordRequest {
+  password: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ChangeCryptoPasswordRequest {
+  old_password: String,
+  password: String,
+  confirm_password: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ChangeCryptoEnableRequest {
+  crypto_enable: bool,
+  password: Option<String>,
+  confirm_password: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSessionConnectRequest {
+  ssh_session_id: String,
+  hostname: String,
+  port: u16,
+  jump_host_ssh_session_id: Option<String>,
+  check_server_key: Option<CheckServerKey>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshAuthenticateRequest {
+  ssh_session_id: String,
+  username: String,
+  password: Option<String>,
+  private_key: Option<String>,
+  passphrase: Option<String>,
+  certificate: Option<String>,
+  prompts: Option<Vec<String>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSessionIdRequest {
+  ssh_session_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshShellOpenRequest {
+  ssh_session_id: String,
+  ssh_shell_id: String,
+  term: Option<String>,
+  envs: Option<HashMap<String, String>>,
+  size: ShellSize,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshShellIdRequest {
+  ssh_shell_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshShellSendRequest {
+  ssh_shell_id: String,
+  data: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshShellResizeRequest {
+  ssh_shell_id: String,
+  size: ShellSize,
+}
+
+struct FfiDataEventSink {
+  event_sink: Arc<dyn FfiEventSink>,
+  sequence: AtomicU64,
+}
+
+struct FfiSshEventSink {
+  event_sink: Arc<dyn FfiEventSink>,
+}
+
+impl SshEventSink for FfiSshEventSink {
+  fn on_event(&self, event: SshEvent) {
+    let payload = match event.payload {
+      SshEventPayload::SessionDisconnect(reason) => {
+        serde_json::to_value(reason).unwrap_or(serde_json::Value::Null)
+      }
+      SshEventPayload::ShellData(data) => serde_json::Value::String(BASE64.encode(data)),
+      SshEventPayload::Empty => serde_json::Value::Null,
+    };
+    let event = serde_json::json!({
+      "clientId": event.client_id,
+      "event": event.event,
+      "targetId": event.target_id,
+      "sequence": event.sequence,
+      "payload": payload,
+    });
+    self.event_sink.on_event(event.to_string());
+  }
+}
+
+impl DataEventSink for FfiDataEventSink {
+  fn on_authed_change(&self, is_authed: bool) {
+    let event = serde_json::json!({
+      "event": "data.authedChange",
+      "targetId": null,
+      "sequence": self.sequence.fetch_add(1, Ordering::Relaxed),
+      "payload": is_authed,
+    });
+    self.event_sink.on_event(event.to_string());
+  }
+}
+
 #[uniffi::export]
 impl Shell360Runtime {
   #[uniffi::constructor]
@@ -42,12 +199,40 @@ impl Shell360Runtime {
     app_data_dir: String,
     cache_dir: String,
     event_sink: Box<dyn FfiEventSink>,
-  ) -> Arc<Self> {
-    Arc::new(Self {
-      app_data_dir: PathBuf::from(app_data_dir),
-      cache_dir: PathBuf::from(cache_dir),
+  ) -> Result<Arc<Self>, FfiError> {
+    let app_data_dir = PathBuf::from(app_data_dir);
+    let cache_dir = PathBuf::from(cache_dir);
+    let event_sink = Arc::<dyn FfiEventSink>::from(event_sink);
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+      .enable_all()
+      .build()
+      .map_err(|error| FfiError::Runtime(error.to_string()))?;
+    let data_service = runtime
+      .block_on(DataService::open(DataOptions {
+        database_path: app_data_dir.join("data.db"),
+        config_path: app_data_dir.join("config.json"),
+        legacy_vault_path: Some(app_data_dir.join("data.vault")),
+        event_sink: Arc::new(FfiDataEventSink {
+          event_sink: event_sink.clone(),
+          sequence: AtomicU64::new(0),
+        }),
+      }))
+      .map_err(data_error)?;
+    let ssh_service = SshService::new(SshOptions {
+      known_hosts_path: app_data_dir.join("known_hosts"),
+      event_sink: Arc::new(FfiSshEventSink {
+        event_sink: event_sink.clone(),
+      }),
+    });
+
+    Ok(Arc::new(Self {
+      app_data_dir,
+      cache_dir,
       event_sink,
-    })
+      runtime,
+      data_service,
+      ssh_service,
+    }))
   }
 
   pub fn health_check(&self) -> String {
@@ -63,7 +248,28 @@ impl Shell360Runtime {
     serde_json::to_string(&key).map_err(|error| FfiError::Serialization(error.to_string()))
   }
 
-  pub fn release_client(&self, _client_id: String) {}
+  pub fn invoke_data(&self, method: String, params_json: String) -> Result<String, FfiError> {
+    self
+      .runtime
+      .block_on(self.invoke_data_async(&method, &params_json))
+  }
+
+  pub fn invoke_ssh(
+    &self,
+    method: String,
+    client_id: String,
+    params_json: String,
+  ) -> Result<String, FfiError> {
+    self
+      .runtime
+      .block_on(self.invoke_ssh_async(&method, client_id, &params_json))
+  }
+
+  pub fn release_client(&self, client_id: String) {
+    self
+      .runtime
+      .block_on(self.ssh_service.release_client(&client_id));
+  }
 
   pub fn shutdown(&self) {}
 
@@ -89,6 +295,346 @@ impl Shell360Runtime {
   }
 }
 
+impl Shell360Runtime {
+  async fn invoke_ssh_async(
+    &self,
+    method: &str,
+    client_id: String,
+    params_json: &str,
+  ) -> Result<String, FfiError> {
+    let result = match method {
+      "ssh.session.connect" => {
+        let request: SshSessionConnectRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_connect(
+            client_id,
+            request.ssh_session_id,
+            shell360_ssh::SessionConnectOptions {
+              hostname: request.hostname,
+              port: request.port,
+              jump_host_ssh_session_id: request.jump_host_ssh_session_id,
+              check_server_key: request.check_server_key,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.authenticatePassword" => {
+        let request: SshAuthenticateRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_authenticate(
+            &client_id,
+            &request.ssh_session_id,
+            &request.username,
+            AuthenticationData::Password {
+              password: required(request.password, "password")?,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.authenticatePublicKey" => {
+        let request: SshAuthenticateRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_authenticate(
+            &client_id,
+            &request.ssh_session_id,
+            &request.username,
+            AuthenticationData::PublicKey {
+              private_key: required(request.private_key, "privateKey")?,
+              passphrase: request.passphrase,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.authenticateCertificate" => {
+        let request: SshAuthenticateRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_authenticate(
+            &client_id,
+            &request.ssh_session_id,
+            &request.username,
+            AuthenticationData::Certificate {
+              private_key: required(request.private_key, "privateKey")?,
+              passphrase: request.passphrase,
+              certificate: required(request.certificate, "certificate")?,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.authenticateKeyboardInteractive" => {
+        let request: SshAuthenticateRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_authenticate(
+            &client_id,
+            &request.ssh_session_id,
+            &request.username,
+            AuthenticationData::KeyboardInteractive {
+              prompts: request.prompts,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.authenticateAgent" => {
+        let request: SshAuthenticateRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_authenticate(
+            &client_id,
+            &request.ssh_session_id,
+            &request.username,
+            AuthenticationData::Agent,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.session.disconnect" => {
+        let request: SshSessionIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .session_disconnect(&client_id, &request.ssh_session_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.shell.open" => {
+        let request: SshShellOpenRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .shell_open(
+            client_id,
+            request.ssh_session_id,
+            request.ssh_shell_id,
+            ShellOpenOptions {
+              term: request.term,
+              envs: request.envs,
+              size: request.size,
+            },
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.shell.send" => {
+        let request: SshShellSendRequest = parse_request(params_json)?;
+        let data = BASE64
+          .decode(request.data)
+          .map_err(|error| FfiError::InvalidRequest(format!("Invalid Base64 data: {error}")))?;
+        self
+          .ssh_service
+          .shell_send(&client_id, &request.ssh_shell_id, &data)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.shell.resize" => {
+        let request: SshShellResizeRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .shell_resize(&client_id, &request.ssh_shell_id, request.size)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.shell.close" => {
+        let request: SshShellIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .shell_close(&client_id, &request.ssh_shell_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      _ => {
+        return Err(FfiError::InvalidRequest(format!(
+          "Unsupported SSH method: {method}"
+        )));
+      }
+    };
+
+    serde_json::to_string(&result).map_err(|error| FfiError::Serialization(error.to_string()))
+  }
+
+  async fn invoke_data_async(&self, method: &str, params_json: &str) -> Result<String, FfiError> {
+    let result = match method {
+      "data.checkIsEnableCrypto" => {
+        serde_json::Value::Bool(self.data_service.check_is_enable_crypto().await)
+      }
+      "data.checkIsInitCrypto" => {
+        serde_json::Value::Bool(self.data_service.check_is_init_crypto().await)
+      }
+      "data.checkIsAuthed" => serde_json::Value::Bool(self.data_service.check_is_authed().await),
+      "data.initCryptoKey" => self
+        .data_service
+        .init_crypto_key()
+        .await
+        .map(|()| serde_json::Value::Null)
+        .map_err(data_error)?,
+      "data.initCryptoPassword" => {
+        let request: InitCryptoPasswordRequest = parse_request(params_json)?;
+        self
+          .data_service
+          .init_crypto_password(request.password, request.confirm_password)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.loadCryptoByPassword" => {
+        let request: LoadCryptoPasswordRequest = parse_request(params_json)?;
+        self
+          .data_service
+          .load_crypto_by_password(request.password)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.changeCryptoPassword" => {
+        let request: ChangeCryptoPasswordRequest = parse_request(params_json)?;
+        self
+          .data_service
+          .change_crypto_password(
+            request.old_password,
+            request.password,
+            request.confirm_password,
+          )
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.initCryptoBiometric" => self
+        .data_service
+        .init_crypto_biometric()
+        .await
+        .map(|()| serde_json::Value::Null)
+        .map_err(data_error)?,
+      "data.loadCryptoByBiometric" => self
+        .data_service
+        .load_crypto_by_biometric()
+        .await
+        .map(|()| serde_json::Value::Null)
+        .map_err(data_error)?,
+      "data.changeCryptoEnable" => {
+        let request: ChangeCryptoEnableRequest = parse_request(params_json)?;
+        self
+          .data_service
+          .change_crypto_enable(
+            request.crypto_enable,
+            request.password,
+            request.confirm_password,
+          )
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.resetCrypto" => serialize_data(self.data_service.reset_crypto().await)?,
+      "data.rotateCryptoKey" => {
+        let request: LoadCryptoPasswordRequest = parse_request(params_json)?;
+        self
+          .data_service
+          .rotate_crypto_key(request.password)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.getHosts" => serialize_data(self.data_service.get_hosts().await)?,
+      "data.addHost" => {
+        let request: HostBase = parse_request(params_json)?;
+        serialize_data(self.data_service.add_host(request).await)?
+      }
+      "data.updateHost" => {
+        let request: Host = parse_request(params_json)?;
+        serialize_data(self.data_service.update_host(request).await)?
+      }
+      "data.deleteHost" => {
+        let request: Host = parse_request(params_json)?;
+        self
+          .data_service
+          .delete_host(request)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.getKeys" => serialize_data(self.data_service.get_keys().await)?,
+      "data.addKey" => {
+        let request: KeyBase = parse_request(params_json)?;
+        serialize_data(self.data_service.add_key(request).await)?
+      }
+      "data.updateKey" => {
+        let request: Key = parse_request(params_json)?;
+        serialize_data(self.data_service.update_key(request).await)?
+      }
+      "data.deleteKey" => {
+        let request: Key = parse_request(params_json)?;
+        self
+          .data_service
+          .delete_key(request)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      "data.getPortForwardings" => serialize_data(self.data_service.get_port_forwardings().await)?,
+      "data.addPortForwarding" => {
+        let request: PortForwardingBase = parse_request(params_json)?;
+        serialize_data(self.data_service.add_port_forwarding(request).await)?
+      }
+      "data.updatePortForwarding" => {
+        let request: PortForwarding = parse_request(params_json)?;
+        serialize_data(self.data_service.update_port_forwarding(request).await)?
+      }
+      "data.deletePortForwarding" => {
+        let request: PortForwarding = parse_request(params_json)?;
+        self
+          .data_service
+          .delete_port_forwarding(request)
+          .await
+          .map(|()| serde_json::Value::Null)
+          .map_err(data_error)?
+      }
+      _ => {
+        return Err(FfiError::InvalidRequest(format!(
+          "Unsupported data method: {method}"
+        )));
+      }
+    };
+
+    serde_json::to_string(&result).map_err(|error| FfiError::Serialization(error.to_string()))
+  }
+}
+
+fn parse_request<T: serde::de::DeserializeOwned>(params_json: &str) -> Result<T, FfiError> {
+  serde_json::from_str(params_json).map_err(|error| FfiError::InvalidRequest(error.to_string()))
+}
+
+fn serialize_data<T: serde::Serialize>(
+  result: shell360_data::DataResult<T>,
+) -> Result<serde_json::Value, FfiError> {
+  result.map_err(data_error).and_then(|value| {
+    serde_json::to_value(value).map_err(|error| FfiError::Serialization(error.to_string()))
+  })
+}
+
+fn data_error(error: shell360_data::DataError) -> FfiError {
+  FfiError::Data {
+    code: error.code().to_string(),
+    reason: error.to_string(),
+  }
+}
+
+fn ssh_error(error: shell360_ssh::SshError) -> FfiError {
+  FfiError::Ssh {
+    code: error.code().to_string(),
+    reason: error.to_string(),
+    details: error.details().map(|details| details.to_string()),
+  }
+}
+
+fn required<T>(value: Option<T>, name: &str) -> Result<T, FfiError> {
+  value.ok_or_else(|| FfiError::InvalidRequest(format!("Missing {name}")))
+}
+
 #[cfg(test)]
 mod tests {
   use std::sync::Mutex;
@@ -110,11 +656,17 @@ mod tests {
 
   #[test]
   fn invokes_keygen() {
+    let directory = tempfile::tempdir().expect("create temp directory");
     let runtime = Shell360Runtime::new(
-      "/tmp/data".to_string(),
-      "/tmp/cache".to_string(),
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
       Box::new(TestEventSink::default()),
-    );
+    )
+    .expect("create runtime");
     let response = runtime
       .invoke_keygen(
         serde_json::json!({
@@ -135,12 +687,53 @@ mod tests {
 
   #[test]
   fn rejects_invalid_request() {
+    let directory = tempfile::tempdir().expect("create temp directory");
     let runtime = Shell360Runtime::new(
-      "/tmp/data".to_string(),
-      "/tmp/cache".to_string(),
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
       Box::new(TestEventSink::default()),
-    );
+    )
+    .expect("create runtime");
 
     assert!(runtime.invoke_keygen("{}".to_string()).is_err());
+  }
+
+  #[test]
+  fn invokes_data_crud() {
+    let directory = tempfile::tempdir().expect("create temp directory");
+    let runtime = Shell360Runtime::new(
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
+      Box::new(TestEventSink::default()),
+    )
+    .expect("create runtime");
+    let key = runtime
+      .invoke_data(
+        "data.addKey".to_string(),
+        serde_json::json!({
+          "name": "test",
+          "privateKey": "private",
+          "publicKey": "public",
+          "passphrase": null,
+          "certificate": null,
+        })
+        .to_string(),
+      )
+      .expect("add key");
+    let key: serde_json::Value = serde_json::from_str(&key).expect("parse key");
+    let keys = runtime
+      .invoke_data("data.getKeys".to_string(), "null".to_string())
+      .expect("get keys");
+    let keys: serde_json::Value = serde_json::from_str(&keys).expect("parse keys");
+
+    assert_eq!(keys[0], key);
   }
 }

@@ -11,11 +11,16 @@ name = "uniffi-bindgen"
 path = "src/bin/uniffi_bindgen.rs"
 
 [dependencies]
+base64 = "0.22.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
+shell360-data = { path = "../shell360-data" }
 shell360-keygen = { path = "../shell360-keygen" }
+shell360-ssh = { path = "../shell360-ssh" }
 thiserror.workspace = true
+tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 uniffi = { version = "0.30.0", features = ["cli"] }
 
 [dev-dependencies]
 ssh-key = { version = "0.6.7", features = ["ed25519"] }
+tempfile = "3.26.0"

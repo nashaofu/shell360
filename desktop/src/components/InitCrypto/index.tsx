@@ -4,6 +4,7 @@ import { changeCryptoEnable } from "bridge/data";
 import { useForm } from "react-hook-form";
 import { Loading } from "shared";
 
+import { useUpdateCryptoIsEnable } from "@/atoms/crypto.atom";
 import CryptoPasswordField from "@/components/CryptoPasswordField";
 import useMessage from "@/hooks/useMessage";
 
@@ -15,6 +16,7 @@ interface InitCryptoProps {
 
 export default function InitCrypto({ open, onCancel, onOk }: InitCryptoProps) {
   const message = useMessage();
+  const updateCryptoIsEnable = useUpdateCryptoIsEnable();
   const formApi = useForm({
     defaultValues: {
       password: "",
@@ -31,6 +33,7 @@ export default function InitCrypto({ open, onCancel, onOk }: InitCryptoProps) {
           password,
           confirmPassword,
         });
+        await updateCryptoIsEnable();
       },
       {
         manual: true,

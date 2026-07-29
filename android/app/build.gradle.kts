@@ -18,6 +18,12 @@ val rustInputs = files(
     fileTree(workspaceDir.resolve("crates/shell360-keygen")) {
         include("Cargo.toml", "**/*.rs")
     },
+    fileTree(workspaceDir.resolve("crates/shell360-data")) {
+        include("Cargo.toml", "**/*.rs")
+    },
+    fileTree(workspaceDir.resolve("crates/shell360-ssh")) {
+        include("Cargo.toml", "**/*.rs")
+    },
 )
 val mobileInputs = files(
     workspaceDir.resolve("package.json"),
