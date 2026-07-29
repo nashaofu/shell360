@@ -62,9 +62,8 @@ tauri-plugin-pty（桌面）
   UI store 暂用 WebView `localStorage`。
 
 本地 Rust、TypeScript、UniFFI 生成和 Android SDK 35 下的 Kotlin 编译已验证。
-工程依赖要求 compile SDK 37.1，完整 APK 需在安装该 SDK 后验证；Release 前端构建还受
-现有 `mobile` 中遗留的 `tauri-plugin-mobile` IAP 导入阻塞。真机 HMR、离线 Release
-启动和 Android instrumentation 测试仍需在具备 SDK 37.1 的环境完成。
+工程依赖要求 compile SDK 37.1，完整 APK 需在安装该 SDK 后验证。真机 HMR、离线
+Release 启动和 Android instrumentation 测试仍需在具备 SDK 37.1 的环境完成。
 
 ## 阶段与方案文件
 
