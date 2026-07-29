@@ -10,7 +10,9 @@
     "check": "biome check .",
     "check:fix": "biome check . --write",
     "tsc": "pnpm --filter \"*\" run tsc",
-    "build": "pnpm --filter \"*\" run build"
+    "build": "pnpm --filter \"*\" run build",
+    "android:dev": "bash scripts/android-dev.sh",
+    "android:build": "bash android/gradlew -p android assembleRelease"
   },
   "license": "MIT",
   "devDependencies": {

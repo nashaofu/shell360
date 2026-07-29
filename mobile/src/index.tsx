@@ -1,4 +1,3 @@
-import { installTauriBackend } from "bridge/tauri";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { identify } from "shared";
@@ -8,11 +7,26 @@ import "./styles/index.less";
 
 import App from "./app";
 
-installTauriBackend();
-identify();
+async function installBackend() {
+  if (window.shell360Native) {
+    const { installNativeBackend } = await import("bridge/native");
+    installNativeBackend();
+    return;
+  }
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+  const { installTauriBackend } = await import("bridge/tauri");
+  installTauriBackend();
+}
+
+async function main() {
+  await installBackend();
+  void identify();
+
+  createRoot(document.getElementById("root") as HTMLElement).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void main();

@@ -44,6 +44,11 @@
       "import": "./src/machine-uid.ts",
       "default": "./src/machine-uid.ts"
     },
+    "./native": {
+      "types": "./dist/src/native.d.ts",
+      "import": "./src/native.ts",
+      "default": "./src/native.ts"
+    },
     "./process": {
       "types": "./dist/src/process.d.ts",
       "import": "./src/process.ts",

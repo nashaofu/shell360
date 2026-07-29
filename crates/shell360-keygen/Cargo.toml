@@ -1,0 +1,16 @@
+[package]
+name = "shell360-keygen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+ssh-key = { version = "0.6.7", features = [
+  "ed25519",
+  "rsa",
+  "encryption",
+  "p256",
+  "p384",
+  "p521",
+] }
+thiserror.workspace = true

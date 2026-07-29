@@ -54,12 +54,12 @@ Release:
 统一通过 ADB 反向代理：
 
 ```bash
-adb reverse tcp:1421 tcp:1421
-pnpm --filter mobile run dev
+pnpm run android:dev
 ```
 
-这样模拟器和真机都可以使用 `127.0.0.1`。多设备场景通过
-`adb -s <serial> reverse ...` 指定目标设备。
+该命令执行 ADB 反向代理、启动 Rsbuild、安装 Debug APK 并打开 Activity。这样模拟器
+和真机都可以使用 `127.0.0.1`。多设备场景先设置
+`ANDROID_SERIAL=<serial>` 指定目标设备。
 
 Debug manifest 单独允许明文 HTTP，Release manifest 不允许。开发服务器继续监听
 `0.0.0.0:1421`，HMR WebSocket 复用相同端口。

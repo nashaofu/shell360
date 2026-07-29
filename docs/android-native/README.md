@@ -49,6 +49,23 @@ tauri-plugin-pty（桌面）
 | P1 | Android 首个可用版本必须具备的核心能力 |
 | P2 | 可在核心版本稳定后实现，或只影响桌面重构和工程清理 |
 
+## 实施状态
+
+截至 2026-07-29，P0 最小垂直链路已落地：
+
+- 顶层 `android/` 通过 Compose WebView 加载 Debug 开发服务器和 Release 内置资源。
+- `bridge/native` 与 Android WebMessage 白名单路由已接通。
+- `shell360-keygen` 从 Tauri 命令中提取，桌面与 Android 复用同一实现。
+- `shell360-ffi` 已通过 UniFFI 接入 Android，支持 `arm64-v8a` 和 `x86_64`。
+- `keygen.generate`、应用版本、安装级 machine UID 和关闭窗口已实现。
+- P1 领域能力暂时返回 `BRIDGE_UNSUPPORTED`；data 启动状态使用无加密、已认证占位值，
+  UI store 暂用 WebView `localStorage`。
+
+本地 Rust、TypeScript、UniFFI 生成和 Android SDK 35 下的 Kotlin 编译已验证。
+工程依赖要求 compile SDK 37.1，完整 APK 需在安装该 SDK 后验证；Release 前端构建还受
+现有 `mobile` 中遗留的 `tauri-plugin-mobile` IAP 导入阻塞。真机 HMR、离线 Release
+启动和 Android instrumentation 测试仍需在具备 SDK 37.1 的环境完成。
+
 ## 阶段与方案文件
 
 | 阶段 | 优先级 | 功能点 | 方案 |
