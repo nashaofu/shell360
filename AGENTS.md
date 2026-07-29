@@ -48,17 +48,23 @@ pnpm run build
 # Tauri build
 pnpm tauri build
 
-# Native Android (requires cargo-ndk, Android SDK/NDK, and adb)
-pnpm run android:dev      # adb reverse, mobile dev server, install and launch
+# Native Android (requires Android SDK/NDK and JAVA_HOME)
+# Set ANDROID_HOME and NDK_HOME; adb does not need to be in PATH.
+# Android Studio Run also works: `installDebug` automatically starts the mobile dev
+# server in the background and sets up `adb reverse` (ensureDevServer/ensureAdbReverse).
+# Stop the background dev server with `./gradlew stopDevServer`.
+pnpm run android:dev      # select device, start dev server, install and launch
 pnpm run android:build    # release APK
 ```
+
+Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared paths and environment variables; `adb.ts`, `devices.ts`, and `emulator.ts` handle device discovery and startup; `gradle.ts` runs the wrapper; `commands.ts` coordinates build and development lifecycles; and `index.ts` provides the CLI.
 
 ## Agent Workflow
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
   - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
-  - **Native Android code**: run the relevant task through `bash android/gradlew -p android`, normally `assembleDebug` or `assembleRelease`.
+  - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat`; both `ANDROID_HOME` and `NDK_HOME` must point to existing SDK and NDK directories.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.

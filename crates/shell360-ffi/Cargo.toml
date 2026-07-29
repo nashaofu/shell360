@@ -14,7 +14,7 @@ path = "src/bin/uniffi_bindgen.rs"
 base64 = "0.22.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-shell360-data = { path = "../shell360-data" }
+shell360-store = { path = "../shell360-store" }
 shell360-keygen = { path = "../shell360-keygen" }
 shell360-ssh = { path = "../shell360-ssh" }
 thiserror.workspace = true

@@ -42,7 +42,7 @@ FileBroker 必须：
 
 ## Store 边界
 
-加密状态和 data 配置归 `shell360-data` 管理。Android DataStore 只保存纯平台或 UI
+加密状态和 data 配置归 `shell360-store` 管理。Android DataStore 只保存纯平台或 UI
 配置，不能成为 Host、Key 或 crypto 状态的第二事实来源。
 
 ## Machine UID

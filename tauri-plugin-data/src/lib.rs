@@ -2,7 +2,7 @@ mod commands;
 
 use std::sync::Arc;
 
-use shell360_data::{DataEventSink, DataOptions, DataService};
+use shell360_store::{DataEventSink, DataOptions, DataService};
 use tauri::{
   AppHandle, Emitter, Manager, Runtime, async_runtime,
   plugin::{Builder, TauriPlugin},

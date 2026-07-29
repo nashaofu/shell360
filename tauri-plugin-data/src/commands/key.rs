@@ -1,4 +1,4 @@
-use shell360_data::{DataResult, DataService, Key, KeyBase};
+use shell360_store::{DataResult, DataService, Key, KeyBase};
 use tauri::State;
 
 #[tauri::command]

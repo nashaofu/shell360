@@ -9,14 +9,14 @@ use std::{
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use serde::Deserialize;
-use shell360_data::{
-  DataEventSink, DataOptions, DataService, Host, HostBase, Key, KeyBase, PortForwarding,
-  PortForwardingBase,
-};
 use shell360_keygen::Algorithm;
 use shell360_ssh::{
   AuthenticationData, CheckServerKey, ShellOpenOptions, ShellSize, SshEvent, SshEventPayload,
   SshEventSink, SshOptions, SshService,
+};
+use shell360_store::{
+  DataEventSink, DataOptions, DataService, Host, HostBase, Key, KeyBase, PortForwarding,
+  PortForwardingBase,
 };
 use thiserror::Error;
 
@@ -609,14 +609,14 @@ fn parse_request<T: serde::de::DeserializeOwned>(params_json: &str) -> Result<T,
 }
 
 fn serialize_data<T: serde::Serialize>(
-  result: shell360_data::DataResult<T>,
+  result: shell360_store::DataResult<T>,
 ) -> Result<serde_json::Value, FfiError> {
   result.map_err(data_error).and_then(|value| {
     serde_json::to_value(value).map_err(|error| FfiError::Serialization(error.to_string()))
   })
 }
 
-fn data_error(error: shell360_data::DataError) -> FfiError {
+fn data_error(error: shell360_store::DataError) -> FfiError {
   FfiError::Data {
     code: error.code().to_string(),
     reason: error.to_string(),

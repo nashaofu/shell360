@@ -18,7 +18,7 @@ val rustInputs = files(
     fileTree(workspaceDir.resolve("crates/shell360-keygen")) {
         include("Cargo.toml", "**/*.rs")
     },
-    fileTree(workspaceDir.resolve("crates/shell360-data")) {
+    fileTree(workspaceDir.resolve("crates/shell360-store")) {
         include("Cargo.toml", "**/*.rs")
     },
     fileTree(workspaceDir.resolve("crates/shell360-ssh")) {
@@ -50,6 +50,81 @@ val hostLibraryName = when {
     else -> "libshell360_ffi.so"
 }
 val hostLibrary = workspaceDir.resolve("target/debug/$hostLibraryName")
+val androidLibraryName = "libshell360_ffi.so"
+val androidNdkHome =
+    System.getenv("NDK_HOME")
+        ?: System.getenv("ANDROID_NDK_HOME")
+        ?: throw GradleException("Set the NDK_HOME or ANDROID_NDK_HOME environment variable")
+val ndkHostTag = when {
+    hostOperatingSystem.contains("windows") -> "windows-x86_64"
+    hostOperatingSystem.contains("mac") && System.getProperty("os.arch").contains("aarch64") ->
+        "darwin-aarch64"
+    hostOperatingSystem.contains("mac") -> "darwin-x86_64"
+    else -> "linux-x86_64"
+}
+val ndkBinDir = file("$androidNdkHome/toolchains/llvm/prebuilt/$ndkHostTag/bin")
+
+data class AndroidRustTarget(
+    val taskName: String,
+    val abi: String,
+    val triple: String,
+    val clangPrefix: String,
+)
+
+val androidRustTargets = listOf(
+    AndroidRustTarget("Arm64", "arm64-v8a", "aarch64-linux-android", "aarch64-linux-android"),
+    AndroidRustTarget("X86_64", "x86_64", "x86_64-linux-android", "x86_64-linux-android"),
+)
+
+fun ndkExecutable(name: String): File =
+    ndkBinDir.resolve(if (hostOperatingSystem.contains("windows")) "$name.cmd" else name)
+
+fun registerRustBuild(
+    variant: String,
+    outputDir: File,
+    release: Boolean,
+) = androidRustTargets.map { target ->
+    val cargoOutput = workspaceDir.resolve(
+        "target/${target.triple}/${if (release) "release" else "debug"}/$androidLibraryName",
+    )
+    val buildTask = tasks.register<Exec>("buildRust${variant}${target.taskName}") {
+        workingDir(workspaceDir)
+        inputs.files(rustInputs)
+        outputs.file(cargoOutput)
+        environment(
+            "CARGO_TARGET_${target.triple.uppercase().replace('-', '_')}_LINKER",
+            ndkExecutable("${target.clangPrefix}29-clang").absolutePath,
+        )
+        environment(
+            "CC_${target.triple.replace('-', '_')}",
+            ndkExecutable("${target.clangPrefix}29-clang").absolutePath,
+        )
+        environment(
+            "CXX_${target.triple.replace('-', '_')}",
+            ndkExecutable("${target.clangPrefix}29-clang++").absolutePath,
+        )
+        environment(
+            "AR_${target.triple.replace('-', '_')}",
+            ndkExecutable("llvm-ar").absolutePath,
+        )
+        commandLine(
+            "cargo",
+            "build",
+            "--target",
+            target.triple,
+            "-p",
+            "shell360-ffi",
+            *(if (release) arrayOf("--release") else emptyArray()),
+        )
+    }
+
+    tasks.register<Sync>("syncRust${variant}${target.taskName}") {
+        dependsOn(buildTask)
+        from(cargoOutput)
+        into(outputDir.resolve(target.abi))
+        include(androidLibraryName)
+    }
+}
 
 android {
     namespace = "com.nashaofu.shell360"
@@ -112,47 +187,15 @@ android {
     }
 }
 
-val buildRustDebug by tasks.registering(Exec::class) {
-    workingDir(workspaceDir)
-    inputs.files(rustInputs)
-    outputs.dir(debugRustDir)
-    commandLine(
-        "cargo",
-        "ndk",
-        "--target",
-        "arm64-v8a",
-        "--target",
-        "x86_64",
-        "--platform",
-        "29",
-        "--output-dir",
-        debugRustDir.absolutePath,
-        "build",
-        "-p",
-        "shell360-ffi",
-    )
+val buildRustDebugTargets = registerRustBuild("Debug", debugRustDir, release = false)
+val buildRustReleaseTargets = registerRustBuild("Release", releaseRustDir, release = true)
+
+val buildRustDebug by tasks.registering {
+    dependsOn(buildRustDebugTargets)
 }
 
-val buildRustRelease by tasks.registering(Exec::class) {
-    workingDir(workspaceDir)
-    inputs.files(rustInputs)
-    outputs.dir(releaseRustDir)
-    commandLine(
-        "cargo",
-        "ndk",
-        "--target",
-        "arm64-v8a",
-        "--target",
-        "x86_64",
-        "--platform",
-        "29",
-        "--output-dir",
-        releaseRustDir.absolutePath,
-        "build",
-        "-p",
-        "shell360-ffi",
-        "--release",
-    )
+val buildRustRelease by tasks.registering {
+    dependsOn(buildRustReleaseTargets)
 }
 
 val buildUniFfiHost by tasks.registering(Exec::class) {
@@ -160,6 +203,19 @@ val buildUniFfiHost by tasks.registering(Exec::class) {
     inputs.files(rustInputs)
     outputs.file(hostLibrary)
     commandLine("cargo", "build", "-p", "shell360-ffi")
+}
+
+tasks.named("buildRustDebugArm64") {
+    mustRunAfter(buildUniFfiHost)
+}
+tasks.named("buildRustDebugX86_64") {
+    mustRunAfter("buildRustDebugArm64")
+}
+tasks.named("buildRustReleaseArm64") {
+    mustRunAfter(buildUniFfiHost)
+}
+tasks.named("buildRustReleaseX86_64") {
+    mustRunAfter("buildRustReleaseArm64")
 }
 
 val generateUniFfiBindings by tasks.registering(Exec::class) {
@@ -203,7 +259,7 @@ tasks.configureEach {
     when (name) {
         "compileDebugKotlin", "compileReleaseKotlin" -> dependsOn(generateUniFfiBindings)
         "mergeDebugJniLibFolders", "mergeDebugNativeLibs" -> dependsOn(buildRustDebug)
-        "mergeReleaseAssets" -> dependsOn(syncWebAssets)
+        "generateReleaseLintVitalReportModel", "lintVitalAnalyzeRelease", "mergeReleaseAssets" -> dependsOn(syncWebAssets)
         "mergeReleaseJniLibFolders", "mergeReleaseNativeLibs" -> dependsOn(buildRustRelease)
     }
 }

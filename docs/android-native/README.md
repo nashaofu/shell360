@@ -22,7 +22,7 @@ Android WebMessage Bridge
 shell360-ffi              Kotlin 平台能力
     |                     dialog/fs/app/clipboard
     +-- shell360-ssh
-    +-- shell360-data
+    +-- shell360-store
     +-- shell360-keygen
 
 shell360-pty
@@ -35,7 +35,7 @@ tauri-plugin-pty（桌面）
 
 - 直接使用现有顶层 `android/`，不新建 Android 工程。
 - 不改造 `src-tauri/gen/android`，迁移完成后整体删除。
-- `shell360-ssh`、`shell360-data`、`shell360-pty` 和
+- `shell360-ssh`、`shell360-store`、`shell360-pty` 和
   `shell360-keygen` 是相互独立的业务库。
 - `shell360-ffi` 只负责绑定、生命周期、调用转换和事件转发，不承载业务逻辑。
 - Android 和未来 iOS 共用 `bridge/native` 的消息协议。
@@ -58,7 +58,7 @@ tauri-plugin-pty（桌面）
 - `shell360-keygen` 从 Tauri 命令中提取，桌面与 Android 复用同一实现。
 - `shell360-ffi` 已通过 UniFFI 接入 Android，支持 `arm64-v8a` 和 `x86_64`。
 - `keygen.generate`、应用版本、安装级 machine UID 和关闭窗口已实现。
-- `shell360-data` 已提供共享 SQLite、migration、CRUD 和密码加密实现，桌面 Tauri
+- `shell360-store` 已提供共享 SQLite、migration、CRUD 和密码加密实现，桌面 Tauri
   插件与 Android FFI 使用同一 data service。
 - Android 已实现全部 `data.*` 路由、认证状态事件、结构化错误码和重置后的进程退出。
 - `shell360-ssh` 已提供直接/跳板连接、known_hosts、认证和交互式 Shell；

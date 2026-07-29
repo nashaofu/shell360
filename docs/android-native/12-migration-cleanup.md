@@ -29,8 +29,8 @@ src-tauri/tauri.android.conf.json
 
 ## 脚本调整
 
-- `scripts/android.sh` 和 `scripts/android.ps1` 改为调用顶层 `android/gradlew`。
-- 增加统一开发脚本：启动 Rsbuild、执行 `adb reverse`、安装并启动 Debug APK。
+- 使用 `scripts/android.js` 统一调用 `gradlew`/`gradlew.bat` 和 SDK 中的 adb。
+- 统一开发命令负责启动 Rsbuild、执行 `adb reverse`、安装并启动 Debug APK。
 - Android Release 先构建 `mobile` 和 Rust FFI，再执行 Gradle bundle。
 - 移除 Android 对 Tauri CLI 的调用。
 
@@ -50,10 +50,10 @@ rust-check:
 android-debug:
   构建 mobile
   cargo-ndk 构建 shell360-ffi
-  ./android/gradlew assembleDebug
+  pnpm run android:build --mode debug
 
 android-release:
-  ./android/gradlew bundleRelease
+  pnpm run android:build
 ```
 
 Release CI 应缓存 Cargo、Gradle 和 pnpm，但不能缓存或提交签名密钥。

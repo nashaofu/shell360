@@ -51,18 +51,41 @@ Release:
 
 ## 开发环境
 
-统一通过 ADB 反向代理：
+先设置 `ANDROID_HOME`，也可以通过 `NDK_HOME` 指定 NDK。未设置 `NDK_HOME` 时，开发
+脚本自动选择 `$ANDROID_HOME/ndk` 下版本号最高的 NDK。脚本直接从 SDK 目录定位
+`platform-tools/adb`，并将两个变量传给所有构建子进程，无需将 adb 加入 `PATH`。
+
+Windows、macOS 和 Linux 使用相同命令。统一通过 ADB 反向代理：
 
 ```bash
 pnpm run android:dev
 ```
 
 该命令执行 ADB 反向代理、启动 Rsbuild、安装 Debug APK 并打开 Activity。这样模拟器
-和真机都可以使用 `127.0.0.1`。多设备场景先设置
-`ANDROID_SERIAL=<serial>` 指定目标设备。
+和真机都可以使用 `127.0.0.1`。交互终端始终显示设备选择列表，即使当前只有一个可用
+设备。列表包含尚未启动的本地 AVD，选择后会自动启动并等待系统就绪。模拟器显示 AVD
+名称，真机显示设备型号，底层仍使用 adb serial。也可以通过名称直接指定目标设备：
+
+```bash
+pnpm run android:dev --device Pixel_9_API_35
+```
+
+Debug WebView 已启用远程调试。应用启动后，脚本会将设备内的 DevTools socket 转发到
+本机 `9222` 端口。打开 Chrome 的 `chrome://inspect/#devices` 即可检查页面，也可以
+访问 `http://127.0.0.1:9222` 查看调试目标。端口被占用时可指定其他端口：
+
+```bash
+pnpm run android:dev --debug-port 9223
+```
 
 Debug manifest 单独允许明文 HTTP，Release manifest 不允许。开发服务器继续监听
 `0.0.0.0:1421`，HMR WebSocket 复用相同端口。
+
+Release APK 使用同一个 Node.js 入口构建：
+
+```bash
+pnpm run android:build
+```
 
 ## Release 资源
 

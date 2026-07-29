@@ -9,7 +9,7 @@ links = "tauri-plugin-data"
 
 [dependencies]
 tauri = { workspace = true }
-shell360-data = { path = "../crates/shell360-data" }
+shell360-store = { path = "../crates/shell360-store" }
 
 [build-dependencies]
 tauri-plugin = { workspace = true, features = ["build"] }

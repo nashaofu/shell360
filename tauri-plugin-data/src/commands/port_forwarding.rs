@@ -1,4 +1,4 @@
-use shell360_data::{DataResult, DataService, PortForwarding, PortForwardingBase};
+use shell360_store::{DataResult, DataService, PortForwarding, PortForwardingBase};
 use tauri::State;
 
 #[tauri::command]

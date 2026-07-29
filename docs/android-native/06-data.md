@@ -2,7 +2,7 @@
 
 ## 目标
 
-将数据和加密实现提取到独立 `shell360-data`，让 Android 通过
+将数据和加密实现提取到独立 `shell360-store`，让 Android 通过
 `shell360-ffi` 使用与桌面一致的数据模型和 migration。
 
 ## 依赖
@@ -13,7 +13,7 @@
 
 截至 2026-07-29，本方案已落地：
 
-- `shell360-data` 已从 Tauri 插件提取，桌面插件和 Android FFI 复用同一套模型、
+- `shell360-store` 已从 Tauri 插件提取，桌面插件和 Android FFI 复用同一套模型、
   migration、SQLite 和加密实现。
 - `bridge/native` 已映射全部 `data.*` API 和认证状态事件。
 - FFI data 错误携带稳定 `code` 和 `reason`，Android Bridge 保留业务错误码。
@@ -34,7 +34,7 @@
 生物识别不在本阶段实现，相关方法应返回明确的
 `CRYPTO_BIOMETRIC_UNSUPPORTED`，不能保留 panic 或 `unimplemented!()`。
 
-## shell360-data 改造
+## shell360-store 改造
 
 移除：
 
@@ -103,4 +103,4 @@ filesDir/shell360/known_hosts
 - 加密状态只有 Rust data service 一个事实来源。
 - 锁定状态下敏感数据不可读取。
 - 删除或重置数据库不会留下已打开连接。
-- 桌面 Tauri data 插件继续通过同一个 `shell360-data` 工作。
+- 桌面 Tauri data 插件继续通过同一个 `shell360-store` 工作。

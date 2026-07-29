@@ -1,4 +1,4 @@
-use shell360_data::{DataResult, DataService};
+use shell360_store::{DataResult, DataService};
 use tauri::{AppHandle, Runtime, State};
 
 #[tauri::command]

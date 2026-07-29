@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "crates/shell360-data",
+  "crates/shell360-store",
   "crates/shell360-ffi",
   "crates/shell360-keygen",
   "crates/shell360-ssh",
