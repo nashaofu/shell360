@@ -1,7 +1,9 @@
 [workspace]
 members = [
+  "crates/shell360-data",
   "crates/shell360-ffi",
   "crates/shell360-keygen",
+  "crates/shell360-ssh",
   "src-tauri",
   "tauri-plugin-ssh",
   "tauri-plugin-data",

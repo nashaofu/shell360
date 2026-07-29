@@ -1,23 +1,11 @@
-import { checkIsInitCrypto } from "bridge/data";
-import { LazyStore } from "bridge/store";
+import { checkIsEnableCrypto, checkIsInitCrypto } from "bridge/data";
 import { atom, useSetAtom } from "jotai";
 import { useCallback } from "react";
-
-const store = new LazyStore("config.json");
 
 export const cryptoIsEnableAtom = atom<boolean>();
 
 cryptoIsEnableAtom.onMount = (setAtom) => {
-  store.get<boolean>("crypto_enable").then((val) => {
-    setAtom(val || false);
-  });
-  const unListen = store.onKeyChange<boolean>("crypto_enable", (val) => {
-    setAtom(val || false);
-  });
-
-  return async () => {
-    (await unListen)();
-  };
+  void checkIsEnableCrypto().then(setAtom);
 };
 
 export const cryptoIsInitAtom = atom<boolean>();
@@ -33,6 +21,15 @@ export const useUpdateCryptoIsInit = () => {
 
   return useCallback(async () => {
     const val = await checkIsInitCrypto();
+    setAtom(val);
+  }, [setAtom]);
+};
+
+export const useUpdateCryptoIsEnable = () => {
+  const setAtom = useSetAtom(cryptoIsEnableAtom);
+
+  return useCallback(async () => {
+    const val = await checkIsEnableCrypto();
     setAtom(val);
   }, [setAtom]);
 };

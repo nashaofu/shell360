@@ -9,6 +9,19 @@
 
 - P0 全部方案。
 
+## 实施状态
+
+截至 2026-07-29，本方案已落地：
+
+- `shell360-data` 已从 Tauri 插件提取，桌面插件和 Android FFI 复用同一套模型、
+  migration、SQLite 和加密实现。
+- `bridge/native` 已映射全部 `data.*` API 和认证状态事件。
+- FFI data 错误携带稳定 `code` 和 `reason`，Android Bridge 保留业务错误码。
+- `resetCrypto` 关闭数据库并返回 `restartRequired`；Android 回复请求后结束应用进程，
+  下次启动时重建 data service。
+- 生物识别和密钥轮换分别返回 `CRYPTO_BIOMETRIC_UNSUPPORTED` 和
+  `CRYPTO_KEY_ROTATION_UNSUPPORTED`。
+
 ## 范围
 
 - Host CRUD。

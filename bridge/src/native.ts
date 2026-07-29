@@ -7,6 +7,7 @@ import type {
   SSHShellImplementation,
 } from "./backend";
 import { setBridgeBackend } from "./backend";
+import type { SSHSessionOpts, SSHShellOpts } from "./ssh";
 import type { Store } from "./store";
 
 type NativeMessageEvent = {
@@ -20,6 +21,7 @@ type NativeMessagePort = {
 
 type NativeResponse = {
   id?: string;
+  clientId?: string;
   result?: unknown;
   error?: {
     code?: string;
@@ -36,6 +38,8 @@ type PendingRequest = {
   reject(error: Error): void;
   timeoutId: ReturnType<typeof setTimeout>;
 };
+
+const SSH_AUTH_TIMEOUT_MS = 130_000;
 
 declare global {
   interface Window {
@@ -71,7 +75,11 @@ export class NativeTransport {
     };
   }
 
-  invoke<T>(method: string, params?: unknown): Promise<T> {
+  invoke<T>(
+    method: string,
+    params?: unknown,
+    timeoutMs = this.timeoutMs,
+  ): Promise<T> {
     const id = crypto.randomUUID();
 
     return new Promise<T>((resolve, reject) => {
@@ -83,7 +91,7 @@ export class NativeTransport {
             `Native request timed out: ${method}`,
           ),
         );
-      }, this.timeoutMs);
+      }, timeoutMs);
 
       this.pending.set(id, {
         resolve: (value) => resolve(value as T),
@@ -187,6 +195,9 @@ export class NativeTransport {
     }
 
     if (response.event) {
+      if (response.clientId && response.clientId !== this.clientId) {
+        return;
+      }
       const callbacks = this.listeners.get(
         this.eventKey(response.event, response.targetId),
       );
@@ -247,31 +258,104 @@ class NativeStore implements Store {
   }
 }
 
-function createSession(): SSHSessionImplementation {
+function createSession(
+  transport: NativeTransport,
+  opts: SSHSessionOpts,
+): SSHSessionImplementation {
   const sshSessionId = crypto.randomUUID();
+  transport.on("ssh.session.disconnect", sshSessionId, (payload) => {
+    opts.onDisconnect?.({
+      type: "disconnect",
+      data: payload as Parameters<
+        NonNullable<SSHSessionOpts["onDisconnect"]>
+      >[0]["data"],
+    });
+  });
   return {
     sshSessionId,
-    connect: () => unsupported("ssh.session.connect"),
-    authenticate_password: () =>
-      unsupported("ssh.session.authenticatePassword"),
-    authenticate_public_key: () =>
-      unsupported("ssh.session.authenticatePublicKey"),
-    authenticate_certificate: () =>
-      unsupported("ssh.session.authenticateCertificate"),
-    authenticate_keyboard_interactive: () =>
-      unsupported("ssh.session.authenticateKeyboardInteractive"),
-    authenticate_agent: () => unsupported("ssh.session.authenticateAgent"),
-    disconnect: () => unsupported("ssh.session.disconnect"),
+    connect: (connectOpts, checkServerKey) =>
+      transport.invoke("ssh.session.connect", {
+        sshSessionId,
+        ...connectOpts,
+        checkServerKey,
+      }),
+    authenticate_password: (authOpts) =>
+      transport.invoke(
+        "ssh.session.authenticatePassword",
+        {
+          sshSessionId,
+          ...authOpts,
+        },
+        SSH_AUTH_TIMEOUT_MS,
+      ),
+    authenticate_public_key: (authOpts) =>
+      transport.invoke(
+        "ssh.session.authenticatePublicKey",
+        {
+          sshSessionId,
+          ...authOpts,
+        },
+        SSH_AUTH_TIMEOUT_MS,
+      ),
+    authenticate_certificate: (authOpts) =>
+      transport.invoke(
+        "ssh.session.authenticateCertificate",
+        {
+          sshSessionId,
+          ...authOpts,
+        },
+        SSH_AUTH_TIMEOUT_MS,
+      ),
+    authenticate_keyboard_interactive: (authOpts) =>
+      transport.invoke(
+        "ssh.session.authenticateKeyboardInteractive",
+        {
+          sshSessionId,
+          ...authOpts,
+        },
+        SSH_AUTH_TIMEOUT_MS,
+      ),
+    authenticate_agent: (authOpts) =>
+      transport.invoke("ssh.session.authenticateAgent", {
+        sshSessionId,
+        ...authOpts,
+      }),
+    disconnect: () =>
+      transport.invoke("ssh.session.disconnect", { sshSessionId }),
   };
 }
 
-function createShell(): SSHShellImplementation {
+function createShell(
+  transport: NativeTransport,
+  session: SSHSessionImplementation,
+  opts: Omit<SSHShellOpts, "session">,
+): SSHShellImplementation {
+  const sshShellId = crypto.randomUUID();
+  transport.on("ssh.shell.data", sshShellId, (payload) => {
+    if (typeof payload === "string") {
+      opts.onData?.(decodeBase64(payload));
+    }
+  });
+  transport.on("ssh.shell.eof", sshShellId, () => opts.onEof?.());
+  transport.on("ssh.shell.close", sshShellId, () => opts.onClose?.());
   return {
-    sshShellId: crypto.randomUUID(),
-    open: () => unsupported("ssh.shell.open"),
-    close: () => unsupported("ssh.shell.close"),
-    send: () => unsupported("ssh.shell.send"),
-    resize: () => unsupported("ssh.shell.resize"),
+    sshShellId,
+    open: (openOpts) =>
+      transport.invoke("ssh.shell.open", {
+        sshSessionId: session.sshSessionId,
+        sshShellId,
+        ...openOpts,
+      }),
+    close: () => transport.invoke("ssh.shell.close", { sshShellId }),
+    send: (data) =>
+      transport.invoke("ssh.shell.send", {
+        sshShellId,
+        data: encodeBase64(
+          typeof data === "string" ? new TextEncoder().encode(data) : data,
+        ),
+      }),
+    resize: (size) =>
+      transport.invoke("ssh.shell.resize", { sshShellId, size }),
   };
 }
 
@@ -328,35 +412,47 @@ function createPtyShell(): PtyShellImplementation {
 export function createNativeBackend(transport: NativeTransport): BridgeBackend {
   return {
     data: {
-      checkIsEnableCrypto: async () => false,
-      checkIsInitCrypto: async () => false,
-      checkIsAuthed: async () => true,
-      onAuthedChange: async () => () => {},
-      initCryptoKey: () => unsupported("data.initCryptoKey"),
-      initCryptoPassword: () => unsupported("data.initCryptoPassword"),
-      loadCryptoByPassword: () => unsupported("data.loadCryptoByPassword"),
-      changeCryptoPassword: () => unsupported("data.changeCryptoPassword"),
-      initCryptoBiometric: () => unsupported("data.initCryptoBiometric"),
-      loadCryptoByBiometric: () => unsupported("data.loadCryptoByBiometric"),
-      changeCryptoEnable: () => unsupported("data.changeCryptoEnable"),
-      resetCrypto: () => unsupported("data.resetCrypto"),
-      rotateCryptoKey: () => unsupported("data.rotateCryptoKey"),
-      getHosts: () => unsupported("data.getHosts"),
-      addHost: () => unsupported("data.addHost"),
-      updateHost: () => unsupported("data.updateHost"),
-      deleteHost: () => unsupported("data.deleteHost"),
-      getKeys: () => unsupported("data.getKeys"),
-      addKey: () => unsupported("data.addKey"),
-      updateKey: () => unsupported("data.updateKey"),
-      deleteKey: () => unsupported("data.deleteKey"),
-      getPortForwardings: () => unsupported("data.getPortForwardings"),
-      addPortForwarding: () => unsupported("data.addPortForwarding"),
-      updatePortForwarding: () => unsupported("data.updatePortForwarding"),
-      deletePortForwarding: () => unsupported("data.deletePortForwarding"),
+      checkIsEnableCrypto: () => transport.invoke("data.checkIsEnableCrypto"),
+      checkIsInitCrypto: () => transport.invoke("data.checkIsInitCrypto"),
+      checkIsAuthed: () => transport.invoke("data.checkIsAuthed"),
+      onAuthedChange: async (callback) =>
+        transport.on("data.authedChange", undefined, (payload) => {
+          callback(payload === true);
+        }),
+      initCryptoKey: () => transport.invoke("data.initCryptoKey"),
+      initCryptoPassword: (opts) =>
+        transport.invoke("data.initCryptoPassword", opts),
+      loadCryptoByPassword: (opts) =>
+        transport.invoke("data.loadCryptoByPassword", opts),
+      changeCryptoPassword: (opts) =>
+        transport.invoke("data.changeCryptoPassword", opts),
+      initCryptoBiometric: () => transport.invoke("data.initCryptoBiometric"),
+      loadCryptoByBiometric: () =>
+        transport.invoke("data.loadCryptoByBiometric"),
+      changeCryptoEnable: (opts) =>
+        transport.invoke("data.changeCryptoEnable", opts),
+      resetCrypto: () => transport.invoke("data.resetCrypto"),
+      rotateCryptoKey: (password) =>
+        transport.invoke("data.rotateCryptoKey", { password }),
+      getHosts: () => transport.invoke("data.getHosts"),
+      addHost: (host) => transport.invoke("data.addHost", host),
+      updateHost: (host) => transport.invoke("data.updateHost", host),
+      deleteHost: (host) => transport.invoke("data.deleteHost", host),
+      getKeys: () => transport.invoke("data.getKeys"),
+      addKey: (key) => transport.invoke("data.addKey", key),
+      updateKey: (key) => transport.invoke("data.updateKey", key),
+      deleteKey: (key) => transport.invoke("data.deleteKey", key),
+      getPortForwardings: () => transport.invoke("data.getPortForwardings"),
+      addPortForwarding: (portForwarding) =>
+        transport.invoke("data.addPortForwarding", portForwarding),
+      updatePortForwarding: (portForwarding) =>
+        transport.invoke("data.updatePortForwarding", portForwarding),
+      deletePortForwarding: (portForwarding) =>
+        transport.invoke("data.deletePortForwarding", portForwarding),
     },
     ssh: {
-      createSession,
-      createShell,
+      createSession: (opts) => createSession(transport, opts),
+      createShell: (session, opts) => createShell(transport, session, opts),
       createSftp,
       createPortForwarding,
     },
@@ -407,6 +503,23 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
       relaunch: () => unsupported("process.relaunch"),
     },
   };
+}
+
+function encodeBase64(data: Uint8Array): string {
+  let binary = "";
+  for (let offset = 0; offset < data.length; offset += 0x8000) {
+    binary += String.fromCharCode(...data.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
+function decodeBase64(data: string): Uint8Array {
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 export function installNativeBackend(): NativeTransport {

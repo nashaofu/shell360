@@ -1,22 +1,22 @@
 mod commands;
-mod crypto_manager;
-mod data_manager;
-mod entities;
-mod error;
-mod migration;
-mod utils;
 
+use std::sync::Arc;
+
+use shell360_data::{DataEventSink, DataOptions, DataService};
 use tauri::{
-  Manager, Runtime, async_runtime,
+  AppHandle, Emitter, Manager, Runtime, async_runtime,
   plugin::{Builder, TauriPlugin},
 };
 
-use crate::{
-  commands::{crypto, host, key, port_forwarding},
-  crypto_manager::CryptoManager,
-  data_manager::DataManager,
-  error::DataError,
-};
+use crate::commands::{crypto, host, key, port_forwarding};
+
+struct TauriDataEventSink<R: Runtime>(AppHandle<R>);
+
+impl<R: Runtime> DataEventSink for TauriDataEventSink<R> {
+  fn on_authed_change(&self, is_authed: bool) {
+    let _ = self.0.emit("data://authed_change", is_authed);
+  }
+}
 
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -49,15 +49,22 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     ])
     .setup(|app, _api| {
       async_runtime::block_on(async {
-        let crypto = CryptoManager::init(app.app_handle().clone()).await?;
-
         let app_handle = app.app_handle().clone();
-        app_handle.manage(crypto);
-
-        let data_manager = DataManager::init(&app_handle).await?;
-        app_handle.manage(data_manager);
-
-        Ok::<(), DataError>(())
+        let local_data_dir = app_handle.path().app_local_data_dir()?;
+        let data_dir = app_handle.path().app_data_dir()?;
+        let service = DataService::open(DataOptions {
+          database_path: local_data_dir.join("data.db"),
+          config_path: data_dir.join("config.json"),
+          legacy_vault_path: Some(local_data_dir.join("data.vault")),
+          event_sink: Arc::new(TauriDataEventSink(app_handle.clone())),
+        })
+        .await
+        .map_err(|error| {
+          let error: Box<dyn std::error::Error> = Box::new(error);
+          tauri::Error::Setup(error.into())
+        })?;
+        app_handle.manage(service);
+        Ok::<(), tauri::Error>(())
       })?;
 
       Ok(())

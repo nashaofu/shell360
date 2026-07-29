@@ -9,25 +9,7 @@ links = "tauri-plugin-data"
 
 [dependencies]
 tauri = { workspace = true }
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-sea-orm = { version = "1.1.20", features = [
-  "runtime-tokio-rustls",
-  "sqlx-sqlite",
-] }
-sea-orm-migration = { version = "1.1.20", features = [
-  "runtime-tokio-rustls",
-  "sqlx-sqlite",
-] }
-tokio = { version = "1.52.3", features = ["fs"] }
-strum = { version = "0.28.0", features = ["derive"] }
-serde_with = "3.21.0"
-defendor = "0.0.7"
-zeroize = "1.9.0"
-futures = "0.3.32"
-tauri-plugin-store.workspace = true
-base64ct = { version = "1.8.3", features = ["std"] }
+shell360-data = { path = "../crates/shell360-data" }
 
 [build-dependencies]
 tauri-plugin = { workspace = true, features = ["build"] }
