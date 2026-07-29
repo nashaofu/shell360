@@ -11,16 +11,19 @@
     "check:fix": "biome check . --write",
     "tsc": "pnpm --filter \"*\" run tsc",
     "build": "pnpm --filter \"*\" run build",
-    "android:dev": "bash scripts/android-dev.sh",
-    "android:build": "bash android/gradlew -p android assembleRelease"
+    "android:dev": "node scripts/android.js dev",
+    "android:build": "node scripts/android.js build"
   },
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
     "@dotenvx/dotenvx": "^1.75.1",
+    "@inquirer/select": "^5.2.1",
     "@tauri-apps/cli": "^2.11.3",
+    "execa": "^9.6.1",
     "glob": "^13.0.6",
     "got": "^15.0.5",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "yargs": "^18.1.0"
   }
 }

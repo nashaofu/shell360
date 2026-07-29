@@ -27,7 +27,10 @@ Android development requires installing Android Studio and configuring environme
 ```shell
 # Linux environment variables configuration example
 export ANDROID_HOME="~/Android/Sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
+if [ -d "$ANDROID_HOME/ndk" ]; then
+  ndk_version="$(ls -1 "$ANDROID_HOME/ndk" | sort -V | tail -n 1)"
+  export NDK_HOME="$ANDROID_HOME/ndk/$ndk_version"
+fi
 export JAVA_HOME="/opt/android-studio/jbr"
 export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
 export PATH="$ANDROID_HOME/tools/bin:$PATH"
@@ -62,7 +65,7 @@ After setting up the project, run the following commands to start the project lo
 pnpm tauri dev
 
 # Android
-pnpm tauri android dev
+pnpm run android:dev
 
 # iOS
 pnpm tauri ios dev
@@ -77,7 +80,7 @@ For local build testing, use the following commands:
 pnpm tauri build
 
 # Android
-pnpm tauri android build
+pnpm run android:build
 
 # iOS
 pnpm tauri ios build

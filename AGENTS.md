@@ -48,7 +48,8 @@ pnpm run build
 # Tauri build
 pnpm tauri build
 
-# Native Android (requires cargo-ndk, Android SDK/NDK, and adb)
+# Native Android (requires cargo-ndk, Android SDK/NDK, and JAVA_HOME)
+# Set ANDROID_HOME or ANDROID_SDK_ROOT; adb does not need to be in PATH.
 pnpm run android:dev      # adb reverse, mobile dev server, install and launch
 pnpm run android:build    # release APK
 ```
@@ -58,7 +59,7 @@ pnpm run android:build    # release APK
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
   - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
-  - **Native Android code**: run the relevant task through `bash android/gradlew -p android`, normally `assembleDebug` or `assembleRelease`.
+  - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat` and resolves Android SDK tools from `ANDROID_HOME` or `ANDROID_SDK_ROOT`.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.

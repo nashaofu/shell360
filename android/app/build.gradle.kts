@@ -203,7 +203,7 @@ tasks.configureEach {
     when (name) {
         "compileDebugKotlin", "compileReleaseKotlin" -> dependsOn(generateUniFfiBindings)
         "mergeDebugJniLibFolders", "mergeDebugNativeLibs" -> dependsOn(buildRustDebug)
-        "mergeReleaseAssets" -> dependsOn(syncWebAssets)
+        "generateReleaseLintVitalReportModel", "lintVitalAnalyzeRelease", "mergeReleaseAssets" -> dependsOn(syncWebAssets)
         "mergeReleaseJniLibFolders", "mergeReleaseNativeLibs" -> dependsOn(buildRustRelease)
     }
 }
