@@ -19,7 +19,7 @@ pub enum Shell360Error {
   TauriError(#[from] tauri::Error),
   #[serde(serialize_with = "serialize_to_string")]
   #[error(transparent)]
-  SshKeyError(#[from] ssh_key::Error),
+  KeygenError(#[from] shell360_keygen::KeygenError),
 
   #[error("{0}")]
   StdSyncPoisonError(String),

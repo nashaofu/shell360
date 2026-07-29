@@ -1,0 +1,5 @@
+[bindings.kotlin]
+android = true
+android_cleaner = true
+package_name = "com.nashaofu.shell360.ffi"
+cdylib_name = "shell360_ffi"

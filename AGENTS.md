@@ -6,7 +6,9 @@ A cross-platform SSH and SFTP client built with Tauri, React, and TypeScript. Su
 
 ```
 shell360/
+├── android/              # Native Android WebView host (Compose + Gradle)
 ├── bridge/               # Backend-neutral frontend API + Tauri adapter
+├── crates/               # Platform-neutral Rust libraries + UniFFI boundary
 ├── desktop/              # Tauri desktop app (React + Rsbuild)
 ├── mobile/               # Mobile app (React + Rsbuild)
 ├── shared/               # Shared components, hooks, atoms, utils (rslib → ESM)
@@ -45,13 +47,18 @@ pnpm run build
 
 # Tauri build
 pnpm tauri build
+
+# Native Android (requires cargo-ndk, Android SDK/NDK, and adb)
+pnpm run android:dev      # adb reverse, mobile dev server, install and launch
+pnpm run android:build    # release APK
 ```
 
 ## Agent Workflow
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
-  - **Rust code** (any `*.rs` under `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Native Android code**: run the relevant task through `bash android/gradlew -p android`, normally `assembleDebug` or `assembleRelease`.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.
@@ -72,12 +79,13 @@ pnpm tauri build
 ## Frontend ↔ Backend Communication
 
 - Frontend business code imports backend APIs and models from capability subpaths. Tauri APIs mirror their package/module suffixes, such as `bridge/fs`, `bridge/dialog`, `bridge/window`, `bridge/store`, and `bridge/updater`. Project domains use `bridge/data`, `bridge/ssh`, and `bridge/pty`; custom Rust commands use `bridge/core`.
-- `desktop/src/index.tsx` and `mobile/src/index.tsx` install the current backend with `installTauriBackend()` from `bridge/tauri`.
+- `desktop/src/index.tsx` installs the Tauri backend. `mobile/src/index.tsx` selects `bridge/native` when hosted by the native Android WebView and otherwise installs `bridge/tauri`.
 - Backend-neutral contracts and facade classes live in `bridge/src/`; Tauri-specific calls live only in `bridge/src/tauri.ts` and the low-level `tauri-plugin-*` packages.
 - A different backend can implement `BridgeBackend` and be installed with `setBridgeBackend()` without changing `shared`, `desktop`, or `mobile` business code.
 - Backend exposes async functions marked `#[tauri::command]`.
 - Plugin TS wrappers (in each plugin's `ts/` folder) wrap `invoke` from `@tauri-apps/api/core` using namespaced command IDs like `plugin:ssh|shell_open`, `plugin:ssh|sftp_read_dir`. App code calls these wrappers, **not** `invoke` directly.
 - Long-lived connections (SSH shell, SFTP streams) use `Channel` for streaming.
+- The top-level `android/` project is the native Android host. Do not modify generated `src-tauri/gen/android` while the migration is in progress.
 
 ## Conventions
 

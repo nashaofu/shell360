@@ -25,18 +25,11 @@ tauri-plugin-machine-uid.workspace = true
 tauri-plugin-clipboard-manager.workspace = true
 tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
 tauri-plugin-data = { path = "../tauri-plugin-data" }
+shell360-keygen = { path = "../crates/shell360-keygen" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 log.workspace = true
 thiserror.workspace = true
-ssh-key = { version = "0.6.7", features = [
-  "ed25519",
-  "rsa",
-  "encryption",
-  "p256",
-  "p384",
-  "p521",
-] }
 webbrowser = "1.2.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
