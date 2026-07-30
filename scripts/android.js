@@ -10,6 +10,15 @@ const workspaceDir = fileURLToPath(new URL("../", import.meta.url));
 const androidDir = path.join(workspaceDir, "android");
 const isWindows = process.platform === "win32";
 
+function execute(command, args, androidEnvironment, options = {}) {
+  return execa(command, args, {
+    cwd: workspaceDir,
+    env: androidEnvironment,
+    windowsHide: true,
+    ...options,
+  });
+}
+
 function getAndroidEnvironment() {
   const sdkRoot = process.env.ANDROID_HOME;
 
@@ -83,7 +92,7 @@ function parseDevices(output) {
       return {
         serial: match[1],
         state: match[2],
-        name: properties.model?.replaceAll("_", " ") || match[1],
+        deviceName: properties.model?.replaceAll("_", " ") || match[1],
       };
     });
 }
@@ -95,12 +104,11 @@ async function resolveDeviceNames(adb, androidEnvironment, devices) {
         return device;
       }
 
-      const { stdout } = await execa(
+      const { stdout } = await execute(
         adb,
         ["-s", device.serial, "emu", "avd", "name"],
+        androidEnvironment,
         {
-          cwd: workspaceDir,
-          env: androidEnvironment,
           reject: false,
         },
       );
@@ -111,18 +119,14 @@ async function resolveDeviceNames(adb, androidEnvironment, devices) {
 
       return {
         ...device,
-        avdName,
-        name: avdName || device.name,
+        deviceName: avdName || device.deviceName,
       };
     }),
   );
 }
 
 async function getConnectedDevices(adb, androidEnvironment) {
-  const { stdout } = await execa(adb, ["devices", "-l"], {
-    cwd: workspaceDir,
-    env: androidEnvironment,
-  });
+  const { stdout } = await execute(adb, ["devices", "-l"], androidEnvironment);
 
   return resolveDeviceNames(adb, androidEnvironment, parseDevices(stdout));
 }
@@ -152,10 +156,11 @@ async function getAvdNames(emulator, androidEnvironment) {
     return [];
   }
 
-  const { stdout } = await execa(emulator, ["-list-avds"], {
-    cwd: workspaceDir,
-    env: androidEnvironment,
-  });
+  const { stdout } = await execute(
+    emulator,
+    ["-list-avds"],
+    androidEnvironment,
+  );
 
   return stdout
     .split(/\r?\n/)
@@ -176,16 +181,18 @@ async function waitForEmulator(
 
     const devices = await getConnectedDevices(adb, androidEnvironment);
     const device = devices.find(
-      (item) => item.state === "device" && item.avdName === avdName,
+      (item) =>
+        item.state === "device" &&
+        item.serial.startsWith("emulator-") &&
+        item.deviceName === avdName,
     );
 
     if (device) {
-      const { stdout } = await execa(
+      const { stdout } = await execute(
         adb,
         ["-s", device.serial, "shell", "getprop", "sys.boot_completed"],
+        androidEnvironment,
         {
-          cwd: workspaceDir,
-          env: androidEnvironment,
           reject: false,
         },
       );
@@ -203,13 +210,16 @@ async function waitForEmulator(
 
 async function startEmulator(adb, emulator, androidEnvironment, avdName) {
   console.log(`[android] Starting emulator: ${avdName}`);
-  const emulatorProcess = execa(emulator, ["-avd", avdName], {
-    cleanup: false,
-    cwd: workspaceDir,
-    detached: true,
-    env: androidEnvironment,
-    stdio: "ignore",
-  });
+  const emulatorProcess = execute(
+    emulator,
+    ["-avd", avdName],
+    androidEnvironment,
+    {
+      cleanup: false,
+      detached: true,
+      stdio: "ignore",
+    },
+  );
   emulatorProcess.catch(() => {});
 
   await new Promise((resolve, reject) => {
@@ -246,7 +256,7 @@ async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
 
   if (requestedName) {
     const matchedDevices = devices.filter(
-      (item) => item.state === "device" && item.name === requestedName,
+      (item) => item.state === "device" && item.deviceName === requestedName,
     );
 
     if (matchedDevices.length > 1) {
@@ -269,19 +279,23 @@ async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
   const availableDevices = devices.filter(
     (device) => device.state === "device",
   );
-  const runningAvdNames = new Set(devices.map((device) => device.avdName));
+  const runningAvdNames = new Set(
+    devices
+      .filter((device) => device.serial.startsWith("emulator-"))
+      .map((device) => device.deviceName),
+  );
   const stoppedAvdNames = avdNames.filter(
     (avdName) => !runningAvdNames.has(avdName),
   );
   const choices = [
     ...devices.map((device) => ({
-      name: `${device.name} (${device.serial})`,
-      value: { serial: device.serial },
+      name: `${device.deviceName} (${device.serial})`,
+      value: device.deviceName,
       disabled: device.state === "device" ? false : `State: ${device.state}`,
     })),
     ...stoppedAvdNames.map((avdName) => ({
       name: `${avdName} (stopped)`,
-      value: { avdName },
+      value: avdName,
     })),
   ];
 
@@ -295,39 +309,36 @@ async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
     );
   }
 
-  const selectedDevice = await select({
+  const selectedDeviceName = await select({
     message: "Select an Android device",
     choices,
   });
+  const matchedDevices = availableDevices.filter(
+    (device) => device.deviceName === selectedDeviceName,
+  );
 
-  if (selectedDevice.serial) {
-    return selectedDevice.serial;
+  if (matchedDevices.length > 1) {
+    throw new Error(`Device name is ambiguous: ${selectedDeviceName}`);
   }
 
-  return startEmulator(
-    adb,
-    emulator,
-    androidEnvironment,
-    selectedDevice.avdName,
-  );
+  if (matchedDevices.length === 1) {
+    return matchedDevices[0].serial;
+  }
+
+  return startEmulator(adb, emulator, androidEnvironment, selectedDeviceName);
 }
 
 function run(command, args, androidEnvironment) {
-  return execa(command, args, {
-    cwd: workspaceDir,
-    env: androidEnvironment,
+  return execute(command, args, androidEnvironment, {
     stdio: "inherit",
   });
 }
 
 async function forwardWebViewDebugPort(adb, adbArgs, androidEnvironment, port) {
-  const { stdout } = await execa(
+  const { stdout } = await execute(
     adb,
     [...adbArgs, "shell", "pidof", "com.nashaofu.shell360"],
-    {
-      cwd: workspaceDir,
-      env: androidEnvironment,
-    },
+    androidEnvironment,
   );
   const pid = stdout.trim().split(/\s+/)[0];
 
@@ -380,12 +391,15 @@ async function devAndroid({ debugPort, device }) {
     androidEnvironment,
   );
 
-  const devServer = execa("pnpm", ["--filter", "mobile", "run", "dev"], {
-    cwd: workspaceDir,
-    env: androidEnvironment,
-    stdio: "inherit",
-    cleanup: true,
-  });
+  const devServer = execute(
+    "pnpm",
+    ["--filter", "mobile", "run", "dev"],
+    androidEnvironment,
+    {
+      stdio: "inherit",
+      cleanup: true,
+    },
+  );
 
   try {
     await run(
@@ -414,12 +428,11 @@ async function devAndroid({ debugPort, device }) {
       await devServer.catch(() => {});
     }
     if (debugPortForwarded) {
-      await execa(
+      await execute(
         adb,
         [...adbArgs, "forward", "--remove", `tcp:${debugPort}`],
+        androidEnvironment,
         {
-          cwd: workspaceDir,
-          env: androidEnvironment,
           reject: false,
         },
       );
