@@ -135,12 +135,7 @@ async function waitForPendingEmulators(adb, androidEnvironment, devices) {
   let currentDevices = devices;
 
   for (let attempt = 0; attempt < 180; attempt += 1) {
-    const pendingEmulators = currentDevices.filter(
-      (device) =>
-        device.serial.startsWith("emulator-") && device.state !== "device",
-    );
-
-    if (pendingEmulators.length === 0) {
+    if (!hasPendingEmulators(currentDevices)) {
       return currentDevices;
     }
 
@@ -149,6 +144,13 @@ async function waitForPendingEmulators(adb, androidEnvironment, devices) {
   }
 
   throw new Error("Timed out waiting for connected Android emulators");
+}
+
+function hasPendingEmulators(devices) {
+  return devices.some(
+    (device) =>
+      device.serial.startsWith("emulator-") && device.state !== "device",
+  );
 }
 
 async function getAvdNames(emulator, androidEnvironment) {
@@ -244,62 +246,147 @@ async function startEmulator(adb, emulator, androidEnvironment, avdName) {
   }
 }
 
-async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
-  const connectedDevices = await getConnectedDevices(adb, androidEnvironment);
-  const devices = await waitForPendingEmulators(
-    adb,
-    androidEnvironment,
-    connectedDevices,
+function getMatchingDevices(devices, deviceName) {
+  return devices.filter(
+    (device) => device.state === "device" && device.deviceName === deviceName,
   );
-  const emulator = getEmulator(androidEnvironment);
-  const avdNames = await getAvdNames(emulator, androidEnvironment);
+}
 
-  if (requestedName) {
-    const matchedDevices = devices.filter(
-      (item) => item.state === "device" && item.deviceName === requestedName,
+function createDeviceCandidates(devices, avdNames) {
+  const runningAvdNames = new Set(
+    devices
+      .filter(
+        (device) =>
+          device.state === "device" && device.serial.startsWith("emulator-"),
+      )
+      .map((device) => device.deviceName),
+  );
+  const stoppedAvdNames = hasPendingEmulators(devices)
+    ? []
+    : avdNames.filter((avdName) => !runningAvdNames.has(avdName));
+
+  return [
+    ...devices.map((device) => ({
+      deviceName: device.deviceName,
+      serial: device.serial,
+      state: device.state,
+      type: device.state === "device" ? "connected" : "unavailable",
+    })),
+    ...stoppedAvdNames.map((deviceName) => ({
+      deviceName,
+      type: "stopped",
+    })),
+  ];
+}
+
+function createDeviceChoices(candidates) {
+  const nameTotals = new Map();
+  const nameOccurrences = new Map();
+
+  for (const candidate of candidates) {
+    nameTotals.set(
+      candidate.deviceName,
+      (nameTotals.get(candidate.deviceName) || 0) + 1,
     );
+  }
 
-    if (matchedDevices.length > 1) {
-      throw new Error(
-        `Device name is ambiguous. Select one from the interactive list: ${requestedName}`,
-      );
+  return candidates.map((candidate, index) => {
+    const occurrence = (nameOccurrences.get(candidate.deviceName) || 0) + 1;
+    nameOccurrences.set(candidate.deviceName, occurrence);
+    const suffix =
+      nameTotals.get(candidate.deviceName) > 1 ? ` #${occurrence}` : "";
+    const status =
+      candidate.type === "stopped" ? "stopped" : candidate.state || "connected";
+
+    return {
+      name: `${candidate.deviceName}${suffix} (${status})`,
+      value: index,
+      disabled:
+        candidate.type === "unavailable" ? `State: ${candidate.state}` : false,
+    };
+  });
+}
+
+async function resolveRequestedDevice(
+  adb,
+  androidEnvironment,
+  emulator,
+  avdNames,
+  devices,
+  requestedName,
+) {
+  let currentDevices = devices;
+  let matchedDevices = getMatchingDevices(currentDevices, requestedName);
+  const requestedAvdExists = avdNames.includes(requestedName);
+
+  if (matchedDevices.length === 1) {
+    const [matchedDevice] = matchedDevices;
+    if (!requestedAvdExists || matchedDevice.serial.startsWith("emulator-")) {
+      return matchedDevice.serial;
     }
+  }
 
-    if (matchedDevices.length === 1) {
-      return matchedDevices[0].serial;
-    }
+  if (matchedDevices.length > 0) {
+    throw new Error(
+      `Device name is ambiguous. Select one from the interactive list: ${requestedName}`,
+    );
+  }
 
-    if (avdNames.includes(requestedName)) {
-      return startEmulator(adb, emulator, androidEnvironment, requestedName);
-    }
-
+  if (!requestedAvdExists) {
     throw new Error(`Android device or AVD not found: ${requestedName}`);
   }
 
-  const availableDevices = devices.filter(
-    (device) => device.state === "device",
-  );
-  const runningAvdNames = new Set(
-    devices
-      .filter((device) => device.serial.startsWith("emulator-"))
-      .map((device) => device.deviceName),
-  );
-  const stoppedAvdNames = avdNames.filter(
-    (avdName) => !runningAvdNames.has(avdName),
-  );
-  const choices = [
-    ...devices.map((device) => ({
-      name: `${device.deviceName} (${device.serial})`,
-      value: device.deviceName,
-      disabled: device.state === "device" ? false : `State: ${device.state}`,
-    })),
-    ...stoppedAvdNames.map((avdName) => ({
-      name: `${avdName} (stopped)`,
-      value: avdName,
-    })),
-  ];
+  if (hasPendingEmulators(currentDevices)) {
+    currentDevices = await waitForPendingEmulators(
+      adb,
+      androidEnvironment,
+      currentDevices,
+    );
+    matchedDevices = getMatchingDevices(currentDevices, requestedName);
 
-  if (availableDevices.length + stoppedAvdNames.length === 0) {
+    if (matchedDevices.length === 1) {
+      const [matchedDevice] = matchedDevices;
+      if (matchedDevice.serial.startsWith("emulator-")) {
+        return matchedDevice.serial;
+      }
+    }
+    if (matchedDevices.length > 0) {
+      throw new Error(`Device name is ambiguous: ${requestedName}`);
+    }
+  }
+
+  return startEmulator(adb, emulator, androidEnvironment, requestedName);
+}
+
+async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
+  const emulator = getEmulator(androidEnvironment);
+  let devices = await getConnectedDevices(adb, androidEnvironment);
+  const avdNames = await getAvdNames(emulator, androidEnvironment);
+
+  if (requestedName) {
+    return resolveRequestedDevice(
+      adb,
+      androidEnvironment,
+      emulator,
+      avdNames,
+      devices,
+      requestedName,
+    );
+  }
+
+  if (
+    !devices.some((device) => device.state === "device") &&
+    hasPendingEmulators(devices)
+  ) {
+    devices = await waitForPendingEmulators(adb, androidEnvironment, devices);
+  }
+
+  const candidates = createDeviceCandidates(devices, avdNames);
+  const selectableCandidates = candidates.filter(
+    (candidate) => candidate.type !== "unavailable",
+  );
+
+  if (selectableCandidates.length === 0) {
     throw new Error("No available Android devices or AVDs found");
   }
 
@@ -309,36 +396,43 @@ async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
     );
   }
 
-  const selectedDeviceName = await select({
+  const selectedCandidateIndex = await select({
     message: "Select an Android device",
-    choices,
+    choices: createDeviceChoices(candidates),
   });
-  const matchedDevices = availableDevices.filter(
-    (device) => device.deviceName === selectedDeviceName,
+  const selectedCandidate = candidates[selectedCandidateIndex];
+
+  if (selectedCandidate.type === "connected") {
+    return selectedCandidate.serial;
+  }
+
+  return startEmulator(
+    adb,
+    emulator,
+    androidEnvironment,
+    selectedCandidate.deviceName,
   );
-
-  if (matchedDevices.length > 1) {
-    throw new Error(`Device name is ambiguous: ${selectedDeviceName}`);
-  }
-
-  if (matchedDevices.length === 1) {
-    return matchedDevices[0].serial;
-  }
-
-  return startEmulator(adb, emulator, androidEnvironment, selectedDeviceName);
 }
 
-function run(command, args, androidEnvironment) {
+function run(command, args, androidEnvironment, options = {}) {
   return execute(command, args, androidEnvironment, {
     stdio: "inherit",
+    ...options,
   });
 }
 
-async function forwardWebViewDebugPort(adb, adbArgs, androidEnvironment, port) {
+async function forwardWebViewDebugPort(
+  adb,
+  adbArgs,
+  androidEnvironment,
+  port,
+  cancelSignal,
+) {
   const { stdout } = await execute(
     adb,
     [...adbArgs, "shell", "pidof", "com.nashaofu.shell360"],
     androidEnvironment,
+    { cancelSignal },
   );
   const pid = stdout.trim().split(/\s+/)[0];
 
@@ -355,6 +449,7 @@ async function forwardWebViewDebugPort(adb, adbArgs, androidEnvironment, port) {
       `localabstract:webview_devtools_remote_${pid}`,
     ],
     androidEnvironment,
+    { cancelSignal },
   );
   console.log(`[android] WebView debug URL: http://127.0.0.1:${port}`);
 }
@@ -379,33 +474,44 @@ async function devAndroid({ debugPort, device }) {
     device,
   );
   const adbArgs = ["-s", selectedSerial];
+  const controller = new AbortController();
+  const abort = () => controller.abort();
   let debugPortForwarded = false;
+  let reversePortForwarded = false;
+  let devServer;
   androidEnvironment = {
     ...androidEnvironment,
     ANDROID_SERIAL: selectedSerial,
   };
 
-  await run(
-    adb,
-    [...adbArgs, "reverse", "tcp:1421", "tcp:1421"],
-    androidEnvironment,
-  );
-
-  const devServer = execute(
-    "pnpm",
-    ["--filter", "mobile", "run", "dev"],
-    androidEnvironment,
-    {
-      stdio: "inherit",
-      cleanup: true,
-    },
-  );
+  process.once("SIGINT", abort);
+  process.once("SIGTERM", abort);
 
   try {
+    await run(
+      adb,
+      [...adbArgs, "reverse", "tcp:1421", "tcp:1421"],
+      androidEnvironment,
+      { cancelSignal: controller.signal },
+    );
+    reversePortForwarded = true;
+    devServer = execute(
+      "pnpm",
+      ["--filter", "mobile", "run", "dev"],
+      androidEnvironment,
+      {
+        cancelSignal: controller.signal,
+        cleanup: true,
+        stdio: "inherit",
+      },
+    );
+    devServer.catch(() => {});
+
     await run(
       getGradleWrapper(),
       ["-p", androidDir, "installDebug"],
       androidEnvironment,
+      { cancelSignal: controller.signal },
     );
     await run(
       adb,
@@ -419,18 +525,38 @@ async function devAndroid({ debugPort, device }) {
         "com.nashaofu.shell360/.MainActivity",
       ],
       androidEnvironment,
+      { cancelSignal: controller.signal },
     );
-    await forwardWebViewDebugPort(adb, adbArgs, androidEnvironment, debugPort);
+    await forwardWebViewDebugPort(
+      adb,
+      adbArgs,
+      androidEnvironment,
+      debugPort,
+      controller.signal,
+    );
     debugPortForwarded = true;
     await devServer;
   } finally {
-    if (devServer.kill("SIGTERM")) {
+    process.removeListener("SIGINT", abort);
+    process.removeListener("SIGTERM", abort);
+    if (devServer) {
+      devServer.kill("SIGTERM");
       await devServer.catch(() => {});
     }
     if (debugPortForwarded) {
       await execute(
         adb,
         [...adbArgs, "forward", "--remove", `tcp:${debugPort}`],
+        androidEnvironment,
+        {
+          reject: false,
+        },
+      );
+    }
+    if (reversePortForwarded) {
+      await execute(
+        adb,
+        [...adbArgs, "reverse", "--remove", "tcp:1421"],
         androidEnvironment,
         {
           reject: false,
@@ -473,6 +599,7 @@ try {
       },
       handler: buildAndroid,
     })
+    .demandCommand(1)
     .strict()
     .help()
     .exitProcess(false)
