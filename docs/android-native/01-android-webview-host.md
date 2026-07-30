@@ -51,8 +51,8 @@ Release:
 
 ## 开发环境
 
-先设置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`。开发脚本直接从 SDK 目录定位
-`platform-tools/adb`，无需将 adb 加入 `PATH`。
+先设置 `ANDROID_HOME`。开发脚本直接从 SDK 目录定位 `platform-tools/adb`，无需将
+adb 加入 `PATH`。
 
 Windows、macOS 和 Linux 使用相同命令。统一通过 ADB 反向代理：
 
@@ -61,10 +61,9 @@ pnpm run android:dev
 ```
 
 该命令执行 ADB 反向代理、启动 Rsbuild、安装 Debug APK 并打开 Activity。这样模拟器
-和真机都可以使用 `127.0.0.1`。只有一个可用设备时会自动选择，存在多个设备时会显示
-交互选择列表。列表包含尚未启动的本地 AVD，选择后会自动启动并等待系统就绪。模拟器
-显示 AVD 名称，真机显示设备型号，底层仍使用 adb serial。也可以通过名称直接指定
-目标设备：
+和真机都可以使用 `127.0.0.1`。交互终端始终显示设备选择列表，即使当前只有一个可用
+设备。列表包含尚未启动的本地 AVD，选择后会自动启动并等待系统就绪。模拟器显示 AVD
+名称，真机显示设备型号，底层仍使用 adb serial。也可以通过名称直接指定目标设备：
 
 ```bash
 pnpm run android:dev --device Pixel_9_API_35

@@ -11,12 +11,10 @@ const androidDir = path.join(workspaceDir, "android");
 const isWindows = process.platform === "win32";
 
 function getAndroidEnvironment() {
-  const sdkRoot = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  const sdkRoot = process.env.ANDROID_HOME;
 
   if (!sdkRoot) {
-    throw new Error(
-      "Set the ANDROID_HOME or ANDROID_SDK_ROOT environment variable",
-    );
+    throw new Error("Set the ANDROID_HOME environment variable");
   }
 
   if (!existsSync(sdkRoot)) {
@@ -26,7 +24,6 @@ function getAndroidEnvironment() {
   return {
     ...process.env,
     ANDROID_HOME: sdkRoot,
-    ANDROID_SDK_ROOT: sdkRoot,
   };
 }
 
@@ -130,6 +127,26 @@ async function getConnectedDevices(adb, androidEnvironment) {
   return resolveDeviceNames(adb, androidEnvironment, parseDevices(stdout));
 }
 
+async function waitForPendingEmulators(adb, androidEnvironment, devices) {
+  let currentDevices = devices;
+
+  for (let attempt = 0; attempt < 180; attempt += 1) {
+    const pendingEmulators = currentDevices.filter(
+      (device) =>
+        device.serial.startsWith("emulator-") && device.state !== "device",
+    );
+
+    if (pendingEmulators.length === 0) {
+      return currentDevices;
+    }
+
+    await delay(1000);
+    currentDevices = await getConnectedDevices(adb, androidEnvironment);
+  }
+
+  throw new Error("Timed out waiting for connected Android emulators");
+}
+
 async function getAvdNames(emulator, androidEnvironment) {
   if (!emulator) {
     return [];
@@ -201,11 +218,29 @@ async function startEmulator(adb, emulator, androidEnvironment, avdName) {
   });
   emulatorProcess.unref();
 
-  return waitForEmulator(adb, androidEnvironment, avdName, emulatorProcess);
+  try {
+    return await waitForEmulator(
+      adb,
+      androidEnvironment,
+      avdName,
+      emulatorProcess,
+    );
+  } catch (error) {
+    if (emulatorProcess.exitCode === null) {
+      emulatorProcess.kill("SIGTERM");
+      await emulatorProcess.catch(() => {});
+    }
+    throw error;
+  }
 }
 
 async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
-  const devices = await getConnectedDevices(adb, androidEnvironment);
+  const connectedDevices = await getConnectedDevices(adb, androidEnvironment);
+  const devices = await waitForPendingEmulators(
+    adb,
+    androidEnvironment,
+    connectedDevices,
+  );
   const emulator = getEmulator(androidEnvironment);
   const avdNames = await getAvdNames(emulator, androidEnvironment);
 
@@ -254,17 +289,9 @@ async function resolveDeviceSerial(adb, androidEnvironment, requestedName) {
     throw new Error("No available Android devices or AVDs found");
   }
 
-  if (availableDevices.length + stoppedAvdNames.length === 1) {
-    if (availableDevices.length === 1) {
-      return availableDevices[0].serial;
-    }
-
-    return startEmulator(adb, emulator, androidEnvironment, stoppedAvdNames[0]);
-  }
-
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error(
-      "Multiple Android devices or AVDs detected. Specify one with --device",
+      "Interactive device selection requires a terminal. Specify one with --device",
     );
   }
 
