@@ -51,8 +51,9 @@ Release:
 
 ## 开发环境
 
-先设置 `ANDROID_HOME`。开发脚本直接从 SDK 目录定位 `platform-tools/adb`，无需将
-adb 加入 `PATH`。
+先设置 `ANDROID_HOME`，也可以通过 `NDK_HOME` 指定 NDK。未设置 `NDK_HOME` 时，开发
+脚本自动选择 `$ANDROID_HOME/ndk` 下版本号最高的 NDK。脚本直接从 SDK 目录定位
+`platform-tools/adb`，并将两个变量传给所有构建子进程，无需将 adb 加入 `PATH`。
 
 Windows、macOS 和 Linux 使用相同命令。统一通过 ADB 反向代理：
 

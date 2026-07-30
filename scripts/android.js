@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
@@ -19,20 +19,48 @@ function execute(command, args, androidEnvironment, options = {}) {
   });
 }
 
+function getNdkRoot(sdkRoot) {
+  if (process.env.NDK_HOME) {
+    return process.env.NDK_HOME;
+  }
+
+  const ndkDirectory = path.join(sdkRoot, "ndk");
+  if (!existsSync(ndkDirectory)) {
+    throw new Error(`Android NDK directory does not exist: ${ndkDirectory}`);
+  }
+
+  const latestVersion = readdirSync(ndkDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort(new Intl.Collator("en", { numeric: true }).compare)
+    .at(-1);
+
+  if (!latestVersion) {
+    throw new Error(`No Android NDK installation found in: ${ndkDirectory}`);
+  }
+
+  return path.join(ndkDirectory, latestVersion);
+}
+
 function getAndroidEnvironment() {
   const sdkRoot = process.env.ANDROID_HOME;
 
   if (!sdkRoot) {
     throw new Error("Set the ANDROID_HOME environment variable");
   }
-
   if (!existsSync(sdkRoot)) {
     throw new Error(`Android SDK directory does not exist: ${sdkRoot}`);
+  }
+
+  const ndkRoot = getNdkRoot(sdkRoot);
+  if (!existsSync(ndkRoot)) {
+    throw new Error(`Android NDK directory does not exist: ${ndkRoot}`);
   }
 
   return {
     ...process.env,
     ANDROID_HOME: sdkRoot,
+    NDK_HOME: ndkRoot,
   };
 }
 
