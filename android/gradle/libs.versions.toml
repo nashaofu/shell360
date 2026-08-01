@@ -8,7 +8,7 @@ lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
-jna = "5.13.0"
+jna = "5.18.1"
 webkit = "1.14.0"
 
 [libraries]
