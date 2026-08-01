@@ -51,17 +51,32 @@ Release:
 
 ## 开发环境
 
-先设置 `ANDROID_HOME`，也可以通过 `NDK_HOME` 指定 NDK。未设置 `NDK_HOME` 时，开发
-脚本自动选择 `$ANDROID_HOME/ndk` 下版本号最高的 NDK。脚本直接从 SDK 目录定位
-`platform-tools/adb`，并将两个变量传给所有构建子进程，无需将 adb 加入 `PATH`。
+先设置 `ANDROID_HOME` 和 `NDK_HOME`，分别指向现有的 Android SDK 和 NDK 目录。
+Gradle 从 `NDK_HOME` 定位工具链；开发脚本从 `ANDROID_HOME` 定位
+`platform-tools/adb`，无需将 adb 加入 `PATH`。不支持 `ANDROID_NDK_HOME`。
 
-Windows、macOS 和 Linux 使用相同命令。统一通过 ADB 反向代理：
+前端开发服务器独立启动：
+
+```bash
+pnpm --filter mobile run dev
+```
+
+在 Android Studio 中开发时，先为目标设备配置一次 ADB 反向代理：
+
+```bash
+adb -s <serial> reverse tcp:1421 tcp:1421
+```
+
+随后可以直接使用 Android Studio Run。设备重启或切换设备后需要重新配置反向代理。
+
+也可以使用统一的命令行入口配置反向代理、安装 Debug APK 并打开 Activity：
 
 ```bash
 pnpm run android:dev
 ```
 
-该命令执行 ADB 反向代理、启动 Rsbuild、安装 Debug APK 并打开 Activity。这样模拟器
+该命令启动 Rsbuild、执行 ADB 反向代理、安装 Debug APK 并打开 Activity；退出时会
+关闭由它启动的开发服务器并清理端口转发。这样模拟器
 和真机都可以使用 `127.0.0.1`。交互终端始终显示设备选择列表，即使当前只有一个可用
 设备。列表包含尚未启动的本地 AVD，选择后会自动启动并等待系统就绪。模拟器显示 AVD
 名称，真机显示设备型号，底层仍使用 adb serial。也可以通过名称直接指定目标设备：

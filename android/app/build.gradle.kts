@@ -4,11 +4,18 @@ plugins {
 }
 
 val workspaceDir = rootProject.projectDir.parentFile
-val generatedDir = layout.buildDirectory.get().asFile.resolve("generated")
+val generatedDir = layout.buildDirectory.dir("generated").get().asFile
 val uniffiSourceDir = generatedDir.resolve("source/uniffi")
 val debugRustDir = generatedDir.resolve("rust/debug/jniLibs")
 val releaseRustDir = generatedDir.resolve("rust/release/jniLibs")
 val webAssetsDir = generatedDir.resolve("webAssets")
+val mobileDistDir = workspaceDir.resolve("mobile/dist")
+
+val androidApiLevel = 29
+val androidLibraryName = "libshell360_ffi.so"
+val debugWebViewOrigin = "http://127.0.0.1:1421"
+val releaseWebViewOrigin = "https://appassets.androidplatform.net"
+
 val rustInputs = files(
     workspaceDir.resolve("Cargo.toml"),
     workspaceDir.resolve("Cargo.lock"),
@@ -44,17 +51,18 @@ val mobileInputs = files(
     fileTree(workspaceDir.resolve("shared/src")),
 )
 val hostOperatingSystem = System.getProperty("os.name").lowercase()
-val hostLibraryName = when {
-    hostOperatingSystem.contains("mac") -> "libshell360_ffi.dylib"
-    hostOperatingSystem.contains("windows") -> "shell360_ffi.dll"
-    else -> "libshell360_ffi.so"
+val hostLibrary = workspaceDir.resolve(
+    "target/debug/${when {
+        hostOperatingSystem.contains("mac") -> "libshell360_ffi.dylib"
+        hostOperatingSystem.contains("windows") -> "shell360_ffi.dll"
+        else -> "libshell360_ffi.so"
+    }}",
+)
+val androidNdkHome = providers.environmentVariable("NDK_HOME").orNull?.let(::file)
+    ?: throw GradleException("Set the NDK_HOME environment variable")
+if (!androidNdkHome.isDirectory) {
+    throw GradleException("NDK_HOME does not point to an existing directory: $androidNdkHome")
 }
-val hostLibrary = workspaceDir.resolve("target/debug/$hostLibraryName")
-val androidLibraryName = "libshell360_ffi.so"
-val androidNdkHome =
-    System.getenv("NDK_HOME")
-        ?: System.getenv("ANDROID_NDK_HOME")
-        ?: throw GradleException("Set the NDK_HOME or ANDROID_NDK_HOME environment variable")
 val ndkHostTag = when {
     hostOperatingSystem.contains("windows") -> "windows-x86_64"
     hostOperatingSystem.contains("mac") && System.getProperty("os.arch").contains("aarch64") ->
@@ -65,47 +73,48 @@ val ndkHostTag = when {
 val ndkBinDir = file("$androidNdkHome/toolchains/llvm/prebuilt/$ndkHostTag/bin")
 
 data class AndroidRustTarget(
-    val taskName: String,
+    val name: String,
     val abi: String,
     val triple: String,
-    val clangPrefix: String,
+) {
+    val environmentKey = triple.uppercase().replace('-', '_')
+    val compilerEnvironmentKey = triple.replace('-', '_')
+}
+
+data class AndroidRustBuildTasks(
+    val build: TaskProvider<Exec>,
+    val sync: TaskProvider<Sync>,
 )
 
 val androidRustTargets = listOf(
-    AndroidRustTarget("Arm64", "arm64-v8a", "aarch64-linux-android", "aarch64-linux-android"),
-    AndroidRustTarget("X86_64", "x86_64", "x86_64-linux-android", "x86_64-linux-android"),
+    AndroidRustTarget("Arm64", "arm64-v8a", "aarch64-linux-android"),
+    AndroidRustTarget("X86_64", "x86_64", "x86_64-linux-android"),
 )
 
 fun ndkExecutable(name: String): File =
     ndkBinDir.resolve(if (hostOperatingSystem.contains("windows")) "$name.cmd" else name)
 
-fun registerRustBuild(
-    variant: String,
+fun registerRustBuildTasks(
+    variantName: String,
     outputDir: File,
     release: Boolean,
 ) = androidRustTargets.map { target ->
     val cargoOutput = workspaceDir.resolve(
         "target/${target.triple}/${if (release) "release" else "debug"}/$androidLibraryName",
     )
-    val buildTask = tasks.register<Exec>("buildRust${variant}${target.taskName}") {
+    val clang = ndkExecutable("${target.triple}$androidApiLevel-clang")
+    val buildTask = tasks.register<Exec>("buildRust$variantName${target.name}") {
         workingDir(workspaceDir)
         inputs.files(rustInputs)
         outputs.file(cargoOutput)
         environment(
-            "CARGO_TARGET_${target.triple.uppercase().replace('-', '_')}_LINKER",
-            ndkExecutable("${target.clangPrefix}29-clang").absolutePath,
-        )
-        environment(
-            "CC_${target.triple.replace('-', '_')}",
-            ndkExecutable("${target.clangPrefix}29-clang").absolutePath,
-        )
-        environment(
-            "CXX_${target.triple.replace('-', '_')}",
-            ndkExecutable("${target.clangPrefix}29-clang++").absolutePath,
-        )
-        environment(
-            "AR_${target.triple.replace('-', '_')}",
-            ndkExecutable("llvm-ar").absolutePath,
+            mapOf(
+                "CARGO_TARGET_${target.environmentKey}_LINKER" to clang.absolutePath,
+                "CC_${target.compilerEnvironmentKey}" to clang.absolutePath,
+                "CXX_${target.compilerEnvironmentKey}" to
+                    ndkExecutable("${target.triple}$androidApiLevel-clang++").absolutePath,
+                "AR_${target.compilerEnvironmentKey}" to ndkExecutable("llvm-ar").absolutePath,
+            ),
         )
         commandLine(
             "cargo",
@@ -118,13 +127,17 @@ fun registerRustBuild(
         )
     }
 
-    tasks.register<Sync>("syncRust${variant}${target.taskName}") {
+    val syncTask = tasks.register<Sync>("syncRust$variantName${target.name}") {
         dependsOn(buildTask)
         from(cargoOutput)
         into(outputDir.resolve(target.abi))
         include(androidLibraryName)
     }
+
+    AndroidRustBuildTasks(buildTask, syncTask)
 }
+
+fun String.asBuildConfigString() = "\"$this\""
 
 android {
     namespace = "com.nashaofu.shell360"
@@ -136,7 +149,7 @@ android {
 
     defaultConfig {
         applicationId = "com.nashaofu.shell360"
-        minSdk = 29
+        minSdk = androidApiLevel
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -146,19 +159,19 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "WEBVIEW_URL", "\"http://127.0.0.1:1421\"")
-            buildConfigField("String", "WEBVIEW_ORIGIN", "\"http://127.0.0.1:1421\"")
+            buildConfigField("String", "WEBVIEW_URL", debugWebViewOrigin.asBuildConfigString())
+            buildConfigField("String", "WEBVIEW_ORIGIN", debugWebViewOrigin.asBuildConfigString())
         }
         release {
             buildConfigField(
                 "String",
                 "WEBVIEW_URL",
-                "\"https://appassets.androidplatform.net/assets/www/index.html\"",
+                "$releaseWebViewOrigin/assets/www/index.html".asBuildConfigString(),
             )
             buildConfigField(
                 "String",
                 "WEBVIEW_ORIGIN",
-                "\"https://appassets.androidplatform.net\"",
+                releaseWebViewOrigin.asBuildConfigString(),
             )
             optimization {
                 enable = false
@@ -187,17 +200,6 @@ android {
     }
 }
 
-val buildRustDebugTargets = registerRustBuild("Debug", debugRustDir, release = false)
-val buildRustReleaseTargets = registerRustBuild("Release", releaseRustDir, release = true)
-
-val buildRustDebug by tasks.registering {
-    dependsOn(buildRustDebugTargets)
-}
-
-val buildRustRelease by tasks.registering {
-    dependsOn(buildRustReleaseTargets)
-}
-
 val buildUniFfiHost by tasks.registering(Exec::class) {
     workingDir(workspaceDir)
     inputs.files(rustInputs)
@@ -205,17 +207,30 @@ val buildUniFfiHost by tasks.registering(Exec::class) {
     commandLine("cargo", "build", "-p", "shell360-ffi")
 }
 
-tasks.named("buildRustDebugArm64") {
+val buildRustDebugTargets = registerRustBuildTasks("Debug", debugRustDir, release = false)
+val buildRustReleaseTargets = registerRustBuildTasks("Release", releaseRustDir, release = true)
+val (rustDebugArm64, rustDebugX86_64) = buildRustDebugTargets
+val (rustReleaseArm64, rustReleaseX86_64) = buildRustReleaseTargets
+
+rustDebugArm64.build.configure {
     mustRunAfter(buildUniFfiHost)
 }
-tasks.named("buildRustDebugX86_64") {
-    mustRunAfter("buildRustDebugArm64")
+rustDebugX86_64.build.configure {
+    mustRunAfter(rustDebugArm64.build)
 }
-tasks.named("buildRustReleaseArm64") {
+rustReleaseArm64.build.configure {
     mustRunAfter(buildUniFfiHost)
 }
-tasks.named("buildRustReleaseX86_64") {
-    mustRunAfter("buildRustReleaseArm64")
+rustReleaseX86_64.build.configure {
+    mustRunAfter(rustReleaseArm64.build)
+}
+
+val buildRustDebug by tasks.registering {
+    dependsOn(buildRustDebugTargets.map { it.sync })
+}
+
+val buildRustRelease by tasks.registering {
+    dependsOn(buildRustReleaseTargets.map { it.sync })
 }
 
 val generateUniFfiBindings by tasks.registering(Exec::class) {
@@ -245,13 +260,13 @@ val generateUniFfiBindings by tasks.registering(Exec::class) {
 val buildMobile by tasks.registering(Exec::class) {
     workingDir(workspaceDir)
     inputs.files(mobileInputs)
-    outputs.dir(workspaceDir.resolve("mobile/dist"))
+    outputs.dir(mobileDistDir)
     commandLine("pnpm", "--filter", "mobile", "run", "build")
 }
 
 val syncWebAssets by tasks.registering(Sync::class) {
     dependsOn(buildMobile)
-    from(workspaceDir.resolve("mobile/dist"))
+    from(mobileDistDir)
     into(webAssetsDir.resolve("www"))
 }
 
