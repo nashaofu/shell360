@@ -5,9 +5,9 @@
     android:viewportWidth="256"
     android:viewportHeight="256">
     <path
-        android:fillColor="@color/launcher_foreground"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M120.781,116L51,68V92L102.734,128L51,164V188L120.781,140V116Z" />
     <path
-        android:fillColor="@color/launcher_foreground"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M205,164H135.219V188H205V164Z" />
 </vector>
