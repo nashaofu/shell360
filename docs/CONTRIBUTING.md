@@ -10,7 +10,7 @@ Shell360 is a cross-platform SSH and SFTP client built with the Tauri framework,
 - **mobile**: Mobile application code
 - **shared**: Shared codebase
 - **src-tauri**: Tauri backend code
-- **tauri-plugin-***: Custom Tauri plugins
+- **tauri-plugin-\***: Custom Tauri plugins
 
 ## Development Environment Setup
 
@@ -22,24 +22,72 @@ When developing Windows applications on Windows, you need to install the latest 
 
 ### Android Development Specific Requirements
 
-Android development requires installing Android Studio and configuring environment variables:
+Android development requires Android Studio with the Android SDK, SDK Platform-Tools,
+Android Emulator, and NDK (Side by side) installed. The project reads the following
+environment variables:
+
+- `ANDROID_HOME`: the Android SDK directory.
+- `NDK_HOME`: one installed NDK directory, such as `$ANDROID_HOME/ndk/30.0.15729638`.
+- `JAVA_HOME`: the JDK directory. Android Studio's bundled JetBrains Runtime is recommended.
+
+`ANDROID_HOME` and `NDK_HOME` are required by the project scripts. The scripts locate
+`adb` and the emulator below `ANDROID_HOME`, so adding them to `PATH` is optional.
+
+The examples below use NDK `30.0.15729638` to keep local and CI builds consistent.
+Install this exact version from Android Studio's SDK Manager before configuring the
+environment variables.
+
+#### macOS (zsh)
+
+Add the following to `~/.zshrc`:
 
 ```shell
-# Linux environment variables configuration example
-export ANDROID_HOME="~/Android/Sdk"
-if [ -d "$ANDROID_HOME/ndk" ]; then
-  ndk_version="$(ls -1 "$ANDROID_HOME/ndk" | sort -V | tail -n 1)"
-  export NDK_HOME="$ANDROID_HOME/ndk/$ndk_version"
-fi
-export JAVA_HOME="/opt/android-studio/jbr"
-export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-export PATH="$ANDROID_HOME/tools/bin:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-For Windows or macOS, adjust the paths and environment variable settings accordingly.
+Reload the shell with `source ~/.zshrc`.
+
+#### Linux (bash)
+
+Add the following to `~/.bashrc`:
+
+```shell
+export ANDROID_HOME="$HOME/Android/Sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
+export JAVA_HOME="/opt/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+Reload the shell with `source ~/.bashrc`. If Android Studio was installed elsewhere,
+adjust `JAVA_HOME` to its `jbr` directory.
+
+#### Windows (PowerShell)
+
+The following example saves user-level environment variables. Restart PowerShell and
+Android Studio after running it:
+
+```powershell
+$androidHome = "$env:LOCALAPPDATA\Android\Sdk"
+$ndkHome = "$androidHome\ndk\30.0.15729638"
+$javaHome = "C:\Program Files\Android\Android Studio\jbr"
+
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
+[Environment]::SetEnvironmentVariable("NDK_HOME", $ndkHome, "User")
+[Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;$androidHome\cmdline-tools\latest\bin"
+[Environment]::SetEnvironmentVariable("Path", "$androidPath;$userPath", "User")
+```
+
+Verify the configuration in a new terminal:
+
+```shell
+node -e "for (const name of ['ANDROID_HOME', 'NDK_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<not set>'))"
+```
 
 ## Project Setup
 
@@ -138,7 +186,6 @@ Certificates and Provisioning Profile files for MacOS and iOS signing can be obt
 2. Log in with your Apple ID in Xcode accounts, add the required certificate types in Xcode, then export the certificate as a [p12 file](https://en.wikipedia.org/wiki/PKCS_12) in Xcode or Keychain. For detailed steps, refer to: https://help.apple.com/xcode/mac/current/#/dev154b28f09. The p12 file contains the key (private key) and cer (certificate). The Apple developer website only allows downloading certificates; the private key is stored in the system keychain. Please keep the p12 file secure, do not share it with others, and make backups.
 
 3. Certificate type description: https://developer.apple.com/help/account/reference/certificate-types. This document uses Developer ID Application certificates for MacOS distribution signing and Apple Distribution certificates for iOS distribution signing.
-
    - Developer ID Application: Used to sign Mac apps distributed outside the Mac App Store.
    - Apple Distribution: Distribute your iOS, macOS, Apple tvOS, or watchOS apps to designated devices for testing or submit them to the App Store.
    - iOS Distribution (App Store Connect and Ad Hoc): Distribute your iOS, Apple tvOS, or watchOS apps to designated devices for testing or submit them to the App Store.

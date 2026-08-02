@@ -53,7 +53,9 @@ Release:
 
 先设置 `ANDROID_HOME` 和 `NDK_HOME`，分别指向现有的 Android SDK 和 NDK 目录。
 Gradle 从 `NDK_HOME` 定位工具链；开发脚本从 `ANDROID_HOME` 定位
-`platform-tools/adb`，无需将 adb 加入 `PATH`。不支持 `ANDROID_NDK_HOME`。
+`platform-tools/adb`，无需将 adb 加入 `PATH`。
+macOS、Linux 和 Windows 的完整环境变量示例参见
+[贡献指南中的 Android 开发特定要求](../CONTRIBUTING-zh_cn.md#android-开发特定要求)。
 
 前端开发服务器独立启动：
 

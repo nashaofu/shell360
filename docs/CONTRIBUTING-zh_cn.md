@@ -22,24 +22,69 @@ Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构�
 
 ### Android 开发特定要求
 
-安卓开发需要安装 Android Studio，并配置环境变量：
+Android 开发需要安装 Android Studio，并通过 SDK Manager 安装 Android SDK、SDK
+Platform-Tools、Android Emulator 和 NDK (Side by side)。项目使用以下环境变量：
+
+- `ANDROID_HOME`：Android SDK 目录。
+- `NDK_HOME`：某个已安装的 NDK 目录，例如 `$ANDROID_HOME/ndk/30.0.15729638`。
+- `JAVA_HOME`：JDK 目录，推荐使用 Android Studio 内置的 JetBrains Runtime。
+
+项目脚本要求配置 `ANDROID_HOME` 和 `NDK_HOME`。脚本会直接从 `ANDROID_HOME` 定位 `adb`
+和模拟器，因此是否将它们加入 `PATH` 均可。
+
+下面的示例统一使用 NDK `30.0.15729638`，以保证本地和 CI 构建环境一致。配置环境变量前，
+请先通过 Android Studio 的 SDK Manager 安装这个确切版本。
+
+#### macOS（zsh）
+
+将以下内容添加到 `~/.zshrc`：
 
 ```shell
-# Linux 环境变量配置示例
-export ANDROID_HOME="~/Android/Sdk"
-if [ -d "$ANDROID_HOME/ndk" ]; then
-  ndk_version="$(ls -1 "$ANDROID_HOME/ndk" | sort -V | tail -n 1)"
-  export NDK_HOME="$ANDROID_HOME/ndk/$ndk_version"
-fi
-export JAVA_HOME="/opt/android-studio/jbr"
-export PATH="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-export PATH="$ANDROID_HOME/tools/bin:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-对于 Windows 或 macOS，请相应地调整路径和环境变量设置。
+运行 `source ~/.zshrc` 使配置在当前终端生效。
+
+#### Linux（bash）
+
+将以下内容添加到 `~/.bashrc`：
+
+```shell
+export ANDROID_HOME="$HOME/Android/Sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
+export JAVA_HOME="/opt/android-studio/jbr"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+运行 `source ~/.bashrc` 使配置在当前终端生效。如果 Android Studio 安装在其他位置，需将
+`JAVA_HOME` 调整为对应的 `jbr` 目录。
+
+#### Windows（PowerShell）
+
+以下示例会保存用户级环境变量。执行后需要重新打开 PowerShell 和 Android Studio：
+
+```powershell
+$androidHome = "$env:LOCALAPPDATA\Android\Sdk"
+$ndkHome = "$androidHome\ndk\30.0.15729638"
+$javaHome = "C:\Program Files\Android\Android Studio\jbr"
+
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
+[Environment]::SetEnvironmentVariable("NDK_HOME", $ndkHome, "User")
+[Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+$androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;$androidHome\cmdline-tools\latest\bin"
+[Environment]::SetEnvironmentVariable("Path", "$androidPath;$userPath", "User")
+```
+
+在新终端中检查配置：
+
+```shell
+node -e "for (const name of ['ANDROID_HOME', 'NDK_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<未设置>'))"
+```
 
 ## 项目设置
 
@@ -137,7 +182,6 @@ MacOS 与 iOS 签名相关证书以及 Provisioning Profile 文件可按照下�
 2. 在 xcode 中 accounts 里面登录 Apple ID，并在 xcode 中添加需要的证书类型，然后在 xcode 中或钥匙串中导出证书为 [p12 文件](https://zh.wikipedia.org/wiki/PKCS_12)，操作步骤可参考：https://help.apple.com/xcode/mac/current/#/dev154b28f09。p12 文件包含 key(私钥) 与 cer(证书)，Apple 开发者网站只能下载证书，私钥保存在系统钥匙串中，请保管好 p12 文件，不要泄露给他人，并做好备份。
 
 3. 证书类型说明：https://developer.apple.com/cn/help/account/reference/certificate-types。本文档在 MacOS 分发签名使用的 Developer ID Application 证书，iOS 分发签名使用的 Apple Distribution 证书。
-
    - Developer ID Application: 用于在 Mac App Store 以外分发 Mac App 时对其进行签名。
    - Apple Distribution: 向指定设备分发你的 iOS、macOS、Apple tvOS 或 watchOS App 以进行测试或将其提交到 App Store。
    - iOS Distribution (App Store Connect and Ad Hoc): 向指定设备分发你的 iOS、Apple tvOS 或 watchOS App 以进行测试或将其提交到 App Store。
