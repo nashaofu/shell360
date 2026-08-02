@@ -1,31 +1,138 @@
 .root {
   position: fixed;
   inset: 0;
-  display: none;
+  display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
   background: var(--color-background);
   z-index: 20;
 }
 
 .hidden {
-  display: none;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .visible {
-  display: flex;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-.dockview {
-  flex: 1;
-  min-height: 0;
-  background: var(--color-background);
+.header {
+  height: 44px;
+  padding: env(safe-area-inset-top) 6px 0;
+  border-bottom: 1px solid var(--gray-a6);
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--color-panel-solid);
 }
 
-.watermark {
-  height: 100%;
+.iconButton {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--gray-12);
+  font-size: 20px;
+
+  &:active {
+    background: var(--gray-a4);
+  }
+
+  &:disabled {
+    color: var(--gray-a8);
+  }
+}
+
+.sessionButton {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-3);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
+  background: transparent;
+  color: var(--gray-12);
+
+  &:active {
+    background: var(--gray-a4);
+  }
+}
+
+.status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--gray-9);
+}
+
+.pending {
+  background: var(--amber-9);
+}
+
+.success {
+  background: var(--green-9);
+}
+
+.failed {
+  background: var(--red-9);
+}
+
+.sessionName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.chevron {
+  flex-shrink: 0;
   color: var(--gray-10);
-  font-size: 14px;
+  transform: translateY(-1px);
+}
+
+.sessionMenu {
+  max-width: min(320px, calc(100vw - 24px));
+}
+
+.menuItemName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.session {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sessionActive {
+  visibility: visible;
+  pointer-events: auto;
 }

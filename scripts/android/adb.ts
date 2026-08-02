@@ -105,30 +105,77 @@ export async function reverseTcpPort(
   throw new Error(`Failed to reverse ${address} on ${serial}`);
 }
 
-export async function forwardWebViewDebugPort(
+export async function monitorWebViewDebugPort(
   serial: string,
   port: number,
   cancelSignal: AbortSignal,
 ): Promise<void> {
   const adbArgs = ["-s", serial];
-  const { stdout } = await adb(
-    [...adbArgs, "shell", "pidof", ANDROID_PACKAGE_NAME],
-    { cancelSignal },
-  );
-  const pid = stdout.trim().split(/\s+/)[0];
+  const localAddress = `tcp:${port}`;
+  let forwardedSocket: string | undefined;
 
-  if (!pid) {
-    throw new Error("Unable to get the Android app process ID");
+  try {
+    while (!cancelSignal.aborted) {
+      const { stdout: pidOutput } = await adb(
+        [...adbArgs, "shell", "pidof", ANDROID_PACKAGE_NAME],
+        { reject: false, cancelSignal },
+      );
+      const pid = pidOutput.trim().split(/\s+/)[0];
+      const remoteAddress = pid
+        ? `localabstract:webview_devtools_remote_${pid}`
+        : undefined;
+      const { stdout: forwardOutput } = await adb(
+        [...adbArgs, "forward", "--list"],
+        { reject: false, cancelSignal },
+      );
+      let configuredRemoteAddress = forwardOutput
+        .split(/\r?\n/)
+        .map((line) => line.trim().split(/\s+/))
+        .find(([, local]) => local === localAddress)?.[2];
+
+      if (!remoteAddress) {
+        if (configuredRemoteAddress) {
+          await adb([...adbArgs, "forward", "--remove", localAddress], {
+            reject: false,
+            cancelSignal,
+          });
+        }
+        forwardedSocket = undefined;
+        await delay(1_000, undefined, { signal: cancelSignal });
+        continue;
+      }
+
+      if (configuredRemoteAddress !== remoteAddress) {
+        const { stdout: sockets } = await adb(
+          [...adbArgs, "shell", "cat", "/proc/net/unix"],
+          { reject: false, cancelSignal },
+        );
+
+        if (sockets.includes(`@webview_devtools_remote_${pid}`)) {
+          await adb([...adbArgs, "forward", "--remove", localAddress], {
+            reject: false,
+            cancelSignal,
+          });
+          await adb([...adbArgs, "forward", localAddress, remoteAddress], {
+            cancelSignal,
+          });
+          configuredRemoteAddress = remoteAddress;
+        }
+      }
+
+      if (
+        configuredRemoteAddress === remoteAddress &&
+        forwardedSocket !== remoteAddress
+      ) {
+        forwardedSocket = remoteAddress;
+        console.log(
+          `[android] WebView debug URL: http://127.0.0.1:${port} (PID ${pid})`,
+        );
+      }
+
+      await delay(1_000, undefined, { signal: cancelSignal });
+    }
+  } catch (error) {
+    if (!cancelSignal.aborted) throw error;
   }
-
-  await adb(
-    [
-      ...adbArgs,
-      "forward",
-      `tcp:${port}`,
-      `localabstract:webview_devtools_remote_${pid}`,
-    ],
-    { stdio: "inherit", cancelSignal },
-  );
-  console.log(`[android] WebView debug URL: http://127.0.0.1:${port}`);
 }

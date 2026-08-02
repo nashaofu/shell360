@@ -1,7 +1,7 @@
 import { execa, type ResultPromise } from "execa";
 import exitHook from "exit-hook";
 import fkill from "fkill";
-import { adb, forwardWebViewDebugPort, reverseTcpPort } from "./adb.ts";
+import { adb, monitorWebViewDebugPort, reverseTcpPort } from "./adb.ts";
 import {
   ANDROID_PACKAGE_NAME,
   DEV_SERVER_PORT,
@@ -142,12 +142,20 @@ export async function devAndroid({
     ],
     { stdio: "inherit", cancelSignal: controller.signal },
   );
-  await forwardWebViewDebugPort(selectedSerial, debugPort, controller.signal);
   cleanup.defer(async () => {
     await adb([...adbArgs, "forward", "--remove", `tcp:${debugPort}`], {
       reject: false,
     });
   });
+  const debugPortMonitor = monitorWebViewDebugPort(
+    selectedSerial,
+    debugPort,
+    controller.signal,
+  );
+  cleanup.defer(async () => {
+    controller.abort();
+    await Promise.allSettled([debugPortMonitor]);
+  });
 
-  await devServer;
+  await Promise.race([devServer, debugPortMonitor]);
 }
