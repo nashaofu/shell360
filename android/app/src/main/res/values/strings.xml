@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Shell360</string>
+    <string name="webview_update_required">Shell360 requires a newer Android System WebView. Update Android System WebView or Chrome, then reopen the app.</string>
 </resources>

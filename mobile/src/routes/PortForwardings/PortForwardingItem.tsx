@@ -1,5 +1,6 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
+import { hasCapability } from "bridge/capabilities";
 import {
   deletePortForwarding,
   type Host,
@@ -50,6 +51,7 @@ export default function PortForwardingItem({
   const { data: keys } = useKeys();
   const modal = useModal();
   const message = useMessage();
+  const canStartPortForwarding = hasCapability("portForwarding");
 
   const title = useMemo(() => {
     const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
@@ -233,7 +235,11 @@ export default function PortForwardingItem({
             </DropdownMenu.Root>
           </div>
         }
-        onClick={() => onOpenOrClosePortForwarding()}
+        onClick={
+          canStartPortForwarding
+            ? () => onOpenOrClosePortForwarding()
+            : undefined
+        }
       />
       {isLoading && (
         <ThemedPortal>

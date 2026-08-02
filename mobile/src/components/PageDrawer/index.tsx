@@ -14,6 +14,10 @@ type PageDrawerProps = {
   onCancel: () => unknown;
 };
 
+export function PageDrawerActions({ children }: { children: ReactNode }) {
+  return <div className={styles.actions}>{children}</div>;
+}
+
 export default function PageDrawer({
   loading,
   open,
@@ -47,7 +51,7 @@ export default function PageDrawer({
               disabled={!!loading}
               onClick={onCancel}
             >
-              <ArrowLeftIcon />
+              <ArrowLeftIcon className={styles.toolbarIcon} />
             </button>
             <h6 className={styles.title}>{title}</h6>
             <button
@@ -56,7 +60,7 @@ export default function PageDrawer({
               disabled={!!loading}
               onClick={onCancel}
             >
-              <CloseIcon />
+              <CloseIcon className={styles.toolbarIcon} />
             </button>
           </div>
           <hr className={styles.divider} />

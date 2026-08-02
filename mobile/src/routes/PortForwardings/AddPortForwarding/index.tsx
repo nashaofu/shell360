@@ -13,7 +13,7 @@ import {
   usePortForwardings,
 } from "shared";
 
-import PageDrawer from "@/components/PageDrawer";
+import PageDrawer, { PageDrawerActions } from "@/components/PageDrawer";
 
 type AddPortForwardingProps = {
   open?: boolean;
@@ -104,23 +104,12 @@ export default function AddPortForwarding({
       title={data ? "Edit tunnel" : "Add tunnel"}
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button style={{ width: "48%" }} variant="outline" onClick={onCancel}>
+        <PageDrawerActions>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            style={{ width: "48%" }}
-            onClick={formApi.handleSubmit(onSave)}
-          >
-            Save
-          </Button>
-        </div>
+          <Button onClick={formApi.handleSubmit(onSave)}>Save</Button>
+        </PageDrawerActions>
       }
     >
       <PortForwardingForm formApi={formApi}></PortForwardingForm>

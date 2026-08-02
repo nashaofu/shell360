@@ -52,7 +52,13 @@ export function getSftpBasename(path: string | undefined) {
     return "";
   }
   const normalized = normalizeSftpPath(path);
-  return normalized.split("/").filter(Boolean).pop() || normalized;
+  const basename = normalized.split("/").filter(Boolean).pop() || normalized;
+  if (!path.startsWith("content://")) {
+    return basename;
+  }
+
+  const decoded = decodeURIComponent(basename);
+  return decoded.split(/[/:]/).filter(Boolean).pop() || decoded;
 }
 
 export function getSftpDirname(path: string | undefined) {

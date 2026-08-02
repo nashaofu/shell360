@@ -21,7 +21,7 @@ import {
   useTerminalsAtomWithApi,
 } from "shared";
 import AddKey from "@/components/AddKey";
-import PageDrawer from "@/components/PageDrawer";
+import PageDrawer, { PageDrawerActions } from "@/components/PageDrawer";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 
 type AddHostProps = {
@@ -178,19 +178,12 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
         title={data ? "Edit host" : "Add host"}
         onCancel={onCancel}
         footer={
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
-            <Button style={{ flex: 1 }} variant="outline" onClick={onCancel}>
+          <PageDrawerActions>
+            <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
 
-            <div style={{ display: "flex", flex: 1, width: "48%" }}>
+            <div style={{ display: "flex", minWidth: 0 }}>
               <Button
                 style={{
                   flex: 1,
@@ -223,7 +216,7 @@ export default function AddHost({ open, data, onOk, onCancel }: AddHostProps) {
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
             </div>
-          </div>
+          </PageDrawerActions>
         }
       >
         <EditHostForm

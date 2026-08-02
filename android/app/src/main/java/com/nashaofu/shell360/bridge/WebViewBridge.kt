@@ -4,6 +4,7 @@ import android.webkit.WebView
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebViewCompat
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class WebViewBridge(
     private val webView: WebView,
@@ -14,6 +15,8 @@ class WebViewBridge(
     private var replyProxy: JavaScriptReplyProxy? = null
 
     private val executor = Executors.newSingleThreadExecutor()
+    private val disposed = AtomicBoolean()
+    private val listenerOwner = Any()
 
     init {
         WebViewCompat.addWebMessageListener(
@@ -21,7 +24,7 @@ class WebViewBridge(
             JS_OBJECT_NAME,
             setOf(com.nashaofu.shell360.BuildConfig.WEBVIEW_ORIGIN),
         ) { _, message, _, isMainFrame, proxy ->
-            if (!isMainFrame) {
+            if (!isMainFrame || disposed.get()) {
                 return@addWebMessageListener
             }
 
@@ -50,22 +53,31 @@ class WebViewBridge(
             executor.execute {
                 val response = router.handle(body)
                 webView.post {
-                    proxy.postMessage(response)
+                    if (!disposed.get()) {
+                        proxy.postMessage(response)
+                    }
                 }
             }
         }
 
-        rustBridge.setEventListener { event ->
+        rustBridge.setEventListener(listenerOwner) { event ->
             webView.post {
-                replyProxy?.postMessage(event)
+                if (!disposed.get()) {
+                    replyProxy?.postMessage(event)
+                }
             }
         }
     }
 
     fun dispose() {
-        rustBridge.setEventListener(null)
+        if (!disposed.compareAndSet(false, true)) {
+            return
+        }
+
+        WebViewCompat.removeWebMessageListener(webView, JS_OBJECT_NAME)
+        rustBridge.clearEventListener(listenerOwner)
         replyProxy = null
-        executor.shutdownNow()
+        executor.shutdown()
     }
 
     private companion object {

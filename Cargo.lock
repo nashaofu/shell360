@@ -5957,7 +5957,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "log",
+ "rusocks",
  "russh",
+ "russh-sftp",
  "serde",
  "serde_json",
  "tempfile",

@@ -10,7 +10,7 @@ import {
   useKeys,
 } from "shared";
 
-import PageDrawer from "@/components/PageDrawer";
+import PageDrawer, { PageDrawerActions } from "@/components/PageDrawer";
 
 type GenerateKeyProps = {
   open?: boolean;
@@ -80,14 +80,8 @@ export default function GenerateKey({
       title="Generate key"
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Loading loading={loading} sx={{ width: "48%" }}>
+        <PageDrawerActions>
+          <Loading loading={loading}>
             <Button
               style={{ width: "100%" }}
               variant="outline"
@@ -97,7 +91,7 @@ export default function GenerateKey({
             </Button>
           </Loading>
 
-          <Loading loading={loading} sx={{ width: "48%" }}>
+          <Loading loading={loading}>
             <Button
               style={{ width: "100%" }}
               onClick={formApi.handleSubmit(onGenerate)}
@@ -105,7 +99,7 @@ export default function GenerateKey({
               Generate
             </Button>
           </Loading>
-        </div>
+        </PageDrawerActions>
       }
     >
       <GenerateKeyForm formApi={formApi} />

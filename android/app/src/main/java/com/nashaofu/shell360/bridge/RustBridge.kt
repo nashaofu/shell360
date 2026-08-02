@@ -9,20 +9,26 @@ import org.json.JSONTokener
 
 class RustBridge(context: Context) {
     @Volatile
-    private var eventListener: ((String) -> Unit)? = null
+    private var eventListener: EventListener? = null
 
     private val runtime = Shell360Runtime(
         appDataDir = context.filesDir.resolve("shell360").absolutePath,
         cacheDir = context.cacheDir.resolve("shell360").absolutePath,
         eventSink = object : FfiEventSink {
             override fun onEvent(eventJson: String) {
-                eventListener?.invoke(eventJson)
+                eventListener?.callback?.invoke(eventJson)
             }
         },
     )
 
-    fun setEventListener(listener: ((String) -> Unit)?) {
-        eventListener = listener
+    fun setEventListener(owner: Any, listener: (String) -> Unit) {
+        eventListener = EventListener(owner, listener)
+    }
+
+    fun clearEventListener(owner: Any) {
+        if (eventListener?.owner === owner) {
+            eventListener = null
+        }
     }
 
     fun healthCheck(): String {
@@ -71,6 +77,11 @@ class RustBridge(context: Context) {
             else -> JSONObject.wrap(this)?.toString() ?: "null"
         }
     }
+
+    private data class EventListener(
+        val owner: Any,
+        val callback: (String) -> Unit,
+    )
 }
 
 class NativeBridgeException(

@@ -1,4 +1,5 @@
 import { useSize } from "ahooks";
+import { hasCapability } from "bridge/capabilities";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -147,7 +148,7 @@ export default function SSHTerminal({
               fontSize: "0.75rem",
             }}
           >
-            {session && <Sftp session={session} />}
+            {session && hasCapability("sftp") && <Sftp session={session} />}
             <div
               style={{
                 padding: "2px 8px",

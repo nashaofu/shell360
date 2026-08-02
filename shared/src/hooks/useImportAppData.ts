@@ -18,7 +18,21 @@ export function useImportAppData() {
   const { refresh: refreshPortForwardings } = usePortForwardings();
 
   const importAppData = useMemoizedFn(async (data: string) => {
-    const { hosts, keys, portForwardings } = JSON.parse(data) as {
+    const imported: unknown = JSON.parse(data);
+    if (
+      !imported ||
+      typeof imported !== "object" ||
+      !("hosts" in imported) ||
+      !("keys" in imported) ||
+      !("portForwardings" in imported) ||
+      !Array.isArray(imported.hosts) ||
+      !Array.isArray(imported.keys) ||
+      !Array.isArray(imported.portForwardings)
+    ) {
+      throw new Error("The selected file is not a valid Shell360 export.");
+    }
+
+    const { hosts, keys, portForwardings } = imported as {
       hosts: Host[];
       keys: Key[];
       portForwardings: PortForwarding[];

@@ -7,7 +7,7 @@ import type {
   SSHShellImplementation,
 } from "./backend";
 import { setBridgeBackend } from "./backend";
-import type { SSHSessionOpts, SSHShellOpts } from "./ssh";
+import type { SSHSessionOpts, SSHSftpOpts, SSHShellOpts } from "./ssh";
 import type { Store } from "./store";
 
 type NativeMessageEvent = {
@@ -40,6 +40,7 @@ type PendingRequest = {
 };
 
 const SSH_AUTH_TIMEOUT_MS = 130_000;
+const FILE_PICKER_TIMEOUT_MS = 300_000;
 
 declare global {
   interface Window {
@@ -359,43 +360,92 @@ function createShell(
   };
 }
 
-function createSftp(): SSHSftpImplementation {
+function createSftp(
+  transport: NativeTransport,
+  session: SSHSessionImplementation,
+  opts: Omit<SSHSftpOpts, "session">,
+): SSHSftpImplementation {
+  const sshSftpId = crypto.randomUUID();
+  transport.on("ssh.sftp.eof", sshSftpId, () => opts.onEof?.());
+  transport.on("ssh.sftp.close", sshSftpId, () => opts.onClose?.());
   return {
-    sshSftpId: crypto.randomUUID(),
-    open: () => unsupported("ssh.sftp.open"),
-    close: () => unsupported("ssh.sftp.close"),
-    sftpReadDir: () => unsupported("ssh.sftp.readDir"),
-    sftpUploadFile: () => unsupported("ssh.sftp.uploadFile"),
-    sftpDownloadFile: () => unsupported("ssh.sftp.downloadFile"),
-    sftpCreateFile: () => unsupported("ssh.sftp.createFile"),
-    sftpCreateDir: () => unsupported("ssh.sftp.createDir"),
-    sftpRemoveDir: () => unsupported("ssh.sftp.removeDir"),
-    sftpRemoveFile: () => unsupported("ssh.sftp.removeFile"),
-    sftpRename: () => unsupported("ssh.sftp.rename"),
-    sftpExists: () => unsupported("ssh.sftp.exists"),
-    sftpCanonicalize: () => unsupported("ssh.sftp.canonicalize"),
-    sftpReadTextFile: () => unsupported("ssh.sftp.readTextFile"),
-    sftpWriteTextFile: () => unsupported("ssh.sftp.writeTextFile"),
-    sftpCancelTask: () => unsupported("ssh.sftp.cancelTask"),
-    sftpPauseTask: () => unsupported("ssh.sftp.pauseTask"),
-    sftpResumeTask: () => unsupported("ssh.sftp.resumeTask"),
+    sshSftpId,
+    open: () =>
+      transport.invoke("ssh.sftp.open", {
+        sshSessionId: session.sshSessionId,
+        sshSftpId,
+      }),
+    close: () => transport.invoke("ssh.sftp.close", { sshSftpId }),
+    sftpReadDir: (path) =>
+      transport.invoke("ssh.sftp.readDir", { sshSftpId, path }),
+    sftpUploadFile: async (transferOpts) => {
+      const result = await transport.invoke<string>("ssh.sftp.uploadFile", {
+        sshSftpId,
+        localFilename: transferOpts.localFilename,
+        remoteFilename: transferOpts.remoteFilename,
+      });
+      transferOpts.onProgress?.({ progress: 1, total: 1 });
+      return result;
+    },
+    sftpDownloadFile: async (transferOpts) => {
+      const result = await transport.invoke<string>("ssh.sftp.downloadFile", {
+        sshSftpId,
+        localFilename: transferOpts.localFilename,
+        remoteFilename: transferOpts.remoteFilename,
+      });
+      transferOpts.onProgress?.({ progress: 1, total: 1 });
+      return result;
+    },
+    sftpCreateFile: (path) =>
+      transport.invoke("ssh.sftp.createFile", { sshSftpId, path }),
+    sftpCreateDir: (path) =>
+      transport.invoke("ssh.sftp.createDir", { sshSftpId, path }),
+    sftpRemoveDir: (path) =>
+      transport.invoke("ssh.sftp.removeDir", { sshSftpId, path }),
+    sftpRemoveFile: (path) =>
+      transport.invoke("ssh.sftp.removeFile", { sshSftpId, path }),
+    sftpRename: (renameOpts) =>
+      transport.invoke("ssh.sftp.rename", { sshSftpId, ...renameOpts }),
+    sftpExists: (path) =>
+      transport.invoke("ssh.sftp.exists", { sshSftpId, path }),
+    sftpCanonicalize: (path) =>
+      transport.invoke("ssh.sftp.canonicalize", { sshSftpId, path }),
+    sftpReadTextFile: (path) =>
+      transport.invoke("ssh.sftp.readTextFile", { sshSftpId, path }),
+    sftpWriteTextFile: (path, content) =>
+      transport.invoke("ssh.sftp.writeTextFile", {
+        sshSftpId,
+        path,
+        content,
+      }),
+    sftpCancelTask: async () => {},
+    sftpPauseTask: async () => {},
+    sftpResumeTask: async () => {},
   };
 }
 
-function createPortForwarding(): SSHPortForwardingImplementation {
+function createPortForwarding(
+  transport: NativeTransport,
+  session: SSHSessionImplementation,
+): SSHPortForwardingImplementation {
+  const sshPortForwardingId = crypto.randomUUID();
+  const invoke = (method: string, opts?: object) =>
+    transport.invoke<string>(method, {
+      sshSessionId: session.sshSessionId,
+      sshPortForwardingId,
+      ...opts,
+    });
   return {
-    sshPortForwardingId: crypto.randomUUID(),
-    openLocalPortForwarding: () => unsupported("ssh.portForwarding.openLocal"),
-    closeLocalPortForwarding: () =>
-      unsupported("ssh.portForwarding.closeLocal"),
-    openRemotePortForwarding: () =>
-      unsupported("ssh.portForwarding.openRemote"),
-    closeRemotePortForwarding: () =>
-      unsupported("ssh.portForwarding.closeRemote"),
-    openDynamicPortForwarding: () =>
-      unsupported("ssh.portForwarding.openDynamic"),
-    closeDynamicPortForwarding: () =>
-      unsupported("ssh.portForwarding.closeDynamic"),
+    sshPortForwardingId,
+    openLocalPortForwarding: (opts) =>
+      invoke("ssh.portForwarding.openLocal", opts),
+    closeLocalPortForwarding: () => invoke("ssh.portForwarding.closeLocal"),
+    openRemotePortForwarding: (opts) =>
+      invoke("ssh.portForwarding.openRemote", opts),
+    closeRemotePortForwarding: () => invoke("ssh.portForwarding.closeRemote"),
+    openDynamicPortForwarding: (opts) =>
+      invoke("ssh.portForwarding.openDynamic", opts),
+    closeDynamicPortForwarding: () => invoke("ssh.portForwarding.closeDynamic"),
   };
 }
 
@@ -411,6 +461,15 @@ function createPtyShell(): PtyShellImplementation {
 
 export function createNativeBackend(transport: NativeTransport): BridgeBackend {
   return {
+    capabilities: {
+      has: (capability) =>
+        capability === "clipboard" ||
+        capability === "fileDialog" ||
+        capability === "fileSystem" ||
+        capability === "openUrl" ||
+        capability === "sftp" ||
+        capability === "portForwarding",
+    },
     data: {
       checkIsEnableCrypto: () => transport.invoke("data.checkIsEnableCrypto"),
       checkIsInitCrypto: () => transport.invoke("data.checkIsInitCrypto"),
@@ -453,8 +512,9 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     ssh: {
       createSession: (opts) => createSession(transport, opts),
       createShell: (session, opts) => createShell(transport, session, opts),
-      createSftp,
-      createPortForwarding,
+      createSftp: (session, opts) => createSftp(transport, session, opts),
+      createPortForwarding: (session) =>
+        createPortForwarding(transport, session),
     },
     pty: {
       createShell: createPtyShell,
@@ -469,17 +529,21 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     },
     core: {
       generateKey: (opts) => transport.invoke("keygen.generate", opts),
-      openUrl: () => unsupported("core.openUrl"),
+      openUrl: (url) => transport.invoke("core.openUrl", { url }),
     },
     dialog: {
-      openDialog: () => unsupported("dialog.open"),
-      saveDialog: () => unsupported("dialog.save"),
+      openDialog: (opts) =>
+        transport.invoke("dialog.open", opts, FILE_PICKER_TIMEOUT_MS),
+      saveDialog: (opts) =>
+        transport.invoke("dialog.save", opts, FILE_PICKER_TIMEOUT_MS),
       ask: () => unsupported("dialog.ask"),
       destroyDialogPath: async () => {},
     },
     fs: {
-      readTextFile: () => unsupported("fs.readTextFile"),
-      writeTextFile: () => unsupported("fs.writeTextFile"),
+      readTextFile: (path, opts) =>
+        transport.invoke("fs.readTextFile", { path, ...opts }),
+      writeTextFile: (path, contents, opts) =>
+        transport.invoke("fs.writeTextFile", { path, contents, ...opts }),
     },
     window: {
       getCurrentWindow: () => ({
@@ -495,8 +559,9 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
       createStore: (path) => new NativeStore(path),
     },
     clipboardManager: {
-      readClipboardText: () => unsupported("clipboard.readText"),
-      writeClipboardText: () => unsupported("clipboard.writeText"),
+      readClipboardText: () => transport.invoke("clipboard.readText"),
+      writeClipboardText: (text) =>
+        transport.invoke("clipboard.writeText", { text }),
     },
     updater: {
       checkUpdate: () => unsupported("updater.check"),

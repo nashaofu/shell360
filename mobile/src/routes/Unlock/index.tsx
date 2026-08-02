@@ -35,18 +35,9 @@ export default function Unlock() {
 
   const { run: onReset, loading: resetLoading } = useRequest(
     async () => {
-      const isContinue = await new Promise((resolve) => {
-        modal.confirm({
-          title: <span>Warning</span>,
-          content:
-            "All application data will be reset soon, whether to continue",
-          onOk: () => {
-            resolve(true);
-          },
-          onCancel: () => {
-            resolve(false);
-          },
-        });
+      const isContinue = await modal.confirm({
+        title: <span>Warning</span>,
+        content: "All application data will be reset soon, whether to continue",
       });
 
       if (!isContinue) {

@@ -151,6 +151,76 @@ struct SshShellResizeRequest {
   size: ShellSize,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpOpenRequest {
+  ssh_session_id: String,
+  ssh_sftp_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpPathRequest {
+  ssh_sftp_id: String,
+  path: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpIdRequest {
+  ssh_sftp_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpRenameRequest {
+  ssh_sftp_id: String,
+  old_path: String,
+  new_path: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpWriteRequest {
+  ssh_sftp_id: String,
+  path: String,
+  content: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshSftpTransferRequest {
+  ssh_sftp_id: String,
+  local_filename: String,
+  remote_filename: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshPortForwardingOpenRequest {
+  ssh_session_id: String,
+  ssh_port_forwarding_id: String,
+  local_address: String,
+  local_port: u16,
+  remote_address: String,
+  remote_port: u16,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshPortForwardingDynamicOpenRequest {
+  ssh_session_id: String,
+  ssh_port_forwarding_id: String,
+  local_address: String,
+  local_port: u16,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SshPortForwardingIdRequest {
+  ssh_port_forwarding_id: String,
+}
+
 struct FfiDataEventSink {
   event_sink: Arc<dyn FfiEventSink>,
   sequence: AtomicU64,
@@ -448,6 +518,212 @@ impl Shell360Runtime {
           .await
           .map_err(ssh_error)?
       }
+      "ssh.sftp.open" => {
+        let request: SshSftpOpenRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_open(client_id, request.ssh_session_id, request.ssh_sftp_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.close" => {
+        let request: SshSftpIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_close(&client_id, &request.ssh_sftp_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.readDir" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        return serialize_ssh(
+          self
+            .ssh_service
+            .sftp_read_dir(&client_id, &request.ssh_sftp_id, &request.path)
+            .await
+            .map_err(ssh_error)?,
+        );
+      }
+      "ssh.sftp.createFile" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_create_file(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.createDir" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_create_dir(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.removeFile" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_remove_file(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.removeDir" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_remove_dir(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.rename" => {
+        let request: SshSftpRenameRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_rename(
+            &client_id,
+            &request.ssh_sftp_id,
+            &request.old_path,
+            &request.new_path,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.exists" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        return serialize_ssh(
+          self
+            .ssh_service
+            .sftp_exists(&client_id, &request.ssh_sftp_id, &request.path)
+            .await
+            .map_err(ssh_error)?,
+        );
+      }
+      "ssh.sftp.canonicalize" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_canonicalize(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.readTextFile" => {
+        let request: SshSftpPathRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_read_text_file(&client_id, &request.ssh_sftp_id, &request.path)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.writeTextFile" => {
+        let request: SshSftpWriteRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_write_text_file(
+            &client_id,
+            &request.ssh_sftp_id,
+            &request.path,
+            &request.content,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.uploadFile" => {
+        let request: SshSftpTransferRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_upload_file(
+            &client_id,
+            &request.ssh_sftp_id,
+            &request.local_filename,
+            &request.remote_filename,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.sftp.downloadFile" => {
+        let request: SshSftpTransferRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .sftp_download_file(
+            &client_id,
+            &request.ssh_sftp_id,
+            &request.remote_filename,
+            &request.local_filename,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.openLocal" => {
+        let request: SshPortForwardingOpenRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_local_open(
+            client_id,
+            request.ssh_session_id,
+            request.ssh_port_forwarding_id,
+            request.local_address,
+            request.local_port,
+            request.remote_address,
+            request.remote_port,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.closeLocal" => {
+        let request: SshPortForwardingIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_local_close(&client_id, &request.ssh_port_forwarding_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.openRemote" => {
+        let request: SshPortForwardingOpenRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_remote_open(
+            client_id,
+            request.ssh_session_id,
+            request.ssh_port_forwarding_id,
+            request.local_address,
+            request.local_port,
+            request.remote_address,
+            request.remote_port,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.closeRemote" => {
+        let request: SshPortForwardingIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_remote_close(&client_id, &request.ssh_port_forwarding_id)
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.openDynamic" => {
+        let request: SshPortForwardingDynamicOpenRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_dynamic_open(
+            client_id,
+            request.ssh_session_id,
+            request.ssh_port_forwarding_id,
+            request.local_address,
+            request.local_port,
+          )
+          .await
+          .map_err(ssh_error)?
+      }
+      "ssh.portForwarding.closeDynamic" => {
+        let request: SshPortForwardingIdRequest = parse_request(params_json)?;
+        self
+          .ssh_service
+          .port_forwarding_dynamic_close(&client_id, &request.ssh_port_forwarding_id)
+          .await
+          .map_err(ssh_error)?
+      }
       _ => {
         return Err(FfiError::InvalidRequest(format!(
           "Unsupported SSH method: {method}"
@@ -616,6 +892,10 @@ fn serialize_data<T: serde::Serialize>(
   })
 }
 
+fn serialize_ssh<T: serde::Serialize>(value: T) -> Result<String, FfiError> {
+  serde_json::to_string(&value).map_err(|error| FfiError::Serialization(error.to_string()))
+}
+
 fn data_error(error: shell360_store::DataError) -> FfiError {
   FfiError::Data {
     code: error.code().to_string(),
@@ -641,7 +921,7 @@ mod tests {
 
   use ssh_key::PrivateKey;
 
-  use super::{FfiEventSink, Shell360Runtime};
+  use super::{FfiError, FfiEventSink, Shell360Runtime};
 
   #[derive(Debug, Default)]
   struct TestEventSink {
@@ -735,5 +1015,34 @@ mod tests {
     let keys: serde_json::Value = serde_json::from_str(&keys).expect("parse keys");
 
     assert_eq!(keys[0], key);
+  }
+
+  #[test]
+  fn routes_sftp_requests_to_the_ssh_service() {
+    let directory = tempfile::tempdir().expect("create temp directory");
+    let runtime = Shell360Runtime::new(
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
+      Box::new(TestEventSink::default()),
+    )
+    .expect("create runtime");
+
+    let error = runtime
+      .invoke_ssh(
+        "ssh.sftp.open".to_string(),
+        "test-client".to_string(),
+        serde_json::json!({
+          "sshSessionId": "missing-session",
+          "sshSftpId": "test-sftp",
+        })
+        .to_string(),
+      )
+      .expect_err("missing SSH session must fail");
+
+    assert!(matches!(error, FfiError::Ssh { ref code, .. } if code == "SSH_SESSION_NOT_FOUND"));
   }
 }

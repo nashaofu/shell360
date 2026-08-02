@@ -1,4 +1,5 @@
 import { Button } from "@radix-ui/themes";
+import { hasCapability } from "bridge/capabilities";
 import { addKey, type Key, updateKey } from "bridge/data";
 import { open as openDialog } from "bridge/dialog";
 import { readTextFile } from "bridge/fs";
@@ -6,7 +7,7 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { EditKeyForm, type EditKeyFormFields, useKeys } from "shared";
 
-import PageDrawer from "../PageDrawer";
+import PageDrawer, { PageDrawerActions } from "../PageDrawer";
 
 type AddKeyProps = {
   open?: boolean;
@@ -16,6 +17,8 @@ type AddKeyProps = {
 };
 
 export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
+  const canImportFile =
+    hasCapability("fileDialog") && hasCapability("fileSystem");
   const { refresh: refreshKeys } = useKeys();
   const formApi = useForm<EditKeyFormFields>({
     defaultValues: {
@@ -44,7 +47,10 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
     }
 
     return {
-      filename: file.split(/[\\/]/).pop() || "",
+      filename:
+        (file.startsWith("content://") ? decodeURIComponent(file) : file)
+          .split(/[\\/:]/)
+          .pop() || "",
       content: await readTextFile(file),
     };
   }, []);
@@ -88,27 +94,19 @@ export default function AddKey({ open, data, onOk, onCancel }: AddKeyProps) {
       title={data ? "Edit key" : "Add key"}
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button style={{ width: "48%" }} variant="outline" onClick={onCancel}>
+        <PageDrawerActions>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
 
-          <Button
-            style={{ width: "48%" }}
-            onClick={formApi.handleSubmit(onSave)}
-          >
-            Save
-          </Button>
-        </div>
+          <Button onClick={formApi.handleSubmit(onSave)}>Save</Button>
+        </PageDrawerActions>
       }
     >
-      <EditKeyForm formApi={formApi} onImportTextFile={importTextFile} />
+      <EditKeyForm
+        formApi={formApi}
+        onImportTextFile={canImportFile ? importTextFile : undefined}
+      />
     </PageDrawer>
   );
 }

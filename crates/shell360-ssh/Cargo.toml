@@ -11,6 +11,8 @@ russh = { version = "0.61.2", default-features = false, features = [
   "ring",
   "rsa",
 ] }
+russh-sftp = "2.3.0"
+rusocks = "0.0.7"
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 thiserror.workspace = true

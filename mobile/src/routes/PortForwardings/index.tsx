@@ -1,4 +1,5 @@
-import { Button } from "@radix-ui/themes";
+import { Button, Callout } from "@radix-ui/themes";
+import { hasCapability } from "bridge/capabilities";
 import type { PortForwarding } from "bridge/data";
 import { useCallback, useMemo, useState } from "react";
 import { AddIcon, useHosts, usePortForwardings } from "shared";
@@ -11,6 +12,7 @@ import AddPortForwarding from "./AddPortForwarding";
 import PortForwardingItem from "./PortForwardingItem";
 
 export default function PortForwardings() {
+  const canStartPortForwarding = hasCapability("portForwarding");
   const { data: hosts } = useHosts();
   const { data: portForwardings } = usePortForwardings();
 
@@ -55,6 +57,14 @@ export default function PortForwardings() {
 
   return (
     <Page title="Tunnels">
+      {!canStartPortForwarding && (
+        <Callout.Root color="gray" style={{ marginTop: 16 }}>
+          <Callout.Text>
+            Tunnels can be configured here, but starting them is not available
+            on this platform yet.
+          </Callout.Text>
+        </Callout.Root>
+      )}
       <div
         style={{
           display: "flex",

@@ -7,6 +7,12 @@ use std::{
 };
 
 use async_trait::async_trait;
+use rusocks::{
+  Socks,
+  addr::SocksAddr,
+  socks4::{Socks4Handler, command::Socks4Command, reply::Socks4Reply},
+  socks5::{Socks5Handler, command::Socks5Command, method::Socks5Method, reply::Socks5Reply},
+};
 use russh::{
   Channel as RusshChannel, ChannelId, Disconnect, Error as RusshError, MethodKind, MethodSet,
   client::{self, AuthResult, Handle, KeyboardInteractiveAuthResponse},
@@ -17,11 +23,19 @@ use russh::{
     ssh_key::Fingerprint,
   },
 };
+use russh_sftp::{
+  client::{self as sftp_client, SftpSession},
+  protocol::FileType as RusshSftpFileType,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 use tokio::{
-  sync::{Mutex, mpsc, watch},
+  io,
+  io::{AsyncReadExt, AsyncWriteExt, BufWriter},
+  net::{TcpListener, TcpStream},
+  select,
+  sync::{Mutex, Notify, mpsc, watch},
   time::{Instant, timeout},
 };
 
@@ -47,6 +61,8 @@ pub enum SshError {
   JumpHostSessionNotFound,
   #[error("Shell not found")]
   ShellNotFound,
+  #[error("SFTP session not found")]
+  SftpNotFound,
   #[error("Session is closed")]
   SessionClosed,
   #[error("{algorithm} key fingerprint is {fingerprint}")]
@@ -70,6 +86,10 @@ pub enum SshError {
   Russh(#[from] russh::Error),
   #[error("SSH key error: {0}")]
   RusshKey(#[from] russh::keys::Error),
+  #[error("SFTP error: {0}")]
+  Sftp(#[from] russh_sftp::client::error::Error),
+  #[error("SOCKS error: {0}")]
+  Socks(#[from] rusocks::error::SocksError),
   #[error("I/O error: {0}")]
   Io(#[from] std::io::Error),
   #[error("{0}")]
@@ -85,6 +105,7 @@ impl SshError {
       Self::SessionNotFound => "SSH_SESSION_NOT_FOUND",
       Self::JumpHostSessionNotFound => "SSH_JUMP_HOST_SESSION_NOT_FOUND",
       Self::ShellNotFound => "SSH_SHELL_NOT_FOUND",
+      Self::SftpNotFound => "SSH_SFTP_NOT_FOUND",
       Self::SessionClosed => "SSH_SESSION_CLOSED",
       Self::UnknownKey { .. } => "SSH_UNKNOWN_SERVER_KEY",
       Self::Authentication { .. } => "SSH_AUTHENTICATION_FAILED",
@@ -93,6 +114,8 @@ impl SshError {
       Self::Timeout => "SSH_TIMEOUT",
       Self::Russh(_) => "SSH_PROTOCOL_ERROR",
       Self::RusshKey(_) => "SSH_KEY_ERROR",
+      Self::Sftp(_) => "SSH_SFTP_ERROR",
+      Self::Socks(_) => "SSH_SOCKS_ERROR",
       Self::Io(_) => "SSH_IO_ERROR",
       Self::Other(_) => "SSH_ERROR",
     }
@@ -229,6 +252,41 @@ pub struct ShellOpenOptions {
   pub size: ShellSize,
 }
 
+#[derive(Debug, Clone, Copy, Serialize)]
+pub enum SftpFileType {
+  Dir,
+  File,
+  Symlink,
+  Other,
+}
+
+impl From<RusshSftpFileType> for SftpFileType {
+  fn from(value: RusshSftpFileType) -> Self {
+    match value {
+      RusshSftpFileType::Dir => Self::Dir,
+      RusshSftpFileType::File => Self::File,
+      RusshSftpFileType::Symlink => Self::Symlink,
+      RusshSftpFileType::Other => Self::Other,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SftpFile {
+  pub path: String,
+  pub name: String,
+  pub file_type: SftpFileType,
+  pub size: u64,
+  pub permissions: String,
+  pub atime: u32,
+  pub mtime: u32,
+  pub uid: Option<u32>,
+  pub user: Option<String>,
+  pub gid: Option<u32>,
+  pub group: Option<String>,
+}
+
 type SessionHandle = Arc<Mutex<Handle<SshClient>>>;
 
 struct Session {
@@ -245,6 +303,33 @@ struct Shell {
   resize: watch::Sender<ShellSize>,
 }
 
+struct Sftp {
+  client_id: String,
+  session_id: String,
+  session: Arc<SftpSession>,
+}
+
+enum PortForwarding {
+  Local {
+    client_id: String,
+    session_id: String,
+    stop: Arc<Notify>,
+  },
+  Remote {
+    client_id: String,
+    session_id: String,
+    local_address: String,
+    local_port: u16,
+    remote_address: String,
+    remote_port: u16,
+  },
+  Dynamic {
+    client_id: String,
+    session_id: String,
+    stop: Arc<Notify>,
+  },
+}
+
 enum ShellMessage {
   Data(Vec<u8>),
   Eof,
@@ -257,6 +342,8 @@ struct State {
   sequence: StdMutex<u64>,
   sessions: Mutex<HashMap<String, Session>>,
   shells: Mutex<HashMap<String, Shell>>,
+  sftps: Mutex<HashMap<String, Sftp>>,
+  port_forwardings: Mutex<HashMap<String, PortForwarding>>,
 }
 
 impl State {
@@ -328,6 +415,45 @@ impl State {
       }
       let _ = shell.channel.lock().await.close().await;
     }
+
+    let sftps = {
+      let mut sftps = self.sftps.lock().await;
+      let ids = sftps
+        .iter()
+        .filter(|(_, sftp)| sftp.session_id == session_id)
+        .map(|(id, _)| id.clone())
+        .collect::<Vec<_>>();
+      ids
+        .into_iter()
+        .filter_map(|id| sftps.remove(&id))
+        .collect::<Vec<_>>()
+    };
+    for sftp in sftps {
+      let _ = sftp.session.close().await;
+    }
+
+    let port_forwardings = {
+      let mut port_forwardings = self.port_forwardings.lock().await;
+      let ids = port_forwardings
+        .iter()
+        .filter(|(_, forwarding)| match forwarding {
+          PortForwarding::Local { session_id: id, .. }
+          | PortForwarding::Remote { session_id: id, .. }
+          | PortForwarding::Dynamic { session_id: id, .. } => id == session_id,
+        })
+        .map(|(id, _)| id.clone())
+        .collect::<Vec<_>>();
+      ids
+        .into_iter()
+        .filter_map(|id| port_forwardings.remove(&id))
+        .collect::<Vec<_>>()
+    };
+    for forwarding in port_forwardings {
+      if let PortForwarding::Local { stop, .. } | PortForwarding::Dynamic { stop, .. } = forwarding
+      {
+        stop.notify_waiters();
+      }
+    }
   }
 }
 
@@ -345,6 +471,8 @@ impl SshService {
         sequence: StdMutex::new(0),
         sessions: Mutex::new(HashMap::new()),
         shells: Mutex::new(HashMap::new()),
+        sftps: Mutex::new(HashMap::new()),
+        port_forwardings: Mutex::new(HashMap::new()),
       }),
     }
   }
@@ -668,6 +796,455 @@ impl SshService {
     Ok(shell_id.to_string())
   }
 
+  pub async fn sftp_open(
+    &self,
+    client_id: String,
+    session_id: String,
+    sftp_id: String,
+  ) -> SshResult<String> {
+    validate_id("clientId", &client_id)?;
+    validate_id("sshSessionId", &session_id)?;
+    validate_id("sshSftpId", &sftp_id)?;
+    let handle = self.session_handle(&client_id, &session_id).await?;
+    let channel = timeout(
+      OPERATION_TIMEOUT,
+      handle.lock().await.channel_open_session(),
+    )
+    .await??;
+    timeout(OPERATION_TIMEOUT, channel.request_subsystem(true, "sftp")).await??;
+    let config = sftp_client::Config {
+      max_packet_len: 5 * 1024 * 1024,
+      max_concurrent_writes: 16,
+      request_timeout_secs: 30,
+    };
+    let session = timeout(
+      OPERATION_TIMEOUT,
+      SftpSession::new_with_config(channel.into_stream(), config),
+    )
+    .await??;
+    let previous = self.state.sftps.lock().await.insert(
+      sftp_id.clone(),
+      Sftp {
+        client_id,
+        session_id,
+        session: Arc::new(session),
+      },
+    );
+    if let Some(previous) = previous {
+      let _ = previous.session.close().await;
+    }
+    Ok(sftp_id)
+  }
+
+  pub async fn sftp_close(&self, client_id: &str, sftp_id: &str) -> SshResult<String> {
+    let sftp = {
+      let mut sftps = self.state.sftps.lock().await;
+      match sftps.get(sftp_id) {
+        Some(sftp) => {
+          ensure_owner(client_id, &sftp.client_id, "SFTP session")?;
+          sftps.remove(sftp_id)
+        }
+        None => None,
+      }
+    };
+    if let Some(sftp) = sftp {
+      timeout(OPERATION_TIMEOUT, sftp.session.close()).await??;
+    }
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_read_dir(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    dirname: &str,
+  ) -> SshResult<Vec<SftpFile>> {
+    let sftp = self.sftp_session(client_id, sftp_id).await?;
+    let files = sftp
+      .read_dir(dirname)
+      .await?
+      .map(|file| {
+        let metadata = file.metadata();
+        let name = file.file_name();
+        SftpFile {
+          path: format!("{dirname}/{name}").replace("//", "/"),
+          name,
+          file_type: file.file_type().into(),
+          size: metadata.size.unwrap_or(0),
+          permissions: metadata.permissions().to_string(),
+          atime: metadata.atime.unwrap_or(0),
+          mtime: metadata.mtime.unwrap_or(0),
+          uid: metadata.uid,
+          user: metadata.user.clone(),
+          gid: metadata.gid,
+          group: metadata.group.clone(),
+        }
+      })
+      .collect();
+    Ok(files)
+  }
+
+  pub async fn sftp_create_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .create(path)
+      .await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_create_dir(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .create_dir(path)
+      .await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_remove_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .remove_file(path)
+      .await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_remove_dir(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .remove_dir(path)
+      .await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_rename(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    old_path: &str,
+    new_path: &str,
+  ) -> SshResult<String> {
+    self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .rename(old_path, new_path)
+      .await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_exists(&self, client_id: &str, sftp_id: &str, path: &str) -> SshResult<bool> {
+    Ok(
+      self
+        .sftp_session(client_id, sftp_id)
+        .await?
+        .try_exists(path)
+        .await?,
+    )
+  }
+
+  pub async fn sftp_canonicalize(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    Ok(
+      self
+        .sftp_session(client_id, sftp_id)
+        .await?
+        .canonicalize(path)
+        .await?,
+    )
+  }
+
+  pub async fn sftp_read_text_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+  ) -> SshResult<String> {
+    let mut file = self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .open(path)
+      .await?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).await?;
+    Ok(content)
+  }
+
+  pub async fn sftp_write_text_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    path: &str,
+    content: &str,
+  ) -> SshResult<String> {
+    let file = self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .create(path)
+      .await?;
+    let mut writer = BufWriter::new(file);
+    writer.write_all(content.as_bytes()).await?;
+    writer.flush().await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_upload_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    local_path: &str,
+    remote_path: &str,
+  ) -> SshResult<String> {
+    let mut local_file = tokio::fs::File::open(local_path).await?;
+    let mut remote_file = self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .create(remote_path)
+      .await?;
+    tokio::io::copy(&mut local_file, &mut remote_file).await?;
+    remote_file.flush().await?;
+    Ok(sftp_id.to_string())
+  }
+
+  pub async fn sftp_download_file(
+    &self,
+    client_id: &str,
+    sftp_id: &str,
+    remote_path: &str,
+    local_path: &str,
+  ) -> SshResult<String> {
+    let mut remote_file = self
+      .sftp_session(client_id, sftp_id)
+      .await?
+      .open(remote_path)
+      .await?;
+    let mut local_file = tokio::fs::File::create(local_path).await?;
+    tokio::io::copy(&mut remote_file, &mut local_file).await?;
+    local_file.flush().await?;
+    Ok(sftp_id.to_string())
+  }
+
+  #[allow(clippy::too_many_arguments)]
+  pub async fn port_forwarding_local_open(
+    &self,
+    client_id: String,
+    session_id: String,
+    forwarding_id: String,
+    local_address: String,
+    local_port: u16,
+    remote_address: String,
+    remote_port: u16,
+  ) -> SshResult<String> {
+    validate_id("sshPortForwardingId", &forwarding_id)?;
+    let handle = self.session_handle(&client_id, &session_id).await?;
+    let listener = TcpListener::bind((local_address.as_str(), local_port)).await?;
+    let stop = Arc::new(Notify::new());
+    if let Some(previous) = self.state.port_forwardings.lock().await.insert(
+      forwarding_id.clone(),
+      PortForwarding::Local {
+        client_id,
+        session_id: session_id.clone(),
+        stop: stop.clone(),
+      },
+    ) && let PortForwarding::Local { stop, .. } = previous
+    {
+      stop.notify_waiters();
+    }
+
+    tokio::spawn(async move {
+      loop {
+        select! {
+          _ = stop.notified() => break,
+          accepted = listener.accept() => {
+            let Ok((mut stream, origin)) = accepted else { break };
+            let handle = handle.clone();
+            let remote_address = remote_address.clone();
+            tokio::spawn(async move {
+              let channel = handle.lock().await.channel_open_direct_tcpip(
+                remote_address,
+                remote_port.into(),
+                origin.ip().to_string(),
+                origin.port().into(),
+              ).await?;
+              io::copy_bidirectional(&mut stream, &mut channel.into_stream()).await?;
+              Ok::<(), SshError>(())
+            });
+          }
+        }
+      }
+    });
+    Ok(session_id)
+  }
+
+  pub async fn port_forwarding_local_close(
+    &self,
+    client_id: &str,
+    forwarding_id: &str,
+  ) -> SshResult<String> {
+    let forwarding = self.take_port_forwarding(client_id, forwarding_id).await?;
+    let session_id = match forwarding {
+      Some(PortForwarding::Local {
+        session_id, stop, ..
+      }) => {
+        stop.notify_waiters();
+        session_id
+      }
+      Some(PortForwarding::Remote { .. }) | Some(PortForwarding::Dynamic { .. }) => {
+        return Err(SshError::InvalidRequest(
+          "Port forwarding type does not match".to_string(),
+        ));
+      }
+      None => String::new(),
+    };
+    Ok(session_id)
+  }
+
+  #[allow(clippy::too_many_arguments)]
+  pub async fn port_forwarding_remote_open(
+    &self,
+    client_id: String,
+    session_id: String,
+    forwarding_id: String,
+    local_address: String,
+    local_port: u16,
+    remote_address: String,
+    remote_port: u16,
+  ) -> SshResult<String> {
+    validate_id("sshPortForwardingId", &forwarding_id)?;
+    let handle = self.session_handle(&client_id, &session_id).await?;
+    handle
+      .lock()
+      .await
+      .tcpip_forward(remote_address.clone(), remote_port.into())
+      .await?;
+    self.state.port_forwardings.lock().await.insert(
+      forwarding_id,
+      PortForwarding::Remote {
+        client_id,
+        session_id: session_id.clone(),
+        local_address,
+        local_port,
+        remote_address,
+        remote_port,
+      },
+    );
+    Ok(session_id)
+  }
+
+  pub async fn port_forwarding_remote_close(
+    &self,
+    client_id: &str,
+    forwarding_id: &str,
+  ) -> SshResult<String> {
+    let forwarding = self.take_port_forwarding(client_id, forwarding_id).await?;
+    match forwarding {
+      Some(PortForwarding::Remote {
+        session_id,
+        remote_address,
+        remote_port,
+        ..
+      }) => {
+        let handle = self.session_handle(client_id, &session_id).await?;
+        handle
+          .lock()
+          .await
+          .cancel_tcpip_forward(remote_address, remote_port.into())
+          .await?;
+        Ok(session_id)
+      }
+      Some(PortForwarding::Local { .. }) | Some(PortForwarding::Dynamic { .. }) => Err(
+        SshError::InvalidRequest("Port forwarding type does not match".to_string()),
+      ),
+      None => Ok(String::new()),
+    }
+  }
+
+  pub async fn port_forwarding_dynamic_open(
+    &self,
+    client_id: String,
+    session_id: String,
+    forwarding_id: String,
+    local_address: String,
+    local_port: u16,
+  ) -> SshResult<String> {
+    validate_id("sshPortForwardingId", &forwarding_id)?;
+    let handle = self.session_handle(&client_id, &session_id).await?;
+    let listener = TcpListener::bind((local_address.as_str(), local_port)).await?;
+    let stop = Arc::new(Notify::new());
+    self.state.port_forwardings.lock().await.insert(
+      forwarding_id,
+      PortForwarding::Dynamic {
+        client_id,
+        session_id: session_id.clone(),
+        stop: stop.clone(),
+      },
+    );
+    tokio::spawn(async move {
+      loop {
+        select! {
+          _ = stop.notified() => break,
+          accepted = listener.accept() => {
+            let Ok((mut stream, _)) = accepted else { break };
+            let handle = handle.clone();
+            tokio::spawn(async move {
+              let local_addr = stream.local_addr()?;
+              let handler = DynamicSocksHandler { handle, local_addr };
+              let mut socks = Socks::from_stream(&mut stream, handler).await?;
+              socks.execute(&mut stream).await?;
+              Ok::<(), SshError>(())
+            });
+          }
+        }
+      }
+    });
+    Ok(session_id)
+  }
+
+  pub async fn port_forwarding_dynamic_close(
+    &self,
+    client_id: &str,
+    forwarding_id: &str,
+  ) -> SshResult<String> {
+    match self.take_port_forwarding(client_id, forwarding_id).await? {
+      Some(PortForwarding::Dynamic {
+        session_id, stop, ..
+      }) => {
+        stop.notify_waiters();
+        Ok(session_id)
+      }
+      Some(_) => Err(SshError::InvalidRequest(
+        "Port forwarding type does not match".to_string(),
+      )),
+      None => Ok(String::new()),
+    }
+  }
+
   pub async fn release_client(&self, client_id: &str) {
     let session_ids = {
       let sessions = self.state.sessions.lock().await;
@@ -710,6 +1287,102 @@ impl SshService {
     let shell = shells.get(shell_id).ok_or(SshError::ShellNotFound)?;
     ensure_owner(client_id, &shell.client_id, "Shell")?;
     Ok(shell.channel.clone())
+  }
+
+  async fn sftp_session(&self, client_id: &str, sftp_id: &str) -> SshResult<Arc<SftpSession>> {
+    let sftps = self.state.sftps.lock().await;
+    let sftp = sftps.get(sftp_id).ok_or(SshError::SftpNotFound)?;
+    ensure_owner(client_id, &sftp.client_id, "SFTP session")?;
+    Ok(sftp.session.clone())
+  }
+
+  async fn take_port_forwarding(
+    &self,
+    client_id: &str,
+    forwarding_id: &str,
+  ) -> SshResult<Option<PortForwarding>> {
+    let mut forwardings = self.state.port_forwardings.lock().await;
+    let owner = forwardings
+      .get(forwarding_id)
+      .map(|forwarding| match forwarding {
+        PortForwarding::Local { client_id, .. }
+        | PortForwarding::Remote { client_id, .. }
+        | PortForwarding::Dynamic { client_id, .. } => client_id,
+      });
+    if let Some(owner) = owner {
+      ensure_owner(client_id, owner, "Port forwarding")?;
+    }
+    Ok(forwardings.remove(forwarding_id))
+  }
+}
+
+struct DynamicSocksHandler {
+  handle: SessionHandle,
+  local_addr: std::net::SocketAddr,
+}
+
+impl DynamicSocksHandler {
+  async fn connect(&self, address: &SocksAddr) -> SshResult<russh::ChannelStream<client::Msg>> {
+    let channel = self
+      .handle
+      .lock()
+      .await
+      .channel_open_direct_tcpip(
+        address.domain(),
+        address.port().into(),
+        self.local_addr.ip().to_string(),
+        self.local_addr.port().into(),
+      )
+      .await?;
+    Ok(channel.into_stream())
+  }
+}
+
+#[async_trait]
+impl Socks4Handler for DynamicSocksHandler {
+  type Error = SshError;
+
+  async fn allow_command(&self, command: &Socks4Command) -> Result<bool, Self::Error> {
+    Ok(command == &Socks4Command::Connect)
+  }
+
+  async fn connect(
+    &self,
+    stream: &mut TcpStream,
+    destination: &SocksAddr,
+  ) -> Result<(), Self::Error> {
+    let mut channel = self.connect(destination).await?;
+    Socks4Reply::Granted
+      .reply(stream, ([0, 0, 0, 0], 0).into())
+      .await?;
+    io::copy_bidirectional(stream, &mut channel).await?;
+    Ok(())
+  }
+}
+
+#[async_trait]
+impl Socks5Handler for DynamicSocksHandler {
+  type Error = SshError;
+
+  async fn negotiate_method(&self, _methods: &[Socks5Method]) -> Result<Socks5Method, Self::Error> {
+    Ok(Socks5Method::None)
+  }
+
+  async fn allow_command(&self, command: &Socks5Command) -> Result<bool, Self::Error> {
+    Ok(command == &Socks5Command::Connect)
+  }
+
+  async fn connect(
+    &self,
+    stream: &mut TcpStream,
+    destination: &SocksAddr,
+  ) -> Result<(), Self::Error> {
+    let mut channel = self.connect(destination).await?;
+    Socks5Reply::Succeeded
+      .reply(stream, ([0, 0, 0, 0], 0).into())
+      .await?;
+    io::copy_bidirectional(stream, &mut channel).await?;
+    Ok(())
   }
 }
 
@@ -805,6 +1478,56 @@ impl client::Handler for SshClient {
           .route_shell_message(&self.session_id, channel_id, ShellMessage::Close)
           .await?;
       }
+      Ok(())
+    }
+  }
+
+  fn server_channel_open_forwarded_tcpip(
+    &mut self,
+    channel: RusshChannel<client::Msg>,
+    connected_address: &str,
+    connected_port: u32,
+    _originator_address: &str,
+    _originator_port: u32,
+    _session: &mut client::Session,
+  ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+    let connected_address = connected_address.to_string();
+    async move {
+      let state = self
+        .state
+        .upgrade()
+        .ok_or_else(|| SshError::Other("SSH service was dropped".to_string()))?;
+      let local = {
+        let forwardings = state.port_forwardings.lock().await;
+        forwardings
+          .values()
+          .find_map(|forwarding| match forwarding {
+            PortForwarding::Remote {
+              session_id,
+              local_address,
+              local_port,
+              remote_address,
+              remote_port,
+              ..
+            } if session_id == &self.session_id
+              && remote_address == &connected_address
+              && u32::from(*remote_port) == connected_port =>
+            {
+              Some((local_address.clone(), *local_port))
+            }
+            _ => None,
+          })
+      }
+      .ok_or_else(|| {
+        SshError::Other(format!(
+          "Remote port forwarding not found: {connected_address}:{connected_port}"
+        ))
+      })?;
+      let mut stream = TcpStream::connect(local).await?;
+      tokio::spawn(async move {
+        io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await?;
+        Ok::<(), SshError>(())
+      });
       Ok(())
     }
   }

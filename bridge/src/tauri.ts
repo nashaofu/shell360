@@ -66,6 +66,9 @@ function createStore(path: string): Store {
 
 export function createTauriBackend(): BridgeBackend {
   return {
+    capabilities: {
+      has: () => true,
+    },
     data: data as unknown as BridgeBackend["data"],
     ssh: {
       createSession: (opts) =>

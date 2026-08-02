@@ -1,3 +1,4 @@
+import type { BridgeCapability } from "./capabilities";
 import type { GeneratedKey, GenerateKeyOptions } from "./core";
 import type {
   ChangeCryptoEnableOpts,
@@ -112,6 +113,9 @@ export interface PtyShellImplementation {
 }
 
 export interface BridgeBackend {
+  capabilities: {
+    has(capability: BridgeCapability): boolean;
+  };
   data: {
     checkIsEnableCrypto(): Promise<boolean>;
     checkIsInitCrypto(): Promise<boolean>;

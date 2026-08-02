@@ -1,5 +1,6 @@
 import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
 import { getVersion } from "bridge/app";
+import { hasCapability } from "bridge/capabilities";
 import {
   type CSSProperties,
   type ReactNode,
@@ -42,6 +43,7 @@ type SettingsActionRowProps = {
   icon: ReactNode;
   onClick: () => void;
   bordered?: boolean;
+  disabled?: boolean;
 };
 
 function SettingsActionRow({
@@ -49,6 +51,7 @@ function SettingsActionRow({
   icon,
   onClick,
   bordered = true,
+  disabled,
 }: SettingsActionRowProps) {
   return (
     <Flex
@@ -56,8 +59,17 @@ function SettingsActionRow({
       justify="between"
       style={bordered ? { ...rowStyle, ...rowBorderStyle } : rowStyle}
     >
-      <Text size="2">{label}</Text>
-      <Button type="button" variant="ghost" color="gray" onClick={onClick}>
+      <Text size="2" color={disabled ? "gray" : undefined}>
+        {label}
+        {disabled && " (Unavailable)"}
+      </Text>
+      <Button
+        type="button"
+        variant="ghost"
+        color="gray"
+        disabled={disabled}
+        onClick={onClick}
+      >
         {icon}
       </Button>
     </Flex>
@@ -65,6 +77,9 @@ function SettingsActionRow({
 }
 
 export default function Settings() {
+  const canUseFiles =
+    hasCapability("fileDialog") && hasCapability("fileSystem");
+  const canOpenUrl = hasCapability("openUrl");
   const [appearance, setAppearance] = useAppearance();
   const [version, setVersion] = useState<string>();
   const exportData = useExportData();
@@ -94,19 +109,17 @@ export default function Settings() {
   }, [exportData, message]);
 
   const onImportData = useCallback(async () => {
-    await new Promise<void>((resolve) => {
-      modal.confirm({
-        title: "Warning",
-        icon: (
-          <WarningCircleIcon
-            style={{ fontSize: 32, color: "var(--orange-9)" }}
-          />
-        ),
-        content:
-          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
-        onOk: () => resolve(),
-      });
+    const confirmed = await modal.confirm({
+      title: "Import configuration?",
+      icon: (
+        <WarningCircleIcon style={{ fontSize: 32, color: "var(--orange-9)" }} />
+      ),
+      content:
+        "Imported hosts, keys, and tunnels will be added to the existing configuration.",
     });
+    if (!confirmed) {
+      return;
+    }
 
     try {
       const isSuccess = await importData();
@@ -158,12 +171,14 @@ export default function Settings() {
           label="Export"
           icon={<FileDownloadIcon />}
           onClick={onExportData}
+          disabled={!canUseFiles}
         />
         <SettingsActionRow
           label="Import"
           icon={<FileUploadIcon />}
           onClick={onImportData}
           bordered={false}
+          disabled={!canUseFiles}
         />
       </Card>
 
@@ -180,6 +195,7 @@ export default function Settings() {
               "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
             )
           }
+          disabled={!canOpenUrl}
         />
         {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
           <SettingsActionRow
@@ -188,12 +204,14 @@ export default function Settings() {
             onClick={() =>
               openUrl("https://www.apple.com/legal/itunes/appstore/dev/stdeula")
             }
+            disabled={!canOpenUrl}
           />
         )}
         <SettingsActionRow
           label="About"
           icon={<ArrowRightIcon />}
           onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
+          disabled={!canOpenUrl}
         />
         <Flex align="center" justify="between" style={rowStyle}>
           <Text size="2">Version</Text>

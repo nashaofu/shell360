@@ -1,3 +1,4 @@
+import { hasCapability } from "bridge/capabilities";
 import { BaseDirectory, readTextFile, writeTextFile } from "bridge/fs";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import {
@@ -18,6 +19,7 @@ const KNOWN_HOSTS_PATH = "./known_hosts";
 const KNOWN_HOSTS_BASE_DIR = BaseDirectory.AppLocalData;
 
 export default function KnownHosts() {
+  const isAvailable = hasCapability("fileSystem");
   const [keyword, setKeyword] = useState("");
   const modal = useModal();
   const message = useMessage();
@@ -83,51 +85,57 @@ export default function KnownHosts() {
 
   return (
     <Page title="Known hosts">
-      <input
-        className="rt-reset rt-TextFieldInput"
-        value={keyword}
-        style={{
-          width: "100%",
-          paddingLeft: 8,
-          paddingRight: 8,
-          height: 36,
-          margin: "16px 0",
-        }}
-        placeholder="Search..."
-        onChange={(event) => setKeyword(event.target.value)}
-      />
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-        }}
-        itemWidth={280}
-      >
-        {filteredItems.map((item) => (
-          <ItemCard
-            key={item.id}
-            icon={<FingerprintIcon />}
-            title={item.host}
-            desc={item.type}
-            extra={
-              <button
-                type="button"
-                className={styles.deleteButton}
-                onClick={(event) => onDelete(event, item)}
-              >
-                <DeleteIcon />
-              </button>
-            }
+      {!isAvailable ? (
+        <Empty desc="Known hosts management is not available on this platform yet." />
+      ) : (
+        <>
+          <input
+            className="rt-reset rt-TextFieldInput"
+            value={keyword}
+            style={{
+              width: "100%",
+              paddingLeft: 8,
+              paddingRight: 8,
+              height: 36,
+              margin: "16px 0",
+            }}
+            placeholder="Search..."
+            onChange={(event) => setKeyword(event.target.value)}
           />
-        ))}
-      </AutoRepeatGrid>
-      {!filteredItems.length && (
-        <Empty
-          desc={
-            items.length
-              ? "No known hosts match your search."
-              : "There is no known hosts yet."
-          }
-        />
+          <AutoRepeatGrid
+            sx={{
+              gap: 2,
+            }}
+            itemWidth={280}
+          >
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                icon={<FingerprintIcon />}
+                title={item.host}
+                desc={item.type}
+                extra={
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={(event) => onDelete(event, item)}
+                  >
+                    <DeleteIcon />
+                  </button>
+                }
+              />
+            ))}
+          </AutoRepeatGrid>
+          {!filteredItems.length && (
+            <Empty
+              desc={
+                items.length
+                  ? "No known hosts match your search."
+                  : "There is no known hosts yet."
+              }
+            />
+          )}
+        </>
       )}
     </Page>
   );

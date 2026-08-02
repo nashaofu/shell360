@@ -36,21 +36,17 @@ export default function useSftpActions({
       const filename = joinSftpPath(dirname, getSftpBasename(file));
       const isExists = await sftpRef.current?.sftpExists(filename);
       if (isExists) {
-        const isCancel = await new Promise<boolean>((resolve) => {
-          modal.confirm({
-            title: "Warning",
-            icon: (
-              <WarningCircleIcon
-                style={{ fontSize: 32, color: "var(--amber-11, #d97706)" }}
-              />
-            ),
-            content: `The file "${filename}" already exists. Continuing to upload will overwrite the corresponding file. Do you want to continue?`,
-            onOk: () => resolve(false),
-            onCancel: () => resolve(true),
-          });
+        const shouldOverwrite = await modal.confirm({
+          title: "Warning",
+          icon: (
+            <WarningCircleIcon
+              style={{ fontSize: 32, color: "var(--amber-11, #d97706)" }}
+            />
+          ),
+          content: `The file "${filename}" already exists. Continuing to upload will overwrite the corresponding file. Do you want to continue?`,
         });
 
-        if (isCancel) {
+        if (!shouldOverwrite) {
           return true;
         }
       }

@@ -14,6 +14,11 @@
       "import": "./src/backend.ts",
       "default": "./src/backend.ts"
     },
+    "./capabilities": {
+      "types": "./dist/src/capabilities.d.ts",
+      "import": "./src/capabilities.ts",
+      "default": "./src/capabilities.ts"
+    },
     "./clipboard-manager": {
       "types": "./dist/src/clipboard-manager.d.ts",
       "import": "./src/clipboard-manager.ts",
