@@ -83,12 +83,7 @@ export default function SSHTerminal({
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
           error={error}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            inset: 0,
-          }}
+          className={styles.loading}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}

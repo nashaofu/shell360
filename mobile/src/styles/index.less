@@ -44,4 +44,34 @@ body {
     sans-serif;
 }
 
+.mobile-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.mobile-search {
+  box-sizing: border-box;
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--gray-a4);
+  border-radius: 15px;
+  outline: none;
+  background: var(--color-panel-solid);
+  color: var(--gray-12);
+  font: inherit;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--gray-12) 4%, transparent);
+}
+
+.mobile-search:focus {
+  border-color: var(--accent-8);
+  box-shadow: 0 0 0 3px var(--accent-a3);
+}
+
+.mobile-search::placeholder {
+  color: var(--gray-9);
+}
+
 

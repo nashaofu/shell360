@@ -90,16 +90,10 @@ export default function KnownHosts() {
       ) : (
         <>
           <input
-            className="rt-reset rt-TextFieldInput"
+            className="mobile-search"
             value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-              margin: "16px 0",
-            }}
-            placeholder="Search..."
+            style={{ margin: "12px 0 18px" }}
+            placeholder="Search known hosts"
             onChange={(event) => setKeyword(event.target.value)}
           />
           <AutoRepeatGrid

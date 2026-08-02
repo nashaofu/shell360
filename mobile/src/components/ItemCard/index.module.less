@@ -1,10 +1,12 @@
 .card {
   display: flex;
   align-items: center;
-  border-radius: 12px;
-  padding: 14px;
+  min-height: 58px;
+  border-radius: 18px;
+  padding: 14px 16px;
   background: var(--color-panel-solid);
-  border: 1px solid var(--gray-a4);
+  border: 1px solid var(--gray-a3);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--gray-12) 5%, transparent);
   transition:
     box-shadow 0.15s ease,
     border-color 0.15s ease,
@@ -29,17 +31,16 @@
 }
 
 .iconWrap {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  border-radius: 10px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent-9), var(--accent-10));
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent-9) 30%, transparent);
+  border-radius: 14px;
+  color: var(--accent-11);
+  background: var(--accent-a3);
 }
 
 .content {
@@ -52,20 +53,20 @@
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 650;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--gray-10);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .extra {

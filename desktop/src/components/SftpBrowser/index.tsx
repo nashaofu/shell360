@@ -470,12 +470,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
           loading={currentJumpHostChainItem?.loading}
           error={connectionError}
           command={`sftp ${item.host.username}@${item.host.hostname} -P ${item.host.port}`}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            inset: 0,
-          }}
+          className={styles.loading}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}

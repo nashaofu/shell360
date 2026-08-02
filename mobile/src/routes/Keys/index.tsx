@@ -137,33 +137,20 @@ export default function Keys() {
         </DropdownMenu.Root>
       }
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ maxWidth: 600, flexGrow: 1 }}>
+      <div className="mobile-toolbar">
+        <div style={{ flexGrow: 1 }}>
           <input
-            className="rt-reset rt-TextFieldInput"
+            className="mobile-search"
             value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
+            placeholder="Search keys"
             onChange={(event) => setKeyword(event.target.value)}
           />
         </div>
-        <div style={{ marginLeft: 16 }}>
+        <div>
           <div style={{ display: "flex", gap: 1 }}>
             <Button onClick={onAddKeyButtonClick}>
               <AddIcon />
-              Add key
+              Add
             </Button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>

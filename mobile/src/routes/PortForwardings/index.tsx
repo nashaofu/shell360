@@ -65,25 +65,12 @@ export default function PortForwardings() {
           </Callout.Text>
         </Callout.Root>
       )}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ flexGrow: 1, maxWidth: 380, marginRight: 16 }}>
+      <div className="mobile-toolbar">
+        <div style={{ flexGrow: 1 }}>
           <input
-            className="rt-reset rt-TextFieldInput"
+            className="mobile-search"
             value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
+            placeholder="Search tunnels"
             onChange={(event) => setKeyword(event.target.value)}
           />
         </div>

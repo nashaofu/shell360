@@ -1,7 +1,4 @@
 import { Progress } from "@radix-ui/themes";
-import { get } from "lodash-es";
-import type { CSSProperties } from "react";
-
 import { getHostName } from "@/utils/host";
 
 import { HostIcon } from "../Icon";
@@ -19,8 +16,14 @@ const STATUS_BUTTONS = {
   default: DefaultError,
 };
 
+const NATIVE_ERROR_TYPES = {
+  SSH_UNKNOWN_SERVER_KEY: "UnknownKey",
+  SSH_AUTHENTICATION_FAILED: "AuthenticationError",
+  SSH_KEYBOARD_INTERACTIVE_REQUIRED: "AuthenticationError",
+} as const;
+
 type SSHLoadingProps = {
-  sx?: CSSProperties | Array<CSSProperties | undefined>;
+  className?: string;
   command?: string;
 } & ErrorProps;
 
@@ -28,7 +31,7 @@ export function SSHLoading({
   host,
   loading,
   error,
-  sx,
+  className,
   command,
   onReConnect,
   onReAuth,
@@ -37,15 +40,41 @@ export function SSHLoading({
   onClose,
   onOpenAddKey,
 }: SSHLoadingProps) {
-  const errorType = get(error as never, "type") as keyof typeof STATUS_BUTTONS;
+  const errorRecord =
+    error && typeof error === "object"
+      ? (error as {
+          code?: unknown;
+          details?: unknown;
+          message?: unknown;
+          type?: unknown;
+        })
+      : undefined;
+  const nativeErrorCode =
+    typeof errorRecord?.code === "string" ? errorRecord.code : undefined;
+  const nativeErrorType =
+    nativeErrorCode &&
+    NATIVE_ERROR_TYPES[nativeErrorCode as keyof typeof NATIVE_ERROR_TYPES];
+  const errorType =
+    typeof errorRecord?.type === "string"
+      ? (errorRecord.type as keyof typeof STATUS_BUTTONS)
+      : nativeErrorType;
+  const errorDetails = errorRecord?.details;
+  const normalizedError =
+    errorDetails && typeof errorDetails === "object"
+      ? {
+          ...errorDetails,
+          type: errorType,
+          message:
+            typeof errorRecord.message === "string"
+              ? errorRecord.message
+              : String(error),
+        }
+      : error;
 
-  const render = STATUS_BUTTONS[errorType] || STATUS_BUTTONS.default;
-  const rootStyle = Array.isArray(sx)
-    ? Object.assign({}, ...sx.filter(Boolean))
-    : sx;
-
+  const render =
+    (errorType && STATUS_BUTTONS[errorType]) || STATUS_BUTTONS.default;
   return (
-    <div className={styles.root} style={rootStyle}>
+    <div className={className ? `${styles.root} ${className}` : styles.root}>
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.hostIcon}>
@@ -70,7 +99,7 @@ export function SSHLoading({
               {render({
                 host,
                 loading,
-                error,
+                error: normalizedError,
                 onReConnect,
                 onReAuth,
                 onSubmitKeyboardInteractive,

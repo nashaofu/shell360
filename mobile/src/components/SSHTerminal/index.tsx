@@ -13,7 +13,7 @@ import {
 } from "shared";
 
 import openUrl from "@/utils/openUrl";
-
+import styles from "./index.module.less";
 import Sftp from "./Sftp";
 
 type SSHTerminalProps = {
@@ -107,16 +107,7 @@ export default function SSHTerminal({
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
           error={error}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 10,
-          }}
+          className={styles.loading}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}

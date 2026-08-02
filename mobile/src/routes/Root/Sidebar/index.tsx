@@ -1,11 +1,11 @@
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { WorkspaceIcon } from "shared";
+import { useTerminalsAtomValue, WorkspaceIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import {
-  useSetTerminalActiveId,
   useSetTerminalViewVisible,
+  useTerminalActiveId,
 } from "@/atoms/terminalView.atom";
 import ThemedPortal from "@/components/ThemedPortal";
 import overlay from "@/utils/overlay";
@@ -15,20 +15,31 @@ import Menus from "./Menus";
 
 export default function Sidebar() {
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
+  const terminals = useTerminalsAtomValue();
   const navigate = useNavigate();
-  const setActiveTerminalId = useSetTerminalActiveId();
+  const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const setTerminalViewVisible = useSetTerminalViewVisible();
 
   const goWorkspace = useCallback(() => {
-    setActiveTerminalId(null);
-    setTerminalViewVisible(false);
-    navigate("/", { replace: true });
+    const terminal =
+      (activeTerminalId ? terminals.get(activeTerminalId) : undefined) ??
+      terminals.values().next().value;
+    if (terminal) {
+      setActiveTerminalId(terminal.uuid);
+      setTerminalViewVisible(true);
+    } else {
+      setActiveTerminalId(null);
+      setTerminalViewVisible(false);
+      navigate("/", { replace: true });
+    }
     globalStateAtomWithApi.closeSidebar();
   }, [
     globalStateAtomWithApi,
+    activeTerminalId,
     navigate,
     setActiveTerminalId,
     setTerminalViewVisible,
+    terminals,
   ]);
 
   useEffect(() => {
