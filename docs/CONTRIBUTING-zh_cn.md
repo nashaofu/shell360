@@ -23,7 +23,21 @@ Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构�
 ### Android 开发特定要求
 
 Android 开发需要安装 Android Studio，并通过 SDK Manager 安装 Android SDK、SDK
-Platform-Tools、Android Emulator 和 NDK (Side by side)。项目使用以下环境变量：
+Platform-Tools、Android Emulator 和 NDK (Side by side)。此外，需要按照 Tauri 前置要求安装
+Rust，并通过 rustup 安装项目构建的 Android targets：
+
+```shell
+rustup target add aarch64-linux-android x86_64-linux-android
+```
+
+当前 Android APK 同时包含 `arm64-v8a` 和 `x86_64` 原生库；缺少任一 target 都会导致对应的
+Cargo 交叉编译任务失败。可用以下命令确认 targets 已安装：
+
+```shell
+rustup target list --installed
+```
+
+项目使用以下环境变量：
 
 - `ANDROID_HOME`：Android SDK 目录。
 - `NDK_HOME`：某个已安装的 NDK 目录，例如 `$ANDROID_HOME/ndk/30.0.15729638`。

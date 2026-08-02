@@ -48,7 +48,8 @@ pnpm run build
 # Tauri build
 pnpm tauri build
 
-# Native Android (requires Android SDK/NDK and JAVA_HOME)
+# Native Android (requires Android SDK/NDK, JAVA_HOME, and Rust Android targets)
+# rustup target add aarch64-linux-android x86_64-linux-android
 # Set ANDROID_HOME and NDK_HOME to existing SDK and NDK directories; adb does not
 # need to be in PATH. ANDROID_NDK_HOME is not supported.
 # For Android Studio development, start the mobile dev server separately and run

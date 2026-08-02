@@ -23,8 +23,23 @@ When developing Windows applications on Windows, you need to install the latest 
 ### Android Development Specific Requirements
 
 Android development requires Android Studio with the Android SDK, SDK Platform-Tools,
-Android Emulator, and NDK (Side by side) installed. The project reads the following
-environment variables:
+Android Emulator, and NDK (Side by side) installed. Rust must also be installed as
+described in the Tauri prerequisites. Before the first Android build, install the Rust
+targets used by the project:
+
+```shell
+rustup target add aarch64-linux-android x86_64-linux-android
+```
+
+The Android APK currently includes both `arm64-v8a` and `x86_64` native libraries.
+If either target is missing, its Cargo cross-compilation task will fail. Verify the
+installed targets with:
+
+```shell
+rustup target list --installed
+```
+
+The project reads the following environment variables:
 
 - `ANDROID_HOME`: the Android SDK directory.
 - `NDK_HOME`: one installed NDK directory, such as `$ANDROID_HOME/ndk/30.0.15729638`.
