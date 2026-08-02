@@ -9,6 +9,7 @@ class BridgeRouter(
     private val rustBridge: RustBridge,
     private val closeWindow: () -> Unit,
     private val resetApplication: () -> Unit,
+    private val setSystemBarsAppearance: (Boolean) -> Unit,
 ) {
     private val preferences = context.getSharedPreferences("shell360-platform", Context.MODE_PRIVATE)
 
@@ -51,6 +52,21 @@ class BridgeRouter(
                 }
                 request.method == "app.getVersion" -> {
                     BridgeResponse.success(request.id, BuildConfig.VERSION_NAME)
+                }
+                request.method == "app.setSystemBarsAppearance" -> {
+                    val params = request.params as? org.json.JSONObject
+                        ?: throw NativeBridgeException(
+                            "BRIDGE_INVALID_REQUEST",
+                            "app.setSystemBarsAppearance requires parameters.",
+                        )
+                    if (!params.has("dark")) {
+                        throw NativeBridgeException(
+                            "BRIDGE_INVALID_REQUEST",
+                            "app.setSystemBarsAppearance requires a dark boolean.",
+                        )
+                    }
+                    setSystemBarsAppearance(params.getBoolean("dark"))
+                    BridgeResponse.success(request.id, null)
                 }
                 request.method == "machineUid.getMachineUid" -> {
                     BridgeResponse.success(request.id, getMachineUid())

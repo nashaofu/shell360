@@ -1,4 +1,4 @@
-import { DropdownMenu, Portal } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { useMemoizedFn } from "ahooks";
 import {
   deletePortForwarding,
@@ -22,6 +22,7 @@ import {
   usePortForwardingsAtomWithApi,
 } from "shared";
 import ItemCard from "@/components/ItemCard";
+import ThemedPortal from "@/components/ThemedPortal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 
@@ -235,7 +236,7 @@ export default function PortForwardingItem({
         onClick={() => onOpenOrClosePortForwarding()}
       />
       {isLoading && (
-        <Portal>
+        <ThemedPortal>
           <div
             style={{
               position: "fixed",
@@ -268,7 +269,7 @@ export default function PortForwardingItem({
               />
             )}
           </div>
-        </Portal>
+        </ThemedPortal>
       )}
     </>
   );

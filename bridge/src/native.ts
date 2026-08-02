@@ -461,6 +461,8 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     },
     app: {
       getVersion: () => transport.invoke("app.getVersion"),
+      setSystemBarsAppearance: (dark) =>
+        transport.invoke("app.setSystemBarsAppearance", { dark }),
     },
     machineUid: {
       getMachineUid: () => transport.invoke("machineUid.getMachineUid"),

@@ -91,6 +91,7 @@ export function createTauriBackend(): BridgeBackend {
     },
     app: {
       getVersion,
+      setSystemBarsAppearance: async () => {},
     },
     machineUid: {
       async getMachineUid() {

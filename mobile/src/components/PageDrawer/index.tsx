@@ -1,7 +1,7 @@
-import { Portal } from "@radix-ui/themes";
 import { type ReactNode, useEffect } from "react";
 import { ArrowLeftIcon, CloseIcon, Loading } from "shared";
 
+import ThemedPortal from "@/components/ThemedPortal";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 
@@ -37,7 +37,7 @@ export default function PageDrawer({
   if (!open) return null;
 
   return (
-    <Portal>
+    <ThemedPortal>
       <div className={styles.overlay} onClick={onCancel}>
         <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
           <div className={styles.toolbar}>
@@ -80,6 +80,6 @@ export default function PageDrawer({
           )}
         </div>
       </div>
-    </Portal>
+    </ThemedPortal>
   );
 }

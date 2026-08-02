@@ -1,4 +1,3 @@
-import { Portal } from "@radix-ui/themes";
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +7,7 @@ import {
   useSetTerminalActiveId,
   useSetTerminalViewVisible,
 } from "@/atoms/terminalView.atom";
+import ThemedPortal from "@/components/ThemedPortal";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 import logo from "./logo.svg";
@@ -49,7 +49,7 @@ export default function Sidebar() {
   if (!globalStateAtomWithApi.isOpenSidebar) return null;
 
   return (
-    <Portal>
+    <ThemedPortal>
       <div
         className={styles.overlay}
         onClick={globalStateAtomWithApi.closeSidebar}
@@ -75,6 +75,6 @@ export default function Sidebar() {
 
         <Menus onClick={globalStateAtomWithApi.closeSidebar} />
       </div>
-    </Portal>
+    </ThemedPortal>
   );
 }

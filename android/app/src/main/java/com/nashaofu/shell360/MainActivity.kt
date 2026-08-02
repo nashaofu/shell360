@@ -2,6 +2,7 @@ package com.nashaofu.shell360
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.ViewGroup
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
@@ -10,9 +11,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
 import com.nashaofu.shell360.bridge.BridgeRouter
 import com.nashaofu.shell360.bridge.WebViewBridge
 import com.nashaofu.shell360.ui.theme.Shell360Theme
@@ -63,6 +64,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
+            setSystemBarsAppearance = { dark ->
+                runOnUiThread {
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !dark
+                        isAppearanceLightNavigationBars = !dark
+                    }
+                }
+            },
         )
 
         setContent {
@@ -70,10 +79,13 @@ class MainActivity : ComponentActivity() {
                 AndroidView(
                     modifier = Modifier
                         .fillMaxSize()
-                        .safeDrawingPadding()
                         .imePadding(),
                     factory = { context ->
                         WebView(context).apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                            )
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
                             settings.allowFileAccess = false
