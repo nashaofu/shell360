@@ -1,0 +1,142 @@
+.toolbar {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: var(--mobile-bg-page);
+  border-bottom: 1px solid var(--mobile-border-subtle);
+}
+
+@media (max-width: 359px) {
+  .toolbar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--mobile-bg-subtle);
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 10px;
+  transition: border-color 0.12s ease;
+
+  &:focus-within {
+    border-color: var(--mobile-accent);
+  }
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--mobile-text-muted);
+  margin-right: 8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-size: 14px;
+  color: var(--mobile-text-primary);
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::placeholder {
+    color: var(--mobile-text-muted);
+  }
+}
+
+.clearBtn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--mobile-text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+.filterBtn {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 10px;
+  background: var(--mobile-bg-subtle);
+  color: var(--mobile-text-primary);
+  font-size: 18px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &[data-active="true"] {
+    color: var(--mobile-accent-text);
+    background: var(--mobile-accent-soft);
+    border-color: var(--mobile-accent-border);
+  }
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+.filterBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--mobile-accent);
+  color: var(--mobile-bg-page);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.quickFilters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-top: 8px;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

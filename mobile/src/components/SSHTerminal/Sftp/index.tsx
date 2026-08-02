@@ -20,7 +20,6 @@ import styles from "./index.module.less";
 import SftpBreadcrumbs from "./SftpBreadcrumbs";
 import SftpFileSearch from "./SftpFileSearch";
 import { SftpTableBody } from "./SftpTableBody";
-import { SftpTableHead } from "./SftpTableHead";
 import { SftpTableOrder } from "./types";
 import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
@@ -35,8 +34,8 @@ export default function Sftp({ session }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
-  const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
-  const [order, setOrder] = useState<SftpTableOrder>(SftpTableOrder.Asc);
+  const [orderBy] = useState<keyof SSHSftpFile>("name");
+  const [order] = useState<SftpTableOrder>(SftpTableOrder.Asc);
   const modal = useModal();
   const message = useMessage();
   const [keyword, setKeyword] = useState("");
@@ -53,14 +52,6 @@ export default function Sftp({ session }: SftpProps) {
       setDirname(dirname);
     },
   });
-
-  const onSort = useCallback(
-    (orderBy: keyof SSHSftpFile, order: SftpTableOrder) => {
-      setOrderBy(orderBy);
-      setOrder(order);
-    },
-    [],
-  );
 
   const {
     data: files,
@@ -350,12 +341,6 @@ export default function Sftp({ session }: SftpProps) {
                     className={styles.tableContainer}
                   >
                     <table className={styles.table}>
-                      <SftpTableHead
-                        cells={cells}
-                        orderBy={orderBy}
-                        order={order}
-                        onSort={onSort}
-                      ></SftpTableHead>
                       <SftpTableBody
                         dataKey="name"
                         data={data}

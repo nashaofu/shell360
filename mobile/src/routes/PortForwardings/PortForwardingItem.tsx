@@ -22,15 +22,15 @@ import {
   usePortForwardings,
   usePortForwardingsAtomWithApi,
 } from "shared";
-import ItemCard from "@/components/ItemCard";
 import ThemedPortal from "@/components/ThemedPortal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
+import styles from "./index.module.less";
 
-const PORT_FORWARDING_STATUS = {
-  pending: "(Loading)",
-  failed: "(Failed)",
-  success: "(Activated)",
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Connecting",
+  failed: "Failed",
+  success: "Active",
 };
 
 type PortForwardingItemProps = {
@@ -53,37 +53,31 @@ export default function PortForwardingItem({
   const message = useMessage();
   const canStartPortForwarding = hasCapability("portForwarding");
 
-  const title = useMemo(() => {
-    const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (!portForwardingAtom) {
-      return item.name;
-    }
-    return item.name + PORT_FORWARDING_STATUS[portForwardingAtom.status];
-  }, [portForwardingsAtomWithApi.state, item.id, item.name]);
+  const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
+  const isActive = !!portForwardingAtom;
+  const statusText = STATUS_LABELS[portForwardingAtom?.status ?? ""] ?? "";
 
   const isLoading = useMemo(() => {
-    const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
     if (!portForwardingAtom) {
       return false;
     }
     return (
       portForwardingAtom.jumpHostChain.some(
-        (item) => item.status !== "authenticated",
+        (it) => it.status !== "authenticated",
       ) || portForwardingAtom.status !== "success"
     );
-  }, [portForwardingsAtomWithApi, item.id]);
+  }, [portForwardingAtom]);
 
   const currentJumpHostChainItem = useMemo(() => {
-    const portForwardingAtom = portForwardingsAtomWithApi.state.get(item.id);
     return portForwardingAtom?.jumpHostChain?.find(
-      (item) => item.status !== "authenticated",
+      (it) => it.status !== "authenticated",
     );
-  }, [portForwardingsAtomWithApi, item.id]);
+  }, [portForwardingAtom]);
 
   const establishPortForwarding = useCallback(
-    async (portForwardingsAtom: PortForwardingsAtom) => {
+    async (atom: PortForwardingsAtom) => {
       await establishPortForwardingUtil(
-        portForwardingsAtom,
+        atom,
         new Map(keys.map((key) => [key.id, key])),
         (updated) => {
           portForwardingsAtomWithApi.update(updated);
@@ -137,11 +131,11 @@ export default function PortForwardingItem({
     [item, modal, message.error, onEdit, refreshPortForwardings],
   );
 
-  const onOpenOrClosePortForwarding = useCallback(async () => {
-    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (portForwardingsAtom) {
-      await stopPortForwardingRuntime(portForwardingsAtom);
-      portForwardingsAtomWithApi.delete(portForwardingsAtom.portForwarding.id);
+  const onToggle = useCallback(async () => {
+    const atom = portForwardingsAtomWithApi.state.get(item.id);
+    if (atom) {
+      await stopPortForwardingRuntime(atom);
+      portForwardingsAtomWithApi.delete(atom.portForwarding.id);
       return;
     }
 
@@ -151,8 +145,8 @@ export default function PortForwardingItem({
 
   const onReConnect = useMemoizedFn(
     (checkServerKey?: SSHSessionCheckServerKey) => {
-      const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-      if (!portForwardingsAtom) {
+      const atom = portForwardingsAtomWithApi.state.get(item.id);
+      if (!atom) {
         return;
       }
 
@@ -161,8 +155,8 @@ export default function PortForwardingItem({
   );
 
   const onReAuth = useMemoizedFn((hostData: Host) => {
-    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (!portForwardingsAtom) {
+    const atom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!atom) {
       return;
     }
 
@@ -170,8 +164,8 @@ export default function PortForwardingItem({
   });
 
   const onSubmitKeyboardInteractive = useMemoizedFn((answers: string[]) => {
-    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (!portForwardingsAtom) {
+    const atom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!atom) {
       return;
     }
 
@@ -179,68 +173,89 @@ export default function PortForwardingItem({
   });
 
   const onRetry = useMemoizedFn(() => {
-    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (!portForwardingsAtom) {
+    const atom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!atom) {
       return;
     }
     portForwardingsAtomWithApi.restart(item.id);
   });
 
   const onClose = useCallback(async () => {
-    const portForwardingsAtom = portForwardingsAtomWithApi.state.get(item.id);
-    if (!portForwardingsAtom) {
+    const atom = portForwardingsAtomWithApi.state.get(item.id);
+    if (!atom) {
       return;
     }
-    await stopPortForwardingRuntime(portForwardingsAtom);
+    await stopPortForwardingRuntime(atom);
     portForwardingsAtomWithApi.delete(item.id);
   }, [item.id, portForwardingsAtomWithApi]);
 
   return (
     <>
-      <ItemCard
-        key={item.id}
-        icon={item.portForwardingType[0].toUpperCase()}
-        title={title}
-        desc={getPortForwardingDesc(item, hostsMap)}
-        extra={
-          <div onClick={(event) => event.stopPropagation()}>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
-                <button
-                  type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "inherit",
-                    padding: 4,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
+      <div className={styles.card}>
+        <div className={styles.info}>
+          <span className={styles.typeBadge}>{item.portForwardingType[0]}</span>
+          <span className={styles.infoMain}>
+            <span className={styles.nameRow}>
+              <span className={styles.name}>{item.name}</span>
+              {statusText && (
+                <span
+                  className={`${styles.statusText}${
+                    portForwardingAtom
+                      ? ` ${styles[`status${portForwardingAtom.status.charAt(0).toUpperCase() + portForwardingAtom.status.slice(1)}`]}`
+                      : ""
+                  }`}
                 >
-                  <MoreIcon />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
-                {menus.map((item) => (
-                  <DropdownMenu.Item
-                    key={item.value}
-                    onSelect={() => item.onClick?.()}
+                  {statusText}
+                </span>
+              )}
+            </span>
+            <span className={styles.desc}>
+              {getPortForwardingDesc(item, hostsMap)}
+            </span>
+          </span>
+          <span className={styles.more}>
+            <div onClick={(event) => event.stopPropagation()}>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  <button
+                    type="button"
+                    aria-label={`More actions for ${item.name}`}
                   >
-                    {item.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
+                    <MoreIcon />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+                  {menus.map((menuItem) => (
+                    <DropdownMenu.Item
+                      key={menuItem.value}
+                      onSelect={() => menuItem.onClick?.()}
+                    >
+                      {menuItem.label}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </div>
+          </span>
+        </div>
+
+        {canStartPortForwarding && (
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={`${styles.startStopBtn} ${isActive ? styles.stopBtn : styles.startBtn}`}
+              onClick={() => {
+                void onToggle();
+              }}
+              disabled={isLoading}
+              aria-label={isActive ? `Stop ${item.name}` : `Start ${item.name}`}
+            >
+              {isLoading ? "Loading…" : isActive ? "Stop" : "Start"}
+            </button>
           </div>
-        }
-        onClick={
-          canStartPortForwarding
-            ? () => onOpenOrClosePortForwarding()
-            : undefined
-        }
-      />
+        )}
+      </div>
+
       {isLoading && (
         <ThemedPortal>
           <div

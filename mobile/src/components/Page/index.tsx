@@ -1,33 +1,55 @@
 import type { ReactNode } from "react";
 
-import { MenuIcon } from "shared";
+import { ArrowLeftIcon, MenuIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import styles from "./index.module.less";
 
 type PageProps = {
   title: ReactNode;
   headerRight?: ReactNode;
+  navigation?: "menu" | "back";
+  onNavigation?: () => void;
+  subtitle?: ReactNode;
   children: ReactNode;
 };
 
-export default function Page({ title, headerRight, children }: PageProps) {
+export default function Page({
+  title,
+  headerRight,
+  navigation = "menu",
+  onNavigation,
+  subtitle,
+  children,
+}: PageProps) {
   const { openSidebar } = useGlobalStateAtomWithApi();
 
+  const handleNavigation = () => {
+    if (navigation === "back") {
+      onNavigation?.();
+    } else {
+      openSidebar();
+    }
+  };
+
   return (
-    <>
+    <div className={styles.page}>
+      <div className={styles.safeTop} />
       <header className={styles.header}>
         <button
           type="button"
-          className={styles.menuBtn}
-          onClick={openSidebar}
-          aria-label="Open menu"
+          className={styles.navBtn}
+          onClick={handleNavigation}
+          aria-label={navigation === "back" ? "Go back" : "Open menu"}
         >
-          <MenuIcon />
+          {navigation === "back" ? <ArrowLeftIcon /> : <MenuIcon />}
         </button>
-        <h1 className={styles.title}>{title}</h1>
+        <div className={styles.titleWrap}>
+          <h1 className={styles.title}>{title}</h1>
+          {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+        </div>
         {headerRight && <div className={styles.actions}>{headerRight}</div>}
       </header>
       <section className={styles.content}>{children}</section>
-    </>
+    </div>
   );
 }

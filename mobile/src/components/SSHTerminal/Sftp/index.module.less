@@ -2,59 +2,72 @@
   padding: 2px 8px;
   line-height: 0;
   border-radius: 8px;
-  border: 1px solid var(--gray-7, #d1d5db);
-  background: var(--color-background, #fff);
-  color: var(--gray-11, #4b5563);
+  border: 1px solid var(--mobile-border-strong);
+  background: var(--mobile-bg-surface);
+  color: var(--mobile-text-secondary);
 }
 
 .openButtonActive {
-  border-color: var(--accent-9, #3b82f6);
-  background: color-mix(
-    in srgb,
-    var(--accent-4, #dbeafe) 70%,
-    var(--color-background, #fff)
-  );
-  color: var(--accent-11, #1d4ed8);
+  border-color: var(--mobile-accent);
+  background: var(--mobile-accent-soft);
+  color: var(--mobile-accent-text);
 }
 
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1500;
-  background: var(--color-background, #fff);
+  background: var(--mobile-bg-page);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal {
   width: 100%;
   height: 100%;
-  background: var(--color-background, #fff);
   display: flex;
   flex-direction: column;
 }
 
 .modalHeader {
-  height: 44px;
-  padding: env(safe-area-inset-top) 12px 0;
-  border-bottom: 1px solid var(--gray-6, #d4d4d8);
+  flex-shrink: 0;
+  height: 52px;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--mobile-border-subtle);
   display: flex;
   align-items: center;
+  background: var(--mobile-bg-frame);
+  padding-left: 12px;
+  padding-right: 8px;
 }
 
 .modalTitle {
   flex: 1;
   font-weight: 600;
+  font-size: 18px;
+  color: var(--mobile-text-primary);
 }
 
 .iconButton {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--gray-11, #4b5563);
+  color: var(--mobile-text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+
+  &:active:not(:disabled) {
+    background: var(--mobile-bg-pressed);
+  }
+
+  &:disabled {
+    color: var(--mobile-text-muted);
+  }
 }
 
 .modalContent {
@@ -68,7 +81,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px;
+  padding: 8px 6px;
+  gap: 4px;
 }
 
 .toolbarRight {
@@ -79,7 +93,7 @@
 
 .divider {
   height: 1px;
-  background: var(--gray-6, #d4d4d8);
+  background: var(--mobile-border-subtle);
 }
 
 .tablePanel {
@@ -92,10 +106,11 @@
 .tableContainer {
   flex: 1;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 }

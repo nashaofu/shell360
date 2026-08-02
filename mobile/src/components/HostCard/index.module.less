@@ -1,0 +1,200 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 138px;
+  padding: 14px;
+  background: var(--mobile-bg-surface);
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 12px;
+  gap: 12px;
+}
+
+.info {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--mobile-accent-soft);
+  color: var(--mobile-accent-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.infoMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mobile-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mobile-status-offline);
+  border: 1px solid var(--mobile-border-strong);
+}
+
+.address {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 12px;
+  color: var(--mobile-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--mobile-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  flex-shrink: 0;
+  display: inline-flex;
+  margin-top: -4px;
+  margin-right: -4px;
+
+  :global(button) {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--mobile-text-secondary);
+    cursor: pointer;
+    border-radius: 9px;
+    font-size: 18px;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.sshBtn,
+.sftpBtn {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.sshBtn {
+  background: var(--mobile-accent-soft);
+  border: 1px solid var(--mobile-accent-border);
+  color: var(--mobile-accent-text);
+
+  &.errorBtn {
+    background: rgba(200, 61, 73, 0.08);
+    border-color: rgba(200, 61, 73, 0.3);
+    color: var(--mobile-status-error);
+
+    :global(.dark) & {
+      background: rgba(255, 112, 122, 0.08);
+      border-color: rgba(255, 112, 122, 0.3);
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: var(--mobile-accent-border);
+  }
+}
+
+.sftpBtn {
+  background: var(--mobile-bg-subtle);
+  border: 1px solid var(--mobile-border-subtle);
+  color: var(--mobile-text-primary);
+
+  &.errorBtn {
+    background: rgba(200, 61, 73, 0.06);
+    border-color: rgba(200, 61, 73, 0.2);
+    color: var(--mobile-status-error);
+
+    :global(.dark) & {
+      background: rgba(255, 112, 122, 0.06);
+      border-color: rgba(255, 112, 122, 0.2);
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+.errorText {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(200, 61, 73, 0.06);
+  color: var(--mobile-status-error);
+  font-size: 12px;
+  line-height: 1.4;
+
+  :global(.dark) & {
+    background: rgba(255, 112, 122, 0.06);
+  }
+}
+
+@media (max-width: 359px) {
+  .sshBtn,
+  .sftpBtn {
+    flex: 1 1 0;
+    padding: 0 8px;
+  }
+}

@@ -1,0 +1,153 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100px;
+  padding: 14px;
+  background: var(--mobile-bg-surface);
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 12px;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.typeBadge {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--mobile-accent-soft);
+  color: var(--mobile-accent-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.infoMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mobile-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusText {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 1px 8px;
+  border-radius: 8px;
+}
+
+.statusPending {
+  background: rgba(181, 106, 9, 0.1);
+  color: var(--mobile-status-warning);
+}
+
+.statusFailed {
+  background: rgba(200, 61, 73, 0.1);
+  color: var(--mobile-status-error);
+}
+
+.statusSuccess {
+  background: rgba(22, 138, 69, 0.1);
+  color: var(--mobile-status-success);
+}
+
+.desc {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 12px;
+  color: var(--mobile-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  flex-shrink: 0;
+  margin-top: -4px;
+  margin-right: -4px;
+
+  :global(button) {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--mobile-text-secondary);
+    cursor: pointer;
+    border-radius: 9px;
+    font-size: 18px;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.startStopBtn {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.startBtn {
+  background: var(--mobile-accent-soft);
+  border: 1px solid var(--mobile-accent-border);
+  color: var(--mobile-accent-text);
+
+  &:active:not(:disabled) {
+    background: var(--mobile-accent-border);
+  }
+}
+
+.stopBtn {
+  background: rgba(200, 61, 73, 0.08);
+  border: 1px solid rgba(200, 61, 73, 0.25);
+  color: var(--mobile-status-error);
+
+  :global(.dark) & {
+    background: rgba(255, 112, 122, 0.08);
+    border-color: rgba(255, 112, 122, 0.25);
+  }
+}

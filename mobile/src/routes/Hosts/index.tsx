@@ -1,25 +1,27 @@
-import { Button, DropdownMenu } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { addHost, deleteHost, type Host } from "bridge/data";
 import { get, omit } from "lodash-es";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import {
   AddIcon,
+  ArrowDownIcon,
   ContentCopyIcon,
   DeleteIcon,
   EditIcon,
-  getHostDesc,
   getHostName,
   HostIcon,
   HostTagsSelect,
   LabelIcon,
   MoreIcon,
   useHosts,
+  useTerminalsAtomValue,
   useTerminalsAtomWithApi,
 } from "shared";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
-import ItemCard from "@/components/ItemCard";
+import type { ConnectionErrorInfo } from "@/components/HostCard";
+import HostCard from "@/components/HostCard";
 import Page from "@/components/Page";
+import SearchToolbar from "@/components/SearchToolbar";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
@@ -30,15 +32,51 @@ export default function Hosts() {
   const [keyword, setKeyword] = useState("");
   const [isOpenAddHost, setIsOpenAddHost] = useState(false);
   const [editHost, setEditHost] = useState<Host>();
+  const [selectedTag, setSelectedTag] = useState<string>();
   const activateTerminal = useActivateTerminal();
 
   const modal = useModal();
   const message = useMessage();
 
   const { data: hosts, refresh: refreshHosts } = useHosts();
+  const terminals = useTerminalsAtomValue();
   const terminalsAtomWithApi = useTerminalsAtomWithApi();
 
-  const [selectedTag, setSelectedTag] = useState<string>();
+  const hostTerminalStates = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        ssh: { pending: boolean; error?: string; terminalId?: string };
+        sftp: { pending: boolean; error?: string; terminalId?: string };
+      }
+    >();
+    for (const [uuid, term] of terminals) {
+      const state = map.get(term.host.id) ?? {
+        ssh: { pending: false },
+        sftp: { pending: false },
+      };
+      if (term.type === "sftp") {
+        state.sftp.pending = term.status === "pending";
+        state.sftp.terminalId = uuid;
+        if (term.status === "failed") {
+          state.sftp.error =
+            (term.error as { message?: string })?.message ??
+            "Connection failed";
+        }
+      } else {
+        state.ssh.pending = term.status === "pending";
+        state.ssh.terminalId = uuid;
+        if (term.status === "failed") {
+          state.ssh.error =
+            (term.error as { message?: string })?.message ??
+            "Connection failed";
+        }
+      }
+      map.set(term.host.id, state);
+    }
+    return map;
+  }, [terminals]);
+
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
@@ -56,16 +94,31 @@ export default function Hosts() {
     return filterHosts.filter(
       (item) =>
         item.name?.toLowerCase().includes(kw) ||
+        item.username?.toLowerCase().includes(kw) ||
+        item.tags?.some((tag) => tag.toLowerCase().includes(kw)) ||
         `${item.hostname}:${item.port}`.toLowerCase().includes(kw),
     );
   }, [hosts, keyword, selectedTag]);
 
-  const onOpenChannel = useCallback(
-    (host: Host) => {
-      const [item] = terminalsAtomWithApi.add(host);
+  const onOpenConnection = useCallback(
+    (host: Host, type: "terminal" | "sftp") => {
+      const [item] =
+        type === "sftp"
+          ? terminalsAtomWithApi.addSftp(host)
+          : terminalsAtomWithApi.add(host);
       activateTerminal(item.uuid);
     },
     [activateTerminal, terminalsAtomWithApi],
+  );
+
+  const onRetryConnection = useCallback(
+    (host: Host, type: "terminal" | "sftp", terminalId: string | undefined) => {
+      if (terminalId) {
+        terminalsAtomWithApi.delete(terminalId);
+      }
+      onOpenConnection(host, type);
+    },
+    [onOpenConnection, terminalsAtomWithApi],
   );
 
   const onAddHostButtonClick = useCallback(() => {
@@ -77,6 +130,11 @@ export default function Hosts() {
     setEditHost(undefined);
     refreshHosts();
   }, [refreshHosts]);
+
+  const onEditHost = useCallback((host: Host) => {
+    setEditHost(host);
+    setIsOpenAddHost(true);
+  }, []);
 
   const onCopyHost = useCallback(
     async (host: Host) => {
@@ -124,151 +182,130 @@ export default function Hosts() {
     [message, modal, refreshHosts],
   );
 
+  const moreActions = useCallback(
+    (host: Host): ReactNode => {
+      return (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <button
+              type="button"
+              aria-label={`More actions for ${getHostName(host)}`}
+            >
+              <MoreIcon />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+            <DropdownMenu.Item onSelect={() => onEditHost(host)}>
+              <EditIcon style={{ marginRight: 8 }} />
+              Edit
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => onCopyHost(host)}>
+              <ContentCopyIcon style={{ marginRight: 8 }} />
+              Duplicate
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => onDeleteHost(host)}>
+              <DeleteIcon style={{ marginRight: 8 }} />
+              Delete
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      );
+    },
+    [onCopyHost, onDeleteHost, onEditHost],
+  );
+
+  const buildError = (
+    errorMsg: string | undefined,
+    onRetry: () => void,
+  ): ConnectionErrorInfo | undefined => {
+    if (!errorMsg) return undefined;
+    return { message: errorMsg, onRetry };
+  };
+
   return (
     <Page
       title="Hosts"
       headerRight={
-        <>
+        <button
+          type="button"
+          className="mobile-icon-btn"
+          onClick={onAddHostButtonClick}
+          aria-label="New Host"
+        >
+          <AddIcon />
+        </button>
+      }
+    >
+      <SearchToolbar
+        value={keyword}
+        placeholder="Search hosts"
+        onChange={setKeyword}
+        activeFilterCount={selectedTag ? 1 : 0}
+        filterTrigger={
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-            {() => {
-              return (
-                <button
-                  type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "inherit",
-                    cursor: "pointer",
-                    padding: 4,
-                  }}
-                >
-                  <LabelIcon />
-                </button>
-              );
-            }}
+            {({ label }) => (
+              <button
+                type="button"
+                className="toolbar-filter-trigger"
+                data-active={!!selectedTag}
+              >
+                <LabelIcon aria-hidden="true" />
+                {label}
+                <ArrowDownIcon aria-hidden="true" />
+              </button>
+            )}
           </HostTagsSelect>
+        }
+      />
+
+      {items.map((item) => {
+        const states = hostTerminalStates.get(item.id);
+        return (
+          <div className="host-card-item" key={item.id}>
+            <HostCard
+              host={item}
+              onOpenSsh={() => onOpenConnection(item, "terminal")}
+              onOpenSftp={() => onOpenConnection(item, "sftp")}
+              onOpenDetails={() => onEditHost(item)}
+              actions={moreActions(item)}
+              sshPending={states?.ssh.pending}
+              sftpPending={states?.sftp.pending}
+              sshError={buildError(states?.ssh.error, () =>
+                onRetryConnection(item, "terminal", states?.ssh.terminalId),
+              )}
+              sftpError={buildError(states?.sftp.error, () =>
+                onRetryConnection(item, "sftp", states?.sftp.terminalId),
+              )}
+            />
+          </div>
+        );
+      })}
+
+      {!hosts.length && (
+        <Empty desc="There is no host yet, add it now.">
           <button
             type="button"
-            style={{
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-              padding: 4,
-            }}
+            className="mobile-primary"
             onClick={onAddHostButtonClick}
           >
             <AddIcon />
+            New Host
           </button>
-        </>
-      }
-    >
-      <div className="mobile-toolbar">
-        <div style={{ flexGrow: 1 }}>
-          <input
-            className="mobile-search"
-            value={keyword}
-            placeholder="Search hosts"
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
-              {({ label }) => (
-                <button
-                  type="button"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    background: "none",
-                    border: "1px solid var(--gray-a6)",
-                    borderRadius: "var(--radius-2)",
-                    padding: "4px 10px",
-                    cursor: "pointer",
-                    color: "inherit",
-                    height: 36,
-                  }}
-                >
-                  <LabelIcon />
-                  {label}
-                </button>
-              )}
-            </HostTagsSelect>
-            <Button onClick={onAddHostButtonClick}>
-              <AddIcon />
-              Add
-            </Button>
-          </div>
-        </div>
-      </div>
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-        }}
-        itemWidth={280}
-      >
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            icon={<HostIcon />}
-            title={getHostName(item)}
-            desc={getHostDesc(item)}
-            extra={
-              <div onClick={(event) => event.stopPropagation()}>
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger>
-                    <button
-                      type="button"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "inherit",
-                        padding: 4,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <MoreIcon />
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content
-                    side="bottom"
-                    align="end"
-                    sideOffset={4}
-                  >
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        setEditHost(item);
-                        setIsOpenAddHost(true);
-                      }}
-                    >
-                      <EditIcon style={{ marginRight: 8 }} />
-                      Edit
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onSelect={() => onCopyHost(item)}>
-                      <ContentCopyIcon style={{ marginRight: 8 }} />
-                      Copy
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onSelect={() => onDeleteHost(item)}>
-                      <DeleteIcon style={{ marginRight: 8 }} />
-                      Delete
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              </div>
-            }
-            onClick={() => onOpenChannel(item)}
-          />
-        ))}
-      </AutoRepeatGrid>
+        </Empty>
+      )}
 
-      {!items.length && (
-        <Empty desc="There is no host yet, add it now.">
-          <Button onClick={() => setIsOpenAddHost(true)}>Add host</Button>
+      {!!hosts.length && !items.length && (
+        <Empty desc="No hosts match your search." icon={<HostIcon />}>
+          <button
+            type="button"
+            className="mobile-secondary"
+            onClick={() => {
+              setKeyword("");
+              setSelectedTag(undefined);
+            }}
+          >
+            Clear search
+          </button>
         </Empty>
       )}
 

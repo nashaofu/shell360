@@ -2,8 +2,8 @@
   position: fixed;
   inset: 0;
   z-index: 1199;
-  background: rgba(0, 0, 0, 0.35);
-  animation: fadeIn 0.2s ease;
+  background: rgba(0, 0, 0, 0.45);
+  animation: fadeIn 0.18s ease;
 }
 
 @keyframes fadeIn {
@@ -21,16 +21,16 @@
   left: 0;
   bottom: 0;
   z-index: 1200;
-  width: 280px;
-  max-width: 85vw;
-  background: var(--color-panel-solid, var(--color-background, #fff));
-  color: var(--gray-12, #1c2024);
+  width: 82vw;
+  max-width: 304px;
+  background: var(--mobile-bg-frame);
+  color: var(--mobile-text-primary);
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
-  animation: slideInLeft 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.18);
+  animation: slideInLeft 0.2s ease;
 }
 
 @keyframes slideInLeft {
@@ -43,10 +43,11 @@
 }
 
 .header {
+  flex-shrink: 0;
   display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  gap: 10px;
+  align-items: flex-end;
+  min-height: 64px;
+  padding: 0 16px 12px;
 }
 
 .logoWrap {
@@ -56,55 +57,103 @@
   gap: 10px;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
+.logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .logoText {
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  color: var(--mobile-text-primary);
+}
+
+.groupLabel {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 14px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--mobile-text-muted);
 }
 
 .workspaceBtn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin: 0 12px 12px;
-  padding: 0 12px;
-  border: 1px solid var(--accent-a6);
-  border-radius: 8px;
-  background: var(--accent-a3);
-  color: var(--accent-11);
+  gap: 12px;
+  height: 52px;
+  margin: 0 12px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: var(--mobile-text-primary);
   font: inherit;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
 
   &:active {
-    background: var(--accent-a4);
+    background: var(--mobile-bg-pressed);
   }
+}
+
+.workspaceBtnActive {
+  background: var(--mobile-accent-soft);
+  border-color: var(--mobile-accent-border);
+  color: var(--mobile-accent-text);
 }
 
 .workspaceIcon {
   flex-shrink: 0;
   font-size: 20px;
+  color: var(--mobile-text-secondary);
+
+  .workspaceBtnActive & {
+    color: var(--mobile-accent);
+  }
 }
 
 .workspaceText {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.divider {
-  margin: 0;
-  border: none;
-  border-top: 0.5px solid var(--gray-a4);
+.statusDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mobile-accent);
 }
 
+.countBadge {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--mobile-bg-subtle);
+  color: var(--mobile-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.divider {
+  margin: 12px 14px;
+  border: none;
+  border-top: 1px solid var(--mobile-border-subtle);
+}

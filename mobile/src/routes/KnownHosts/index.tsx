@@ -1,19 +1,20 @@
+import { DropdownMenu } from "@radix-ui/themes";
 import { hasCapability } from "bridge/capabilities";
 import { BaseDirectory, readTextFile, writeTextFile } from "bridge/fs";
-import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DeleteIcon,
   FingerprintIcon,
   type KnownHost,
+  MoreIcon,
   useKnownHostsStore,
 } from "shared";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
+import SearchToolbar from "@/components/SearchToolbar";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-import styles from "./index.module.less";
 
 const KNOWN_HOSTS_PATH = "./known_hosts";
 const KNOWN_HOSTS_BASE_DIR = BaseDirectory.AppLocalData;
@@ -41,18 +42,11 @@ export default function KnownHosts() {
   });
 
   const onDelete = useCallback(
-    (event: MouseEvent<HTMLButtonElement>, knownHost: KnownHost) => {
-      event.stopPropagation();
-
+    (knownHost: KnownHost) => {
       const knownHostContent = knownHost.rawLine;
       modal.confirm({
         title: "Delete Confirmation",
-        content: (
-          <div className={styles.confirmContent}>
-            Are you sure to delete the known host:
-            {knownHostContent}?
-          </div>
-        ),
+        content: `Are you sure to delete the known host: ${knownHostContent}?`,
         OkButtonProps: {
           color: "orange",
         },
@@ -84,42 +78,55 @@ export default function KnownHosts() {
   }, [items, keyword]);
 
   return (
-    <Page title="Known hosts">
+    <Page title="Known Hosts">
       {!isAvailable ? (
         <Empty desc="Known hosts management is not available on this platform yet." />
       ) : (
         <>
-          <input
-            className="mobile-search"
+          <SearchToolbar
             value={keyword}
-            style={{ margin: "12px 0 18px" }}
-            placeholder="Search known hosts"
-            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Search hostname or fingerprint"
+            onChange={setKeyword}
           />
-          <AutoRepeatGrid
-            sx={{
-              gap: 2,
-            }}
-            itemWidth={280}
-          >
-            {filteredItems.map((item) => (
+
+          {filteredItems.map((item) => (
+            <div className="list-item" key={item.id}>
               <ItemCard
-                key={item.id}
                 icon={<FingerprintIcon />}
                 title={item.host}
-                desc={item.type}
+                desc={<span className="mobile-monospace">{item.key}</span>}
                 extra={
-                  <button
-                    type="button"
-                    className={styles.deleteButton}
-                    onClick={(event) => onDelete(event, item)}
-                  >
-                    <DeleteIcon />
-                  </button>
+                  <span onClick={(event) => event.stopPropagation()}>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        <button
+                          type="button"
+                          className="card-more-btn"
+                          aria-label={`More actions for ${item.host}`}
+                        >
+                          <MoreIcon />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content
+                        side="bottom"
+                        align="end"
+                        sideOffset={4}
+                      >
+                        <DropdownMenu.Item
+                          onSelect={() => onDelete(item)}
+                          color="red"
+                        >
+                          <DeleteIcon style={{ marginRight: 8 }} />
+                          Delete
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
+                  </span>
                 }
               />
-            ))}
-          </AutoRepeatGrid>
+            </div>
+          ))}
+
           {!filteredItems.length && (
             <Empty
               desc={

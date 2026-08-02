@@ -44,34 +44,332 @@ body {
     sans-serif;
 }
 
-.mobile-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0 18px;
+/* ==========================================================================
+   Mobile semantic design tokens (mobile-ui-design-spec.md §12)
+   Scoped under .light / .dark classes applied by Radix Theme.
+   ========================================================================== */
+
+:root,
+.light {
+  --mobile-bg-page: #f5f7f5;
+  --mobile-bg-frame: #edf1ee;
+  --mobile-bg-surface: #ffffff;
+  --mobile-bg-subtle: #f0f3f1;
+  --mobile-bg-pressed: #e6ebe8;
+  --mobile-border-subtle: #e0e5e2;
+  --mobile-border-strong: #cdd5d0;
+  --mobile-text-primary: #17201b;
+  --mobile-text-secondary: #5f6b63;
+  --mobile-text-muted: #89938d;
+  --mobile-accent: #119c42;
+  --mobile-accent-hover: #0e8739;
+  --mobile-accent-soft: #e5f6ea;
+  --mobile-accent-border: #a8e8bb;
+  --mobile-accent-text: #087431;
 }
 
-.mobile-search {
+.dark {
+  --mobile-bg-page: #121613;
+  --mobile-bg-frame: #191e1b;
+  --mobile-bg-surface: #1c221e;
+  --mobile-bg-subtle: #232a25;
+  --mobile-bg-pressed: #2a332c;
+  --mobile-border-subtle: #29322c;
+  --mobile-border-strong: #374239;
+  --mobile-text-primary: #edf3ef;
+  --mobile-text-secondary: #aab5ae;
+  --mobile-text-muted: #748078;
+  --mobile-accent: #35e566;
+  --mobile-accent-hover: #48ee78;
+  --mobile-accent-soft: #183721;
+  --mobile-accent-border: #286d3d;
+  --mobile-accent-text: #79f498;
+}
+
+/* Status colors must always be paired with text/icon, not color alone. */
+:root,
+.light {
+  --mobile-status-success: #168a45;
+  --mobile-status-warning: #b56a09;
+  --mobile-status-error: #c83d49;
+  --mobile-status-info: #3678d4;
+  --mobile-status-offline: #7b8580;
+}
+
+.dark {
+  --mobile-status-success: #53d985;
+  --mobile-status-warning: #f2b84b;
+  --mobile-status-error: #ff707a;
+  --mobile-status-info: #70a7ff;
+  --mobile-status-offline: #7d8981;
+}
+
+/* ==========================================================================
+   Shared mobile primitives
+   ========================================================================== */
+
+.mobile-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--mobile-bg-page);
+}
+
+.mobile-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 359px) {
+  .mobile-page-body {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Generic icon touch target (min 44x44 hit area). */
+.mobile-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--mobile-text-primary);
+  cursor: pointer;
+  border-radius: 9px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &:active,
+  &[data-active="true"] {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+.mobile-monospace {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+/* Toolbar filter trigger (dropdown next to search). */
+.toolbar-filter-trigger {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 10px;
+  background: var(--mobile-bg-subtle);
+  color: var(--mobile-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &[data-active="true"] {
+    color: var(--mobile-accent-text);
+    background: var(--mobile-accent-soft);
+    border-color: var(--mobile-accent-border);
+  }
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+/* Card more-button (Keys / Known Hosts / etc.). */
+.card-more-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--mobile-text-secondary);
+  border-radius: 9px;
+  font-size: 18px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+/* Ensure Radix floating content renders above sheets/drawers. */
+[data-radix-dropdown-menu-content] {
+  z-index: 1400 !important;
+}
+
+/* Quick filter chips under the search toolbar. */
+.quick-chip {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 8px;
+  background: var(--mobile-bg-subtle);
+  color: var(--mobile-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &[data-active="true"] {
+    background: var(--mobile-accent-soft);
+    border-color: var(--mobile-accent-border);
+    color: var(--mobile-accent-text);
+    font-weight: 500;
+  }
+}
+
+.host-card-item,
+.key-list-item,
+.list-item {
+  margin-bottom: 8px;
+}
+
+.tunnel-group + .tunnel-group {
+  margin-top: 24px;
+}
+
+.tunnel-group-label {
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mobile-text-secondary);
+}
+
+/* Primary / secondary mobile buttons. */
+.mobile-primary,
+.mobile-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+
+  &:active {
+    background: var(--mobile-bg-pressed);
+  }
+}
+
+.mobile-primary {
+  background: var(--mobile-accent);
+  border: 1px solid var(--mobile-accent);
+  color: var(--mobile-bg-page);
+
+  &:active {
+    background: var(--mobile-accent-hover);
+    border-color: var(--mobile-accent-hover);
+  }
+}
+
+.mobile-secondary {
+  background: var(--mobile-bg-subtle);
+  border: 1px solid var(--mobile-border-subtle);
+  color: var(--mobile-text-primary);
+}
+
+/* ==========================================================================
+   Form input styling (mobile-ui-design-spec.md §13.9)
+   ========================================================================== */
+
+.mobile-form-field {
+  margin-bottom: 18px;
+}
+
+.mobile-form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mobile-text-primary);
+}
+
+.mobile-form-input {
   box-sizing: border-box;
   width: 100%;
-  height: 46px;
-  padding: 0 16px;
-  border: 1px solid var(--gray-a4);
-  border-radius: 15px;
-  outline: none;
-  background: var(--color-panel-solid);
-  color: var(--gray-12);
-  font: inherit;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--gray-12) 4%, transparent);
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--mobile-border-subtle);
+  border-radius: 9px;
+  background: var(--mobile-bg-subtle);
+  color: var(--mobile-text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.12s ease;
+
+  &::placeholder {
+    color: var(--mobile-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--mobile-accent);
+  }
 }
 
-.mobile-search:focus {
-  border-color: var(--accent-8);
-  box-shadow: 0 0 0 3px var(--accent-a3);
+.mobile-form-textarea {
+  min-height: 96px;
+  padding: 12px;
+  resize: vertical;
 }
 
-.mobile-search::placeholder {
-  color: var(--gray-9);
+.mobile-form-helper {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--mobile-text-muted);
 }
 
+.mobile-form-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--mobile-status-error);
+}
+
+/* ==========================================================================
+   Reduced motion support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 

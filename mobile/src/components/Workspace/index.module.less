@@ -5,7 +5,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--color-background);
+  background: var(--mobile-bg-page);
   z-index: 20;
 }
 
@@ -23,76 +23,75 @@
 }
 
 .header {
-  height: 44px;
-  padding: env(safe-area-inset-top) 6px 0;
-  border-bottom: 1px solid var(--gray-a6);
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
-  align-items: center;
   flex-shrink: 0;
-  background: var(--color-panel-solid);
+  height: 52px;
+  padding-top: env(safe-area-inset-top);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  background: var(--mobile-bg-frame);
+  border-bottom: 1px solid var(--mobile-border-subtle);
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .iconButton {
-  width: 36px;
-  height: 36px;
-  margin: 0 auto;
+  width: 44px;
+  height: 44px;
+  margin: 0;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-3);
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: transparent;
-  color: var(--gray-12);
+  color: var(--mobile-text-primary);
   font-size: 20px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
 
-  &:active {
-    background: var(--gray-a4);
+  &:active:not(:disabled) {
+    background: var(--mobile-bg-pressed);
   }
 
   &:disabled {
-    color: var(--gray-a8);
+    color: var(--mobile-text-muted);
+    cursor: default;
   }
 }
 
 .sessionButton {
-  width: 100%;
   min-width: 0;
-  height: 36px;
+  height: 44px;
   padding: 0 8px;
   border: 0;
-  border-radius: var(--radius-3);
+  border-radius: 10px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
-  gap: 7px;
+  gap: 2px;
   background: transparent;
-  color: var(--gray-12);
+  color: var(--mobile-text-primary);
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+  overflow: hidden;
 
   &:active {
-    background: var(--gray-a4);
+    background: var(--mobile-bg-pressed);
   }
 }
 
-.status {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--gray-9);
-}
-
-.pending {
-  background: var(--amber-9);
-}
-
-.success {
-  background: var(--green-9);
-}
-
-.failed {
-  background: var(--red-9);
+.titleRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
 }
 
 .sessionName {
@@ -100,24 +99,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 15px;
   font-weight: 600;
+}
+
+.sessionSub {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--mobile-text-secondary);
 }
 
 .chevron {
   flex-shrink: 0;
-  color: var(--gray-10);
-  transform: translateY(-1px);
-}
-
-.sessionMenu {
-  max-width: min(320px, calc(100vw - 24px));
-}
-
-.menuItemName {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--mobile-text-muted);
+  font-size: 14px;
 }
 
 .content {
@@ -133,9 +132,59 @@
   inset: 0;
   visibility: hidden;
   pointer-events: none;
+  z-index: 0;
+}
+
+.sessionBtnEmpty {
+  cursor: default;
 }
 
 .sessionActive {
   visibility: visible;
   pointer-events: auto;
+  z-index: 1;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 32px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: var(--mobile-accent-soft);
+  color: var(--mobile-accent);
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mobile-text-primary);
+}
+
+.emptyDesc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--mobile-text-secondary);
+  max-width: 280px;
+}
+
+.emptyActions {
+  display: flex;
+  gap: 12px;
 }

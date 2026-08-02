@@ -1,5 +1,4 @@
-import { useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { useTerminalsAtomValue, WorkspaceIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
@@ -16,30 +15,43 @@ import Menus from "./Menus";
 export default function Sidebar() {
   const globalStateAtomWithApi = useGlobalStateAtomWithApi();
   const terminals = useTerminalsAtomValue();
-  const navigate = useNavigate();
   const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const setTerminalViewVisible = useSetTerminalViewVisible();
 
-  const goWorkspace = useCallback(() => {
-    const terminal =
+  const workspaceItem = useMemo(() => {
+    const active =
       (activeTerminalId ? terminals.get(activeTerminalId) : undefined) ??
       terminals.values().next().value;
+    return active;
+  }, [activeTerminalId, terminals]);
+
+  const activeCount = useMemo(
+    () =>
+      [...terminals.values()].filter((item) => item.status !== "failed").length,
+    [terminals],
+  );
+  const hasConnecting = useMemo(
+    () =>
+      [...terminals.values()].some(
+        (item) => item.status === "pending" || item.status === "failed",
+      ),
+    [terminals],
+  );
+
+  const goWorkspace = useCallback(() => {
+    const terminal = workspaceItem;
     if (terminal) {
       setActiveTerminalId(terminal.uuid);
-      setTerminalViewVisible(true);
     } else {
       setActiveTerminalId(null);
-      setTerminalViewVisible(false);
-      navigate("/", { replace: true });
     }
+    setTerminalViewVisible(true);
     globalStateAtomWithApi.closeSidebar();
   }, [
     globalStateAtomWithApi,
-    activeTerminalId,
-    navigate,
+    workspaceItem,
     setActiveTerminalId,
     setTerminalViewVisible,
-    terminals,
   ]);
 
   useEffect(() => {
@@ -59,6 +71,8 @@ export default function Sidebar() {
 
   if (!globalStateAtomWithApi.isOpenSidebar) return null;
 
+  const isWorkspaceHighlight = !!activeTerminalId || terminals.size === 0;
+
   return (
     <ThemedPortal>
       <div
@@ -68,21 +82,30 @@ export default function Sidebar() {
       <div className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.logoWrap}>
-            <img className={styles.avatar} src={logo} alt="logo" />
+            <img className={styles.logo} src={logo} alt="logo" />
             <span className={styles.logoText}>Shell360</span>
           </div>
         </div>
 
+        <div className={styles.groupLabel}>Workspace</div>
         <button
           type="button"
-          className={styles.workspaceBtn}
+          className={`${styles.workspaceBtn}${
+            isWorkspaceHighlight ? ` ${styles.workspaceBtnActive}` : ""
+          }`}
           onClick={goWorkspace}
         >
           <WorkspaceIcon className={styles.workspaceIcon} />
           <span className={styles.workspaceText}>Workspace</span>
+          {hasConnecting && (
+            <span className={styles.statusDot} aria-hidden="true" />
+          )}
+          {activeCount > 0 && (
+            <span className={styles.countBadge}>{activeCount}</span>
+          )}
         </button>
 
-        <hr className={styles.divider} />
+        <div className={styles.divider} />
 
         <Menus onClick={globalStateAtomWithApi.closeSidebar} />
       </div>

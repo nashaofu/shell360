@@ -15,7 +15,8 @@ import styles from "./index.module.less";
 
 const MENU_SECTIONS = [
   {
-    id: "main",
+    id: "manage",
+    label: "Manage",
     items: [
       { icon: HostIcon, text: "Hosts", to: "/" },
       {
@@ -30,10 +31,6 @@ const MENU_SECTIONS = [
         to: "/known-hosts",
       },
     ],
-  },
-  {
-    id: "system",
-    items: [{ icon: SettingsIcon, text: "Settings", to: "/settings" }],
   },
 ];
 
@@ -57,32 +54,59 @@ export default function Menus({ onClick }: MenusProps) {
     [navigate, onClick, setActiveTerminalId, setTerminalViewVisible],
   );
 
+  const onOpenSettings = useCallback(() => {
+    navigate("/settings");
+    onClick?.();
+  }, [navigate, onClick]);
+
   return (
     <nav className={styles.nav} aria-label="Main navigation">
-      {MENU_SECTIONS.map((section) => (
-        <ul className={styles.list} key={section.id}>
-          {section.items.map((item) => {
-            const isActive = !!matchPath(
-              { path: item.to, end: true },
-              pathname,
-            );
-            const Icon = item.icon;
+      <div className={styles.manage}>
+        {MENU_SECTIONS.map((section) => (
+          <div key={section.id}>
+            <p className={styles.groupLabel}>{section.label}</p>
+            <ul className={styles.list}>
+              {section.items.map((item) => {
+                const isActive = !!matchPath(
+                  { path: item.to, end: true },
+                  pathname,
+                );
+                const Icon = item.icon;
 
-            return (
-              <li key={item.to} className={styles.item}>
-                <button
-                  type="button"
-                  className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
-                  onClick={() => onListItemClick(item.to)}
-                >
-                  <Icon className={styles.itemIcon} />
-                  <span className={styles.itemText}>{item.text}</span>
-                </button>
-              </li>
-            );
-          })}
+                return (
+                  <li key={item.to} className={styles.item}>
+                    <button
+                      type="button"
+                      className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
+                      onClick={() => onListItemClick(item.to)}
+                    >
+                      <Icon className={styles.itemIcon} />
+                      <span className={styles.itemText}>{item.text}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.settings}>
+        <ul className={styles.list}>
+          <li className={styles.item}>
+            <button
+              type="button"
+              className={`${styles.itemBtn}${
+                pathname === "/settings" ? ` ${styles.active}` : ""
+              }`}
+              onClick={onOpenSettings}
+            >
+              <SettingsIcon className={styles.itemIcon} />
+              <span className={styles.itemText}>Settings</span>
+            </button>
+          </li>
         </ul>
-      ))}
+      </div>
     </nav>
   );
 }
