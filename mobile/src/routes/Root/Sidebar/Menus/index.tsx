@@ -36,9 +36,10 @@ const MENU_SECTIONS = [
 
 type MenusProps = {
   onClick?: () => unknown;
+  compact?: boolean;
 };
 
-export default function Menus({ onClick }: MenusProps) {
+export default function Menus({ onClick, compact }: MenusProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const setActiveTerminalId = useSetTerminalActiveId();
@@ -60,11 +61,16 @@ export default function Menus({ onClick }: MenusProps) {
   }, [navigate, onClick]);
 
   return (
-    <nav className={styles.nav} aria-label="Main navigation">
+    <nav
+      className={`${styles.nav}${compact ? ` ${styles.compact}` : ""}`}
+      aria-label="Main navigation"
+    >
       <div className={styles.manage}>
         {MENU_SECTIONS.map((section) => (
           <div key={section.id}>
-            <p className={styles.groupLabel}>{section.label}</p>
+            {!compact && (
+              <p className={styles.groupLabel}>{section.label}</p>
+            )}
             <ul className={styles.list}>
               {section.items.map((item) => {
                 const isActive = !!matchPath(
@@ -77,11 +83,15 @@ export default function Menus({ onClick }: MenusProps) {
                   <li key={item.to} className={styles.item}>
                     <button
                       type="button"
-                      className={`${styles.itemBtn}${isActive ? ` ${styles.active}` : ""}`}
+                      className={`${styles.itemBtn}${
+                        isActive ? ` ${styles.active}` : ""
+                      }`}
                       onClick={() => onListItemClick(item.to)}
                     >
                       <Icon className={styles.itemIcon} />
-                      <span className={styles.itemText}>{item.text}</span>
+                      {!compact && (
+                        <span className={styles.itemText}>{item.text}</span>
+                      )}
                     </button>
                   </li>
                 );
@@ -102,7 +112,7 @@ export default function Menus({ onClick }: MenusProps) {
               onClick={onOpenSettings}
             >
               <SettingsIcon className={styles.itemIcon} />
-              <span className={styles.itemText}>Settings</span>
+              {!compact && <span className={styles.itemText}>Settings</span>}
             </button>
           </li>
         </ul>

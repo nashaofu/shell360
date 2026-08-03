@@ -1,7 +1,7 @@
 import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { type SSHSession, type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CloseIcon,
   FileUploadIcon,
@@ -13,6 +13,7 @@ import {
   useSftp,
   useSftpFileEditor,
 } from "shared";
+import { useSetSftpDir } from "@/atoms/sftpDir.atom";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import FileEditorModal from "./FileEditorModal";
@@ -28,9 +29,10 @@ import useSftpActions from "./useSftpActions";
 
 type SftpProps = {
   session: SSHSession;
+  terminalId?: string;
 };
 
-export default function Sftp({ session }: SftpProps) {
+export default function Sftp({ session, terminalId }: SftpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);

@@ -139,7 +139,9 @@ export default function SSHTerminal({
               fontSize: "0.75rem",
             }}
           >
-            {session && hasCapability("sftp") && <Sftp session={session} />}
+            {session && hasCapability("sftp") && (
+              <Sftp session={session} terminalId={item.uuid} />
+            )}
             <div
               style={{
                 padding: "2px 8px",

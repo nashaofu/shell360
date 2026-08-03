@@ -18,6 +18,7 @@ import {
 import AddKey from "@/components/AddKey";
 import SSHTerminal from "@/components/SSHTerminal";
 import WorkspaceSessionSheet from "@/components/WorkspaceSessionSheet";
+import useMediaQuery from "@/hooks/useMediaQuery";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
 
@@ -28,7 +29,8 @@ export default function Workspace() {
   const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const [openAddKey, setOpenAddKey] = useState(false);
   const [openSessionSheet, setOpenSessionSheet] = useState(false);
-  const { openSidebar } = useGlobalStateAtomWithApi();
+  const { openSidebar, toggleSidebar } = useGlobalStateAtomWithApi();
+  const isTablet = useMediaQuery("(min-width: 840px)");
   const navigate = useNavigate();
   const terminalItems = useMemo(() => [...terminals.values()], [terminals]);
   const activeTerminal = activeTerminalId
@@ -136,7 +138,7 @@ export default function Workspace() {
         <button
           type="button"
           className={styles.iconButton}
-          onClick={openSidebar}
+          onClick={() => (isTablet ? toggleSidebar() : openSidebar())}
           aria-label="Open menu"
         >
           <MenuIcon />

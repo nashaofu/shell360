@@ -39,14 +39,18 @@ export default function AppLayout() {
   usePortForwardings();
 
   return (
-    <>
-      <div className={styles.root}>
-        <Suspense>
-          <Outlet />
-        </Suspense>
+    <div className={styles.root}>
+      <div className={styles.sidebarRegion}>
+        <Sidebar />
       </div>
-      <Workspace />
-      <Sidebar />
-    </>
+      <div className={styles.main}>
+        <div className={styles.pageArea}>
+          <Suspense>
+            <Outlet />
+          </Suspense>
+        </div>
+        <Workspace />
+      </div>
+    </div>
   );
 }

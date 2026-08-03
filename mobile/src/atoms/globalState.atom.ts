@@ -3,10 +3,12 @@ import { useMemo } from "react";
 
 export type GlobalState = {
   isOpenSidebar: boolean;
+  compactSidebar: boolean;
 };
 
 const globalStateAtom = atom<GlobalState>({
   isOpenSidebar: false,
+  compactSidebar: false,
 });
 
 export function useGlobalStateAtom() {
@@ -19,6 +21,7 @@ export function useGlobalStateAtomWithApi() {
   return useMemo(
     () => ({
       isOpenSidebar: state.isOpenSidebar,
+      compactSidebar: state.compactSidebar,
       closeSidebar: () => {
         setState({
           ...state,
@@ -29,6 +32,12 @@ export function useGlobalStateAtomWithApi() {
         setState({
           ...state,
           isOpenSidebar: true,
+        });
+      },
+      toggleSidebar: () => {
+        setState({
+          ...state,
+          compactSidebar: !state.compactSidebar,
         });
       },
     }),

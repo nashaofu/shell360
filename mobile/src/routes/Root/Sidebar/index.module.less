@@ -16,6 +16,12 @@
 }
 
 .panel {
+  flex-direction: column;
+  background: var(--mobile-bg-frame);
+  color: var(--mobile-text-primary);
+  display: flex;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
   position: fixed;
   top: 0;
   left: 0;
@@ -23,14 +29,63 @@
   z-index: 1200;
   width: 82vw;
   max-width: 304px;
-  background: var(--mobile-bg-frame);
-  color: var(--mobile-text-primary);
-  display: flex;
-  flex-direction: column;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.18);
   animation: slideInLeft 0.2s ease;
+}
+
+/* Persistent tablet sidebar: rendered in normal flow inside AppLayout. */
+.inlineWrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.inline {
+  position: static;
+  z-index: auto;
+  box-shadow: none;
+  animation: none;
+  width: 200px;
+  max-width: 200px;
+}
+
+.compact {
+  width: 56px;
+  max-width: 56px;
+
+  .header {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .logoWrap {
+    justify-content: center;
+  }
+
+  .groupLabel {
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .workspaceBtn {
+    justify-content: center;
+    margin-left: 8px;
+    margin-right: 8px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .countBadge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
 }
 
 @keyframes slideInLeft {
@@ -82,6 +137,7 @@
 }
 
 .workspaceBtn {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;

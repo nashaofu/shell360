@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { ArrowLeftIcon, MenuIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
+import useMediaQuery from "@/hooks/useMediaQuery";
 import styles from "./index.module.less";
 
 type PageProps = {
@@ -21,11 +22,14 @@ export default function Page({
   subtitle,
   children,
 }: PageProps) {
-  const { openSidebar } = useGlobalStateAtomWithApi();
+  const { openSidebar, toggleSidebar } = useGlobalStateAtomWithApi();
+  const isTablet = useMediaQuery("(min-width: 840px)");
 
   const handleNavigation = () => {
     if (navigation === "back") {
       onNavigation?.();
+    } else if (isTablet) {
+      toggleSidebar();
     } else {
       openSidebar();
     }
