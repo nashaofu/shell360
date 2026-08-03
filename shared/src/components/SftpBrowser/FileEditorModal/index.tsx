@@ -1,8 +1,9 @@
 import type { SSHSftpFile } from "bridge/ssh";
 import { useCallback, useEffect, useState } from "react";
-import { CloseIcon, FileIcon } from "shared";
-import useMessage from "@/hooks/useMessage";
-import styles from "./FileEditorModal.module.less";
+import { CloseIcon, FileIcon } from "@/components/Icon";
+import { getErrorMessage, getSftpBasename } from "../messages";
+import useMessage from "../useMessage";
+import styles from "./index.module.less";
 
 type FileEditorModalProps = {
   open: boolean;
@@ -42,7 +43,7 @@ export default function FileEditorModal({
           return;
         }
         message.error({
-          message: `Failed to load file: ${err?.message ?? JSON.stringify(err) ?? "Unknown error"}`,
+          message: `Failed to load "${getSftpBasename(file.path)}": ${getErrorMessage(err)}`,
         });
         onClose();
       })
@@ -56,22 +57,24 @@ export default function FileEditorModal({
     };
   }, [open, file, onLoadContent, onClose, message]);
 
+  const filePath = file?.path ?? "";
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
       await onSave(content);
       message.success({
-        message: "File saved successfully",
+        message: `Saved "${getSftpBasename(filePath)}"`,
       });
       onClose();
     } catch (err: unknown) {
       message.error({
-        message: `Failed to save file: ${(err as Error).message ?? "Unknown error"}`,
+        message: `Failed to save "${getSftpBasename(filePath)}": ${getErrorMessage(err)}`,
       });
     } finally {
       setSaving(false);
     }
-  }, [content, onSave, onClose, message]);
+  }, [content, filePath, onSave, onClose, message]);
 
   const handleCancel = useCallback(() => {
     setContent("");
@@ -87,7 +90,7 @@ export default function FileEditorModal({
       <div className={styles.modal}>
         <div className={styles.header}>
           <FileIcon />
-          <div className={styles.title}>Edit: {file?.name}</div>
+          <div className={styles.title}>Edit File: {file?.name}</div>
           <button
             type="button"
             className={styles.iconButton}

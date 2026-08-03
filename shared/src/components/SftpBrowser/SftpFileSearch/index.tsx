@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SearchIcon } from "shared";
-import styles from "./SftpFileSearch.module.less";
+import { SearchIcon } from "@/components/Icon";
+import styles from "./index.module.less";
 
 type SftpFileSearchProps = {
   value: string;

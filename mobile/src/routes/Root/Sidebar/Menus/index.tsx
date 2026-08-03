@@ -68,9 +68,7 @@ export default function Menus({ onClick, compact }: MenusProps) {
       <div className={styles.manage}>
         {MENU_SECTIONS.map((section) => (
           <div key={section.id}>
-            {!compact && (
-              <p className={styles.groupLabel}>{section.label}</p>
-            )}
+            {!compact && <p className={styles.groupLabel}>{section.label}</p>}
             <ul className={styles.list}>
               {section.items.map((item) => {
                 const isActive = !!matchPath(

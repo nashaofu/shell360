@@ -6,11 +6,12 @@ import {
   HostIcon,
   MenuIcon,
   MoreIcon,
-  TerminalIcon,
+  SftpBrowser,
   useTerminalsAtomValue,
   useTerminalsAtomWithApi,
 } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
+import { useSftpDirValue } from "@/atoms/sftpDir.atom";
 import {
   useTerminalActiveId,
   useTerminalViewVisible,
@@ -21,6 +22,15 @@ import WorkspaceSessionSheet from "@/components/WorkspaceSessionSheet";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
+
+function simplifyPath(path: string): string {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length <= 2) {
+    return path;
+  }
+  const tail = segments.slice(-2).join("/");
+  return `…/${tail}`;
+}
 
 export default function Workspace() {
   const terminals = useTerminalsAtomValue();
@@ -36,6 +46,7 @@ export default function Workspace() {
   const activeTerminal = activeTerminalId
     ? terminals.get(activeTerminalId)
     : undefined;
+  const sftpDir = useSftpDirValue(activeTerminalId ?? undefined);
 
   const hideWorkspace = useCallback(() => {
     setVisible(false);
@@ -59,10 +70,9 @@ export default function Workspace() {
   const sessionSubtitle = useMemo(() => {
     if (!activeTerminal) return "";
     if (activeTerminal.type === "sftp") {
-      return `SFTP · ${activeTerminal.host.hostname}`;
-    }
-    if (activeTerminal.connectionType === "local") {
-      return "Local Shell · Connected";
+      const dir =
+        sftpDir || activeTerminal.host.hostname || activeTerminal.name;
+      return `SFTP · ${simplifyPath(dir)}`;
     }
     const state =
       activeTerminal.status === "pending"
@@ -71,31 +81,7 @@ export default function Workspace() {
           ? "Failed"
           : "Connected";
     return `Terminal · ${state}`;
-  }, [activeTerminal]);
-
-  const onCreateMenu = useMemo(
-    () => [
-      <DropdownMenu.Item
-        key="local"
-        onSelect={() => {
-          setOpenSessionSheet(false);
-          const [item] = terminalsApi.addLocal();
-          setActiveTerminalId(item.uuid);
-          setVisible(true);
-        }}
-      >
-        <TerminalIcon style={{ marginRight: 8 }} />
-        New Local Shell
-      </DropdownMenu.Item>,
-    ],
-    [setActiveTerminalId, setVisible, terminalsApi],
-  );
-
-  const createLocalShell = useCallback(() => {
-    const [item] = terminalsApi.addLocal();
-    setActiveTerminalId(item.uuid);
-    setVisible(true);
-  }, [setActiveTerminalId, setVisible, terminalsApi]);
+  }, [activeTerminal, sftpDir]);
 
   useEffect(() => {
     if (!terminalItems.length) {
@@ -196,9 +182,7 @@ export default function Workspace() {
             <HostIcon aria-hidden="true" />
           </div>
           <h2 className={styles.emptyTitle}>No active sessions</h2>
-          <p className={styles.emptyDesc}>
-            Open a host terminal or start a local shell to begin.
-          </p>
+          <p className={styles.emptyDesc}>Open a host terminal to begin.</p>
           <div className={styles.emptyActions}>
             <button
               type="button"
@@ -209,14 +193,6 @@ export default function Workspace() {
               }}
             >
               Browse Hosts
-            </button>
-            <button
-              type="button"
-              className="mobile-secondary"
-              onClick={createLocalShell}
-            >
-              <TerminalIcon style={{ fontSize: 18 }} />
-              Local Shell
             </button>
           </div>
         </main>
@@ -231,12 +207,23 @@ export default function Workspace() {
                 className={`${styles.session} ${active ? styles.sessionActive : ""}`}
                 aria-hidden={!active}
               >
-                <SSHTerminal
-                  item={item}
-                  style={{ width: "100%", height: "100%" }}
-                  onClose={() => closeTerminal(item.uuid)}
-                  onOpenAddKey={() => setOpenAddKey(true)}
-                />
+                {item.type === "sftp" ? (
+                  <div className={styles.sftpSession}>
+                    <SftpBrowser
+                      item={item}
+                      loadingClassName="mobile-sftp-loading-square"
+                      onClose={() => closeTerminal(item.uuid)}
+                      onOpenAddKey={() => setOpenAddKey(true)}
+                    />
+                  </div>
+                ) : (
+                  <SSHTerminal
+                    item={item}
+                    style={{ width: "100%", height: "100%" }}
+                    onClose={() => closeTerminal(item.uuid)}
+                    onOpenAddKey={() => setOpenAddKey(true)}
+                  />
+                )}
               </div>
             );
           })}
@@ -253,7 +240,7 @@ export default function Workspace() {
             setActiveTerminalId(id);
             setOpenSessionSheet(false);
           }}
-          onCreateMenu={onCreateMenu}
+          onCloseSession={(id) => closeTerminal(id)}
         />
       )}
 

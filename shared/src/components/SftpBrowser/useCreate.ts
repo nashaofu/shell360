@@ -1,21 +1,19 @@
 import { useRequest } from "ahooks";
-import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
+import type { SSHSftp } from "bridge/ssh";
 import {
   type MutableRefObject,
   type RefObject,
   useCallback,
-  useEffect,
   useState,
 } from "react";
-import { joinSftpPath, sanitizeSftpFilename } from "shared";
-
-import type useMessage from "@/hooks/useMessage";
+import { joinSftpPath, sanitizeSftpFilename } from "@/utils/sftp";
+import { getErrorMessage, getSftpBasename } from "./messages";
+import type useMessage from "./useMessage";
 
 type UseCreateOpts = {
   tableContainerRef: RefObject<HTMLDivElement | null>;
   message: ReturnType<typeof useMessage>;
   dirname?: string;
-  files?: SSHSftpFile[];
   sftpRef: MutableRefObject<SSHSftp | null>;
   refreshDir: () => unknown;
 };
@@ -29,7 +27,6 @@ export default function useCreate({
   tableContainerRef,
   message,
   dirname,
-  files,
   sftpRef,
   refreshDir,
 }: UseCreateOpts) {
@@ -46,15 +43,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create file success",
+          message: `Created file "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create file failed",
+          message: `Failed to create file: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -70,15 +67,15 @@ export default function useCreate({
     },
     {
       manual: true,
-      onSuccess: () => {
+      onSuccess: (_, [path]) => {
         message.success({
-          message: "create dir success",
+          message: `Created folder "${getSftpBasename(path)}"`,
         });
         refreshDir();
       },
       onError: (err) =>
         message.error({
-          message: err.message ?? "create dir failed",
+          message: `Failed to create folder: ${getErrorMessage(err)}`,
         }),
     },
   );
@@ -125,11 +122,6 @@ export default function useCreate({
     dirname,
     onCreateCancel,
   ]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: files 变化时重置编辑状态
-  useEffect(() => {
-    onCreateCancel();
-  }, [files]);
 
   return {
     creatingFilename,

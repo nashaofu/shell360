@@ -34,8 +34,7 @@ export default function Sidebar() {
     [terminals],
   );
   const hasConnecting = useMemo(
-    () =>
-      [...terminals.values()].some((item) => item.status === "pending"),
+    () => [...terminals.values()].some((item) => item.status === "pending"),
     [terminals],
   );
 
@@ -107,10 +106,7 @@ export default function Sidebar() {
 
       <div className={styles.divider} />
 
-      <Menus
-        compact={compact}
-        onClick={globalStateAtomWithApi.closeSidebar}
-      />
+      <Menus compact={compact} onClick={globalStateAtomWithApi.closeSidebar} />
     </div>
   );
 

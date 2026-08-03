@@ -1,6 +1,9 @@
 import type { IDockviewPanelProps } from "dockview-react";
-import { useTerminalsAtomValue, useTerminalsAtomWithApi } from "shared";
-import SftpBrowser from "@/components/SftpBrowser";
+import {
+  SftpBrowser,
+  useTerminalsAtomValue,
+  useTerminalsAtomWithApi,
+} from "shared";
 
 export default function SftpContent({
   params,

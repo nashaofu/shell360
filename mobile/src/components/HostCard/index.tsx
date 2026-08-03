@@ -1,5 +1,5 @@
 import type { Host } from "bridge/data";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import { getHostDesc, getHostName } from "shared";
 import styles from "./index.module.less";
@@ -56,12 +56,21 @@ export default function HostCard({
     </button>
   );
 
+  const onInfoKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpenDetails();
+    }
+  };
+
   return (
     <div className={styles.card}>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         className={styles.info}
         onClick={onOpenDetails}
+        onKeyDown={onInfoKeyDown}
         aria-label={`Open ${title}`}
       >
         <span className={styles.avatar} aria-hidden="true">
@@ -76,7 +85,7 @@ export default function HostCard({
           <span className={styles.meta}>{host.tags?.join(" · ") ?? ""}</span>
         </span>
         {actions && <span className={styles.more}>{actions}</span>}
-      </button>
+      </div>
 
       {(sshError?.message || sftpError?.message) && (
         <span className={styles.errorText}>

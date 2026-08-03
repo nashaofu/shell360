@@ -24,7 +24,37 @@
   padding: 0;
 }
 
+.swipeRow {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.deleteAction {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: var(--mobile-status-error);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  svg {
+    font-size: 15px;
+  }
+}
+
 .item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -32,13 +62,15 @@
   min-height: 58px;
   padding: 0 12px;
   border: none;
-  background: none;
+  background: var(--mobile-bg-surface);
   border-radius: 10px;
   text-align: left;
   color: var(--mobile-text-primary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.12s ease;
+  transition:
+    background 0.12s ease,
+    transform 0.2s ease;
 
   &:active {
     background: var(--mobile-bg-pressed);
@@ -47,6 +79,10 @@
   &.active {
     background: var(--mobile-accent-soft);
     color: var(--mobile-accent-text);
+  }
+
+  &.revealed {
+    transform: translateX(-88px);
   }
 }
 

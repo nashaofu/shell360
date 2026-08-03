@@ -1,4 +1,4 @@
-import type { TransferQueueItem } from "shared";
+import type { TransferQueueItem } from "@/components/TransferProgress";
 
 export type TransferStatus =
   | "transferring"

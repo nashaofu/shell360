@@ -1,4 +1,4 @@
-export { getSftpBasename } from "shared";
+export { getSftpBasename } from "@/utils/sftp";
 
 export function getErrorMessage(err: unknown, fallback = "Unknown error") {
   if (err instanceof Error) {

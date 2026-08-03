@@ -2,20 +2,14 @@ import { DropdownMenu } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
 import { type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
 import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  FileUploadIcon,
-  getSftpBrowserFiles,
-  getSftpDirname,
-  Loading,
-  MoreIcon,
-  SSHLoading,
-  type TerminalAtom,
-  TransferProgress,
-  useSftpConnection,
-  useSftpFileEditor,
-} from "shared";
-import useMessage from "@/hooks/useMessage";
-import useModal from "@/hooks/useModal";
+import type { TerminalAtom } from "@/atoms/session.atom";
+import { FileUploadIcon, MoreIcon } from "@/components/Icon";
+import { Loading } from "@/components/Loading";
+import { SSHLoading } from "@/components/SSHLoading";
+import { TransferProgress } from "@/components/TransferProgress";
+import { useSftpConnection } from "@/hooks/useSftpConnection";
+import { useSftpFileEditor } from "@/hooks/useSftpFileEditor";
+import { getSftpBrowserFiles, getSftpDirname } from "@/utils/sftp";
 import FileEditorModal from "./FileEditorModal";
 import styles from "./index.module.less";
 import { getErrorMessage } from "./messages";
@@ -27,6 +21,8 @@ import StatusBar from "./StatusBar";
 import { SftpTableOrder } from "./types";
 import useCells from "./useCells";
 import useCreate, { CreateType } from "./useCreate";
+import useMessage from "./useMessage";
+import useModal from "./useModal";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
 
@@ -34,9 +30,17 @@ type SftpProps = {
   item: TerminalAtom;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
+  className?: string;
+  loadingClassName?: string;
 };
 
-export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
+export default function Sftp({
+  item,
+  onClose,
+  onOpenAddKey,
+  className,
+  loadingClassName,
+}: SftpProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");
@@ -365,7 +369,7 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
   }, [task]);
 
   return (
-    <div className={styles.root}>
+    <div className={className ? `${styles.root} ${className}` : styles.root}>
       <div
         className={styles.browserLayer}
         style={
@@ -470,7 +474,9 @@ export default function Sftp({ item, onClose, onOpenAddKey }: SftpProps) {
           loading={currentJumpHostChainItem?.loading}
           error={connectionError}
           command={`sftp ${item.host.username}@${item.host.hostname} -P ${item.host.port}`}
-          className={styles.loading}
+          className={
+            loadingClassName ? `${styles.loading} ${loadingClassName}` : styles.loading
+          }
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}

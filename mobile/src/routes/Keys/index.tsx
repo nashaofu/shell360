@@ -1,12 +1,15 @@
 import { DropdownMenu } from "@radix-ui/themes";
-import { deleteKey, type Key } from "bridge/data";
-import { get } from "lodash-es";
+import { addKey, deleteKey, type Key } from "bridge/data";
+import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
   AddIcon,
+  ArrowDownIcon,
+  ContentCopyIcon,
   DeleteIcon,
   EditIcon,
   KeyIcon,
+  LockIcon,
   MoreIcon,
   useKeys,
 } from "shared";
@@ -17,11 +20,45 @@ import Page from "@/components/Page";
 import SearchToolbar from "@/components/SearchToolbar";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-
 import GenerateKey from "./GenerateKey";
+import styles from "./index.module.less";
+
+function getKeyTypeLabel(key: Key) {
+  const type = key.publicKey.trim().split(/\s+/)[0] || "";
+  switch (type) {
+    case "ssh-ed25519":
+    case "sk-ssh-ed25519@openssh.com":
+      return "Ed25519";
+    case "ssh-rsa":
+    case "ssh-rsa-cert-v01@openssh.com":
+      return "RSA";
+    case "ecdsa-sha2-nistp256":
+    case "ecdsa-sha2-nistp384":
+    case "ecdsa-sha2-nistp521":
+    case "sk-ecdsa-sha2-nistp256@openssh.com":
+      return "ECDSA";
+    default:
+      return (
+        type
+          .replace(/^ssh-/, "")
+          .replace(/^sk-/, "")
+          .replace(/-cert.*$/, "")
+          .toUpperCase() || "Key"
+      );
+  }
+}
+
+function getKeyPreview(publicKey: string) {
+  const [, value = publicKey] = publicKey.trim().split(/\s+/);
+  if (value.length <= 24) return value;
+  return `${value.slice(0, 12)}...${value.slice(-7)}`;
+}
+
+const TYPE_OPTIONS = ["Ed25519", "RSA", "ECDSA"];
 
 export default function Keys() {
   const [keyword, setKeyword] = useState("");
+  const [selectedType, setSelectedType] = useState<string>();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -33,11 +70,19 @@ export default function Keys() {
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
-    if (!kw) {
-      return keys;
-    }
-    return keys.filter((item) => item.name.toLowerCase().includes(kw));
-  }, [keys, keyword]);
+    return keys.filter((item) => {
+      if (selectedType && getKeyTypeLabel(item) !== selectedType) {
+        return false;
+      }
+      if (!kw) {
+        return true;
+      }
+      return (
+        item.name.toLowerCase().includes(kw) ||
+        item.publicKey.toLowerCase().includes(kw)
+      );
+    });
+  }, [keys, keyword, selectedType]);
 
   const onAddKeyClose = useCallback(() => {
     setIsOpenAddKey(false);
@@ -77,6 +122,25 @@ export default function Keys() {
     [message, modal, refreshKeys],
   );
 
+  const onCopyKey = useCallback(
+    async (key: Key) => {
+      try {
+        const newKey = await addKey({
+          ...omit(key, ["id"]),
+          name: `${key.name} Copy`,
+        });
+        await refreshKeys();
+        setEditKey(newKey);
+        setIsOpenAddKey(true);
+      } catch (err) {
+        message.error({
+          message: get(err, "message") || "Copy failed",
+        });
+      }
+    },
+    [message, refreshKeys],
+  );
+
   const moreActions = useCallback(
     (key: Key) => (
       <DropdownMenu.Root>
@@ -99,6 +163,10 @@ export default function Keys() {
             <EditIcon style={{ marginRight: 8 }} />
             Edit
           </DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => onCopyKey(key)}>
+            <ContentCopyIcon style={{ marginRight: 8 }} />
+            Duplicate
+          </DropdownMenu.Item>
           <DropdownMenu.Item onSelect={() => onDeleteKey(key)}>
             <DeleteIcon style={{ marginRight: 8 }} />
             Delete
@@ -106,7 +174,33 @@ export default function Keys() {
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     ),
-    [onDeleteKey],
+    [onCopyKey, onDeleteKey],
+  );
+
+  const typeFilterTrigger = (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>
+        <button
+          type="button"
+          className="toolbar-filter-trigger"
+          data-active={!!selectedType}
+        >
+          <KeyIcon aria-hidden="true" />
+          {selectedType ?? "All types"}
+          <ArrowDownIcon aria-hidden="true" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+        <DropdownMenu.Item onSelect={() => setSelectedType(undefined)}>
+          All types
+        </DropdownMenu.Item>
+        {TYPE_OPTIONS.map((type) => (
+          <DropdownMenu.Item key={type} onSelect={() => setSelectedType(type)}>
+            {type}
+          </DropdownMenu.Item>
+        ))}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
   );
 
   return (
@@ -138,16 +232,35 @@ export default function Keys() {
         value={keyword}
         placeholder="Search keys"
         onChange={setKeyword}
+        activeFilterCount={selectedType ? 1 : 0}
+        filterTrigger={typeFilterTrigger}
       />
 
       {items.map((item) => (
         <div className="key-list-item" key={item.id}>
           <ItemCard
             icon={<KeyIcon />}
-            title={item.name}
-            desc={item.publicKey ? item.publicKey.slice(0, 32) : undefined}
+            title={
+              <span className={styles.nameWrap}>
+                {item.name}
+                {item.passphrase && (
+                  <LockIcon className={styles.lockIcon} aria-hidden="true" />
+                )}
+              </span>
+            }
+            desc={
+              <span className="mobile-monospace">
+                SHA256:{getKeyPreview(item.publicKey)}
+              </span>
+            }
             extra={
-              <span onClick={(event) => event.stopPropagation()}>
+              <span
+                className={styles.extraWrap}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <span className={styles.typeBadge}>
+                  {getKeyTypeLabel(item)}
+                </span>
                 {moreActions(item)}
               </span>
             }
@@ -173,7 +286,10 @@ export default function Keys() {
           <button
             type="button"
             className="mobile-secondary"
-            onClick={() => setKeyword("")}
+            onClick={() => {
+              setKeyword("");
+              setSelectedType(undefined);
+            }}
           >
             Clear search
           </button>

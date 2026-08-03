@@ -14,6 +14,7 @@ export * from "./components/Message";
 export * from "./components/Modal";
 export * from "./components/PortForwardingForm";
 export * from "./components/PortForwardingLoading";
+export { default as SftpBrowser } from "./components/SftpBrowser";
 export * from "./components/SSHLoading";
 export * from "./components/TextFieldPassword";
 export * from "./components/TransferProgress";

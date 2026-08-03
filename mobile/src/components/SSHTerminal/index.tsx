@@ -1,5 +1,4 @@
 import { useSize } from "ahooks";
-import { hasCapability } from "bridge/capabilities";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -14,7 +13,6 @@ import {
 
 import openUrl from "@/utils/openUrl";
 import styles from "./index.module.less";
-import Sftp from "./Sftp";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
@@ -139,9 +137,6 @@ export default function SSHTerminal({
               fontSize: "0.75rem",
             }}
           >
-            {session && hasCapability("sftp") && (
-              <Sftp session={session} terminalId={item.uuid} />
-            )}
             <div
               style={{
                 padding: "2px 8px",

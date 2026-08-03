@@ -5,7 +5,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { CheckIcon, CloseIcon } from "shared";
+import { CheckIcon, CloseIcon } from "@/components/Icon";
 import styles from "./index.module.less";
 
 type SftpFilenameInputProps = {

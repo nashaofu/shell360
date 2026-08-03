@@ -12,7 +12,9 @@ type EmptyProps = {
 export default function Empty({ desc, title, icon, children }: EmptyProps) {
   return (
     <div className={styles.root}>
-      {icon ?? <EmptyIcon className={styles.icon} aria-hidden="true" />}
+      <div className={styles.icon}>
+        {icon ?? <EmptyIcon aria-hidden="true" />}
+      </div>
       {!!title && (
         <div className={styles.descWrap}>
           <p className={styles.title}>{title}</p>

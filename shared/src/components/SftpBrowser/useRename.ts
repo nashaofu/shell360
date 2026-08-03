@@ -6,10 +6,9 @@ import {
   getSftpDirname,
   joinSftpPath,
   sanitizeSftpFilename,
-} from "shared";
-
-import type useMessage from "@/hooks/useMessage";
+} from "@/utils/sftp";
 import { getErrorMessage } from "./messages";
+import type useMessage from "./useMessage";
 
 type UseRenameOpts = {
   message: ReturnType<typeof useMessage>;

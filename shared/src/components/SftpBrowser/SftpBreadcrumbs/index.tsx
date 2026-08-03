@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useCallback, useMemo, useState } from "react";
-import { CloseIcon, EditIcon, SuccessCircleIcon } from "shared";
-import styles from "./SftpBreadcrumbs.module.less";
+import { CheckIcon, CloseIcon, EditIcon } from "@/components/Icon";
+import styles from "./index.module.less";
 
 type SftpBreadcrumbsProps = {
   dirname?: string;
@@ -71,20 +71,24 @@ export default function SftpBreadcrumbs({
           autoFocus
           placeholder="Enter path..."
         />
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={() => handleConfirmEdit()}
-        >
-          <SuccessCircleIcon />
-        </button>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={handleCancelEdit}
-        >
-          <CloseIcon />
-        </button>
+        <div className={styles.editActions}>
+          <button
+            type="button"
+            className={styles.confirmButton}
+            title="Confirm"
+            onClick={() => handleConfirmEdit()}
+          >
+            <CheckIcon />
+          </button>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            title="Cancel"
+            onClick={handleCancelEdit}
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
     );
   }

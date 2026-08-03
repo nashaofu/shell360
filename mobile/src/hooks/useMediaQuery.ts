@@ -13,5 +13,9 @@ function getSnapshot(query: string) {
 }
 
 export default function useMediaQuery(query: string) {
-  return useSyncExternalStore(subscribe(query), getSnapshot(query), () => false);
+  return useSyncExternalStore(
+    subscribe(query),
+    getSnapshot(query),
+    () => false,
+  );
 }

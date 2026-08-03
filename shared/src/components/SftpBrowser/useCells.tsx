@@ -1,5 +1,4 @@
 import { type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
-import dayjs from "dayjs";
 import { useCallback, useMemo } from "react";
 import {
   DeleteIcon,
@@ -8,12 +7,17 @@ import {
   FileIcon,
   FolderIcon,
   SymlinkIcon,
-} from "shared";
-
-import type useModal from "@/hooks/useModal";
+} from "@/components/Icon";
 import SftpFilenameInput from "./SftpFilenameInput";
 import type { SftpTableCell } from "./types";
 import styles from "./useCells.module.less";
+import type useModal from "./useModal";
+
+function formatSftpMtime(mtime: number) {
+  const d = new Date(mtime * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 
 type UseCellsOpts = {
   selectedFile?: SSHSftpFile;
@@ -139,8 +143,7 @@ export default function useCells({
         width: 170,
         maxWidth: 170,
         minWidth: 170,
-        render: (item: SSHSftpFile) =>
-          dayjs.unix(item.mtime).format("YYYY-MM-DD HH:mm:ss"),
+        render: (item: SSHSftpFile) => formatSftpMtime(item.mtime),
       },
       {
         id: "size",

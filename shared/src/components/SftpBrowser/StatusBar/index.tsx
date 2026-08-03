@@ -1,12 +1,11 @@
+import type { TransferTask } from "@/atoms/transfer.atom";
 import {
-  formatEta,
-  formatSpeed,
-  type QueueItemStatus,
   StatusCompleteIcon,
   StatusDownloadIcon,
   StatusUploadIcon,
-  type TransferTask,
-} from "shared";
+} from "@/components/Icon";
+import type { QueueItemStatus } from "@/components/TransferProgress";
+import { formatEta, formatSpeed } from "@/utils/display";
 
 import styles from "./index.module.less";
 
