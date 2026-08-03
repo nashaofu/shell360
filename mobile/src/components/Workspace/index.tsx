@@ -211,7 +211,7 @@ export default function Workspace() {
                   <div className={styles.sftpSession}>
                     <SftpBrowser
                       item={item}
-                      loadingClassName="mobile-sftp-loading-square"
+                      loadingClassName={styles.sftpLoadingSquare}
                       onClose={() => closeTerminal(item.uuid)}
                       onOpenAddKey={() => setOpenAddKey(true)}
                     />

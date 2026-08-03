@@ -475,7 +475,9 @@ export default function Sftp({
           error={connectionError}
           command={`sftp ${item.host.username}@${item.host.hostname} -P ${item.host.port}`}
           className={
-            loadingClassName ? `${styles.loading} ${loadingClassName}` : styles.loading
+            loadingClassName
+              ? `${styles.loading} ${loadingClassName}`
+              : styles.loading
           }
           onReConnect={onReConnect}
           onReAuth={onReAuth}
