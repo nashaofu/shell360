@@ -8,6 +8,8 @@ import {
   ContentCopyIcon,
   DeleteIcon,
   EditIcon,
+  getAvatarColor,
+  getAvatarLabel,
   KeyIcon,
   LockIcon,
   MoreIcon,
@@ -236,37 +238,53 @@ export default function Keys() {
         filterTrigger={typeFilterTrigger}
       />
 
-      {items.map((item) => (
-        <div className="key-list-item" key={item.id}>
-          <ItemCard
-            icon={<KeyIcon />}
-            title={
-              <span className={styles.nameWrap}>
-                {item.name}
-                {item.passphrase && (
-                  <LockIcon className={styles.lockIcon} aria-hidden="true" />
-                )}
-              </span>
-            }
-            desc={
-              <span className="mobile-monospace">
-                SHA256:{getKeyPreview(item.publicKey)}
-              </span>
-            }
-            extra={
-              <span
-                className={styles.extraWrap}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <span className={styles.typeBadge}>
-                  {getKeyTypeLabel(item)}
+      {items.map((item) => {
+        const avatarBg = getAvatarColor(item.name);
+        return (
+          <div className="key-list-item" key={item.id}>
+            <ItemCard
+              icon={
+                <span
+                  className={styles.keyAvatar}
+                  style={{
+                    background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
+                    color: avatarBg,
+                  }}
+                >
+                  {getAvatarLabel(item.name)}
                 </span>
-                {moreActions(item)}
-              </span>
-            }
-          />
-        </div>
-      ))}
+              }
+              title={
+                <span className={styles.nameWrap}>
+                  {item.name}
+                  {item.passphrase && (
+                    <LockIcon className={styles.lockIcon} aria-hidden="true" />
+                  )}
+                  {item.certificate && (
+                    <span className={styles.certBadge}>Signed certificate</span>
+                  )}
+                </span>
+              }
+              desc={
+                <span className="mobile-monospace">
+                  SHA256:{getKeyPreview(item.publicKey)}
+                </span>
+              }
+              extra={
+                <span
+                  className={styles.extraWrap}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <span className={styles.typeBadge}>
+                    {getKeyTypeLabel(item)}
+                  </span>
+                  {moreActions(item)}
+                </span>
+              }
+            />
+          </div>
+        );
+      })}
 
       {!keys.length && (
         <Empty desc="There is no key yet, add it now.">

@@ -19,6 +19,13 @@ import useModal from "@/hooks/useModal";
 const KNOWN_HOSTS_PATH = "./known_hosts";
 const KNOWN_HOSTS_BASE_DIR = BaseDirectory.AppLocalData;
 
+function getFingerprint(key: string) {
+  if (key.length <= 18) {
+    return key;
+  }
+  return `${key.slice(0, 12)}...${key.slice(-4)}`;
+}
+
 export default function KnownHosts() {
   const isAvailable = hasCapability("fileSystem");
   const [keyword, setKeyword] = useState("");
@@ -94,7 +101,11 @@ export default function KnownHosts() {
               <ItemCard
                 icon={<FingerprintIcon />}
                 title={item.host}
-                desc={<span className="mobile-monospace">{item.key}</span>}
+                desc={
+                  <span className="mobile-monospace">
+                    {getFingerprint(item.key)}
+                  </span>
+                }
                 extra={
                   <span onClick={(event) => event.stopPropagation()}>
                     <DropdownMenu.Root>

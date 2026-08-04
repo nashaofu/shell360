@@ -1,7 +1,12 @@
 import type { Host } from "bridge/data";
 import type { KeyboardEvent, ReactNode } from "react";
 
-import { getHostDesc, getHostName } from "shared";
+import {
+  getAvatarColor,
+  getAvatarLabel,
+  getHostDesc,
+  getHostName,
+} from "shared";
 import styles from "./index.module.less";
 
 export type ConnectionErrorInfo = {
@@ -33,7 +38,8 @@ export default function HostCard({
   sftpError,
 }: HostCardProps) {
   const title = getHostName(host);
-  const initials = title.slice(0, 2).toUpperCase();
+  const avatarBg = getAvatarColor(title);
+  const avatarLabel = getAvatarLabel(title);
 
   const sshLabel = sshPending ? "Connecting…" : sshError ? "Failed" : "SSH";
   const sftpLabel = sftpPending ? "Connecting…" : sftpError ? "Failed" : "SFTP";
@@ -73,8 +79,15 @@ export default function HostCard({
         onKeyDown={onInfoKeyDown}
         aria-label={`Open ${title}`}
       >
-        <span className={styles.avatar} aria-hidden="true">
-          {initials}
+        <span
+          className={styles.avatar}
+          style={{
+            background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
+            color: avatarBg,
+          }}
+          aria-hidden="true"
+        >
+          {avatarLabel}
         </span>
         <span className={styles.infoMain}>
           <span className={styles.nameRow}>
@@ -82,7 +95,6 @@ export default function HostCard({
             <span className={styles.statusDot} aria-hidden="true" />
           </span>
           <span className={styles.address}>{getHostDesc(host)}</span>
-          <span className={styles.meta}>{host.tags?.join(" · ") ?? ""}</span>
         </span>
         {actions && <span className={styles.more}>{actions}</span>}
       </div>
