@@ -12,18 +12,14 @@ tauri = { workspace = true, features = [] }
 log.workspace = true
 serde.workspace = true
 thiserror.workspace = true
-russh = { version = "0.61.2", default-features = false, features = [
-  "flate2",
-  "ring",
-  "rsa",
-] }
-uuid = { version = "1.23.3", features = ["serde", "v4"] }
-async-trait = "0.1.89"
-tokio = { version = "1.52.3", features = ["full"] }
+russh = { workspace = true, features = ["flate2", "ring", "rsa"] }
+uuid = { workspace = true, features = ["serde", "v4"] }
+async-trait.workspace = true
+tokio = { workspace = true, features = ["full"] }
 serde_json.workspace = true
-strum = { version = "0.28.0", features = ["derive"] }
-russh-sftp = "2.3.0"
-rusocks = "0.0.7"
+strum = { workspace = true, features = ["derive"] }
+russh-sftp.workspace = true
+rusocks.workspace = true
 tauri-plugin-fs.workspace = true
 
 [build-dependencies]

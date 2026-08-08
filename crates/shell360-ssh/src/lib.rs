@@ -15,7 +15,7 @@ use rusocks::{
 };
 use russh::{
   Channel as RusshChannel, ChannelId, Disconnect, Error as RusshError, MethodKind, MethodSet,
-  client::{self, AuthResult, Handle, KeyboardInteractiveAuthResponse},
+  client::{self, AuthResult, ChannelOpenHandle, Handle, KeyboardInteractiveAuthResponse},
   keys::{
     Certificate, HashAlg, PublicKey, decode_secret_key,
     key::PrivateKeyWithHashAlg,
@@ -1489,6 +1489,7 @@ impl client::Handler for SshClient {
     connected_port: u32,
     _originator_address: &str,
     _originator_port: u32,
+    _reply: ChannelOpenHandle,
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     let connected_address = connected_address.to_string();

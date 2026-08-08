@@ -15,7 +15,7 @@ pub enum DataError {
   #[error(transparent)]
   Crypto(#[from] defendor::error::DefendorError),
   #[error(transparent)]
-  Base64(#[from] base64ct::Error),
+  Base64(#[from] base64::DecodeError),
   #[error(transparent)]
   Json(#[from] serde_json::Error),
   #[error("Database is closed")]

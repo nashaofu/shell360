@@ -4,7 +4,7 @@ use std::{
   sync::Arc,
 };
 
-use base64ct::{Base64, Encoding};
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use defendor::{defendor::Defendor, password::Password};
 use serde::Deserialize;
 use tokio::{
@@ -137,7 +137,7 @@ impl CryptoManager {
 
   async fn migrate_legacy_vault(path: &Path, config: &ConfigStore) -> DataResult<()> {
     let value: LegacyVaultConfig = serde_json::from_str(&fs::read_to_string(path).await?)?;
-    let buffer = Base64::decode_vec(&value.encrypted_key)?;
+    let buffer = BASE64.decode(&value.encrypted_key)?;
     if buffer.len() < 14 {
       return Err(DataError::MigrationVaultConfig);
     }
@@ -150,11 +150,11 @@ impl CryptoManager {
     );
     values.insert(
       "crypto_password_nonce".to_string(),
-      serde_json::Value::String(Base64::encode_string(&buffer[2..14])),
+      serde_json::Value::String(BASE64.encode(&buffer[2..14])),
     );
     values.insert(
       "crypto_password_encrypted_key".to_string(),
-      serde_json::Value::String(Base64::encode_string(&buffer[14..])),
+      serde_json::Value::String(BASE64.encode(&buffer[14..])),
     );
     drop(values);
     config.save().await

@@ -4,19 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-async-trait = "0.1.89"
+async-trait.workspace = true
 log.workspace = true
-russh = { version = "0.61.2", default-features = false, features = [
-  "flate2",
-  "ring",
-  "rsa",
-] }
-russh-sftp = "2.3.0"
-rusocks = "0.0.7"
+russh = { workspace = true, features = ["flate2", "ring", "rsa"] }
+russh-sftp.workspace = true
+rusocks.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 thiserror.workspace = true
-tokio = { version = "1.52.3", features = [
+tokio = { workspace = true, features = [
   "fs",
   "macros",
   "net",
@@ -27,4 +23,4 @@ tokio = { version = "1.52.3", features = [
 
 [dev-dependencies]
 tempfile = "3.26.0"
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

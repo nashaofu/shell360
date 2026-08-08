@@ -3,7 +3,7 @@ use std::future::Future;
 use async_trait::async_trait;
 use russh::{
   Channel, ChannelId,
-  client::{self},
+  client::{self, ChannelOpenHandle},
   keys::{
     HashAlg, PublicKey,
     known_hosts::{check_known_hosts_path, learn_known_hosts_path},
@@ -155,6 +155,7 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
     connected_port: u32,
     _originator_address: &str,
     _originator_port: u32,
+    _reply: ChannelOpenHandle,
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     async move {
