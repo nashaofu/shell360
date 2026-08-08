@@ -59,10 +59,10 @@ await yargs()
         describe: "Reuse Gradle build cache and up-to-date task outputs",
         type: "boolean",
       },
-      mode: {
-        choices: ["debug", "release"] as const,
-        default: "release",
-        describe: "Build mode",
+      debug: {
+        default: false,
+        describe: "Build in debug mode",
+        type: "boolean",
       },
     },
     handler: buildAndroid,

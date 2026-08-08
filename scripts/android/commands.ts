@@ -80,10 +80,10 @@ async function startMobileDevServer(
 
 export async function buildAndroid({
   cache,
-  mode,
+  debug,
 }: {
   cache: boolean;
-  mode: "debug" | "release";
+  debug: boolean;
 }): Promise<void> {
   const ANDROID_KEY_JKS = process.env.ANDROID_KEY_JKS;
   const signingStoreFile = `${os.tmpdir()}/android_key_jks.jks`;
@@ -92,7 +92,7 @@ export async function buildAndroid({
     encoding: "base64",
   });
 
-  const variant = mode === "debug" ? "Debug" : "Release";
+  const variant = debug ? "Debug" : "Release";
 
   const gradleArgs = [`assemble${variant}`, `bundle${variant}`];
   if (!cache) {
