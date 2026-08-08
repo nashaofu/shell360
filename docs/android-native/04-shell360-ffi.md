@@ -97,7 +97,8 @@ Shell 数据通过有界队列进入 FFI event sink。Kotlin 回调不能阻塞 
 
 ## Android 构建
 
-- 使用 `cargo-ndk` 构建 Android 动态库。
+- 由 Android Gradle 的 `shell360NativeBuild` 任务构建 Android 动态库，并根据
+  `android/app/build.gradle.kts` 中的配置使用固定 NDK 版本。
 - P0 支持 `arm64-v8a` 和 `x86_64`。
 - Release 是否增加 `armeabi-v7a` 在包体评估后决定。
 - Gradle 任务输出到 build 目录，再作为 `jniLibs` 输入，不提交 `.so`。

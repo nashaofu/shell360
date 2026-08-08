@@ -1,5 +1,7 @@
 # P2：迁移清理与 CI
 
+> 状态：已完成。本文记录迁移后的约束与验证清单。
+
 ## 目标
 
 在原生 Android 核心功能验收通过后，删除旧 Tauri Android 工程和配置，建立独立、
@@ -27,11 +29,11 @@ src-tauri/tauri.android.conf.json
 
 `src-tauri` 继续作为桌面 Tauri 工程，不能因为 Android 清理删除桌面依赖。
 
-## 脚本调整
+## 当前脚本
 
-- 使用 `scripts/android.js` 统一调用 `gradlew`/`gradlew.bat` 和 SDK 中的 adb。
-- 统一开发命令负责启动 Rsbuild、执行 `adb reverse`、安装并启动 Debug APK。
-- Android Release 先构建 `mobile` 和 Rust FFI，再执行 Gradle bundle。
+- 使用 `scripts/android/` 下的 TypeScript runner 统一调用 `gradlew`/`gradlew.bat` 和 SDK 中的 adb。
+- `pnpm run android:dev` 负责启动 Rsbuild、执行 `adb reverse`、安装并启动 Debug APK。
+- `pnpm run android:build` 先构建 `mobile` 和 Rust FFI，再执行 Gradle APK/AAB 构建。
 - 移除 Android 对 Tauri CLI 的调用。
 
 ## CI 阶段
@@ -49,7 +51,7 @@ rust-check:
 
 android-debug:
   构建 mobile
-  cargo-ndk 构建 shell360-ffi
+  Gradle shell360NativeBuild 任务构建 shell360-ffi
   pnpm run android:build --mode debug
 
 android-release:
@@ -58,13 +60,12 @@ android-release:
 
 Release CI 应缓存 Cargo、Gradle 和 pnpm，但不能缓存或提交签名密钥。
 
-## 文档调整
+## 文档状态
 
-- 更新 `AGENTS.md` 项目结构和 Android 命令。
-- 更新 README 的 Android 构建方式。
-- 明确 `src-tauri/gen/android` 不再生成或维护。
-- 记录 Rust target、NDK、JDK 和 Android SDK 版本。
-- 删除失效的 Tauri Android capability 和脚本说明。
+- `AGENTS.md` 已记录当前项目结构和 Android 命令。
+- `docs/CONTRIBUTING.md` 已记录 Rust targets、NDK、JDK 和 Android SDK 要求。
+- `src-tauri/gen/android` 已删除，不再生成或维护。
+- 失效的 Tauri Android capability 和脚本已删除。
 
 ## 发布检查
 

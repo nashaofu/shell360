@@ -52,6 +52,10 @@ The examples below use NDK `30.0.15729638` to keep local and CI builds consisten
 Install this exact version from Android Studio's SDK Manager before configuring the
 environment variables.
 
+Android `versionName` is read from `src-tauri/tauri.conf.json`, so update the Tauri
+version there when releasing. Android `versionCode` is derived from the first three
+numeric SemVer components as `major * 1,000,000 + minor * 1,000 + patch`.
+
 #### macOS (zsh)
 
 Add the following to `~/.zshrc`:

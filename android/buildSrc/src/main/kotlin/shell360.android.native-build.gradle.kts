@@ -119,7 +119,7 @@ val buildMobile = tasks.register<Exec>("buildMobile") {
 val syncWebAssets = tasks.register<Sync>("syncWebAssets") {
     dependsOn(buildMobile)
     from(mobileDistDir)
-    into(shell360NativeBuild.webAssetsDir.map { it.dir("www") })
+    into(shell360NativeBuild.webAssetsDir)
 }
 
 tasks.configureEach {

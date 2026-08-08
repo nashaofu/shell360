@@ -383,6 +383,7 @@ function createSftp(
         sshSftpId,
         localFilename: transferOpts.localFilename,
         remoteFilename: transferOpts.remoteFilename,
+        taskId: transferOpts.taskId,
       });
       transferOpts.onProgress?.({ progress: 1, total: 1 });
       return result;
@@ -392,6 +393,7 @@ function createSftp(
         sshSftpId,
         localFilename: transferOpts.localFilename,
         remoteFilename: transferOpts.remoteFilename,
+        taskId: transferOpts.taskId,
       });
       transferOpts.onProgress?.({ progress: 1, total: 1 });
       return result;
@@ -418,9 +420,9 @@ function createSftp(
         path,
         content,
       }),
-    sftpCancelTask: async () => {},
-    sftpPauseTask: async () => {},
-    sftpResumeTask: async () => {},
+    sftpCancelTask: () => unsupported("sftp.cancelTask"),
+    sftpPauseTask: () => unsupported("sftp.pauseTask"),
+    sftpResumeTask: () => unsupported("sftp.resumeTask"),
   };
 }
 

@@ -50,10 +50,15 @@ await yargs()
     },
     handler: devAndroid,
   })
-  .command<{ mode: "debug" | "release" }>({
+  .command<{ cache: boolean; mode: "debug" | "release" }>({
     command: "build",
     describe: "Build the Android APK and app bundle",
     builder: {
+      cache: {
+        default: false,
+        describe: "Reuse Gradle build cache and up-to-date task outputs",
+        type: "boolean",
+      },
       mode: {
         choices: ["debug", "release"] as const,
         default: "release",

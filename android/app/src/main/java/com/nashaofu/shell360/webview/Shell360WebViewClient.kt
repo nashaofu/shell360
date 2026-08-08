@@ -16,7 +16,7 @@ class Shell360WebViewClient(
     context: Context,
 ) : WebViewClient() {
     private val assetLoader = WebViewAssetLoader.Builder()
-        .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+        .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(context))
         .build()
 
     override fun shouldInterceptRequest(

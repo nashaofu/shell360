@@ -49,6 +49,10 @@ rustup target list --installed
 下面的示例统一使用 NDK `30.0.15729638`，以保证本地和 CI 构建环境一致。配置环境变量前，
 请先通过 Android Studio 的 SDK Manager 安装这个确切版本。
 
+Android 的 `versionName` 会读取 `src-tauri/tauri.conf.json`，发布新版本时只需修改
+Tauri 配置中的版本号。Android 的 `versionCode` 根据 SemVer 的前三段计算：
+`major * 1,000,000 + minor * 1,000 + patch`。
+
 #### macOS（zsh）
 
 将以下内容添加到 `~/.zshrc`：

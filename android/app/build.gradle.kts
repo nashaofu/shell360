@@ -1,4 +1,5 @@
 import com.nashaofu.shell360.gradle.Shell360AndroidNativeBuildExtension
+import groovy.json.JsonSlurper
 
 plugins {
     alias(libs.plugins.android.application)
@@ -17,6 +18,20 @@ val signingStorePassword = providers
 val signingKeyPassword = providers
     .environmentVariable("SIGNING_KEY_PASSWORD")
     .orNull
+
+val tauriConfig = rootProject.file("../src-tauri/tauri.conf.json")
+val tauriConfigJson = JsonSlurper().parse(tauriConfig) as? Map<*, *>
+    ?: error("Invalid JSON in ${tauriConfig.path}")
+val tauriVersion = tauriConfigJson["version"] as? String
+    ?: error("Unable to read version from ${tauriConfig.path}")
+val tauriVersionParts = tauriVersion
+    .substringBefore('-')
+    .split('.')
+    .map { it.toIntOrNull() ?: error("Invalid Tauri version: $tauriVersion") }
+
+val androidVersionCode = tauriVersionParts[0] * 1_000_000 +
+    tauriVersionParts[1] * 1_000 +
+    tauriVersionParts[2]
 
 fun String.asBuildConfigString() = "\"$this\""
 
@@ -40,8 +55,8 @@ android {
         applicationId = "com.nashaofu.shell360"
         minSdk = shell360NativeBuild.androidApiLevel.get()
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = androidVersionCode
+        versionName = tauriVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -62,7 +77,7 @@ android {
             buildConfigField(
                 "String",
                 "WEBVIEW_URL",
-                "$releaseWebViewOrigin/assets/www/index.html".asBuildConfigString(),
+                "$releaseWebViewOrigin/index.html".asBuildConfigString(),
             )
             buildConfigField(
                 "String",
