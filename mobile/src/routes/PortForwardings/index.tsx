@@ -13,6 +13,8 @@ import Empty from "@/components/Empty";
 import Page from "@/components/Page";
 import SearchToolbar from "@/components/SearchToolbar";
 
+import styles from "./index.module.less";
+
 import AddPortForwarding from "./AddPortForwarding";
 import PortForwardingItem from "./PortForwardingItem";
 

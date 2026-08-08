@@ -15,6 +15,7 @@ import Page from "@/components/Page";
 import SearchToolbar from "@/components/SearchToolbar";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
+import styles from "./index.module.less";
 
 const KNOWN_HOSTS_PATH = "./known_hosts";
 const KNOWN_HOSTS_BASE_DIR = BaseDirectory.AppLocalData;
