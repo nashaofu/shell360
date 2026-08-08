@@ -1,4 +1,4 @@
-import { Callout } from "@radix-ui/themes";
+import { Button, Callout, IconButton } from "@radix-ui/themes";
 import { hasCapability } from "bridge/capabilities";
 import type { PortForwarding } from "bridge/data";
 import { useCallback, useMemo, useState } from "react";
@@ -78,8 +78,8 @@ export default function PortForwardings() {
   const renderGroup = (label: string, items: PortForwarding[]) => {
     if (!items.length) return null;
     return (
-      <div className="tunnel-group">
-        <h2 className="tunnel-group-label">{label}</h2>
+      <div className={styles.tunnelGroup}>
+        <h2 className={styles.tunnelGroupLabel}>{label}</h2>
         {items.map((item) => (
           <PortForwardingItem
             key={item.id}
@@ -97,14 +97,16 @@ export default function PortForwardings() {
     <Page
       title="Tunnels"
       headerRight={
-        <button
+        <IconButton
           type="button"
-          className="mobile-icon-btn"
+          size="3"
+          variant="ghost"
+          className={styles.headerAction}
           onClick={() => setIsOpenAddPortForwarding(true)}
           aria-label="New Tunnel"
         >
           <AddIcon />
-        </button>
+        </IconButton>
       }
     >
       {!canStartPortForwarding && (
@@ -132,14 +134,15 @@ export default function PortForwardings() {
               : "There is no tunnel yet, add it now."
           }
         >
-          <button
+          <Button
             type="button"
-            className="mobile-primary"
+            size="3"
+            className={styles.emptyPrimary}
             onClick={() => setIsOpenAddPortForwarding(true)}
           >
             <AddIcon />
             New tunnel
-          </button>
+          </Button>
         </Empty>
       )}
 

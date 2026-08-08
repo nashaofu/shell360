@@ -1,4 +1,4 @@
-import { IconButton } from "@radix-ui/themes";
+import { Badge, Button, Flex, IconButton } from "@radix-ui/themes";
 import { addHost, deleteHost, type Host } from "bridge/data";
 import clsx from "clsx";
 import { get, omit } from "lodash-es";
@@ -7,11 +7,11 @@ import {
   AddIcon,
   FilterIcon,
   FolderIcon,
+  getTagTone,
   getAvatarColor,
   getAvatarLabel,
   getHostDesc,
   getHostName,
-  getTagTone,
   HostTagsSelect,
   JumpIcon,
   MoreIcon,
@@ -23,17 +23,30 @@ import {
 import AddHost from "@/components/AddHost";
 import Empty from "@/components/Empty";
 import ListToolbar from "@/components/ListToolbar";
+import PanelTable from "@/components/PanelTable";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useListView } from "@/hooks/useListView";
 import useMessage from "@/hooks/useMessage";
-import panel from "@/styles/panel.module.less";
 import { filterByKeyword } from "@/utils/list";
 import HostActionsMenu from "./HostActionsMenu";
 import styles from "./index.module.less";
 
 function getHostTags(host: Host) {
   return (host.tags || []).filter((tag) => tag.trim()).map((tag) => tag.trim());
+}
+
+function getTagColor(tag: string) {
+  switch (getTagTone(tag)) {
+    case "Prod":
+      return "red" as const;
+    case "Staging":
+      return "amber" as const;
+    case "Local":
+      return "green" as const;
+    default:
+      return "indigo" as const;
+  }
 }
 
 export default function Hosts() {
@@ -123,7 +136,7 @@ export default function Hosts() {
 
   return (
     <>
-      <section className={panel.page}>
+      <div className={styles.page}>
         <ListToolbar
           title="Hosts"
           keyword={keyword}
@@ -134,40 +147,38 @@ export default function Hosts() {
           leading={
             <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
               {({ label }) => (
-                <button
+                <Button
                   type="button"
+                  variant="soft"
                   className={clsx(
-                    panel.button,
-                    selectedTag && panel.buttonPrimary,
+                    styles.toolbarButton,
+                    selectedTag && styles.filterActive,
                   )}
                 >
                   <FilterIcon width="11" height="11" />
                   {label}
-                </button>
+                </Button>
               )}
             </HostTagsSelect>
           }
         >
-          <div className={panel.splitButton}>
-            <button
+          <Flex gap="0" className={styles.splitButton}>
+            <Button
               type="button"
-              className={clsx(panel.button, panel.buttonPrimary)}
+              variant="soft"
+              className={styles.toolbarPrimaryButton}
               onClick={() => setIsOpenAddHost(true)}
             >
               <AddIcon width="11" height="11" />
               New Host
-            </button>
-            <button
-              type="button"
-              className={panel.button}
-              onClick={handleOpenLocalShell}
-            >
+            </Button>
+            <Button type="button" variant="soft" className={styles.toolbarButton} onClick={handleOpenLocalShell}>
               <TerminalIcon width="11" height="11" />
               Local Shell
-            </button>
-          </div>
+            </Button>
+          </Flex>
         </ListToolbar>
-        <div className={panel.content}>
+        <div className={styles.content}>
           {items.length > 0 ? (
             viewMode === "grid" ? (
               <div className={styles.grid}>
@@ -209,15 +220,9 @@ export default function Hosts() {
                         {tags.length > 0 && (
                           <div className={styles.cardTags}>
                             {tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className={clsx(
-                                  panel.tag,
-                                  panel[`tag${getTagTone(tag)}`],
-                                )}
-                              >
+                              <Badge key={tag} color={getTagColor(tag)} size="1">
                                 {tag}
-                              </span>
+                              </Badge>
                             ))}
                           </div>
                         )}
@@ -260,100 +265,97 @@ export default function Hosts() {
               </div>
             ) : (
               <div className={styles.listView}>
-                <div className={panel.tableWrap}>
-                  <table className={panel.table}>
-                    <thead>
-                      <tr>
-                        <th>Host</th>
-                        <th>Address</th>
-                        <th>Tags</th>
-                        <th />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item) => {
-                        const tags = getHostTags(item);
-                        return (
-                          <tr
-                            key={item.id}
-                            onDoubleClick={() => onOpenChannel(item)}
-                          >
-                            <td className={styles.listName}>
-                              {getHostName(item)}
-                            </td>
-                            <td className={styles.listAddr}>
-                              {getHostDesc(item)}
-                            </td>
-                            <td>
-                              <div className={styles.listTags}>
-                                {tags.map((tag) => (
-                                  <span
-                                    key={tag}
-                                    className={clsx(
-                                      panel.tag,
-                                      panel[`tag${getTagTone(tag)}`],
-                                    )}
+                <PanelTable>
+                  <thead>
+                    <tr>
+                      <th>Host</th>
+                      <th>Address</th>
+                      <th>Tags</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => {
+                      const tags = getHostTags(item);
+                      return (
+                        <tr
+                          key={item.id}
+                          onDoubleClick={() => onOpenChannel(item)}
+                        >
+                          <td className={styles.listName}>
+                            {getHostName(item)}
+                          </td>
+                          <td className={styles.listAddr}>
+                            {getHostDesc(item)}
+                          </td>
+                          <td>
+                            <div className={styles.listTags}>
+                              {tags.map((tag) => (
+                                <Badge key={tag} color={getTagColor(tag)} size="1">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            <Flex gap="1">
+                              <Button
+                                type="button"
+                                size="1"
+                                  variant="ghost"
+                                  className={styles.actionButton}
+                                onClick={() => onOpenChannel(item)}
+                              >
+                                Terminal
+                              </Button>
+                              <Button
+                                type="button"
+                                size="1"
+                                  variant="ghost"
+                                  className={styles.actionButton}
+                                onClick={() => onOpenSftp(item)}
+                              >
+                                SFTP
+                              </Button>
+                              <HostActionsMenu
+                                host={item}
+                                onEdit={onEditHost}
+                                onCopy={onCopyHost}
+                                onDelete={onDeleteHost}
+                                trigger={
+                                  <IconButton
+                                    type="button"
+                                    size="1"
+                                    variant="ghost"
+                                    color="gray"
                                   >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td>
-                              <div className={panel.actionGroup}>
-                                <button
-                                  type="button"
-                                  className={panel.actionButton}
-                                  onClick={() => onOpenChannel(item)}
-                                >
-                                  Terminal
-                                </button>
-                                <button
-                                  type="button"
-                                  className={panel.actionButton}
-                                  onClick={() => onOpenSftp(item)}
-                                >
-                                  SFTP
-                                </button>
-                                <HostActionsMenu
-                                  host={item}
-                                  onEdit={onEditHost}
-                                  onCopy={onCopyHost}
-                                  onDelete={onDeleteHost}
-                                  trigger={
-                                    <IconButton
-                                      type="button"
-                                      size="1"
-                                      variant="ghost"
-                                      color="gray"
-                                    >
-                                      <MoreIcon />
-                                    </IconButton>
-                                  }
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                                    <MoreIcon />
+                                  </IconButton>
+                                }
+                              />
+                            </Flex>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </PanelTable>
               </div>
             )
           ) : (
             <Empty desc="No hosts yet. Add one to get started.">
-              <button
+              <Button
                 type="button"
-                className={clsx(panel.button, panel.buttonPrimary)}
+                variant="soft"
+                className={styles.toolbarPrimaryButton}
                 onClick={() => setIsOpenAddHost(true)}
               >
                 New Host
-              </button>
+              </Button>
             </Empty>
           )}
         </div>
-      </section>
+      </div>
 
       <AddHost
         open={isOpenAddHost}

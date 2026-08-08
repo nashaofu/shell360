@@ -13,7 +13,7 @@ export default function ThemedPortal({ children }: ThemedPortalProps) {
     <Portal>
       <Theme
         appearance={appearance}
-        accentColor="indigo"
+        accentColor="green"
         grayColor="gray"
         panelBackground="translucent"
         radius="medium"

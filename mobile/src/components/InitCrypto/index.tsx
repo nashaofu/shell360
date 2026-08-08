@@ -3,6 +3,7 @@ import { useRequest } from "ahooks";
 import { changeCryptoEnable } from "bridge/data";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
+import styles from "./index.module.less";
 
 import { useUpdateCryptoIsEnable } from "@/atoms/crypto.atom";
 import useMessage from "@/hooks/useMessage";
@@ -55,6 +56,7 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
   return (
     <Dialog.Root open={open}>
       <Dialog.Content
+        className={styles.dialog}
         style={{
           paddingTop: "calc(var(--dialog-padding) + env(safe-area-inset-top))",
         }}

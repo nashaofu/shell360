@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import { hasCapability } from "bridge/capabilities";
 import { BaseDirectory, readTextFile, writeTextFile } from "bridge/fs";
 import { useCallback, useMemo, useState } from "react";
@@ -97,12 +97,12 @@ export default function KnownHosts() {
           />
 
           {filteredItems.map((item) => (
-            <div className="list-item" key={item.id}>
+            <div className={styles.listItem} key={item.id}>
               <ItemCard
                 icon={<FingerprintIcon />}
                 title={item.host}
                 desc={
-                  <span className="mobile-monospace">
+                  <span className={styles.monospace}>
                     {getFingerprint(item.key)}
                   </span>
                 }
@@ -110,13 +110,15 @@ export default function KnownHosts() {
                   <span onClick={(event) => event.stopPropagation()}>
                     <DropdownMenu.Root>
                       <DropdownMenu.Trigger>
-                        <button
+                        <IconButton
                           type="button"
-                          className="card-more-btn"
+                          size="3"
+                          variant="ghost"
+                          className={styles.moreAction}
                           aria-label={`More actions for ${item.host}`}
                         >
                           <MoreIcon />
-                        </button>
+                        </IconButton>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Content
                         side="bottom"

@@ -1,11 +1,11 @@
+import { Badge, Button, Flex } from "@radix-ui/themes";
 import { BaseDirectory, readTextFile, writeTextFile } from "bridge/fs";
-import clsx from "clsx";
 import { type MouseEvent, useCallback, useMemo, useState } from "react";
 import { getTagTone, type KnownHost, useKnownHostsStore } from "shared";
 import Empty from "@/components/Empty";
 import ListToolbar from "@/components/ListToolbar";
+import PanelTable from "@/components/PanelTable";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
-import panel from "@/styles/panel.module.less";
 import { filterByKeyword } from "@/utils/list";
 import styles from "./index.module.less";
 
@@ -22,6 +22,19 @@ function getFingerprint(key: string) {
   }
 
   return `${key.slice(0, 12)}...${key.slice(-4)}`;
+}
+
+function getTagColor(tag: string) {
+  switch (getTagTone(tag)) {
+    case "Prod":
+      return "red" as const;
+    case "Staging":
+      return "amber" as const;
+    case "Local":
+      return "green" as const;
+    default:
+      return "indigo" as const;
+  }
 }
 
 export default function KnownHosts() {
@@ -74,68 +87,64 @@ export default function KnownHosts() {
   }, [items, keyword]);
 
   return (
-    <section className={panel.page}>
+    <div className={styles.page}>
       <ListToolbar
         title="Known Hosts"
         keyword={keyword}
         onKeywordChange={setKeyword}
         searchPlaceholder="Filter hosts..."
       />
-      <div className={panel.content}>
+      <div className={styles.content}>
         {filteredItems.length ? (
-          <div className={panel.tableWrap}>
-            <table className={panel.table}>
-              <thead>
-                <tr>
-                  <th>Hostname / IP</th>
-                  <th>Key Type</th>
-                  <th>Fingerprint</th>
-                  <th>Label</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className={styles.hostCell}>{item.host}</td>
-                    <td>
-                      <span className={`${panel.tag} ${panel.tagAccent}`}>
-                        {item.type}
-                      </span>
-                    </td>
-                    <td className={styles.fingerprintCell}>
-                      {getFingerprint(item.key)}
-                    </td>
-                    <td>
-                      <span
-                        className={clsx(
-                          panel.tag,
-                          panel[`tag${getTagTone(item.host)}`],
-                        )}
+          <PanelTable>
+            <thead>
+              <tr>
+                <th>Hostname / IP</th>
+                <th>Key Type</th>
+                <th>Fingerprint</th>
+                <th>Label</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item) => (
+                <tr key={item.id}>
+                  <td className={styles.hostCell}>{item.host}</td>
+                  <td>
+                    <Badge color="indigo" size="1">
+                      {item.type}
+                    </Badge>
+                  </td>
+                  <td className={styles.fingerprintCell}>
+                    {getFingerprint(item.key)}
+                  </td>
+                  <td>
+                      <Badge color={getTagColor(item.host)} size="1">
+                      {getKnownHostLabel(item.host)}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Flex gap="1">
+                      <Button
+                        type="button"
+                        color="red"
+                        size="1"
+                          variant="ghost"
+                          className={styles.actionButton}
+                        onClick={(event) => onDelete(event, item)}
                       >
-                        {getKnownHostLabel(item.host)}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={panel.actionGroup}>
-                        <button
-                          type="button"
-                          className={`${panel.actionButton} ${panel.dangerButton}`}
-                          onClick={(event) => onDelete(event, item)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        Remove
+                      </Button>
+                    </Flex>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </PanelTable>
         ) : (
           <Empty desc="There is no known hosts yet." />
         )}
       </div>
-    </section>
+    </div>
   );
 }

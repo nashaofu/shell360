@@ -1,6 +1,5 @@
 import type { Host, PortForwarding } from "bridge/data";
 import { getTagTone } from "shared";
-import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
 import PortForwardingCard from "./PortForwardingCard";
 import PortForwardingLoadingOverlay from "./PortForwardingLoadingOverlay";
@@ -11,17 +10,17 @@ const PORT_FORWARDING_STATUS = {
   pending: {
     label: "Connecting",
     textClassName: styles.statusPending,
-    dotClassName: panel.statusActive,
+    dotClassName: "active",
   },
   failed: {
     label: "Failed",
     textClassName: styles.statusFailed,
-    dotClassName: panel.statusFailed,
+    dotClassName: "failed",
   },
   success: {
     label: "Running",
     textClassName: styles.statusRunning,
-    dotClassName: panel.statusActive,
+    dotClassName: "active",
   },
 };
 
@@ -49,7 +48,7 @@ export default function PortForwardingItem({
     : {
         label: "Stopped",
         textClassName: styles.statusStopped,
-        dotClassName: panel.statusIdle,
+        dotClassName: "idle",
       };
 
   const loadingOverlay = (

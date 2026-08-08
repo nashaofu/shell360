@@ -1,6 +1,6 @@
 import type { Host } from "bridge/data";
 import clsx from "clsx";
-import panel from "@/styles/panel.module.less";
+import { Badge } from "@radix-ui/themes";
 import styles from "./index.module.less";
 
 export type PortForwardingStatusMeta = {
@@ -14,14 +14,14 @@ type HostBadgeProps = {
   tagTone: string;
 };
 
-export function HostBadge({ host, tagTone }: HostBadgeProps) {
+export function HostBadge({ host, tagTone: _tagTone }: HostBadgeProps) {
   return (
     <div className={styles.serverCell}>
       <span>{host?.name || host?.hostname || "--"}</span>
       {host?.tags?.[0] && (
-        <span className={clsx(panel.tag, panel[`tag${tagTone}`])}>
+        <Badge color="gray" size="1">
           {host.tags[0]}
-        </span>
+        </Badge>
       )}
     </div>
   );
@@ -36,7 +36,7 @@ export function StatusBadge({ dot = false, statusMeta }: StatusBadgeProps) {
   return (
     <span className={clsx(styles.statusText, statusMeta.textClassName)}>
       {dot && (
-        <span className={clsx(panel.statusDot, statusMeta.dotClassName)} />
+        <span className={styles.statusDot} data-status={statusMeta.dotClassName} />
       )}
       {statusMeta.label}
     </span>
@@ -46,7 +46,7 @@ export function StatusBadge({ dot = false, statusMeta }: StatusBadgeProps) {
 export function StatusDot({
   statusMeta,
 }: Pick<StatusBadgeProps, "statusMeta">) {
-  return <span className={clsx(panel.statusDot, statusMeta.dotClassName)} />;
+  return <span className={styles.statusDot} data-status={statusMeta.dotClassName} />;
 }
 
 type EndpointValueProps = {

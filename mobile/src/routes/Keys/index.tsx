@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { Button, DropdownMenu, IconButton } from "@radix-ui/themes";
 import { addKey, deleteKey, type Key } from "bridge/data";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
@@ -147,13 +147,15 @@ export default function Keys() {
     (key: Key) => (
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
-          <button
+          <IconButton
             type="button"
-            className="card-more-btn"
+            size="3"
+            variant="ghost"
+            className={styles.moreAction}
             aria-label={`More actions for ${key.name}`}
           >
             <MoreIcon />
-          </button>
+          </IconButton>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
           <DropdownMenu.Item
@@ -182,15 +184,16 @@ export default function Keys() {
   const typeFilterTrigger = (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <button
+        <Button
           type="button"
-          className="toolbar-filter-trigger"
-          data-active={!!selectedType}
+          size="2"
+          variant={selectedType ? "soft" : "surface"}
+          className={styles.filterTrigger}
         >
           <KeyIcon aria-hidden="true" />
           {selectedType ?? "All types"}
           <ArrowDownIcon aria-hidden="true" />
-        </button>
+        </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
         <DropdownMenu.Item onSelect={() => setSelectedType(undefined)}>
@@ -211,13 +214,15 @@ export default function Keys() {
       headerRight={
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <button
+            <IconButton
               type="button"
-              className="mobile-icon-btn"
+              size="3"
+              variant="ghost"
+              className={styles.headerAction}
               aria-label="Generate or import key"
             >
               <AddIcon />
-            </button>
+            </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
             <DropdownMenu.Item onSelect={onGenerateKeyButtonClick}>
@@ -241,7 +246,7 @@ export default function Keys() {
       {items.map((item) => {
         const avatarBg = getAvatarColor(item.name);
         return (
-          <div className="key-list-item" key={item.id}>
+          <div className={styles.listItem} key={item.id}>
             <ItemCard
               icon={
                 <span
@@ -266,7 +271,7 @@ export default function Keys() {
                 </span>
               }
               desc={
-                <span className="mobile-monospace">
+                <span className={styles.monospace}>
                   SHA256:{getKeyPreview(item.publicKey)}
                 </span>
               }
@@ -288,29 +293,33 @@ export default function Keys() {
 
       {!keys.length && (
         <Empty desc="There is no key yet, add it now.">
-          <button
+          <Button
             type="button"
-            className="mobile-primary"
+            size="3"
+            className={styles.emptyPrimary}
             onClick={onAddKeyButtonClick}
           >
             <AddIcon />
             New key
-          </button>
+          </Button>
         </Empty>
       )}
 
       {!!keys.length && !items.length && (
         <Empty desc="No keys match your search.">
-          <button
+          <Button
             type="button"
-            className="mobile-secondary"
+            size="3"
+            variant="soft"
+            color="gray"
+            className={styles.emptySecondary}
             onClick={() => {
               setKeyword("");
               setSelectedType(undefined);
             }}
           >
             Clear search
-          </button>
+          </Button>
         </Empty>
       )}
 

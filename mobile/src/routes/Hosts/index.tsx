@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { Button, DropdownMenu, IconButton } from "@radix-ui/themes";
 import { addHost, deleteHost, type Host } from "bridge/data";
 import { get, omit } from "lodash-es";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
@@ -25,6 +25,7 @@ import SearchToolbar from "@/components/SearchToolbar";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
+import styles from "./index.module.less";
 
 import AddHost from "./AddHost";
 
@@ -226,14 +227,16 @@ export default function Hosts() {
     <Page
       title="Hosts"
       headerRight={
-        <button
+        <IconButton
           type="button"
-          className="mobile-icon-btn"
+          size="3"
+          variant="ghost"
+          className={styles.headerAction}
           onClick={onAddHostButtonClick}
           aria-label="New Host"
         >
           <AddIcon />
-        </button>
+        </IconButton>
       }
     >
       <SearchToolbar
@@ -244,15 +247,16 @@ export default function Hosts() {
         filterTrigger={
           <HostTagsSelect value={selectedTag} onChange={setSelectedTag}>
             {({ label }) => (
-              <button
+              <Button
                 type="button"
-                className="toolbar-filter-trigger"
-                data-active={!!selectedTag}
+                size="2"
+                variant={selectedTag ? "soft" : "surface"}
+                className={styles.filterTrigger}
               >
                 <LabelIcon aria-hidden="true" />
                 {label}
                 <ArrowDownIcon aria-hidden="true" />
-              </button>
+              </Button>
             )}
           </HostTagsSelect>
         }
@@ -261,7 +265,7 @@ export default function Hosts() {
       {items.map((item) => {
         const states = hostTerminalStates.get(item.id);
         return (
-          <div className="host-card-item" key={item.id}>
+          <div className={styles.listItem} key={item.id}>
             <HostCard
               host={item}
               onOpenSsh={() => onOpenConnection(item, "terminal")}
@@ -283,29 +287,33 @@ export default function Hosts() {
 
       {!hosts.length && (
         <Empty desc="There is no host yet, add it now.">
-          <button
+          <Button
             type="button"
-            className="mobile-primary"
+            size="3"
+            className={styles.emptyPrimary}
             onClick={onAddHostButtonClick}
           >
             <AddIcon />
             New Host
-          </button>
+          </Button>
         </Empty>
       )}
 
       {!!hosts.length && !items.length && (
         <Empty desc="No hosts match your search." icon={<HostIcon />}>
-          <button
+          <Button
             type="button"
-            className="mobile-secondary"
+            size="3"
+            variant="soft"
+            color="gray"
+            className={styles.emptySecondary}
             onClick={() => {
               setKeyword("");
               setSelectedTag(undefined);
             }}
           >
             Clear search
-          </button>
+          </Button>
         </Empty>
       )}
 

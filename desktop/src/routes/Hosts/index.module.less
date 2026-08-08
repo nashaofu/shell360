@@ -214,3 +214,50 @@
     min-height: auto;
   }
 }
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+
+.splitButton > :global(button) {
+  position: relative;
+
+  &:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &:last-child {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
+.toolbarButton,
+.toolbarPrimaryButton {
+  height: 28px;
+  padding-inline: 12px;
+  font-size: 11px;
+}
+
+.toolbarPrimaryButton {
+  background: color-mix(in srgb, var(--accent-9) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  color: var(--accent-11);
+}
+
+.actionButton {
+  min-height: 22px;
+  padding-inline: 8px;
+  font-size: 10.5px;
+}

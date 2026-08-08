@@ -33,7 +33,7 @@ export default function App() {
       className={styles.app}
       hasBackground
       appearance={appearance}
-      accentColor="indigo"
+      accentColor="green"
       grayColor="gray"
       panelBackground="translucent"
       radius="medium"

@@ -1,6 +1,5 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { Button, DropdownMenu, Flex } from "@radix-ui/themes";
 import { addKey, deleteKey, type Key } from "bridge/data";
-import clsx from "clsx";
 import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -16,10 +15,10 @@ import AddKey from "@/components/AddKey";
 import Empty from "@/components/Empty";
 import GenerateKey from "@/components/GenerateKey";
 import ListToolbar from "@/components/ListToolbar";
+import PanelTable from "@/components/PanelTable";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useListView } from "@/hooks/useListView";
 import useMessage from "@/hooks/useMessage";
-import panel from "@/styles/panel.module.less";
 import { filterByKeyword } from "@/utils/list";
 import styles from "./index.module.less";
 import KeyActions from "./KeyActions";
@@ -118,7 +117,7 @@ export default function Keys() {
 
   return (
     <>
-      <section className={panel.page}>
+      <div className={styles.page}>
         <ListToolbar
           title="Keys"
           keyword={keyword}
@@ -127,24 +126,26 @@ export default function Keys() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         >
-          <div className={panel.splitButton}>
-            <button
+          <Flex gap="0" className={styles.splitButton}>
+            <Button
               type="button"
-              className={clsx(panel.button, panel.buttonPrimary)}
+              variant="soft"
+              className={styles.toolbarPrimaryButton}
               onClick={() => setIsOpenGenerateKey(true)}
             >
               <KeyIcon width="11" height="11" />
               Generate Key
-            </button>
+            </Button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
-                <button
+                <Button
                   type="button"
-                  className={clsx(panel.button, panel.buttonPrimary)}
+                  variant="soft"
+                  className={styles.toolbarPrimaryButton}
                   aria-label="More key options"
                 >
                   <MoreIcon width="13" height="13" />
-                </button>
+                </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content side="bottom" align="end" sideOffset={6}>
                 <DropdownMenu.Item onSelect={() => setIsOpenGenerateKey(true)}>
@@ -157,9 +158,9 @@ export default function Keys() {
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
-          </div>
+          </Flex>
         </ListToolbar>
-        <div className={panel.content}>
+        <div className={styles.content}>
           {loading ? (
             <Empty desc="Loading keys..." />
           ) : items.length && viewMode === "grid" ? (
@@ -213,93 +214,88 @@ export default function Keys() {
               })}
             </div>
           ) : items.length ? (
-            <div className={panel.tableWrap}>
-              <table className={panel.table}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Private Key</th>
-                    <th>Public Key</th>
-                    <th>Passphrase</th>
-                    <th>Certificate</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id}>
-                      <td className={styles.listName}>{item.name}</td>
-                      <td>
-                        <span className={styles.typeBadge}>
-                          {getKeyTypeLabel(item)}
+            <PanelTable>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Private Key</th>
+                  <th>Public Key</th>
+                  <th>Passphrase</th>
+                  <th>Certificate</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td className={styles.listName}>{item.name}</td>
+                    <td>
+                      <span className={styles.typeBadge}>
+                        {getKeyTypeLabel(item)}
+                      </span>
+                    </td>
+                    <td>
+                      {item.privateKey ? (
+                        <span className={styles.stateBadge}>Configured</span>
+                      ) : (
+                        "--"
+                      )}
+                    </td>
+                    <td className={styles.fingerprint}>
+                      {getKeyPreview(item.publicKey)}
+                    </td>
+                    <td>
+                      {item.passphrase ? (
+                        <span className={styles.stateBadge}>
+                          <LockIcon width="9" height="9" />
+                          Set
                         </span>
-                      </td>
-                      <td>
-                        {item.privateKey ? (
-                          <span className={styles.stateBadge}>Configured</span>
-                        ) : (
-                          "--"
-                        )}
-                      </td>
-                      <td className={styles.fingerprint}>
-                        {getKeyPreview(item.publicKey)}
-                      </td>
-                      <td>
-                        {item.passphrase ? (
-                          <span className={styles.stateBadge}>
-                            <LockIcon width="9" height="9" />
-                            Set
-                          </span>
-                        ) : (
-                          "--"
-                        )}
-                      </td>
-                      <td>
-                        {item.certificate ? (
-                          <span className={styles.certBadge}>
-                            Signed certificate
-                          </span>
-                        ) : (
-                          "--"
-                        )}
-                      </td>
-                      <td>
-                        <KeyActions
-                          item={item}
-                          viewMode="list"
-                          onCopy={onCopyKey}
-                          onEdit={onEdit}
-                          onDelete={onDelete}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      ) : (
+                        "--"
+                      )}
+                    </td>
+                    <td>
+                      {item.certificate ? (
+                        <span className={styles.certBadge}>
+                          Signed certificate
+                        </span>
+                      ) : (
+                        "--"
+                      )}
+                    </td>
+                    <td>
+                      <KeyActions
+                        item={item}
+                        viewMode="list"
+                        onCopy={onCopyKey}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </PanelTable>
           ) : (
             <Empty desc="There is no key yet, add it now.">
-              <button
-                type="button"
-                className={panel.button}
-                onClick={() => setIsOpenAddKey(true)}
-              >
+              <Button type="button" variant="soft" className={styles.toolbarButton} onClick={() => setIsOpenAddKey(true)}>
                 <FileUploadIcon width="11" height="11" />
                 Import Key
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={clsx(panel.button, panel.buttonPrimary)}
+                variant="soft"
+                className={styles.toolbarPrimaryButton}
                 onClick={() => setIsOpenGenerateKey(true)}
               >
                 <KeyIcon width="11" height="11" />
                 Generate Key
-              </button>
+              </Button>
             </Empty>
           )}
         </div>
-      </section>
+      </div>
 
       <AddKey
         open={isOpenAddKey}

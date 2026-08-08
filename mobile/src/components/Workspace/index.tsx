@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -184,16 +184,17 @@ export default function Workspace() {
           <h2 className={styles.emptyTitle}>No active sessions</h2>
           <p className={styles.emptyDesc}>Open a host terminal to begin.</p>
           <div className={styles.emptyActions}>
-            <button
+            <Button
               type="button"
-              className="mobile-primary"
+              size="3"
+              className={styles.emptyPrimary}
               onClick={() => {
                 setVisible(false);
                 navigate("/");
               }}
             >
               Browse Hosts
-            </button>
+            </Button>
           </div>
         </main>
       ) : (

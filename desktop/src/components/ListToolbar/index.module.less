@@ -1,0 +1,79 @@
+.toolbar {
+  display: flex;
+  height: 52px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--app-panel-border, var(--gray-a4));
+  background: var(--app-toolbar-bg, var(--color-panel-solid, var(--gray-1)));
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-12);
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.search {
+  min-width: 160px;
+  width: 220px;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-surface) 68%, var(--gray-a2));
+  color: var(--gray-9);
+  box-sizing: border-box;
+  flex-shrink: 1;
+}
+
+.searchIcon { width: 12px; height: 12px; flex-shrink: 0; }
+
+.searchInput {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--gray-12);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.searchInput::placeholder { color: var(--gray-9); }
+
+.toggleGroup {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--app-soft-border, var(--gray-a5));
+  border-radius: 6px;
+}
+
+.toggleButton {
+  width: 28px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: var(--gray-9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.toggleButton:hover { background: var(--app-hover-bg, var(--gray-a3)); color: var(--gray-12); }
+.toggleButtonActive { background: var(--app-active-bg, var(--gray-a4)); color: var(--gray-12); }
+
+@media (max-width: 720px) {
+  .toolbar { padding: 12px 16px; height: auto; min-height: 52px; flex-wrap: wrap; }
+  .title { width: 100%; flex: none; }
+  .search { min-width: 0; width: 100%; }
+}

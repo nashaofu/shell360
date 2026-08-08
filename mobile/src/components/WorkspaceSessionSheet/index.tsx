@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@radix-ui/themes";
+import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import { type ReactNode, useRef, useState } from "react";
 import type { TerminalAtom } from "shared";
 import {
@@ -151,14 +151,15 @@ export default function WorkspaceSessionSheet({
         onCreateMenu ? (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <button
+              <IconButton
                 type="button"
-                className="mobile-icon-btn"
-                style={{ width: 40, height: 40 }}
+                size="3"
+                variant="ghost"
+                className={styles.headerAction}
                 aria-label="New session"
               >
                 <AddIcon />
-              </button>
+              </IconButton>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content side="top" align="end" sideOffset={6}>
               {onCreateMenu}

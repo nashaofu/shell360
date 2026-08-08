@@ -1,7 +1,6 @@
 import type { Key } from "bridge/data";
-import clsx from "clsx";
+import { Button, Flex } from "@radix-ui/themes";
 import { ContentCopyIcon, DeleteIcon, EditIcon } from "shared";
-import panel from "@/styles/panel.module.less";
 import styles from "./index.module.less";
 
 type KeyActionsProps = {
@@ -21,29 +20,33 @@ export default function KeyActions({
 }: KeyActionsProps) {
   if (viewMode === "list") {
     return (
-      <div className={panel.actionGroup}>
-        <button
+      <Flex gap="1">
+        <Button
           type="button"
-          className={panel.actionButton}
+          size="1"
+          variant="ghost"
           onClick={() => onCopy(item)}
         >
           Duplicate
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={panel.actionButton}
+          size="1"
+          variant="ghost"
           onClick={() => onEdit(item)}
         >
           Edit
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={clsx(panel.actionButton, panel.dangerButton)}
+          size="1"
+          variant="ghost"
+          color="red"
           onClick={() => onDelete(item)}
         >
           Delete
-        </button>
-      </div>
+        </Button>
+      </Flex>
     );
   }
 
