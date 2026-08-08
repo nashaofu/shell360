@@ -7,7 +7,6 @@ export const WORKSPACE_DIR = ROOT_DIR;
 export const ANDROID_DIR = path.join(ROOT_DIR, "android");
 export const IS_WINDOWS = process.platform === "win32";
 export const ANDROID_HOME = process.env.ANDROID_HOME;
-export const NDK_HOME = process.env.NDK_HOME;
 export const DEV_SERVER_PORT = 1421;
 
 export const ADB_PATH = path.join(

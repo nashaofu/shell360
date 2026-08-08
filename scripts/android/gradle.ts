@@ -1,10 +1,5 @@
 import { execa, type Options, type ResultPromise } from "execa";
-import {
-  ANDROID_DIR,
-  ANDROID_HOME,
-  GRADLE_PATH,
-  NDK_HOME,
-} from "./constants.ts";
+import { ANDROID_DIR, ANDROID_HOME, GRADLE_PATH } from "./constants.ts";
 
 export function gradlew(
   args: string[],
@@ -12,14 +7,14 @@ export function gradlew(
 ): ResultPromise {
   return execa(GRADLE_PATH, args, {
     cwd: ANDROID_DIR,
-    env: {
-      ...process.env,
-      ANDROID_HOME,
-      NDK_HOME,
-    },
     windowsHide: true,
     encoding: "utf8",
     stdio: "inherit",
     ...options,
+    env: {
+      ...process.env,
+      ANDROID_HOME,
+      ...options?.env,
+    },
   });
 }

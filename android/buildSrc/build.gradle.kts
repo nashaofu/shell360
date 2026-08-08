@@ -7,4 +7,3 @@ repositories {
     mavenCentral()
     gradlePluginPortal()
 }
-

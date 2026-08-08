@@ -42,10 +42,10 @@ rustup target list --installed
 The project reads the following environment variables:
 
 - `ANDROID_HOME`: the Android SDK directory.
-- `NDK_HOME`: one installed NDK directory, such as `$ANDROID_HOME/ndk/30.0.15729638`.
 - `JAVA_HOME`: the JDK directory. Android Studio's bundled JetBrains Runtime is recommended.
 
-`ANDROID_HOME` and `NDK_HOME` are required by the project scripts. The scripts locate
+`ANDROID_HOME` is required by the project scripts. The project fixes the NDK version in
+the `shell360NativeBuild` Gradle configuration and locates it below `ANDROID_HOME/ndk`. The scripts locate
 `adb` and the emulator below `ANDROID_HOME`, so adding them to `PATH` is optional.
 
 The examples below use NDK `30.0.15729638` to keep local and CI builds consistent.
@@ -58,7 +58,6 @@ Add the following to `~/.zshrc`:
 
 ```shell
 export ANDROID_HOME="$HOME/Library/Android/sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
@@ -71,7 +70,6 @@ Add the following to `~/.bashrc`:
 
 ```shell
 export ANDROID_HOME="$HOME/Android/Sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
 export JAVA_HOME="/opt/android-studio/jbr"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
@@ -86,11 +84,9 @@ Android Studio after running it:
 
 ```powershell
 $androidHome = "$env:LOCALAPPDATA\Android\Sdk"
-$ndkHome = "$androidHome\ndk\30.0.15729638"
 $javaHome = "C:\Program Files\Android\Android Studio\jbr"
 
 [Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
-[Environment]::SetEnvironmentVariable("NDK_HOME", $ndkHome, "User")
 [Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -101,7 +97,7 @@ $androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;
 Verify the configuration in a new terminal:
 
 ```shell
-node -e "for (const name of ['ANDROID_HOME', 'NDK_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<not set>'))"
+node -e "for (const name of ['ANDROID_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<not set>'))"
 ```
 
 ## Project Setup

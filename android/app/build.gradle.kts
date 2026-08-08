@@ -1,18 +1,33 @@
+import com.nashaofu.shell360.gradle.Shell360AndroidNativeBuildExtension
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("shell360.android.native-build")
 }
 
-val generatedDir = layout.buildDirectory.dir("generated").get().asFile
-val uniffiSourceDir = generatedDir.resolve("source/uniffi")
-val debugRustDir = generatedDir.resolve("rust/debug/jniLibs")
-val releaseRustDir = generatedDir.resolve("rust/release/jniLibs")
-val webAssetsDir = generatedDir.resolve("webAssets")
 val debugWebViewOrigin = "http://127.0.0.1:1421"
 val releaseWebViewOrigin = "https://appassets.androidplatform.net"
+val signingStoreFile = providers
+    .environmentVariable("SIGNING_STORE_FILE")
+    .orNull
+val signingStorePassword = providers
+    .environmentVariable("SIGNING_STORE_PASSWORD")
+    .orNull
+val signingKeyPassword = providers
+    .environmentVariable("SIGNING_KEY_PASSWORD")
+    .orNull
 
 fun String.asBuildConfigString() = "\"$this\""
+
+shell360NativeBuild {
+    ndkVersion.set("30.0.15729638")
+    androidApiLevel.set(29)
+    uniFfiSourceDir.set(layout.buildDirectory.dir("generated/source/uniffi"))
+    debugRustDir.set(layout.buildDirectory.dir("generated/rust/debug/jniLibs"))
+    releaseRustDir.set(layout.buildDirectory.dir("generated/rust/release/jniLibs"))
+    webAssetsDir.set(layout.buildDirectory.dir("generated/webAssets"))
+}
 
 android {
     namespace = "com.nashaofu.shell360"
@@ -21,17 +36,23 @@ android {
             minorApiLevel = 1
         }
     }
-
     defaultConfig {
         applicationId = "com.nashaofu.shell360"
-        minSdk = 29
+        minSdk = shell360NativeBuild.androidApiLevel.get()
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    signingConfigs {
+        create("release") {
+            storeFile = signingStoreFile?.let(::file)
+            storePassword = signingStorePassword
+            keyAlias = "upload"
+            keyPassword = signingKeyPassword
+        }
+    }
     buildTypes {
         debug {
             buildConfigField("String", "WEBVIEW_URL", debugWebViewOrigin.asBuildConfigString())
@@ -48,8 +69,9 @@ android {
                 "WEBVIEW_ORIGIN",
                 releaseWebViewOrigin.asBuildConfigString(),
             )
+            signingConfig = signingConfigs.getByName("release")
             optimization {
-                enable = false
+                enable = true
             }
         }
     }
@@ -63,17 +85,17 @@ android {
     }
     sourceSets {
         getByName("main") {
-            kotlin.directories.add(uniffiSourceDir.absolutePath)
+            kotlin.directories.add(shell360NativeBuild.uniFfiSourceDir.get().asFile.absolutePath)
         }
         getByName("debug") {
-            jniLibs.directories.add(debugRustDir.absolutePath)
+            jniLibs.directories.add(shell360NativeBuild.debugRustDir.get().asFile.absolutePath)
         }
         getByName("release") {
-            assets.directories.add(webAssetsDir.absolutePath)
-            jniLibs.directories.add(releaseRustDir.absolutePath)
+            jniLibs.directories.add(shell360NativeBuild.releaseRustDir.get().asFile.absolutePath)
+            assets.directories.add(shell360NativeBuild.webAssetsDir.get().asFile.absolutePath)
         }
     }
-    ndkVersion = "30.0.15729638 rc2"
+    ndkVersion = shell360NativeBuild.ndkVersion.get()
 }
 
 dependencies {

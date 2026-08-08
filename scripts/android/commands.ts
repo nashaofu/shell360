@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import os from "node:os";
 import { execa, type ResultPromise } from "execa";
 import exitHook from "exit-hook";
 import fkill from "fkill";
@@ -81,9 +83,22 @@ export async function buildAndroid({
 }: {
   mode: "debug" | "release";
 }): Promise<void> {
-  const task = mode === "debug" ? "assembleDebug" : "assembleRelease";
+  const ANDROID_KEY_JKS = process.env.ANDROID_KEY_JKS;
+  const signingStoreFile = `${os.tmpdir()}/android_key_jks.jks`;
 
-  await gradlew([task]);
+  await fs.writeFile(signingStoreFile, ANDROID_KEY_JKS ?? "", {
+    encoding: "base64",
+  });
+
+  const variant = mode === "debug" ? "Debug" : "Release";
+
+  await gradlew([`assemble${variant}`, `bundle${variant}`], {
+    env: {
+      SIGNING_STORE_FILE: signingStoreFile,
+      SIGNING_STORE_PASSWORD: process.env.ANDROID_STORE_PASSWORD,
+      SIGNING_KEY_PASSWORD: process.env.ANDROID_KEY_PASSWORD,
+    },
+  });
 }
 
 export async function devAndroid({

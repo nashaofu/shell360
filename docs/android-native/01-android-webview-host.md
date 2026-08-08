@@ -51,8 +51,8 @@ Release:
 
 ## 开发环境
 
-先设置 `ANDROID_HOME` 和 `NDK_HOME`，分别指向现有的 Android SDK 和 NDK 目录。
-Gradle 从 `NDK_HOME` 定位工具链；开发脚本从 `ANDROID_HOME` 定位
+先设置 `ANDROID_HOME`，使其指向现有的 Android SDK 目录，并在 SDK 中安装
+`shell360NativeBuild` 配置的 NDK 版本。Gradle 根据该固定版本定位工具链；开发脚本从 `ANDROID_HOME` 定位
 `platform-tools/adb`，无需将 adb 加入 `PATH`。
 macOS、Linux 和 Windows 的完整环境变量示例参见
 [贡献指南中的 Android 开发特定要求](../CONTRIBUTING-zh_cn.md#android-开发特定要求)。

@@ -6,7 +6,6 @@ import {
   ANDROID_HOME,
   EMULATOR_PATH,
   GRADLE_PATH,
-  NDK_HOME,
 } from "./constants.ts";
 
 if (!ANDROID_HOME) {
@@ -17,14 +16,7 @@ if (!existsSync(ANDROID_HOME)) {
   console.error(`[android] ANDROID_HOME does not exist: ${ANDROID_HOME}`);
   process.exit(1);
 }
-if (!NDK_HOME) {
-  console.error("[android] NDK_HOME is not set");
-  process.exit(1);
-}
-if (!existsSync(NDK_HOME)) {
-  console.error(`[android] NDK_HOME does not exist: ${NDK_HOME}`);
-  process.exit(1);
-}
+
 if (!existsSync(ADB_PATH)) {
   console.error(
     `[android] adb not found: ${ADB_PATH}. Install Android SDK Platform-Tools`,
@@ -60,7 +52,7 @@ await yargs()
   })
   .command<{ mode: "debug" | "release" }>({
     command: "build",
-    describe: "Build the Android APK",
+    describe: "Build the Android APK and app bundle",
     builder: {
       mode: {
         choices: ["debug", "release"] as const,

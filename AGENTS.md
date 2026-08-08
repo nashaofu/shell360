@@ -50,8 +50,8 @@ pnpm tauri build
 
 # Native Android (requires Android SDK/NDK, JAVA_HOME, and Rust Android targets)
 # rustup target add aarch64-linux-android x86_64-linux-android
-# Set ANDROID_HOME and NDK_HOME to existing SDK and NDK directories; adb does not
-# need to be in PATH. ANDROID_NDK_HOME is not supported.
+# Set ANDROID_HOME to an existing SDK directory; adb does not need to be in PATH.
+# Install the NDK version configured by shell360NativeBuild in the Android SDK.
 # For Android Studio development, start the mobile dev server separately and run
 # `adb -s <serial> reverse tcp:1421 tcp:1421` before using Android Studio Run.
 pnpm run android:dev      # select device, start dev server, install and launch
@@ -65,7 +65,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
   - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
-  - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat`; `ANDROID_HOME` and `NDK_HOME` must point to existing SDK and NDK directories. `ANDROID_NDK_HOME` is not supported.
+  - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat`; `ANDROID_HOME` must point to an existing SDK directory containing the NDK version configured by `shell360NativeBuild`.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
 - Keep AI-facing guidance in this file only; do not create or maintain duplicate Copilot-specific instruction files.
@@ -152,7 +152,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 
 ## Commit Message Requirements
 
-- Use Conventional Commits style: `<type>(<scope>): <subject>`.
+- Commit messages must use Semantic Commit Messages (Conventional Commits) format: `<type>(<scope>): <subject>`.
 - Preferred types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, and `revert`.
 - Keep the subject concise, imperative, and preferably under 72 characters.
 - Use a body only when extra context is helpful, and keep it focused on the why and impact of the change.

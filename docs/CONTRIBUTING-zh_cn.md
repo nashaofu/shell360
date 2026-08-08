@@ -40,10 +40,10 @@ rustup target list --installed
 项目使用以下环境变量：
 
 - `ANDROID_HOME`：Android SDK 目录。
-- `NDK_HOME`：某个已安装的 NDK 目录，例如 `$ANDROID_HOME/ndk/30.0.15729638`。
 - `JAVA_HOME`：JDK 目录，推荐使用 Android Studio 内置的 JetBrains Runtime。
 
-项目脚本要求配置 `ANDROID_HOME` 和 `NDK_HOME`。脚本会直接从 `ANDROID_HOME` 定位 `adb`
+项目脚本要求配置 `ANDROID_HOME`。项目在 `shell360NativeBuild` Gradle 配置中固定 NDK 版本，
+并从 `ANDROID_HOME/ndk` 定位它。脚本会直接从 `ANDROID_HOME` 定位 `adb`
 和模拟器，因此是否将它们加入 `PATH` 均可。
 
 下面的示例统一使用 NDK `30.0.15729638`，以保证本地和 CI 构建环境一致。配置环境变量前，
@@ -55,7 +55,6 @@ rustup target list --installed
 
 ```shell
 export ANDROID_HOME="$HOME/Library/Android/sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
@@ -68,7 +67,6 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:
 
 ```shell
 export ANDROID_HOME="$HOME/Android/Sdk"
-export NDK_HOME="$ANDROID_HOME/ndk/30.0.15729638"
 export JAVA_HOME="/opt/android-studio/jbr"
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
@@ -82,11 +80,9 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:
 
 ```powershell
 $androidHome = "$env:LOCALAPPDATA\Android\Sdk"
-$ndkHome = "$androidHome\ndk\30.0.15729638"
 $javaHome = "C:\Program Files\Android\Android Studio\jbr"
 
 [Environment]::SetEnvironmentVariable("ANDROID_HOME", $androidHome, "User")
-[Environment]::SetEnvironmentVariable("NDK_HOME", $ndkHome, "User")
 [Environment]::SetEnvironmentVariable("JAVA_HOME", $javaHome, "User")
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -97,7 +93,7 @@ $androidPath = "$javaHome\bin;$androidHome\platform-tools;$androidHome\emulator;
 在新终端中检查配置：
 
 ```shell
-node -e "for (const name of ['ANDROID_HOME', 'NDK_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<未设置>'))"
+node -e "for (const name of ['ANDROID_HOME', 'JAVA_HOME']) console.log(name + '=' + (process.env[name] || '<未设置>'))"
 ```
 
 ## 项目设置
