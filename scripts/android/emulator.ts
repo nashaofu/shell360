@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { setTimeout as delay } from "node:timers/promises";
+import fs from "node:fs";
+import timers from "node:timers/promises";
 import { execa, type Options, type ResultPromise } from "execa";
 import fkill from "fkill";
 import { adb, parseAdbDevices } from "./adb.ts";
@@ -20,7 +20,7 @@ function emulator(args: string[], options?: Partial<Options>): ResultPromise {
 export async function getAvdNames(
   cancelSignal?: AbortSignal,
 ): Promise<string[]> {
-  if (!existsSync(EMULATOR_PATH)) {
+  if (!fs.existsSync(EMULATOR_PATH)) {
     return [];
   }
 
@@ -82,7 +82,7 @@ async function waitForEmulator(
     }
 
     if (!serial) {
-      await delay(EMULATOR_POLL_INTERVAL, undefined, {
+      await timers.setTimeout(EMULATOR_POLL_INTERVAL, undefined, {
         signal: cancelSignal,
       });
       continue;
@@ -97,7 +97,9 @@ async function waitForEmulator(
       return serial;
     }
 
-    await delay(EMULATOR_POLL_INTERVAL, undefined, { signal: cancelSignal });
+    await timers.setTimeout(EMULATOR_POLL_INTERVAL, undefined, {
+      signal: cancelSignal,
+    });
   }
 
   throw new Error(`Timed out waiting for Android emulator: ${avdName}`);

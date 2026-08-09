@@ -596,13 +596,12 @@ Rust SFTP → App cache 临时文件 → UIDocumentPicker/export → 用户目�
 
 ```text
 pnpm run ios:dev
-pnpm run ios:build
 
-# CI 无签名校验（默认）
-pnpm run ios:build --archive
-
-# 真机签名归档
-CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES pnpm run ios:build --archive
+# 签名归档并导出 IPA
+IOS_CERTIFICATE=<p12-base64> \
+IOS_CERTIFICATE_PASSWORD=<p12-password> \
+IOS_MOBILE_PROVISION=<mobileprovision-base64> \
+pnpm dotenvx pnpm run ios:build
 ```
 
 ### Debug 流程
@@ -633,7 +632,9 @@ pnpm --filter mobile run build
 - Xcode 共享 Scheme 的 Build Pre-action 会在 Release 构建计划创建前通过 `pnpm run ios:web-assets` 生成 WebAssets，Target Build Phase 再通过 `pnpm run ios:build-native` 生成 UniFFI binding 和当前平台静态库；因此命令行和直接点击 Xcode Build 都能使用最新产物。
 - iOS 命令由 `scripts/ios/index.ts` 提供，和 Android 一样通过 Node.js 统一编排。
 - `pnpm run ios:dev --device <模拟器名称或 UDID>` 可指定模拟器；未指定时交互选择。
-- `pnpm run ios:build` 构建 Release 模拟器 App，`pnpm run ios:build --archive` 创建 device archive。
+- `pnpm run ios:build` 创建签名的 Release device archive，并使用 `app-store-connect` 导出 `ios/build/shell360.ipa`；任一签名变量为空时立即失败。
+- 签名流程使用独立的临时 Keychain 和最小文件权限，并在构建结束后恢复 Keychain 搜索列表、删除临时描述文件；描述文件会在归档前校验有效期和 Bundle ID。
+- `ios:dev` 从 Xcode Build Settings 读取实际 `.app` 产物路径，不依赖 DerivedData 的内部目录结构；CI 从 `ios/build` 收集 `.xcarchive` 和 `.ipa`。
 - `ios:dev` 和 `ios:build` 只负责调用 Xcode；UniFFI 由 Target Build Phase 生成，Release WebAssets 由共享 Scheme 的 Build Pre-action 生成。
 - 不固定不存在的 Xcode App 路径；使用明确、可覆盖的 Developer Directory。
 - 从统一版本源生成 Marketing Version 和 Build Number。

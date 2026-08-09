@@ -2,15 +2,15 @@ import exitHook from "exit-hook";
 import fkill from "fkill";
 import { startMobileDevServer } from "../../utils/mobileDevServer.ts";
 import {
-  BUILD_DIR,
   BUNDLE_ID,
+  DERIVED_DATA_PATH,
   DEV_SERVER_PORT,
   PROJECT_PATH,
   SCHEME,
   WORKSPACE_DIR,
 } from "../constants.ts";
 import { bootSimulator, resolveSimulator } from "../devices.ts";
-import { simctl, xcodebuild } from "../xcode.ts";
+import { readBuildSettings, simctl, xcodebuild } from "../xcode.ts";
 
 export async function dev({ device }: { device?: string }): Promise<void> {
   const simulator = await resolveSimulator(device);
@@ -30,7 +30,7 @@ export async function dev({ device }: { device?: string }): Promise<void> {
       return fkill(server.pid, { silent: true, force: true, tree: true });
     }
   });
-  await xcodebuild([
+  const buildArguments = [
     "-project",
     PROJECT_PATH,
     "-scheme",
@@ -39,14 +39,22 @@ export async function dev({ device }: { device?: string }): Promise<void> {
     "Debug",
     "-sdk",
     "iphonesimulator",
+    "-destination",
+    `platform=iOS Simulator,id=${simulator.udid}`,
     "-derivedDataPath",
-    `${BUILD_DIR}/DerivedData`,
-    "build",
-  ]);
+    DERIVED_DATA_PATH,
+  ];
+  await xcodebuild([...buildArguments, "build"]);
+  const settings = await readBuildSettings(buildArguments);
+  const targetBuildDirectory = settings.TARGET_BUILD_DIR;
+  const productName = settings.FULL_PRODUCT_NAME;
+  if (!targetBuildDirectory || !productName) {
+    throw new Error("Xcode did not report the built app location");
+  }
   await simctl([
     "install",
     simulator.udid,
-    `${BUILD_DIR}/DerivedData/Build/Products/Debug-iphonesimulator/shell360.app`,
+    `${targetBuildDirectory}/${productName}`,
   ]);
   await simctl(["launch", simulator.udid, BUNDLE_ID]);
   await server;

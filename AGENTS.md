@@ -59,8 +59,7 @@ pnpm run android:build    # release APK
 
 # iOS (macOS + Xcode)
 pnpm run ios:dev           # select/boot simulator, start mobile dev server, build and launch
-pnpm run ios:build         # build unsigned Release simulator app
-pnpm run ios:build --archive # create unsigned Release archive by default
+pnpm run ios:build         # create a Release device archive; signs when iOS signing env vars are set
 pnpm run ios:build-native --platform iphonesimulator --configuration Debug --archs arm64
 ```
 

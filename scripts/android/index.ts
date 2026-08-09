@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import fs from "node:fs";
 import yargs from "yargs";
 import { build, dev } from "./commands/index.ts";
 import {
@@ -12,22 +12,22 @@ if (!ANDROID_HOME) {
   console.error("[android] ANDROID_HOME is not set");
   process.exit(1);
 }
-if (!existsSync(ANDROID_HOME)) {
+if (!fs.existsSync(ANDROID_HOME)) {
   console.error(`[android] ANDROID_HOME does not exist: ${ANDROID_HOME}`);
   process.exit(1);
 }
 
-if (!existsSync(ADB_PATH)) {
+if (!fs.existsSync(ADB_PATH)) {
   console.error(
     `[android] adb not found: ${ADB_PATH}. Install Android SDK Platform-Tools`,
   );
   process.exit(1);
 }
-if (!existsSync(GRADLE_PATH)) {
+if (!fs.existsSync(GRADLE_PATH)) {
   console.error(`[android] Gradle Wrapper not found: ${GRADLE_PATH}`);
   process.exit(1);
 }
-if (!existsSync(EMULATOR_PATH)) {
+if (!fs.existsSync(EMULATOR_PATH)) {
   console.warn(`[android] Emulator not found: ${EMULATOR_PATH}`);
 }
 

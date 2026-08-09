@@ -1,7 +1,9 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import url from "node:url";
 
-export const WORKSPACE_DIR = fileURLToPath(new URL("../../", import.meta.url));
+export const WORKSPACE_DIR = url.fileURLToPath(
+  new URL("../../", import.meta.url),
+);
 export const ANDROID_DIR = path.join(WORKSPACE_DIR, "android");
 export const IS_WINDOWS = process.platform === "win32";
 export const ANDROID_HOME = process.env.ANDROID_HOME;

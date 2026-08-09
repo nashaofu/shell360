@@ -1,4 +1,4 @@
-import { setTimeout as delay } from "node:timers/promises";
+import timers from "node:timers/promises";
 import { execa, type Options, type ResultPromise } from "execa";
 import { ADB_PATH, ANDROID_PACKAGE_NAME, WORKSPACE_DIR } from "./constants.ts";
 
@@ -99,7 +99,7 @@ export async function reverseTcpPort(
       return;
     }
 
-    await delay(500, undefined, { signal: cancelSignal });
+    await timers.setTimeout(500, undefined, { signal: cancelSignal });
   }
 
   throw new Error(`Failed to reverse ${address} on ${serial}`);
@@ -141,7 +141,7 @@ export async function monitorWebViewDebugPort(
           });
         }
         forwardedSocket = undefined;
-        await delay(1_000, undefined, { signal: cancelSignal });
+        await timers.setTimeout(1_000, undefined, { signal: cancelSignal });
         continue;
       }
 
@@ -173,7 +173,7 @@ export async function monitorWebViewDebugPort(
         );
       }
 
-      await delay(1_000, undefined, { signal: cancelSignal });
+      await timers.setTimeout(1_000, undefined, { signal: cancelSignal });
     }
   } catch (error) {
     if (!cancelSignal.aborted) throw error;

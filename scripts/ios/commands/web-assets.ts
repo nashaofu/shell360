@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { execa } from "execa";
 import { IOS_DIR, WORKSPACE_DIR } from "../constants.ts";
@@ -9,9 +9,9 @@ export async function webAssets(): Promise<void> {
     cwd: WORKSPACE_DIR,
     stdio: "inherit",
   });
-  await rm(webAssetsPath, { recursive: true, force: true });
-  await mkdir(webAssetsPath, { recursive: true });
-  await cp(path.join(WORKSPACE_DIR, "mobile", "dist"), webAssetsPath, {
+  await fs.rm(webAssetsPath, { recursive: true, force: true });
+  await fs.mkdir(webAssetsPath, { recursive: true });
+  await fs.cp(path.join(WORKSPACE_DIR, "mobile", "dist"), webAssetsPath, {
     recursive: true,
   });
   console.log(`[ios] Copied mobile/dist into ${webAssetsPath}`);

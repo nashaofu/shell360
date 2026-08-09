@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { execa } from "execa";
 import { IOS_DIR, WORKSPACE_DIR } from "../constants.ts";
@@ -6,13 +6,19 @@ import { IOS_DIR, WORKSPACE_DIR } from "../constants.ts";
 const GENERATED_ROOT = path.join(IOS_DIR, "shell360", "Generated");
 const FFI_PACKAGE = "shell360-ffi";
 
+export type NativePlatform = "iphoneos" | "iphonesimulator";
+export type NativeConfiguration = "Debug" | "Release";
+
 type BuildNativeOptions = {
-  platform: string;
-  configuration: string;
+  platform: NativePlatform;
+  configuration: NativeConfiguration;
   archs: string;
 };
 
-function resolveRustTarget(platform: string, architecture: string): string {
+function resolveRustTarget(
+  platform: NativePlatform,
+  architecture: string,
+): string {
   if (platform === "iphoneos" && architecture === "arm64") {
     return "aarch64-apple-ios";
   }
@@ -53,7 +59,7 @@ async function buildRustLibrary(
 }
 
 async function generateSwiftBindings(library: string): Promise<void> {
-  await mkdir(GENERATED_ROOT, { recursive: true });
+  await fs.mkdir(GENERATED_ROOT, { recursive: true });
   await execa(
     "cargo",
     [
@@ -75,7 +81,7 @@ async function generateSwiftBindings(library: string): Promise<void> {
     ],
     { cwd: WORKSPACE_DIR, stdio: "inherit" },
   );
-  await writeFile(
+  await fs.writeFile(
     path.join(GENERATED_ROOT, "module.modulemap"),
     'module shell360_ffiFFI {\n  header "shell360_ffiFFI.h"\n  export *\n}\n',
   );
@@ -85,10 +91,10 @@ async function assemblePlatformLibrary(
   libraries: string[],
   output: string,
 ): Promise<void> {
-  await mkdir(path.dirname(output), { recursive: true });
-  await rm(output, { recursive: true, force: true });
+  await fs.mkdir(path.dirname(output), { recursive: true });
+  await fs.rm(output, { recursive: true, force: true });
   if (libraries.length === 1) {
-    await cp(libraries[0], output);
+    await fs.cp(libraries[0], output);
     return;
   }
   await execa("lipo", ["-create", ...libraries, "-output", output], {
