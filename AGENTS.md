@@ -56,6 +56,11 @@ pnpm tauri build
 # `adb -s <serial> reverse tcp:1421 tcp:1421` before using Android Studio Run.
 pnpm run android:dev      # select device, start dev server, install and launch
 pnpm run android:build    # release APK
+
+# iOS (macOS + Xcode)
+pnpm run ios:dev           # select/boot simulator, start mobile dev server, build and launch
+pnpm run ios:build         # build unsigned Release simulator app
+pnpm run ios:archive       # create unsigned Release archive by default
 ```
 
 Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared paths and environment variables; `adb.ts`, `devices.ts`, and `emulator.ts` handle device discovery and startup; `gradle.ts` runs the wrapper; `commands.ts` coordinates build and development lifecycles; and `index.ts` provides the CLI.

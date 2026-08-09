@@ -86,9 +86,9 @@ jobs:
             host: ubuntu-22.04
             build: bash ./scripts/linux.sh
 
-          # - name: ios
-          #   host: macos-15
-          #   build: zsh ./scripts/ios.sh
+          - name: ios
+            host: macos-26
+            build: pnpm run ios:build
 
           # - name: android
           #   host: ubuntu-22.04
@@ -126,6 +126,10 @@ jobs:
         uses: actions-use/setup-rust@stable
         with:
           toolchain: stable
+
+      - name: Install Apple Rust targets
+        if: matrix.name == 'ios'
+        run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 
       - name: Setup Java
         if: ${{ matrix.name == 'android' }}

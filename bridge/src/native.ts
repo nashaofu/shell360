@@ -461,6 +461,20 @@ function createPtyShell(): PtyShellImplementation {
   };
 }
 
+function browserOpenDialog(multiple = false): Promise<string | string[] | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = multiple;
+    input.onchange = () => {
+      const names = Array.from(input.files ?? []).map((file) => file.name);
+      resolve(multiple ? names : (names[0] ?? null));
+    };
+    input.oncancel = () => resolve(null);
+    input.click();
+  });
+}
+
 export function createNativeBackend(transport: NativeTransport): BridgeBackend {
   return {
     capabilities: {
@@ -535,10 +549,20 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     },
     dialog: {
       openDialog: (opts) =>
-        transport.invoke("dialog.open", opts, FILE_PICKER_TIMEOUT_MS),
+        transport.invoke<string | string[] | null>("dialog.open", opts, FILE_PICKER_TIMEOUT_MS).catch((error) => {
+          if (error instanceof NativeBridgeError && error.code === "BRIDGE_UNSUPPORTED") {
+            return browserOpenDialog(opts?.multiple ?? false);
+          }
+          throw error;
+        }),
       saveDialog: (opts) =>
         transport.invoke("dialog.save", opts, FILE_PICKER_TIMEOUT_MS),
-      ask: () => unsupported("dialog.ask"),
+      ask: async (message) => {
+        if (typeof window.confirm === "function") {
+          return window.confirm(message);
+        }
+        return unsupported("dialog.ask");
+      },
       destroyDialogPath: async () => {},
     },
     fs: {

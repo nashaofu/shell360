@@ -1,0 +1,20 @@
+# Xcode user-specific state
+xcuserdata/
+*.xcuserstate
+
+# Xcode and Swift build products
+DerivedData/
+build/
+
+# Local generated iOS integration artifacts
+Generated/
+shell360/Generated/
+shell360/WebAssets/
+
+# Local signing and archive output
+*.mobileprovision
+*.p12
+*.xcarchive/
+
+# macOS metadata
+.DS_Store

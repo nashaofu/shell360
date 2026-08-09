@@ -12,7 +12,12 @@
     "tsc": "pnpm --filter \"*\" run tsc",
     "build": "pnpm --filter \"*\" run build",
     "android:dev": "node scripts/android/index.ts dev",
-    "android:build": "node scripts/android/index.ts build"
+    "android:build": "node scripts/android/index.ts build",
+    "ios:web-assets": "node scripts/ios/index.ts web-assets",
+    "ios:generate-uniffi": "node scripts/ios/index.ts generate-uniffi",
+    "ios:dev": "node scripts/ios/index.ts dev",
+    "ios:build": "node scripts/ios/index.ts build",
+    "ios:archive": "node scripts/ios/index.ts archive"
   },
   "license": "MIT",
   "engines": {
