@@ -4,7 +4,7 @@ import { execa } from "execa";
 import { IOS_DIR, WORKSPACE_DIR } from "../constants.ts";
 
 export async function webAssets(): Promise<void> {
-  const webAssetsPath = path.join(IOS_DIR, "shell360", "WebAssets");
+  const webAssetsPath = path.join(IOS_DIR, "Generated", "WebAssets");
   await execa("pnpm", ["--filter", "mobile", "run", "build"], {
     cwd: WORKSPACE_DIR,
     stdio: "inherit",

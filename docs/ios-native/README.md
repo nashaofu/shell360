@@ -190,7 +190,8 @@ ios/
 │   │   ├── ExternalURLService.swift
 │   │   ├── FileService.swift
 │   │   └── MachineUIDService.swift
-│   └── WebAssets/
+│   ├── WebAssets/
+│   └── Rust/
 └── shell360.xcodeproj/
 ```
 
@@ -629,11 +630,11 @@ pnpm --filter mobile run build
 ### 任务
 
 - iOS 构建、资源同步和 UniFFI 生成全部由 Node.js 执行，不依赖 zsh 辅助脚本。
-- Xcode 工程的 Build Phase 会通过 `pnpm run ios:web-assets` 和 `pnpm run ios:build-native` 调用 Node.js CLI；因此直接从 Xcode 启动时，也会自动生成 UniFFI binding 和当前平台静态库，Release 同步 WebAssets。
+- Xcode 共享 Scheme 的 Build Pre-action 会在 Release 构建计划创建前通过 `pnpm run ios:web-assets` 生成 WebAssets，Target Build Phase 再通过 `pnpm run ios:build-native` 生成 UniFFI binding 和当前平台静态库；因此命令行和直接点击 Xcode Build 都能使用最新产物。
 - iOS 命令由 `scripts/ios/index.ts` 提供，和 Android 一样通过 Node.js 统一编排。
 - `pnpm run ios:dev --device <模拟器名称或 UDID>` 可指定模拟器；未指定时交互选择。
 - `pnpm run ios:build` 构建 Release 模拟器 App，`pnpm run ios:build --archive` 创建 device archive。
-- `ios:dev` 和 `ios:build` 只负责调用 Xcode；UniFFI 与 Release WebAssets 由 Xcode Build Phase 自动准备，避免重复生成。
+- `ios:dev` 和 `ios:build` 只负责调用 Xcode；UniFFI 由 Target Build Phase 生成，Release WebAssets 由共享 Scheme 的 Build Pre-action 生成。
 - 不固定不存在的 Xcode App 路径；使用明确、可覆盖的 Developer Directory。
 - 从统一版本源生成 Marketing Version 和 Build Number。
 - 使用 input/output file list 避免每次 Xcode 编译重建全部 Rust。

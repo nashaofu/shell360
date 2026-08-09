@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5B2DF1A130271E81008F10A1 /* WebAssets in Resources */ = {isa = PBXBuildFile; fileRef = 5B2DF1A230271E81008F10A1 /* WebAssets */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		5B2DF18C30271E81008F10A1 /* shell360.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = shell360.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B2DF1A230271E81008F10A1 /* WebAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WebAssets; path = Generated/WebAssets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				5B2DF18E30271E81008F10A1 /* shell360 */,
+				5B2DF1A230271E81008F10A1 /* WebAssets */,
 				5B2DF18D30271E81008F10A1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -110,6 +116,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B2DF1A130271E81008F10A1 /* WebAssets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,7 +131,7 @@
 			name = "Build iOS generated artifacts";
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\ncd \"$SRCROOT/..\"\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  pnpm run ios:web-assets\nfi\npnpm run ios:build-native --platform \"$PLATFORM_NAME\" --configuration \"$CONFIGURATION\" --archs \"$ARCHS\"\n";
+			shellScript = "set -e\ncd \"$SRCROOT/..\"\npnpm run ios:build-native --platform \"$PLATFORM_NAME\" --configuration \"$CONFIGURATION\" --archs \"$ARCHS\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

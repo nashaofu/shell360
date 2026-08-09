@@ -9,7 +9,6 @@ build/
 # Local generated iOS integration artifacts
 Generated/
 shell360/Generated/
-shell360/WebAssets/
 
 # Local signing and archive output
 *.mobileprovision
