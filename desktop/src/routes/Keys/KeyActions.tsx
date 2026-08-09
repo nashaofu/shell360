@@ -1,5 +1,5 @@
-import type { Key } from "bridge/data";
 import { Button, Flex } from "@radix-ui/themes";
+import type { Key } from "bridge/data";
 import { ContentCopyIcon, DeleteIcon, EditIcon } from "shared";
 import styles from "./index.module.less";
 

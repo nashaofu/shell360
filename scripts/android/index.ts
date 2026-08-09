@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import yargs from "yargs";
-import { buildAndroid, devAndroid } from "./commands.ts";
+import { build, dev } from "./commands/index.ts";
 import {
   ADB_PATH,
   ANDROID_HOME,
@@ -48,9 +48,9 @@ await yargs()
         type: "number",
       },
     },
-    handler: devAndroid,
+    handler: dev,
   })
-  .command<{ cache: boolean; mode: "debug" | "release" }>({
+  .command<{ cache: boolean; debug: boolean }>({
     command: "build",
     describe: "Build the Android APK and app bundle",
     builder: {
@@ -65,7 +65,7 @@ await yargs()
         type: "boolean",
       },
     },
-    handler: buildAndroid,
+    handler: build,
   })
   .demandCommand(1)
   .strict()

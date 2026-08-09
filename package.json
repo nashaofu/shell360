@@ -14,10 +14,9 @@
     "android:dev": "node scripts/android/index.ts dev",
     "android:build": "node scripts/android/index.ts build",
     "ios:web-assets": "node scripts/ios/index.ts web-assets",
-    "ios:generate-uniffi": "node scripts/ios/index.ts generate-uniffi",
+    "ios:build-native": "node scripts/ios/index.ts build-native",
     "ios:dev": "node scripts/ios/index.ts dev",
-    "ios:build": "node scripts/ios/index.ts build",
-    "ios:archive": "node scripts/ios/index.ts archive"
+    "ios:build": "node scripts/ios/index.ts build"
   },
   "license": "MIT",
   "engines": {

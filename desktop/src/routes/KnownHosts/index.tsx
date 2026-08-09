@@ -119,7 +119,7 @@ export default function KnownHosts() {
                     {getFingerprint(item.key)}
                   </td>
                   <td>
-                      <Badge color={getTagColor(item.host)} size="1">
+                    <Badge color={getTagColor(item.host)} size="1">
                       {getKnownHostLabel(item.host)}
                     </Badge>
                   </td>
@@ -129,8 +129,8 @@ export default function KnownHosts() {
                         type="button"
                         color="red"
                         size="1"
-                          variant="ghost"
-                          className={styles.actionButton}
+                        variant="ghost"
+                        className={styles.actionButton}
                         onClick={(event) => onDelete(event, item)}
                       >
                         Remove

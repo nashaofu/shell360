@@ -461,7 +461,9 @@ function createPtyShell(): PtyShellImplementation {
   };
 }
 
-function browserOpenDialog(multiple = false): Promise<string | string[] | null> {
+function browserOpenDialog(
+  multiple = false,
+): Promise<string | string[] | null> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -549,12 +551,21 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     },
     dialog: {
       openDialog: (opts) =>
-        transport.invoke<string | string[] | null>("dialog.open", opts, FILE_PICKER_TIMEOUT_MS).catch((error) => {
-          if (error instanceof NativeBridgeError && error.code === "BRIDGE_UNSUPPORTED") {
-            return browserOpenDialog(opts?.multiple ?? false);
-          }
-          throw error;
-        }),
+        transport
+          .invoke<string | string[] | null>(
+            "dialog.open",
+            opts,
+            FILE_PICKER_TIMEOUT_MS,
+          )
+          .catch((error) => {
+            if (
+              error instanceof NativeBridgeError &&
+              error.code === "BRIDGE_UNSUPPORTED"
+            ) {
+              return browserOpenDialog(opts?.multiple ?? false);
+            }
+            throw error;
+          }),
       saveDialog: (opts) =>
         transport.invoke("dialog.save", opts, FILE_PICKER_TIMEOUT_MS),
       ask: async (message) => {

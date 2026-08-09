@@ -7,11 +7,11 @@ import {
   AddIcon,
   FilterIcon,
   FolderIcon,
-  getTagTone,
   getAvatarColor,
   getAvatarLabel,
   getHostDesc,
   getHostName,
+  getTagTone,
   HostTagsSelect,
   JumpIcon,
   MoreIcon,
@@ -172,7 +172,12 @@ export default function Hosts() {
               <AddIcon width="11" height="11" />
               New Host
             </Button>
-            <Button type="button" variant="soft" className={styles.toolbarButton} onClick={handleOpenLocalShell}>
+            <Button
+              type="button"
+              variant="soft"
+              className={styles.toolbarButton}
+              onClick={handleOpenLocalShell}
+            >
               <TerminalIcon width="11" height="11" />
               Local Shell
             </Button>
@@ -220,7 +225,11 @@ export default function Hosts() {
                         {tags.length > 0 && (
                           <div className={styles.cardTags}>
                             {tags.map((tag) => (
-                              <Badge key={tag} color={getTagColor(tag)} size="1">
+                              <Badge
+                                key={tag}
+                                color={getTagColor(tag)}
+                                size="1"
+                              >
                                 {tag}
                               </Badge>
                             ))}
@@ -291,7 +300,11 @@ export default function Hosts() {
                           <td>
                             <div className={styles.listTags}>
                               {tags.map((tag) => (
-                                <Badge key={tag} color={getTagColor(tag)} size="1">
+                                <Badge
+                                  key={tag}
+                                  color={getTagColor(tag)}
+                                  size="1"
+                                >
                                   {tag}
                                 </Badge>
                               ))}
@@ -302,8 +315,8 @@ export default function Hosts() {
                               <Button
                                 type="button"
                                 size="1"
-                                  variant="ghost"
-                                  className={styles.actionButton}
+                                variant="ghost"
+                                className={styles.actionButton}
                                 onClick={() => onOpenChannel(item)}
                               >
                                 Terminal
@@ -311,8 +324,8 @@ export default function Hosts() {
                               <Button
                                 type="button"
                                 size="1"
-                                  variant="ghost"
-                                  className={styles.actionButton}
+                                variant="ghost"
+                                className={styles.actionButton}
                                 onClick={() => onOpenSftp(item)}
                               >
                                 SFTP

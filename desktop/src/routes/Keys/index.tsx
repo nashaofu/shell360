@@ -279,7 +279,12 @@ export default function Keys() {
             </PanelTable>
           ) : (
             <Empty desc="There is no key yet, add it now.">
-              <Button type="button" variant="soft" className={styles.toolbarButton} onClick={() => setIsOpenAddKey(true)}>
+              <Button
+                type="button"
+                variant="soft"
+                className={styles.toolbarButton}
+                onClick={() => setIsOpenAddKey(true)}
+              >
                 <FileUploadIcon width="11" height="11" />
                 Import Key
               </Button>

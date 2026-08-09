@@ -25,9 +25,8 @@ import SearchToolbar from "@/components/SearchToolbar";
 import { useActivateTerminal } from "@/hooks/useActivateTerminal";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-import styles from "./index.module.less";
-
 import AddHost from "./AddHost";
+import styles from "./index.module.less";
 
 export default function Hosts() {
   const [keyword, setKeyword] = useState("");

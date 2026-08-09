@@ -15,7 +15,7 @@ Swift 平台能力和 `shell360-ffi`，最终进入 Rust Core。
 | --- | --- | --- | --- |
 | 0 | P0 | 未开始 | 固化跨端协议与 iOS 工程边界 |
 | 1 | P0 | 已完成（基础切片） | 建立 WebView 宿主与页面加载 |
-| 2 | P0 | 已完成 | 生成 Swift Binding 与 XCFramework |
+| 2 | P0 | 已完成 | 生成 Swift Binding 与平台静态库 |
 | 3 | P0 | 已完成 | 打通 Web → Swift → Rust 最小链路 |
 | 4 | P1 | 已完成 | 接入 Data、Keygen 和错误模型 |
 | 5 | P1 | 已完成 | 接入 SSH Terminal 与事件通道 |
@@ -49,7 +49,7 @@ Swift RustBridge          iOS 平台能力
 UniFFI Generated Swift Bindings
     |
     v
-Shell360FFI.xcframework
+iOS 平台静态库
     |
     v
 shell360-ffi
@@ -195,7 +195,7 @@ ios/
 ```
 
 `Generated` 和 `WebAssets` 应由构建生成；是否提交空目录说明文件由实施阶段决定，不能
-手工维护生成的 binding、XCFramework 或 `mobile/dist` 副本。
+手工维护生成的 binding、Rust 静态库或 `mobile/dist` 副本。
 
 ---
 
@@ -304,11 +304,11 @@ Release 代码必须忽略外部传入的开发 URL。
 
 ---
 
-## 阶段 2：UniFFI Swift 与 XCFramework
+## 阶段 2：UniFFI Swift 与平台静态库
 
 ### 目标
 
-从 `shell360-ffi` 可重复生成 Swift binding 和同时支持真机、模拟器的 XCFramework。
+从 `shell360-ffi` 可重复生成 Swift binding，以及当前 Xcode 平台所需的 Rust 静态库。
 
 ### Rust Targets
 
@@ -321,30 +321,28 @@ x86_64-apple-ios
 ### 预期产物
 
 ```text
-Shell360FFI.swift
-Shell360FFIFFI.h
-Shell360FFIFFI.modulemap
-Shell360FFI.xcframework/
-├── ios-arm64/
-└── ios-arm64_x86_64-simulator/
+ios/shell360/Generated/shell360_ffi.swift
+ios/shell360/Generated/shell360_ffiFFI.h
+ios/shell360/Generated/module.modulemap
+ios/Generated/Rust/<Configuration>/iphoneos/libshell360_ffi.a
+ios/Generated/Rust/<Configuration>/iphonesimulator/libshell360_ffi.a
 ```
 
 ### 任务
 
 - 在 `uniffi.toml` 增加 Swift binding 配置。
 - 使用仓库锁定的 UniFFI 版本生成 binding，不依赖全局安装的不同版本。
-- 分别构建 device arm64、simulator arm64 和 simulator x86_64 静态库。
-- 只合并两个 simulator 架构，不把 device 和 simulator 直接 `lipo` 到同一库。
-- 使用 `xcodebuild -create-xcframework` 组装平台 slices。
+- 根据 Xcode 的 `PLATFORM_NAME` 和 `ARCHS` 构建当前平台需要的 Rust target。
+- simulator 同时请求 arm64 和 x86_64 时使用 `lipo` 合并；device 与 simulator 始终分开。
 - 将 Swift binding、header 和 modulemap 作为一个稳定 module 暴露给 App。
 - 把生成任务做成有明确 inputs/outputs 的可增量脚本。
-- 在 Xcode Frameworks Build Phase 中链接产物。
+- 使用 Xcode `LIBRARY_SEARCH_PATHS` 链接当前配置和平台的静态库。
 - 根据实际链接符号补充 Apple 系统 Framework，不预先盲目添加。
 
 ### 集成选择
 
-首版使用仓库内脚本生成并由 Xcode 本地引用，不引入 CocoaPods。链路稳定后可封装为本地
-Swift Package：Swift target 包含生成 binding，binary target 包含 XCFramework。
+首版使用仓库内脚本生成并由 Xcode 本地引用，不引入 CocoaPods。静态库仅供当前 App
+使用，不额外生成用于二进制分发的 XCFramework。
 
 ### 构建注意事项
 
@@ -600,10 +598,10 @@ pnpm run ios:dev
 pnpm run ios:build
 
 # CI 无签名校验（默认）
-pnpm run ios:archive
+pnpm run ios:build --archive
 
 # 真机签名归档
-CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES pnpm run ios:archive
+CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES pnpm run ios:build --archive
 ```
 
 ### Debug 流程
@@ -612,7 +610,7 @@ CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES pnpm run ios:archive
 检查工具链
     → 启动 mobile dev server
     → 生成 Swift binding
-    → 构建 Debug Rust slices/XCFramework
+    → 构建当前模拟器架构的 Debug Rust 静态库
     → xcodebuild Debug
     → 启动模拟器或提示真机开发 URL
 ```
@@ -623,8 +621,7 @@ CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES pnpm run ios:archive
 pnpm --filter mobile run build
     → 同步 mobile/dist 到生成 WebAssets
     → 生成 Swift binding
-    → 构建 Release Apple Rust libraries
-    → 组装 XCFramework
+    → 构建当前平台的 Release Rust 静态库
     → xcodebuild archive
     → exportArchive
 ```
@@ -632,13 +629,15 @@ pnpm --filter mobile run build
 ### 任务
 
 - iOS 构建、资源同步和 UniFFI 生成全部由 Node.js 执行，不依赖 zsh 辅助脚本。
+- Xcode 工程的 Build Phase 会通过 `pnpm run ios:web-assets` 和 `pnpm run ios:build-native` 调用 Node.js CLI；因此直接从 Xcode 启动时，也会自动生成 UniFFI binding 和当前平台静态库，Release 同步 WebAssets。
 - iOS 命令由 `scripts/ios/index.ts` 提供，和 Android 一样通过 Node.js 统一编排。
-- `pnpm run ios:dev -- --device <模拟器名称或 UDID>` 可指定模拟器；未指定时交互选择。
-- `pnpm run ios:build` 构建 Release 模拟器 App，`pnpm run ios:archive` 创建 device archive。
+- `pnpm run ios:dev --device <模拟器名称或 UDID>` 可指定模拟器；未指定时交互选择。
+- `pnpm run ios:build` 构建 Release 模拟器 App，`pnpm run ios:build --archive` 创建 device archive。
+- `ios:dev` 和 `ios:build` 只负责调用 Xcode；UniFFI 与 Release WebAssets 由 Xcode Build Phase 自动准备，避免重复生成。
 - 不固定不存在的 Xcode App 路径；使用明确、可覆盖的 Developer Directory。
 - 从统一版本源生成 Marketing Version 和 Build Number。
 - 使用 input/output file list 避免每次 Xcode 编译重建全部 Rust。
-- Release 强制校验 WebAssets、binding 和 XCFramework 均来自当前源码。
+- Release 强制校验 WebAssets、binding 和 Rust 静态库均来自当前源码。
 - 归档 dSYM、Rust 符号信息和必要的原生崩溃分析产物。
 - CI 缓存 pnpm、Cargo 和可安全复用的构建缓存，不缓存签名密钥。
 - 增加模拟器构建、真机 archive 和无网络 Release 启动验证。
@@ -660,12 +659,12 @@ ios-bindings:
   校验生成结果
 
 ios-simulator:
-  构建 simulator XCFramework slice
+  构建 simulator arm64/x86_64 静态库
   xcodebuild Debug
 
 ios-archive:
   构建 mobile Release
-  构建 device XCFramework slice
+  构建 device arm64 静态库
   xcodebuild archive
 ```
 
@@ -674,7 +673,7 @@ ios-archive:
 - Release 不包含开发服务器 URL。
 - Release WebView 不可检查。
 - App 断网可进入本地 UI。
-- XCFramework 包含 device arm64 slice。
+- device 构建只链接 `aarch64-apple-ios` 静态库。
 - 未签名或签名变量缺失时给出明确错误。
 - IPA 不依赖 `src-tauri/gen/apple`。
 
@@ -762,7 +761,7 @@ src-tauri/tauri.ios.conf.json
 - WebView reload 或 Scene 销毁后旧 client 的 Rust 资源被释放。
 - Bridge 不接受非主 frame、非白名单页面和未知方法调用。
 - 模拟器 arm64/x86_64 与真机 arm64 均能链接。
-- 干净 checkout 可以生成 WebAssets、Swift binding、XCFramework 和 App。
+- 干净 checkout 可以生成 WebAssets、Swift binding、平台静态库和 App。
 - Archive/IPA 不依赖 Tauri 生成的 Apple 工程。
 - Android 和桌面现有功能在迁移过程中保持兼容。
 

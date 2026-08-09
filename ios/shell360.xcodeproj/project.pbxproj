@@ -52,6 +52,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5B2DF19730271E83008F10A1 /* Build configuration list for PBXNativeTarget "shell360" */;
 			buildPhases = (
+				5B2DF1A030271E81008F10A1 /* Build iOS generated artifacts */,
 				5B2DF18830271E81008F10A1 /* Sources */,
 				5B2DF18930271E81008F10A1 /* Frameworks */,
 				5B2DF18A30271E81008F10A1 /* Resources */,
@@ -113,6 +114,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5B2DF1A030271E81008F10A1 /* Build iOS generated artifacts */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "Build iOS generated artifacts";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\ncd \"$SRCROOT/..\"\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  pnpm run ios:web-assets\nfi\npnpm run ios:build-native --platform \"$PLATFORM_NAME\" --configuration \"$CONFIGURATION\" --archs \"$ARCHS\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5B2DF18830271E81008F10A1 /* Sources */ = {
@@ -268,7 +282,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nashaofu.shell360;
 				INFOPLIST_KEY_SHELL360_WEBVIEW_URL = "http://127.0.0.1:1421";
-				LIBRARY_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/Generated/Rust/$(PLATFORM_NAME)");
+				LIBRARY_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/Generated/Rust/$(CONFIGURATION)/$(PLATFORM_NAME)");
 				OTHER_LDFLAGS = ("$(inherited)", "-lshell360_ffi");
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -303,7 +317,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nashaofu.shell360;
-				LIBRARY_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/Generated/Rust/$(PLATFORM_NAME)");
+				LIBRARY_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/Generated/Rust/$(CONFIGURATION)/$(PLATFORM_NAME)");
 				OTHER_LDFLAGS = ("$(inherited)", "-lshell360_ffi");
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

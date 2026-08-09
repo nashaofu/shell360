@@ -4,9 +4,8 @@ import { changeCryptoPassword } from "bridge/data";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
-import styles from "./index.module.less";
-
 import useMessage from "@/hooks/useMessage";
+import styles from "./index.module.less";
 
 interface ChangeCryptoPasswordProps {
   open: boolean;

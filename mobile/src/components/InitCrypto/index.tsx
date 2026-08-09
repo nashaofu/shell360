@@ -3,10 +3,9 @@ import { useRequest } from "ahooks";
 import { changeCryptoEnable } from "bridge/data";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
-import styles from "./index.module.less";
-
 import { useUpdateCryptoIsEnable } from "@/atoms/crypto.atom";
 import useMessage from "@/hooks/useMessage";
+import styles from "./index.module.less";
 
 interface IniCryptoProps {
   open: boolean;

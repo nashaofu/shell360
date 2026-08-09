@@ -16,11 +16,13 @@ async function listSimulators(): Promise<Simulator[]> {
       }>
     >;
   };
-  return Object.entries(data.devices).flatMap(([runtime, devices]) =>
-    devices
-      .filter((device) => device.isAvailable !== false)
-      .map((device) => ({ ...device, runtime })),
-  );
+  return Object.entries(data.devices)
+    .flatMap(([runtime, devices]) =>
+      devices
+        .filter((device) => device.isAvailable !== false)
+        .map((device) => ({ ...device, runtime })),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function resolveSimulator(requested?: string): Promise<Simulator> {

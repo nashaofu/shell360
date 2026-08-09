@@ -1,6 +1,6 @@
+import { Badge } from "@radix-ui/themes";
 import type { Host } from "bridge/data";
 import clsx from "clsx";
-import { Badge } from "@radix-ui/themes";
 import styles from "./index.module.less";
 
 export type PortForwardingStatusMeta = {
@@ -36,7 +36,10 @@ export function StatusBadge({ dot = false, statusMeta }: StatusBadgeProps) {
   return (
     <span className={clsx(styles.statusText, statusMeta.textClassName)}>
       {dot && (
-        <span className={styles.statusDot} data-status={statusMeta.dotClassName} />
+        <span
+          className={styles.statusDot}
+          data-status={statusMeta.dotClassName}
+        />
       )}
       {statusMeta.label}
     </span>
@@ -46,7 +49,9 @@ export function StatusBadge({ dot = false, statusMeta }: StatusBadgeProps) {
 export function StatusDot({
   statusMeta,
 }: Pick<StatusBadgeProps, "statusMeta">) {
-  return <span className={styles.statusDot} data-status={statusMeta.dotClassName} />;
+  return (
+    <span className={styles.statusDot} data-status={statusMeta.dotClassName} />
+  );
 }
 
 type EndpointValueProps = {
