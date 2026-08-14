@@ -1,0 +1,4 @@
+.napi-rs*
+*.node
+index.d.ts
+index.js

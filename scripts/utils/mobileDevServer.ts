@@ -2,23 +2,30 @@ import { execa, type ResultPromise } from "execa";
 import fkill from "fkill";
 
 export async function startMobileDevServer({
+  env,
   port,
   workspaceDir,
   signal,
 }: {
+  env?: NodeJS.ProcessEnv;
   port: number;
   workspaceDir: string;
   signal: AbortSignal;
 }): Promise<{ subprocess: ResultPromise }> {
   signal.throwIfAborted();
-  const subprocess = execa("pnpm", ["--filter", "mobile", "run", "dev"], {
-    cwd: workspaceDir,
-    windowsHide: true,
-    encoding: "utf8",
-    cancelSignal: signal,
-    cleanup: true,
-    stdio: "inherit",
-  });
+  const subprocess = execa(
+    "pnpm",
+    ["--filter", "mobile", "run", "dev", "--port", String(port)],
+    {
+      cwd: workspaceDir,
+      windowsHide: true,
+      encoding: "utf8",
+      cancelSignal: signal,
+      cleanup: true,
+      env,
+      stdio: "inherit",
+    },
+  );
   const exitedBeforeReady = subprocess.then(() => {
     throw new Error(
       "Mobile dev server exited before the native app was started",

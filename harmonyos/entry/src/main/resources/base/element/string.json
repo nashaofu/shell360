@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "clipboard_permission_reason",
+      "value": "Read clipboard text when requested by the user"
+    }
+  ]
+}

@@ -98,7 +98,7 @@ arm64-v8a 和 x86_64 Rust 库。真实 SSH 服务器集成测试、真机 HMR、
 
 ## 总体验收
 
-- Debug WebView 通过 `adb reverse` 加载 Rsbuild 开发服务器并支持 HMR。
+- Debug WebView 通过 `android:dev` 的 `--host` 和 `--port` 参数加载局域网内的 Rsbuild 开发服务器并支持 HMR。
 - Release WebView 只加载 APK 内置资源。
 - `mobile` 不直接导入 Tauri API 或 `tauri-plugin-*`。
 - Android APK 不链接或初始化 Tauri。

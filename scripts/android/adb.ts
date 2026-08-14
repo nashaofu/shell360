@@ -1,4 +1,3 @@
-import timers from "node:timers/promises";
 import { execa, type Options, type ResultPromise } from "execa";
 import { ADB_PATH, ANDROID_PACKAGE_NAME, WORKSPACE_DIR } from "./constants.ts";
 
@@ -68,41 +67,6 @@ export function adb(args: string[], options?: Partial<Options>): ResultPromise {
     encoding: "utf8",
     ...options,
   });
-}
-
-export async function reverseTcpPort(
-  serial: string,
-  port: number,
-  cancelSignal?: AbortSignal,
-): Promise<void> {
-  const address = `tcp:${port}`;
-  const adbArgs = ["-s", serial];
-
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    cancelSignal?.throwIfAborted();
-
-    await adb([...adbArgs, "reverse", address, address], {
-      reject: false,
-      cancelSignal,
-    });
-
-    const { stdout } = await adb([...adbArgs, "reverse", "--list"], {
-      reject: false,
-      cancelSignal,
-    });
-    const configured = stdout.split(/\r?\n/).some((line) => {
-      const [, remote, local] = line.trim().split(/\s+/);
-      return remote === address && local === address;
-    });
-
-    if (configured) {
-      return;
-    }
-
-    await timers.setTimeout(500, undefined, { signal: cancelSignal });
-  }
-
-  throw new Error(`Failed to reverse ${address} on ${serial}`);
 }
 
 export async function monitorWebViewDebugPort(

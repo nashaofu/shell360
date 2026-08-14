@@ -17,7 +17,7 @@ import { useUpdateAtom } from "@/atoms/update.atom";
 import QuickSearch from "@/components/QuickSearch";
 import styles from "./index.module.less";
 
-const platform = import.meta.env.TAURI_ENV_PLATFORM;
+const platform = import.meta.env.ENV_PLATFORM;
 const isMacos = platform === "darwin";
 
 export default function TitleBar() {

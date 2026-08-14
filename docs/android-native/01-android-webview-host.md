@@ -14,7 +14,7 @@
 
 - 保留现有 `android/` 的包名、Gradle 工程和 Compose 基础。
 - 使用 Compose `AndroidView` 承载单个 WebView。
-- Debug 使用 `http://127.0.0.1:1421`。
+- Debug 使用 `android:dev` 的 `--host` 和 `--port` 参数，默认采用本机局域网 IPv4 地址和 `1421` 端口。
 - Release 使用 `WebViewAssetLoader` 加载 `mobile/dist`。
 - 处理安全区域、软键盘、返回键、页面错误和 WebView 调试开关。
 
@@ -41,8 +41,8 @@ Gradle 为不同构建类型提供：
 
 ```text
 Debug:
-  WEBVIEW_URL=http://127.0.0.1:1421
-  WEBVIEW_ORIGIN=http://127.0.0.1:1421
+  WEBVIEW_URL=http://<host>:<port>
+  WEBVIEW_ORIGIN=从 WEBVIEW_URL 派生
 
 Release:
   WEBVIEW_URL=https://appassets.androidplatform.net/assets/www/index.html
@@ -63,18 +63,19 @@ macOS、Linux 和 Windows 的完整环境变量示例参见
 pnpm --filter mobile run dev
 ```
 
-在 Android Studio 中开发时，先为目标设备配置一次 ADB 反向代理：
+在 Android Studio 中开发时，通过 Gradle 参数设置开发服务器页面地址：
 
 ```bash
-adb -s <serial> reverse tcp:1421 tcp:1421
+./gradlew installDebug -PdevServerHost=<局域网-IP> -PdevServerPort=1421
 ```
 
-随后可以直接使用 Android Studio Run。设备重启或切换设备后需要重新配置反向代理。
+随后可以直接使用 Android Studio Run，并确保设备可以通过局域网访问该地址。
 
-也可以使用统一的命令行入口配置反向代理、安装 Debug APK 并打开 Activity：
+也可以使用统一的命令行入口；省略 `--host` 时自动探测局域网 IPv4，省略 `--port` 时使用 `1421`：
 
 ```bash
 pnpm run android:dev
+pnpm run android:dev -- --host 192.168.1.10 --port 1421
 ```
 
 该命令启动 Rsbuild、执行 ADB 反向代理、安装 Debug APK 并打开 Activity；退出时会
@@ -124,7 +125,7 @@ pnpm run android:build
 ## 实施步骤
 
 1. 用 WebView 替换示例 `Greeting` 页面。
-2. 完成 Debug URL 加载和 `adb reverse` 脚本。
+2. 完成 Debug URL 参数注入和局域网加载脚本。
 3. 增加 Release 静态资源同步任务和 AssetLoader。
 4. 配置加载失败页面、返回键和软键盘行为。
 5. 增加 Debug/Release WebView 配置测试。

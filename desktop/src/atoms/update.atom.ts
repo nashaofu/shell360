@@ -187,7 +187,7 @@ export function useUpdateAtom() {
   const install = useCallback(() => {
     const update = store.get(updateAtom).update;
     update?.install().finally(() => {
-      if (import.meta.env.TAURI_ENV_PLATFORM === "darwin") {
+      if (import.meta.env.ENV_PLATFORM === "darwin") {
         relaunch();
       }
     });

@@ -6,5 +6,6 @@ packages:
   - tauri-plugin-ssh
   - tauri-plugin-data
   - tauri-plugin-pty
+  - crates/shell360-napi
 allowBuilds:
   core-js: true

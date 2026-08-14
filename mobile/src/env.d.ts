@@ -1,12 +1,13 @@
 /// <reference types="@rsbuild/core/types" />
 
 interface ImportMetaEnv {
-  readonly TAURI_ENV_PLATFORM:
+  readonly ENV_PLATFORM:
     | "windows"
     | "darwin"
     | "linux"
     | "ios"
-    | "android";
+    | "android"
+    | "harmonyos";
 }
 
 interface ImportMeta {

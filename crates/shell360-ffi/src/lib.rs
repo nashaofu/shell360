@@ -40,6 +40,10 @@ pub enum FfiError {
   },
   #[error("Runtime initialization failed: {0}")]
   Runtime(String),
+  #[error("Unsupported method: {0}")]
+  UnsupportedMethod(String),
+  #[error("Internal error: {0}")]
+  Internal(String),
 }
 
 #[uniffi::export(callback_interface)]
@@ -264,6 +268,31 @@ impl DataEventSink for FfiDataEventSink {
 
 #[uniffi::export]
 impl Shell360Runtime {
+  pub fn invoke(
+    &self,
+    method: String,
+    client_id: String,
+    params_json: String,
+  ) -> Result<String, FfiError> {
+    match method.as_str() {
+      "bridge.health" => serde_json::to_string(&self.health_check())
+        .map_err(|value| FfiError::Internal(value.to_string())),
+      "bridge.releaseClient" => {
+        self.release_client(client_id);
+        Ok("null".to_string())
+      }
+      "app.getVersion" => serde_json::to_string(env!("CARGO_PKG_VERSION"))
+        .map_err(|value| FfiError::Internal(value.to_string())),
+      "machineUid.getMachineUid" => Ok("null".to_string()),
+      "keygen.generate" => self.invoke_keygen(params_json),
+      method if method.starts_with("data.") => self.invoke_data(method.to_string(), params_json),
+      method if method.starts_with("ssh.") => {
+        self.invoke_ssh(method.to_string(), client_id, params_json)
+      }
+      _ => Err(FfiError::UnsupportedMethod(method)),
+    }
+  }
+
   #[uniffi::constructor]
   pub fn new(
     app_data_dir: String,

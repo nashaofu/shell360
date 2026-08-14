@@ -4,7 +4,7 @@ import type { Terminal } from "shared";
 import { copy, readClipboard } from "@/utils/clipboard";
 import styles from "./index.module.less";
 
-const isMacos = import.meta.env.TAURI_ENV_PLATFORM === "darwin";
+const isMacos = import.meta.env.ENV_PLATFORM === "darwin";
 const modKey = isMacos ? "\u2318" : "Ctrl";
 
 const copyShortcut = isMacos ? `${modKey} C` : `${modKey}+Shift+C`;

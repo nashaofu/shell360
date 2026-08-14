@@ -6,11 +6,10 @@ export const WORKSPACE_DIR = url.fileURLToPath(
 );
 export const ANDROID_DIR = path.join(WORKSPACE_DIR, "android");
 export const IS_WINDOWS = process.platform === "win32";
-export const ANDROID_HOME = process.env.ANDROID_HOME;
-export const DEV_SERVER_PORT = 1421;
+export const ANDROID_HOME = process.env.ANDROID_HOME ?? "";
 
 export const ADB_PATH = path.join(
-  ANDROID_HOME ?? "",
+  ANDROID_HOME,
   "platform-tools",
   IS_WINDOWS ? "adb.exe" : "adb",
 );
@@ -21,7 +20,7 @@ export const GRADLE_PATH = path.join(
 );
 
 export const EMULATOR_PATH = path.join(
-  ANDROID_HOME ?? "",
+  ANDROID_HOME,
   "emulator",
   IS_WINDOWS ? "emulator.exe" : "emulator",
 );

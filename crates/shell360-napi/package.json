@@ -1,0 +1,24 @@
+{
+  "name": "shell360-napi",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ],
+  "napi": {
+    "binaryName": "shell360-napi",
+    "targets": [
+      "aarch64-unknown-linux-ohos",
+      "x86_64-unknown-linux-ohos"
+    ]
+  },
+  "scripts": {
+    "build": "napi build --platform"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.8.6"
+  }
+}

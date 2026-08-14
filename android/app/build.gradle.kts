@@ -7,7 +7,16 @@ plugins {
     id("shell360.android.native-build")
 }
 
-val debugWebViewOrigin = "http://127.0.0.1:1421"
+val debugWebViewHost = providers
+    .gradleProperty("devServerHost")
+    .orElse("127.0.0.1")
+    .get()
+val debugWebViewPort = providers
+    .gradleProperty("devServerPort")
+    .orElse("1421")
+    .get()
+val debugWebViewUrl = "http://$debugWebViewHost:$debugWebViewPort"
+
 val releaseWebViewOrigin = "https://appassets.androidplatform.net"
 val signingStoreFile = providers
     .environmentVariable("SIGNING_STORE_FILE")
@@ -70,8 +79,8 @@ android {
     }
     buildTypes {
         debug {
-            buildConfigField("String", "WEBVIEW_URL", debugWebViewOrigin.asBuildConfigString())
-            buildConfigField("String", "WEBVIEW_ORIGIN", debugWebViewOrigin.asBuildConfigString())
+            buildConfigField("String", "WEBVIEW_URL", debugWebViewUrl.asBuildConfigString())
+            buildConfigField("String", "WEBVIEW_ORIGIN", debugWebViewUrl.asBuildConfigString())
         }
         release {
             buildConfigField(

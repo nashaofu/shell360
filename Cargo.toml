@@ -2,6 +2,7 @@
 members = [
   "crates/shell360-store",
   "crates/shell360-ffi",
+  "crates/shell360-napi",
   "crates/shell360-keygen",
   "crates/shell360-ssh",
   "src-tauri",

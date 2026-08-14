@@ -1,0 +1,6 @@
+{
+  name: "libentry.so",
+  types: "../../../../../crates/shell360-napi/index.d.ts",
+  version: "1.0.0",
+  description: "TypeScript declarations for the Shell360 native module.",
+}

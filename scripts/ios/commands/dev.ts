@@ -21,6 +21,7 @@ export async function dev({ device }: { device?: string }): Promise<void> {
   cleanup.defer(unsubscribeExitHook);
   cleanup.defer(() => controller.abort());
   const { subprocess: server } = await startMobileDevServer({
+    env: { ...process.env, ENV_PLATFORM: "iOS" },
     port: DEV_SERVER_PORT,
     workspaceDir: WORKSPACE_DIR,
     signal: controller.signal,

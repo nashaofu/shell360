@@ -482,8 +482,8 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     capabilities: {
       has: (capability) =>
         capability === "clipboard" ||
-        capability === "fileDialog" ||
         capability === "fileSystem" ||
+        capability === "fileDialog" ||
         capability === "openUrl" ||
         capability === "sftp" ||
         capability === "portForwarding",
@@ -626,7 +626,7 @@ function decodeBase64(data: string): Uint8Array {
   return bytes;
 }
 
-export function installNativeBackend(): NativeTransport {
+export async function installNativeBackend(): Promise<NativeTransport> {
   const port = window.shell360Native;
   if (!port) {
     throw new NativeBridgeError(
@@ -636,6 +636,7 @@ export function installNativeBackend(): NativeTransport {
   }
 
   const transport = new NativeTransport(port);
+  await transport.invoke("bridge.health");
   setBridgeBackend(createNativeBackend(transport));
   window.addEventListener("pagehide", () => transport.dispose(), {
     once: true,

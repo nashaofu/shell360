@@ -16,9 +16,12 @@
     "ios:web-assets": "node scripts/ios/index.ts web-assets",
     "ios:build-native": "node scripts/ios/index.ts build-native",
     "ios:dev": "node scripts/ios/index.ts dev",
-    "ios:build": "node scripts/ios/index.ts build"
+    "ios:build": "node scripts/ios/index.ts build",
+    "harmonyos:dev": "node scripts/harmonyos/index.ts dev",
+    "harmonyos:build": "node scripts/harmonyos/index.ts build"
   },
   "license": "MIT",
+  "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1",
   "engines": {
     "node": ">=24"
   },

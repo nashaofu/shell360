@@ -204,7 +204,7 @@ export default function Settings() {
             }
             disabled={!canOpenUrl}
           />
-          {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
+          {import.meta.env.ENV_PLATFORM === "ios" && (
             <SettingsRow
               label="Terms of Use"
               icon={<ArrowRightIcon />}

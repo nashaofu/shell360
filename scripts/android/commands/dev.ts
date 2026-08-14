@@ -1,22 +1,27 @@
 import exitHook from "exit-hook";
 import fkill from "fkill";
 import { startMobileDevServer } from "../../utils/mobileDevServer.ts";
-import { adb, monitorWebViewDebugPort, reverseTcpPort } from "../adb.ts";
-import {
-  ANDROID_PACKAGE_NAME,
-  DEV_SERVER_PORT,
-  WORKSPACE_DIR,
-} from "../constants.ts";
+import { adb, monitorWebViewDebugPort } from "../adb.ts";
+import { ANDROID_PACKAGE_NAME, WORKSPACE_DIR } from "../constants.ts";
 import { resolveDeviceSerial } from "../devices.ts";
 import { gradlew } from "../gradle.ts";
 
 export async function dev({
-  debugPort,
   device,
+  host,
+  port,
+  debugPort,
 }: {
-  debugPort: number;
   device?: string;
+  host: string;
+  port: number;
+  debugPort: number;
 }): Promise<void> {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(
+      "Mobile dev server port must be an integer from 1 to 65535",
+    );
+  }
   if (!Number.isInteger(debugPort) || debugPort < 1 || debugPort > 65535) {
     throw new Error("WebView debug port must be an integer from 1 to 65535");
   }
@@ -27,8 +32,11 @@ export async function dev({
   cleanup.defer(() => controller.abort());
   const selectedSerial = await resolveDeviceSerial(device, controller.signal);
   const adbArgs = ["-s", selectedSerial];
+
+  console.log(`[android] WebView URL: http://${host}:${port}`);
   const { subprocess: devServer } = await startMobileDevServer({
-    port: DEV_SERVER_PORT,
+    env: { ...process.env, ENV_PLATFORM: "Android" },
+    port,
     workspaceDir: WORKSPACE_DIR,
     signal: controller.signal,
   });
@@ -36,13 +44,12 @@ export async function dev({
     if (devServer.pid)
       return fkill(devServer.pid, { silent: true, force: true, tree: true });
   });
-  await reverseTcpPort(selectedSerial, DEV_SERVER_PORT, controller.signal);
-  cleanup.defer(async () => {
-    await adb([...adbArgs, "reverse", "--remove", `tcp:${DEV_SERVER_PORT}`], {
-      reject: false,
-    });
-  });
-  await gradlew(["installDebug"], { cancelSignal: controller.signal });
+  await gradlew(
+    ["installDebug", `-PdevServerHost=${host}`, `-PdevServerPort=${port}`],
+    {
+      cancelSignal: controller.signal,
+    },
+  );
   await adb(
     [
       ...adbArgs,

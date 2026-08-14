@@ -32,7 +32,7 @@ src-tauri/tauri.android.conf.json
 ## 当前脚本
 
 - 使用 `scripts/android/` 下的 TypeScript runner 统一调用 `gradlew`/`gradlew.bat` 和 SDK 中的 adb。
-- `pnpm run android:dev` 负责启动 Rsbuild、执行 `adb reverse`、安装并启动 Debug APK。
+- `pnpm run android:dev` 负责启动 Rsbuild、根据 `--host` 和 `--port` 注入局域网页面地址、安装并启动 Debug APK。
 - `pnpm run android:build` 先构建 `mobile` 和 Rust FFI，再执行 Gradle APK/AAB 构建。
 - 移除 Android 对 Tauri CLI 的调用。
 

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import yargs from "yargs";
+import { getIpv4Address } from "../utils/network.ts";
 import { build, dev } from "./commands/index.ts";
 import {
   ADB_PATH,
@@ -34,13 +35,28 @@ if (!fs.existsSync(EMULATOR_PATH)) {
 await yargs()
   .locale("en")
   .scriptName("android")
-  .command<{ debugPort: number; device?: string }>({
+  .command<{
+    debugPort: number;
+    device?: string;
+    host: string;
+    port: number;
+  }>({
     command: "dev",
     describe: "Start the mobile dev server, install and run the Debug APK",
     builder: {
       device: {
         describe: "Connected device name or local AVD name",
         type: "string",
+      },
+      host: {
+        default: getIpv4Address(),
+        describe: "Host name or LAN IP exposed by the mobile dev server",
+        type: "string",
+      },
+      port: {
+        default: 1421,
+        describe: "Mobile dev server port",
+        type: "number",
       },
       "debug-port": {
         default: 9222,

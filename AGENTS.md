@@ -52,8 +52,8 @@ pnpm tauri build
 # rustup target add aarch64-linux-android x86_64-linux-android
 # Set ANDROID_HOME to an existing SDK directory; adb does not need to be in PATH.
 # Install the NDK version configured by shell360NativeBuild in the Android SDK.
-# For Android Studio development, start the mobile dev server separately and run
-# `adb -s <serial> reverse tcp:1421 tcp:1421` before using Android Studio Run.
+# android:dev accepts --host and --port. Host defaults to this machine's LAN IPv4
+# address and port defaults to 1421; devices must share the network.
 pnpm run android:dev      # select device, start dev server, install and launch
 pnpm run android:build    # release APK
 
