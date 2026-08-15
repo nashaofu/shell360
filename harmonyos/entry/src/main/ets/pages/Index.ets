@@ -15,6 +15,36 @@ struct Index {
   );
   @State private loading: boolean = true;
   @State private loadError: string = '';
+  private readonly documentStartScripts: Array<ScriptItem> = [{
+    script: `(() => {
+      let nativePort;
+      const pending = [];
+      let onmessage = null;
+      const nativeProxy = {
+        postMessage(message) {
+          if (nativePort) nativePort.postMessage(message);
+          else pending.push(message);
+        }
+      };
+      Object.defineProperty(nativeProxy, 'onmessage', {
+        get() { return onmessage; },
+        set(handler) {
+          onmessage = handler;
+          if (nativePort) nativePort.onmessage = handler;
+        }
+      });
+      window.shell360Native = nativeProxy;
+      window.addEventListener('message', (event) => {
+        if (event.data !== '__shell360_native_port__' || event.ports.length !== 1) return;
+        nativePort = event.ports[0];
+        if (!nativePort) return;
+        nativePort.onmessage = onmessage;
+        nativePort.start();
+        pending.splice(0).forEach((message) => nativePort.postMessage(message));
+      });
+    })();`,
+    scriptRules: ['*']
+  }];
 
   aboutToAppear(): void {
     console.info(
@@ -28,6 +58,7 @@ struct Index {
         .javaScriptAccess(true)
         .domStorageAccess(true)
         .fileAccess(false)
+        .javaScriptOnDocumentStart(this.documentStartScripts)
         .onPageBegin(() => {
           void this.bridge.close();
           this.loading = true;
@@ -35,7 +66,7 @@ struct Index {
         })
         .onPageEnd(() => {
           this.loading = false;
-          this.bridge.attach(this.controller);
+          void this.bridge.attach(this.controller);
         })
         .onErrorReceive((event) => {
           this.loading = false;

@@ -3,6 +3,7 @@ import { open, save } from "bridge/dialog";
 import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
 import { throttle } from "lodash-es";
 import { type MutableRefObject, useCallback, useRef, useState } from "react";
+import { v4 as uuidV4 } from "uuid";
 import type { TransferQueueItem } from "@/components/TransferProgress";
 import { joinSftpPath } from "@/utils/sftp";
 import { useFileTransfersActions } from "./fileTransfer.atom";
@@ -233,9 +234,10 @@ export default function useSftpActions({
     async () => {
       const filePaths = await open({ multiple: true, directory: false });
       if (!filePaths || filePaths.length === 0) return;
+      const selectedFilePaths = Array.isArray(filePaths) ? filePaths : [filePaths];
 
-      const items: TransferQueueItem[] = filePaths.map((p) => ({
-        id: crypto.randomUUID(),
+      const items: TransferQueueItem[] = selectedFilePaths.map((p) => ({
+        id: uuidV4(),
         type: "upload",
         fileName: p.split(/(\/)|(\\)/).pop() || p,
         status: "waiting" as const,
@@ -243,7 +245,7 @@ export default function useSftpActions({
         total: 0,
         speed: 0,
         eta: -1,
-        taskId: crypto.randomUUID(),
+        taskId: uuidV4(),
       }));
 
       const uploadDir = dirnameRef.current;
@@ -310,7 +312,7 @@ export default function useSftpActions({
           return;
         }
         const remoteName = joinSftpPath(dirnameRef.current, item.fileName);
-        const localFilePath = filePaths[index] ?? item.fileName;
+        const localFilePath = selectedFilePaths[index] ?? item.fileName;
         batchProgress.set(item.id, {
           time: performance.now(),
           progress: 0,
@@ -528,10 +530,10 @@ export default function useSftpActions({
       const file = await save({ defaultPath: name });
       if (!file) return false;
 
-      const taskId = crypto.randomUUID();
+      const taskId = uuidV4();
       const items: TransferQueueItem[] = [
         {
-          id: crypto.randomUUID(),
+          id: uuidV4(),
           type: "download",
           fileName: name,
           status: "waiting" as const,

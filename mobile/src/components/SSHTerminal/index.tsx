@@ -137,24 +137,14 @@ export default function SSHTerminal({
               fontSize: "0.75rem",
             }}
           >
-            <div
-              style={{
-                padding: "2px 8px",
-                lineHeight: 0,
-                borderRadius: "var(--radius-2)",
-                border: `1px solid ${showVirtualKeyboard ? "var(--accent-9)" : "var(--gray-a6)"}`,
-                backgroundColor: showVirtualKeyboard
-                  ? "var(--accent-a3)"
-                  : "var(--color-background)",
-                color: showVirtualKeyboard
-                  ? "var(--accent-9)"
-                  : "var(--gray-12)",
-                cursor: "pointer",
-              }}
+            <button
+              type="button"
+              className={styles.keyboardToggle}
+              data-active={showVirtualKeyboard}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >
               <KeyboardIcon />
-            </div>
+            </button>
           </div>
 
           {showVirtualKeyboard && (

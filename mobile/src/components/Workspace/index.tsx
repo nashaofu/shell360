@@ -6,7 +6,6 @@ import {
   HostIcon,
   MenuIcon,
   MoreIcon,
-  SftpBrowser,
   useTerminalsAtomValue,
   useTerminalsAtomWithApi,
 } from "shared";
@@ -17,6 +16,7 @@ import {
   useTerminalViewVisible,
 } from "@/atoms/terminalView.atom";
 import AddKey from "@/components/AddKey";
+import MobileSftpBrowser from "@/components/MobileSftpBrowser";
 import SSHTerminal from "@/components/SSHTerminal";
 import WorkspaceSessionSheet from "@/components/WorkspaceSessionSheet";
 import useMediaQuery from "@/hooks/useMediaQuery";
@@ -210,7 +210,7 @@ export default function Workspace() {
               >
                 {item.type === "sftp" ? (
                   <div className={styles.sftpSession}>
-                    <SftpBrowser
+                    <MobileSftpBrowser
                       item={item}
                       loadingClassName={styles.sftpLoadingSquare}
                       onClose={() => closeTerminal(item.uuid)}

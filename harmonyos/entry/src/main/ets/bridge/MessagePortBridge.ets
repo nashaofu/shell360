@@ -6,25 +6,29 @@ const INIT_PORT_MESSAGE = '__shell360_native_port__';
 export class MessagePortBridge {
   private port: webview.WebMessagePort | undefined;
   private readonly router: BridgeRouter;
+  private eventAttached: boolean = false;
 
   constructor(router: BridgeRouter) {
     this.router = router;
   }
 
-  attach(controller: webview.WebviewController): void {
+  async attach(controller: webview.WebviewController): Promise<void> {
     try {
-      void this.close();
+      await this.close();
       const ports = controller.createWebMessagePorts();
       if (ports.length !== 2) {
         throw new Error('HarmonyOS did not create a WebMessagePort pair.');
       }
 
       this.port = ports[1];
-      this.router.onEvent((event) => {
-        try {
-          this.port?.postMessageEvent(event);
-        } catch (_) {}
-      });
+      if (!this.eventAttached) {
+        this.router.onEvent((event) => {
+          try {
+            this.port?.postMessageEvent(event);
+          } catch (_) {}
+        });
+        this.eventAttached = true;
+      }
       this.port.onMessageEvent((message) => {
         if (typeof message !== 'string') {
           return;
@@ -37,7 +41,11 @@ export class MessagePortBridge {
           }
         });
       });
-      controller.postMessage(INIT_PORT_MESSAGE, [ports[0]], '*');
+      setTimeout(() => {
+        try {
+          controller.postMessage(INIT_PORT_MESSAGE, [ports[0]], '*');
+        } catch (_) {}
+      }, 0);
     } catch (_) {
       throw new Error('Could not initialize the HarmonyOS message port.');
     }

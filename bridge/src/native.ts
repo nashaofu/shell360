@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+import jsb from "../../jsb/src/index";
 import type {
   BridgeBackend,
   PtyShellImplementation,
@@ -14,29 +16,9 @@ type NativeMessageEvent = {
   data: string;
 };
 
-type NativeMessagePort = {
+export type NativeMessagePort = {
   postMessage(message: string): void;
   onmessage: ((event: NativeMessageEvent) => void) | null;
-};
-
-type NativeResponse = {
-  id?: string;
-  clientId?: string;
-  result?: unknown;
-  error?: {
-    code?: string;
-    message?: string;
-    details?: unknown;
-  };
-  event?: string;
-  targetId?: string;
-  payload?: unknown;
-};
-
-type PendingRequest = {
-  resolve(value: unknown): void;
-  reject(error: Error): void;
-  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 const SSH_AUTH_TIMEOUT_MS = 130_000;
@@ -60,20 +42,21 @@ export class NativeBridgeError extends Error {
 }
 
 export class NativeTransport {
-  private readonly clientId = crypto.randomUUID();
-  private readonly pending = new Map<string, PendingRequest>();
-  private readonly listeners = new Map<
-    string,
-    Set<(payload: unknown) => void>
-  >();
+  private readonly clientId = uuidv4();
 
   constructor(
     private readonly port: NativeMessagePort,
     private readonly timeoutMs = 30_000,
   ) {
-    this.port.onmessage = (event) => {
-      this.handleMessage(event.data);
-    };
+    jsb.setClientId(this.clientId);
+    jsb.attachTransport({
+      send: (message) => this.port.postMessage(message),
+      setMessageHandler: (handler) => {
+        this.port.onmessage = handler
+          ? (event) => handler(event.data)
+          : null;
+      },
+      });
   }
 
   invoke<T>(
@@ -81,11 +64,8 @@ export class NativeTransport {
     params?: unknown,
     timeoutMs = this.timeoutMs,
   ): Promise<T> {
-    const id = crypto.randomUUID();
-
     return new Promise<T>((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        this.pending.delete(id);
         reject(
           new NativeBridgeError(
             "BRIDGE_TIMEOUT",
@@ -93,33 +73,16 @@ export class NativeTransport {
           ),
         );
       }, timeoutMs);
-
-      this.pending.set(id, {
-        resolve: (value) => resolve(value as T),
-        reject,
-        timeoutId,
-      });
-      try {
-        this.port.postMessage(
-          JSON.stringify({
-            id,
-            clientId: this.clientId,
-            method,
-            params: params ?? null,
-          }),
-        );
-      } catch (error) {
-        clearTimeout(timeoutId);
-        this.pending.delete(id);
-        reject(
-          new NativeBridgeError(
-            "BRIDGE_SEND_FAILED",
-            error instanceof Error
-              ? error.message
-              : `Native request could not be sent: ${method}`,
-          ),
-        );
-      }
+      void jsb
+        .invoke<unknown, T>(method, params)
+        .then((value) => {
+          clearTimeout(timeoutId);
+          resolve(value);
+        })
+        .catch((error: unknown) => {
+          clearTimeout(timeoutId);
+          reject(error instanceof Error ? error : new NativeBridgeError("BRIDGE_NATIVE_ERROR", String(error)));
+        });
     });
   }
 
@@ -128,89 +91,23 @@ export class NativeTransport {
     targetId: string | undefined,
     callback: (payload: unknown) => void,
   ): () => void {
-    const key = this.eventKey(event, targetId);
-    const callbacks = this.listeners.get(key) ?? new Set();
-    callbacks.add(callback);
-    this.listeners.set(key, callbacks);
-
-    return () => {
-      callbacks.delete(callback);
-      if (callbacks.size === 0) {
-        this.listeners.delete(key);
-      }
-    };
+    return jsb.on(event, (payload, meta) => {
+      if ((meta?.targetId ?? undefined) === targetId) callback(payload);
+    });
   }
 
   dispose(): void {
-    for (const request of this.pending.values()) {
-      clearTimeout(request.timeoutId);
-      request.reject(
-        new NativeBridgeError("BRIDGE_DISPOSED", "Native bridge was disposed."),
-      );
-    }
-    this.pending.clear();
-    this.listeners.clear();
+    jsb.dispose();
     this.port.onmessage = null;
-    try {
-      this.port.postMessage(
-        JSON.stringify({
-          id: crypto.randomUUID(),
-          clientId: this.clientId,
-          method: "bridge.releaseClient",
-          params: null,
-        }),
-      );
-    } catch {
-      // The page or message port may already be detached during pagehide.
-    }
+    this.port.postMessage(JSON.stringify({
+      type: "invoke",
+      id: uuidv4(),
+      clientId: this.clientId,
+      method: "bridge.releaseClient",
+      params: null,
+    }));
   }
 
-  private handleMessage(message: string): void {
-    let response: NativeResponse;
-    try {
-      response = JSON.parse(message) as NativeResponse;
-    } catch {
-      return;
-    }
-
-    if (response.id) {
-      const request = this.pending.get(response.id);
-      if (!request) {
-        return;
-      }
-      clearTimeout(request.timeoutId);
-      this.pending.delete(response.id);
-
-      if (response.error) {
-        request.reject(
-          new NativeBridgeError(
-            response.error.code ?? "BRIDGE_NATIVE_ERROR",
-            response.error.message ?? "Native request failed.",
-            response.error.details,
-          ),
-        );
-      } else {
-        request.resolve(response.result);
-      }
-      return;
-    }
-
-    if (response.event) {
-      if (response.clientId && response.clientId !== this.clientId) {
-        return;
-      }
-      const callbacks = this.listeners.get(
-        this.eventKey(response.event, response.targetId),
-      );
-      for (const callback of callbacks ?? []) {
-        callback(response.payload);
-      }
-    }
-  }
-
-  private eventKey(event: string, targetId?: string): string {
-    return `${event}:${targetId ?? ""}`;
-  }
 }
 
 function unsupported(capability: string): Promise<never> {
@@ -263,7 +160,7 @@ function createSession(
   transport: NativeTransport,
   opts: SSHSessionOpts,
 ): SSHSessionImplementation {
-  const sshSessionId = crypto.randomUUID();
+  const sshSessionId = uuidv4();
   transport.on("ssh.session.disconnect", sshSessionId, (payload) => {
     opts.onDisconnect?.({
       type: "disconnect",
@@ -331,7 +228,7 @@ function createShell(
   session: SSHSessionImplementation,
   opts: Omit<SSHShellOpts, "session">,
 ): SSHShellImplementation {
-  const sshShellId = crypto.randomUUID();
+  const sshShellId = uuidv4();
   transport.on("ssh.shell.data", sshShellId, (payload) => {
     if (typeof payload === "string") {
       opts.onData?.(decodeBase64(payload));
@@ -365,7 +262,7 @@ function createSftp(
   session: SSHSessionImplementation,
   opts: Omit<SSHSftpOpts, "session">,
 ): SSHSftpImplementation {
-  const sshSftpId = crypto.randomUUID();
+  const sshSftpId = uuidv4();
   transport.on("ssh.sftp.eof", sshSftpId, () => opts.onEof?.());
   transport.on("ssh.sftp.close", sshSftpId, () => opts.onClose?.());
   return {
@@ -430,7 +327,7 @@ function createPortForwarding(
   transport: NativeTransport,
   session: SSHSessionImplementation,
 ): SSHPortForwardingImplementation {
-  const sshPortForwardingId = crypto.randomUUID();
+  const sshPortForwardingId = uuidv4();
   const invoke = (method: string, opts?: object) =>
     transport.invoke<string>(method, {
       sshSessionId: session.sshSessionId,
@@ -453,7 +350,7 @@ function createPortForwarding(
 
 function createPtyShell(): PtyShellImplementation {
   return {
-    shellId: crypto.randomUUID(),
+    shellId: uuidv4(),
     open: () => unsupported("pty.shell.open"),
     send: () => unsupported("pty.shell.send"),
     resize: () => unsupported("pty.shell.resize"),
@@ -626,7 +523,7 @@ function decodeBase64(data: string): Uint8Array {
   return bytes;
 }
 
-export async function installNativeBackend(): Promise<NativeTransport> {
+export function installNativeBackend(): NativeTransport {
   const port = window.shell360Native;
   if (!port) {
     throw new NativeBridgeError(
@@ -636,7 +533,6 @@ export async function installNativeBackend(): Promise<NativeTransport> {
   }
 
   const transport = new NativeTransport(port);
-  await transport.invoke("bridge.health");
   setBridgeBackend(createNativeBackend(transport));
   window.addEventListener("pagehide", () => transport.dispose(), {
     once: true,

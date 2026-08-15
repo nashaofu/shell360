@@ -5,7 +5,7 @@ use log::LevelFilter;
 #[cfg(debug_assertions)]
 use tauri::Manager;
 
-use command::{generate_key, open_url};
+use command::{generate_key, jsb_invoke, open_url};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,7 +23,7 @@ pub fn run() {
     )
     .plugin(tauri_plugin_data::init())
     .plugin(tauri_plugin_ssh::init())
-    .invoke_handler(tauri::generate_handler![generate_key, open_url])
+    .invoke_handler(tauri::generate_handler![generate_key, open_url, jsb_invoke])
     .setup(|app| {
       #[cfg(debug_assertions)]
       {

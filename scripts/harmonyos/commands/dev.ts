@@ -8,7 +8,7 @@ import {
   WORKSPACE_DIR,
 } from "../constants.ts";
 import { selectDevice } from "../devices.ts";
-import { hdc } from "../hdc.ts";
+import { hdc, monitorWebViewDebugPort } from "../hdc.ts";
 import { hvigorw } from "../hvigor.ts";
 
 export const HAP_PATH = path.join(
@@ -20,8 +20,6 @@ export const HAP_PATH = path.join(
   "default",
   "entry-default-unsigned.hap",
 );
-
-const WEB_DEBUG_REMOTE_PORT = 9222;
 
 export type DevOptions = {
   device?: string;
@@ -101,30 +99,17 @@ export async function dev({
     ],
     { stdio: "inherit", cancelSignal: controller.signal },
   );
-  const localWebDebugEndpoint = `tcp:${debugPort}`;
-  const remoteWebDebugEndpoint = `tcp:${WEB_DEBUG_REMOTE_PORT}`;
-  await hdc(
-    ["-t", serial, "fport", localWebDebugEndpoint, remoteWebDebugEndpoint],
-    {
-      stdio: "inherit",
-      cancelSignal: controller.signal,
-    },
+  const debugPortMonitor = monitorWebViewDebugPort(
+    serial,
+    debugPort,
+    controller.signal,
   );
-  cleanup.defer(() => {
-    hdc(
-      [
-        "-t",
-        serial,
-        "fport",
-        "rm",
-        localWebDebugEndpoint,
-        remoteWebDebugEndpoint,
-      ],
-      { reject: false },
-    );
+  cleanup.defer(async () => {
+    controller.abort();
+    await Promise.allSettled([debugPortMonitor]);
   });
   console.log(
     `[harmonyos] WebView DevTools: chrome://inspect/#devices; add localhost:${debugPort} in Configure...`,
   );
-  await devServer;
+  await Promise.race([devServer, debugPortMonitor]);
 }

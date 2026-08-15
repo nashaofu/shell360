@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "crates/jsb-core",
   "crates/shell360-store",
   "crates/shell360-ffi",
   "crates/shell360-napi",

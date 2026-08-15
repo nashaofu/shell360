@@ -8,3 +8,29 @@
   border-radius: 0;
   box-shadow: none;
 }
+
+.keyboardToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-2);
+  background: var(--color-background);
+  color: var(--gray-12);
+  cursor: pointer;
+  touch-action: manipulation;
+
+  svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  &[data-active="true"] {
+    border-color: var(--accent-9);
+    background: var(--accent-a3);
+    color: var(--accent-9);
+  }
+}

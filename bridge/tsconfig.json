@@ -14,10 +14,14 @@
     "composite": true,
     "declaration": true,
     "declarationDir": "dist",
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "paths": {
+      "jsb": ["../jsb/dist/index.d.ts"]
+    }
   },
   "include": ["src"],
   "references": [
+    { "path": "../jsb" },
     { "path": "../tauri-plugin-data" },
     { "path": "../tauri-plugin-pty" },
     { "path": "../tauri-plugin-ssh" }

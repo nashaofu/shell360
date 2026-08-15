@@ -110,8 +110,14 @@
 
 .sshBtn,
 .sftpBtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   flex: 1;
   height: 36px;
+  min-width: 0;
   padding: 0 12px;
   border-radius: 8px;
   font-size: 13px;
@@ -127,9 +133,10 @@
 }
 
 .sshBtn {
-  background: var(--mobile-accent-soft);
-  border: 1px solid var(--mobile-accent-border);
+  background: color-mix(in srgb, var(--mobile-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mobile-accent) 50%, transparent);
   color: var(--mobile-accent-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--mobile-accent) 10%, transparent);
 
   &.errorBtn {
     background: rgba(200, 61, 73, 0.08);
@@ -143,7 +150,8 @@
   }
 
   &:active:not(:disabled) {
-    background: var(--mobile-accent-border);
+    background: color-mix(in srgb, var(--mobile-accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--mobile-accent) 50%, transparent);
   }
 }
 
