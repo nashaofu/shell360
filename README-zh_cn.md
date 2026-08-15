@@ -123,4 +123,4 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 关注数据
 
-[![Star History Chart](https://api.star-history.com/svg?repos=nashaofu/shell360&type=date&legend=top-left)](https://www.star-history.com/#nashaofu/shell360&type=date&legend=top-left)
+[![Star History Chart](https://star-history.dera.page/svg?repos=nashaofu/shell360&type=date&legend=top-left)](https://star-history.dera.page/#nashaofu/shell360&type=date&legend=top-left)
