@@ -1,3 +1,4 @@
+import * as timers from "node:timers/promises";
 import { execa, type Options, type ResultPromise } from "execa";
 import { ADB_PATH, ANDROID_PACKAGE_NAME, WORKSPACE_DIR } from "./constants.ts";
 

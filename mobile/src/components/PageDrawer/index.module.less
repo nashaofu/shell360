@@ -4,6 +4,7 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: flex-end;
+  overflow: hidden;
 }
 
 .panel {
@@ -19,6 +20,7 @@
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  contain: layout paint;
 
   @media (max-width: 580px) {
     width: 100%;
@@ -109,6 +111,7 @@
   overflow: auto;
   padding: 20px 16px;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .footer {

@@ -39,6 +39,24 @@ function formatNumber(val: number, dp: number) {
   return Math.round(val * dpVal) / dpVal;
 }
 
+function formatSftpSize(item: SSHSftpFile) {
+  if (item.fileType !== SSHSftpFileType.File) {
+    return "-";
+  }
+
+  if (item.size < 1024) {
+    return `${item.size} B`;
+  } else if (item.size < 1024 ** 2) {
+    return `${formatNumber(item.size / 1024, 2)} KB`;
+  } else if (item.size < 1024 ** 3) {
+    return `${formatNumber(item.size / 1024 ** 2, 2)} MB`;
+  } else if (item.size < 1024 ** 4) {
+    return `${formatNumber(item.size / 1024 ** 3, 2)} GB`;
+  }
+
+  return `${formatNumber(item.size / 1024 ** 4, 2)} TB`;
+}
+
 export default function useCells({
   selectedFile,
   editingFilename,
@@ -95,8 +113,7 @@ export default function useCells({
         title: "Name",
         compare: (a: SSHSftpFile, b: SSHSftpFile) =>
           b.name.localeCompare(a.name),
-        maxWidth: 320,
-        minWidth: 320,
+        minWidth: 180,
         render: (item: SSHSftpFile) => {
           const iconMap = {
             [SSHSftpFileType.Dir]: FolderIcon,
@@ -127,7 +144,10 @@ export default function useCells({
                 ) : (
                   <>
                     <div className={styles.fileName}>{item.name}</div>
-                    <div className={styles.filePerms}>{item.permissions}</div>
+                    <div className={styles.fileMeta}>
+                      <span>{formatSftpMtime(item.mtime)}</span>
+                      <span className={styles.filePerms}>{item.permissions}</span>
+                    </div>
                   </>
                 )}
               </div>
@@ -136,48 +156,24 @@ export default function useCells({
         },
       },
       {
-        id: "mtime",
-        key: "mtime",
-        title: "Date Modified",
-        compare: (a: SSHSftpFile, b: SSHSftpFile) => b.mtime - a.mtime,
-        width: 170,
-        maxWidth: 170,
-        minWidth: 170,
-        render: (item: SSHSftpFile) => formatSftpMtime(item.mtime),
-      },
-      {
         id: "size",
         key: "size",
         title: "Size",
-        width: 120,
-        maxWidth: 120,
-        minWidth: 120,
+        width: 90,
+        maxWidth: 90,
+        minWidth: 90,
         compare: (a: SSHSftpFile, b: SSHSftpFile) => b.size - a.size,
-        render: (item: SSHSftpFile) => {
-          if (item.fileType !== SSHSftpFileType.File) {
-            return "-";
-          }
-
-          if (item.size < 1024) {
-            return `${item.size} B`;
-          } else if (item.size < 1024 ** 2) {
-            return `${formatNumber(item.size / 1024, 2)} KB`;
-          } else if (item.size < 1024 ** 3) {
-            return `${formatNumber(item.size / 1024 ** 2, 2)} MB`;
-          } else if (item.size < 1024 ** 4) {
-            return `${formatNumber(item.size / 1024 ** 3, 2)} GB`;
-          } else if (item.size < 1024 ** 5) {
-            return `${formatNumber(item.size / 1024 ** 4, 2)} TB`;
-          }
-        },
+        render: (item: SSHSftpFile) => (
+          <span className={styles.fileSize}>{formatSftpSize(item)}</span>
+        ),
       },
       {
         id: "opts",
         key: "path",
         title: null,
-        width: 152,
-        maxWidth: 152,
-        minWidth: 152,
+        width: 96,
+        maxWidth: 96,
+        minWidth: 96,
         sx: (isHeader: boolean) => {
           if (isHeader) {
             return {
