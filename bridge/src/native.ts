@@ -52,11 +52,9 @@ export class NativeTransport {
     jsb.attachTransport({
       send: (message) => this.port.postMessage(message),
       setMessageHandler: (handler) => {
-        this.port.onmessage = handler
-          ? (event) => handler(event.data)
-          : null;
+        this.port.onmessage = handler ? (event) => handler(event.data) : null;
       },
-      });
+    });
   }
 
   invoke<T>(
@@ -81,7 +79,11 @@ export class NativeTransport {
         })
         .catch((error: unknown) => {
           clearTimeout(timeoutId);
-          reject(error instanceof Error ? error : new NativeBridgeError("BRIDGE_NATIVE_ERROR", String(error)));
+          reject(
+            error instanceof Error
+              ? error
+              : new NativeBridgeError("BRIDGE_NATIVE_ERROR", String(error)),
+          );
         });
     });
   }
@@ -99,15 +101,16 @@ export class NativeTransport {
   dispose(): void {
     jsb.dispose();
     this.port.onmessage = null;
-    this.port.postMessage(JSON.stringify({
-      type: "invoke",
-      id: uuidv4(),
-      clientId: this.clientId,
-      method: "bridge.releaseClient",
-      params: null,
-    }));
+    this.port.postMessage(
+      JSON.stringify({
+        type: "invoke",
+        id: uuidv4(),
+        clientId: this.clientId,
+        method: "bridge.releaseClient",
+        params: null,
+      }),
+    );
   }
-
 }
 
 function unsupported(capability: string): Promise<never> {

@@ -3,13 +3,17 @@ import { useRequest } from "ahooks";
 import { type SSHSftpFile, SSHSftpFileType } from "bridge/ssh";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { TerminalAtom } from "shared";
-import { FileUploadIcon, MoreIcon } from "shared";
-import { Loading } from "shared";
-import { SSHLoading } from "shared";
-import { TransferProgress } from "shared";
-import { useSftpConnection } from "shared";
-import { useSftpFileEditor } from "shared";
-import { getSftpBrowserFiles, getSftpDirname } from "shared";
+import {
+  FileUploadIcon,
+  getSftpBrowserFiles,
+  getSftpDirname,
+  Loading,
+  MoreIcon,
+  SSHLoading,
+  TransferProgress,
+  useSftpConnection,
+  useSftpFileEditor,
+} from "shared";
 import FileEditorModal from "./FileEditorModal";
 import styles from "./index.module.less";
 import { getErrorMessage } from "./messages";
@@ -26,7 +30,7 @@ import useModal from "./useModal";
 import useRename from "./useRename";
 import useSftpActions from "./useSftpActions";
 
-type SftpProps = {
+type SftpBrowserProps = {
   item: TerminalAtom;
   onClose: () => unknown;
   onOpenAddKey: () => unknown;
@@ -34,13 +38,13 @@ type SftpProps = {
   loadingClassName?: string;
 };
 
-export default function Sftp({
+export default function SftpBrowser({
   item,
   onClose,
   onOpenAddKey,
   className,
   loadingClassName,
-}: SftpProps) {
+}: SftpBrowserProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [dirname, setDirname] = useState<string | undefined>(undefined);
   const [orderBy, setOrderBy] = useState<keyof SSHSftpFile>("name");

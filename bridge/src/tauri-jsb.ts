@@ -20,21 +20,25 @@ export class TauriJsbTransport implements JsbTransport {
   }
 
   emit(event: string, payload: unknown, targetId?: string): void {
-    this.handler?.(JSON.stringify({
-      type: "emit",
-      event,
-      targetId,
-      payload,
-    }));
+    this.handler?.(
+      JSON.stringify({
+        type: "emit",
+        event,
+        targetId,
+        payload,
+      }),
+    );
   }
 
   listenDataEvents(): void {
     void listen<boolean>("data://authed_change", (event) => {
-      this.handler?.(JSON.stringify({
-        type: "emit",
-        event: "data.authedChange",
-        payload: event.payload,
-      }));
+      this.handler?.(
+        JSON.stringify({
+          type: "emit",
+          event: "data.authedChange",
+          payload: event.payload,
+        }),
+      );
     });
   }
 
@@ -48,17 +52,21 @@ export class TauriJsbTransport implements JsbTransport {
     if (localResult !== undefined) {
       void localResult
         .then((result) => {
-          this.handler?.(JSON.stringify({ type: "result", id: request.id, result }));
+          this.handler?.(
+            JSON.stringify({ type: "result", id: request.id, result }),
+          );
         })
         .catch((error: unknown) => {
-          this.handler?.(JSON.stringify({
-            type: "result",
-            id: request.id,
-            error: {
-              code: "JSB_NATIVE_ERROR",
-              message: error instanceof Error ? error.message : String(error),
-            },
-          }));
+          this.handler?.(
+            JSON.stringify({
+              type: "result",
+              id: request.id,
+              error: {
+                code: "JSB_NATIVE_ERROR",
+                message: error instanceof Error ? error.message : String(error),
+              },
+            }),
+          );
         });
       return;
     }

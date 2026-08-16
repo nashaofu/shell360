@@ -11,8 +11,7 @@ export default function useMessage() {
         sharedMessage.success(normalize(arg)),
       error: (arg: MessageArg | ReactNode) =>
         sharedMessage.error(normalize(arg)),
-      info: (arg: MessageArg | ReactNode) =>
-        sharedMessage.info(normalize(arg)),
+      info: (arg: MessageArg | ReactNode) => sharedMessage.info(normalize(arg)),
       warning: (arg: MessageArg | ReactNode) =>
         sharedMessage.warning(normalize(arg)),
     }),

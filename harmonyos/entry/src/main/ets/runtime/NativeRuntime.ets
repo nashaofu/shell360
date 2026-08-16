@@ -3,6 +3,7 @@ import * as nativeRuntime from 'libentry.so';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
+import { util } from '@kit.ArkTS';
 import { fileIo } from '@kit.CoreFileKit';
 import picker from '@ohos.file.picker';
 
@@ -122,7 +123,7 @@ export class HarmonyNativeRuntime implements NativeRuntime {
       if (this.machineId === undefined) {
         const path = `${context.filesDir}/machine-id`;
         this.machineId = fileIo.readText(path).catch(async () => {
-          const value = `shell360-${Date.now()}-${Math.random()}`;
+          const value = `shell360-${util.generateRandomUUID()}`;
           const file = await fileIo.open(
             path,
             fileIo.OpenMode.WRITE_ONLY | fileIo.OpenMode.CREATE | fileIo.OpenMode.TRUNC,

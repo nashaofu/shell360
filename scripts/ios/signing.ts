@@ -1,8 +1,8 @@
-import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execa } from "execa";
+import { v4 as uuid } from "uuid";
 import { BUILD_DIR, BUNDLE_ID } from "./constants.ts";
 
 const SIGNING_ENVIRONMENT_VARIABLES = [
@@ -133,7 +133,7 @@ export async function prepareSigning(
   const profilePlist = path.join(signingDirectory, "profile.plist");
   const keychainPath = path.join(signingDirectory, "signing.keychain-db");
   const exportOptionsPath = path.join(signingDirectory, "ExportOptions.plist");
-  const keychainPassword = crypto.randomUUID();
+  const keychainPassword = uuid();
   await fs.writeFile(certificatePath, certificate, { encoding: "base64" });
   await fs.writeFile(profilePath, mobileProvision, { encoding: "base64" });
   await Promise.all([

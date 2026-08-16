@@ -1,11 +1,11 @@
-import type { TransferTask } from "shared";
+import type { QueueItemStatus, TransferTask } from "shared";
 import {
+  formatEta,
+  formatSpeed,
   StatusCompleteIcon,
   StatusDownloadIcon,
   StatusUploadIcon,
 } from "shared";
-import type { QueueItemStatus } from "shared";
-import { formatEta, formatSpeed } from "shared";
 
 import styles from "./index.module.less";
 

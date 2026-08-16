@@ -12,7 +12,10 @@
   "scripts": {
     "tsc": "tsc -p tsconfig.json"
   },
+  "dependencies": {
+    "uuid": "^14.0.1"
+  },
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   }
 }

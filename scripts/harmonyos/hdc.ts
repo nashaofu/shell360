@@ -1,5 +1,5 @@
-import { execa, type Options, type ResultPromise } from "execa";
 import * as timers from "node:timers/promises";
+import { execa, type Options, type ResultPromise } from "execa";
 import { HARMONYOS_DIR, HDC } from "./constants.ts";
 
 export function hdc(args: string[], options?: Partial<Options>): ResultPromise {
@@ -75,15 +75,21 @@ export async function monitorWebViewDebugPort(
       if (configuredRemoteAddress !== remoteAddress) {
         if (configuredRemoteAddress) {
           await hdc(
-            ["-t", serial, "fport", "rm", localAddress, configuredRemoteAddress],
+            [
+              "-t",
+              serial,
+              "fport",
+              "rm",
+              localAddress,
+              configuredRemoteAddress,
+            ],
             { reject: false, cancelSignal },
           );
         }
         if (remoteAddress) {
-          await hdc(
-            ["-t", serial, "fport", localAddress, remoteAddress],
-            { cancelSignal },
-          );
+          await hdc(["-t", serial, "fport", localAddress, remoteAddress], {
+            cancelSignal,
+          });
         }
       }
 

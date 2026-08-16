@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 export interface JsbTransport {
   send(message: string): void;
   setMessageHandler(handler: ((message: string) => void) | null): void;
@@ -32,23 +34,23 @@ type QueuedRequest = {
 const MAX_QUEUE_SIZE = 128;
 
 class JsbClient {
-  private clientId = `jsb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  private clientId = `jsb-${uuid()}`;
   private transport: JsbTransport | undefined;
   private connected = false;
   private disposed = false;
   private readonly queue: QueuedRequest[] = [];
   private readonly pending = new Map<string, PendingRequest>();
   private readonly listeners = new Map<string, Set<JsbEventListener>>();
-  private sequence = 0;
-
   invoke<TParams = void, TResult = void>(
     method: string,
     params?: TParams,
   ): Promise<TResult> {
     if (this.disposed) {
-      return Promise.reject(new JsbError("JSB_DISPOSED", "JSB has been disposed."));
+      return Promise.reject(
+        new JsbError("JSB_DISPOSED", "JSB has been disposed."),
+      );
     }
-    const id = `${Date.now().toString(36)}-${(this.sequence += 1).toString(36)}`;
+    const id = uuid();
     const message = JSON.stringify({
       type: "invoke",
       id,
@@ -90,7 +92,8 @@ class JsbClient {
   }
 
   attachTransport(transport: JsbTransport): void {
-    if (this.disposed) throw new JsbError("JSB_DISPOSED", "JSB has been disposed.");
+    if (this.disposed)
+      throw new JsbError("JSB_DISPOSED", "JSB has been disposed.");
     this.transport?.setMessageHandler(null);
     this.transport = transport;
     transport.setMessageHandler((message) => this.handleMessage(message));
@@ -130,10 +133,12 @@ class JsbClient {
     const pending = this.pending.get(parsed.id);
     if (!pending) return;
     this.pending.delete(parsed.id);
-    pending.reject(new JsbError(
-      "JSB_TRANSPORT_ERROR",
-      error instanceof Error ? error.message : "JSB transport failed.",
-    ));
+    pending.reject(
+      new JsbError(
+        "JSB_TRANSPORT_ERROR",
+        error instanceof Error ? error.message : "JSB transport failed.",
+      ),
+    );
   }
 
   private handleMessage(message: string): void {
@@ -165,11 +170,13 @@ class JsbClient {
     if (!pending) return;
     this.pending.delete(parsed.id);
     if (parsed.error) {
-      pending.reject(new JsbError(
-        parsed.error.code ?? "JSB_NATIVE_ERROR",
-        parsed.error.message ?? "Native invocation failed.",
-        parsed.error.details,
-      ));
+      pending.reject(
+        new JsbError(
+          parsed.error.code ?? "JSB_NATIVE_ERROR",
+          parsed.error.message ?? "Native invocation failed.",
+          parsed.error.details,
+        ),
+      );
     } else {
       pending.resolve(parsed.result);
     }
@@ -178,7 +185,10 @@ class JsbClient {
 
 const jsb = new JsbClient();
 
-export function attachTransport(transport: JsbTransport, clientId?: string): void {
+export function attachTransport(
+  transport: JsbTransport,
+  clientId?: string,
+): void {
   if (clientId) jsb.setClientId(clientId);
   jsb.attachTransport(transport);
 }

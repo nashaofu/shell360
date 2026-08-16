@@ -39,5 +39,8 @@
     "typescript": "^7.0.2",
     "wait-on": "^9.1.0",
     "yargs": "^18.1.0"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
   }
 }

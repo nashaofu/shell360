@@ -3,8 +3,7 @@ import { open, save } from "bridge/dialog";
 import type { SSHSftp, SSHSftpFile } from "bridge/ssh";
 import { throttle } from "lodash-es";
 import { type MutableRefObject, useCallback, useRef, useState } from "react";
-import { type TransferQueueItem, uuidV4 } from "shared";
-import { joinSftpPath } from "shared";
+import { joinSftpPath, type TransferQueueItem, uuidV4 } from "shared";
 import { useFileTransfersActions } from "./fileTransfer.atom";
 import {
   formatTransferCount,
@@ -233,7 +232,9 @@ export default function useSftpActions({
     async () => {
       const filePaths = await open({ multiple: true, directory: false });
       if (!filePaths || filePaths.length === 0) return;
-      const selectedFilePaths = Array.isArray(filePaths) ? filePaths : [filePaths];
+      const selectedFilePaths = Array.isArray(filePaths)
+        ? filePaths
+        : [filePaths];
 
       const items: TransferQueueItem[] = selectedFilePaths.map((p) => ({
         id: uuidV4(),
