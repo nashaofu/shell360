@@ -64,6 +64,7 @@ export default function LocalTerminal({
       >
         <TerminalContextMenu terminal={terminal}>
           <XTerminal
+            className={styles.xterminal}
             fontFamily={localSettings.fontFamily}
             fontSize={localSettings.fontSize}
             theme={TERMINAL_THEMES_MAP.get(localSettings.theme)?.theme}

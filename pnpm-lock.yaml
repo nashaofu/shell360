@@ -201,6 +201,9 @@ importers:
       bridge:
         specifier: workspace:*
         version: link:../bridge
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       dayjs:
         specifier: ^1.11.21
         version: 1.11.21

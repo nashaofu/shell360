@@ -65,6 +65,7 @@ export default function SSHTerminal({
       >
         <TerminalContextMenu terminal={terminal}>
           <XTerminal
+            className={styles.xterminal}
             fontFamily={item.host.terminalSettings?.fontFamily}
             fontSize={item.host.terminalSettings?.fontSize}
             theme={

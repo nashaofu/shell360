@@ -1,6 +1,6 @@
-import { useSize } from "ahooks";
+import { clsx } from "clsx";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardIcon,
   SSHLoading,
@@ -43,10 +43,8 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose });
 
-  const footerRef = useRef<HTMLDivElement>(null);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
 
-  const size = useSize(footerRef);
   const terminalSettings = item.host.terminalSettings;
   const hasBlockingState = loading || Boolean(error);
   const showLoadingMask = !terminal || hasBlockingState;
@@ -75,21 +73,15 @@ export default function SSHTerminal({
   }, [showVirtualKeyboard, terminal]);
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", ...style }}>
+    <div className={styles.root} style={style}>
       <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: size?.height || 0,
-          left: 0,
-          overflow: "hidden",
-          pointerEvents: hasBlockingState ? "none" : "unset",
-          visibility: hasBlockingState ? "hidden" : "visible",
-        }}
+        className={clsx(styles.terminal, {
+          [styles.terminalHidden]: hasBlockingState,
+        })}
         data-paste="true"
       >
         <XTerminal
+          className={styles.xterminal}
           fontFamily={terminalSettings?.fontFamily}
           fontSize={terminalSettings?.fontSize}
           theme={TERMINAL_THEMES_MAP.get(terminalSettings?.theme)?.theme}
@@ -116,27 +108,8 @@ export default function SSHTerminal({
       )}
 
       {showFooter && (
-        <div
-          ref={footerRef}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            paddingBottom: "env(safe-area-inset-bottom)",
-            borderTop: "1px solid var(--gray-a6)",
-            backgroundColor: "var(--gray-3)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              padding: "2px 8px 1px",
-              gap: 4,
-              fontSize: "0.75rem",
-            }}
-          >
+        <div className={styles.footer}>
+          <div className={styles.footerToolbar}>
             <button
               type="button"
               className={styles.keyboardToggle}

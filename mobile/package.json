@@ -12,6 +12,7 @@
     "@radix-ui/themes": "^3.3.0",
     "ahooks": "^3.9.7",
     "bridge": "workspace:*",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.21",
     "jotai": "^2.20.1",
     "lodash-es": "^4.18.1",
