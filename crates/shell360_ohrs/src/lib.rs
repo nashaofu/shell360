@@ -1,11 +1,11 @@
 use std::sync::{Arc, LazyLock, Mutex};
 
-use napi::{
-  Error, Result, Status, Task,
+use napi_ohos::{
+  Env, Error, Result, Status, Task,
   bindgen_prelude::{AsyncTask, Function, Unknown},
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
-use napi_derive::napi;
+use napi_derive_ohos::napi;
 use shell360_ffi::{FfiEventSink, Shell360Runtime};
 
 type EventCallback =
@@ -123,7 +123,7 @@ impl Task for InvokeTask {
       .map_err(native_error)
   }
 
-  fn resolve(&mut self, _: napi::Env, output: Self::Output) -> Result<Self::JsValue> {
+  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
     Ok(output)
   }
 }

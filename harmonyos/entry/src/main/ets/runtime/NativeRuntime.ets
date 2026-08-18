@@ -1,7 +1,13 @@
 import type { NativeRuntime } from '../bridge/BridgeRouter';
-import * as nativeRuntime from 'libentry.so';
+import {
+  attachEventCallback,
+  initializeRuntime,
+  invoke,
+  releaseClient,
+  shutdown,
+} from 'shell360_ohrs';
 import { pasteboard } from '@kit.BasicServicesKit';
-import { common } from '@kit.AbilityKit';
+import { abilityAccessCtrl, common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { util } from '@kit.ArkTS';
 import { fileIo } from '@kit.CoreFileKit';
@@ -19,7 +25,7 @@ export class HarmonyNativeRuntime implements NativeRuntime {
   }
 
   static shutdownGlobal(): void {
-    nativeRuntime.shutdown();
+    shutdown();
   }
 
   static initializeGlobal(): void {
@@ -27,7 +33,7 @@ export class HarmonyNativeRuntime implements NativeRuntime {
     if (context === undefined) {
       throw new Error('HarmonyOS ability context is unavailable.');
     }
-    nativeRuntime.initializeRuntime(context.filesDir, context.cacheDir);
+    initializeRuntime(context.filesDir, context.cacheDir);
   }
 
   static setMainWindow(mainWindow: window.Window): void {
@@ -56,7 +62,7 @@ export class HarmonyNativeRuntime implements NativeRuntime {
   }
 
   private attachEventCallback(): void {
-    nativeRuntime.attachEventCallback((event: string) => {
+    attachEventCallback((event: string) => {
       this.eventHandler?.(event);
     });
   }
@@ -74,9 +80,23 @@ export class HarmonyNativeRuntime implements NativeRuntime {
     }
     if (method === 'clipboard.readText') {
       try {
+        const context = HarmonyNativeRuntime.context;
+        if (context === undefined) {
+          throw new Error('HarmonyOS ability context is unavailable.');
+        }
+        const permissionResult = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
+          context,
+          ['ohos.permission.READ_PASTEBOARD'],
+        );
+        if (permissionResult.authResults[0] !== abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+          throw new Error('HarmonyOS clipboard read permission was denied.');
+        }
         const data = await pasteboard.getSystemPasteboard().getData();
         return JSON.stringify(data.getPrimaryText());
-      } catch (_) {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'HarmonyOS clipboard read permission was denied.') {
+          throw error;
+        }
         throw new Error('HarmonyOS clipboard read failed.');
       }
     }
@@ -173,7 +193,7 @@ export class HarmonyNativeRuntime implements NativeRuntime {
       }
     }
     this.ensureRuntime();
-    return nativeRuntime.invoke(method, clientId, paramsJson);
+    return invoke(method, clientId, paramsJson);
   }
 
   private resolveFilePath(path: string, baseDir: string | undefined): string {
@@ -186,12 +206,12 @@ export class HarmonyNativeRuntime implements NativeRuntime {
   }
 
   async releaseClient(clientId: string): Promise<void> {
-    if (this.initialized) nativeRuntime.releaseClient(clientId);
+    if (this.initialized) releaseClient(clientId);
   }
 
   shutdown(): void {
     if (this.initialized) {
-      nativeRuntime.shutdown();
+      shutdown();
       this.initialized = false;
     }
   }

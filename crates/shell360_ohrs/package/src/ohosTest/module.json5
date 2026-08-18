@@ -1,0 +1,11 @@
+{
+  "module": {
+    "name": "shell360_ohrs_test",
+    "type": "feature",
+    "deviceTypes": [
+      "default"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false
+  }
+}

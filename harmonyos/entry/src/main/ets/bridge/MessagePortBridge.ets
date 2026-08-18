@@ -1,7 +1,30 @@
 import { webview } from '@kit.ArkWeb';
 import { BridgeRouter } from './BridgeRouter';
 
-const INIT_PORT_MESSAGE = '__shell360_native_port__';
+const INIT_PORT_MESSAGE = 'shell360:port';
+
+interface BridgeErrorPayload {
+  code: string;
+  message: string;
+}
+
+interface BridgeErrorResponse {
+  type: string;
+  id: string;
+  error: BridgeErrorPayload;
+}
+
+interface BridgeResultResponse {
+  type: string;
+  id: string;
+  result: Object | null;
+}
+
+interface BridgeDispatchResponse {
+  id: string;
+  result?: Object | null;
+  error?: BridgeErrorPayload;
+}
 
 export class MessagePortBridge {
   private port: webview.WebMessagePort | undefined;
@@ -29,17 +52,42 @@ export class MessagePortBridge {
         });
         this.eventAttached = true;
       }
-      this.port.onMessageEvent((message) => {
+      const nativePort = this.port;
+      nativePort.onMessageEvent((message) => {
         if (typeof message !== 'string') {
           return;
         }
-        void this.router.dispatch(message).then((response) => {
-          try {
-            this.port?.postMessageEvent(response);
-          } catch (_) {
-            return;
-          }
-        });
+        void this.router.dispatch(message)
+          .catch((error: Error) => JSON.stringify({
+            type: 'result',
+            id: '',
+            error: {
+              code: 'BRIDGE_NATIVE_ERROR',
+              message: error.message,
+            } as BridgeErrorPayload,
+          } as BridgeErrorResponse))
+          .then((response) => {
+            try {
+              const parsed = JSON.parse(response) as BridgeDispatchResponse;
+              if (parsed.error !== undefined) {
+                const errorResponse: BridgeErrorResponse = {
+                  type: 'result',
+                  id: parsed.id,
+                  error: parsed.error,
+                };
+                nativePort.postMessageEvent(JSON.stringify(errorResponse));
+              } else {
+                const resultResponse: BridgeResultResponse = {
+                  type: 'result',
+                  id: parsed.id,
+                  result: parsed.result ?? null,
+                };
+                nativePort.postMessageEvent(JSON.stringify(resultResponse));
+              }
+            } catch (_) {
+              return;
+            }
+          });
       });
       setTimeout(() => {
         try {

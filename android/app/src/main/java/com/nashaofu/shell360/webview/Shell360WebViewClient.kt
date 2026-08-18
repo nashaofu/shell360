@@ -14,6 +14,7 @@ import com.nashaofu.shell360.BuildConfig
 
 class Shell360WebViewClient(
     context: Context,
+    private val onPageStartedCallback: () -> Unit = {},
 ) : WebViewClient() {
     private val assetLoader = WebViewAssetLoader.Builder()
         .addPathHandler("/", WebViewAssetLoader.AssetsPathHandler(context))
@@ -25,6 +26,11 @@ class Shell360WebViewClient(
     ): WebResourceResponse? {
         return assetLoader.shouldInterceptRequest(request.url)
             ?: super.shouldInterceptRequest(view, request)
+    }
+
+    override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+        onPageStartedCallback()
+        super.onPageStarted(view, url, favicon)
     }
 
     override fun shouldOverrideUrlLoading(

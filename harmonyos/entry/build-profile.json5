@@ -6,10 +6,6 @@
         enable: false,
       },
     },
-    externalNativeOptions: {
-      path: "./src/main/rust/CMakeLists.txt",
-      abiFilters: ["arm64-v8a", "x86_64"],
-    },
   },
   buildOptionSet: [
     {

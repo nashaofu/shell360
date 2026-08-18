@@ -13,12 +13,17 @@ const port = Number(
   hvigor.getParameter().getExtParam("devServerPort") ?? "1421",
 );
 
+const workspaceDir = path.resolve(__dirname, "..", "..");
+
 hvigor.afterNodeEvaluate((node) => {
   const hapContext = node.getContext(
     OhosPluginId.OHOS_HAP_PLUGIN,
   ) as OhosHapContext;
+  if (!hapContext) {
+    return;
+  }
   const buildMode = hapContext.getBuildMode();
-  const workspaceDir = path.resolve(hapContext.getModulePath(), "..", "..");
+
   const webAssetsDir = path.join(
     hapContext.getModulePath(),
     "src",

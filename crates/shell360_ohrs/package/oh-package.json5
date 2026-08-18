@@ -1,0 +1,10 @@
+{
+  name: "shell360_ohrs",
+  version: "0.1.0",
+  description: "Please describe the basic information.",
+  main: "index.ets",
+  types: "libs/index.d.ts",
+  author: "",
+  license: "Apache-2.0",
+  dependencies: {},
+}

@@ -35,6 +35,28 @@ class RustBridge(context: Context) {
         return runtime.healthCheck()
     }
 
+    fun route(method: String, clientId: String, params: Any?): Any? {
+        return try {
+            JSONTokener(
+                runtime.invoke(method, clientId, params.toJson()),
+            ).nextValue()
+        } catch (error: FfiException.UnsupportedMethod) {
+            throw NativeBridgeException("BRIDGE_UNSUPPORTED", error.v1)
+        } catch (error: FfiException.InvalidRequest) {
+            throw NativeBridgeException("BRIDGE_INVALID_REQUEST", error.v1)
+        } catch (error: FfiException.Keygen) {
+            throw NativeBridgeException("KEYGEN_ERROR", error.v1)
+        } catch (error: FfiException.Data) {
+            throw NativeBridgeException(error.code, error.reason)
+        } catch (error: FfiException.Ssh) {
+            throw NativeBridgeException(
+                error.code,
+                error.reason,
+                error.details?.let { JSONTokener(it).nextValue() },
+            )
+        }
+    }
+
     fun invokeKeygen(params: Any?): JSONObject {
         return JSONObject(runtime.invokeKeygen(params.toJson()))
     }

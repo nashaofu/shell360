@@ -17,30 +17,13 @@ struct Index {
   @State private loadError: string = '';
   private readonly documentStartScripts: Array<ScriptItem> = [{
     script: `(() => {
-      let nativePort;
-      const pending = [];
-      let onmessage = null;
-      const nativeProxy = {
-        postMessage(message) {
-          if (nativePort) nativePort.postMessage(message);
-          else pending.push(message);
-        }
-      };
-      Object.defineProperty(nativeProxy, 'onmessage', {
-        get() { return onmessage; },
-        set(handler) {
-          onmessage = handler;
-          if (nativePort) nativePort.onmessage = handler;
-        }
-      });
-      window.shell360Native = nativeProxy;
+      window.__shell360Native__ = true;
       window.addEventListener('message', (event) => {
-        if (event.data !== '__shell360_native_port__' || event.ports.length !== 1) return;
-        nativePort = event.ports[0];
-        if (!nativePort) return;
-        nativePort.onmessage = onmessage;
-        nativePort.start();
-        pending.splice(0).forEach((message) => nativePort.postMessage(message));
+        if (event.data !== 'shell360:port' || event.ports.length !== 1) return;
+        const port = event.ports[0];
+        port.start();
+        window.__shell360NativePort__ = port;
+        window.dispatchEvent(new Event('shell360:native-port'));
       });
     })();`,
     scriptRules: ['*']

@@ -41,7 +41,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
         val supportsNativeBridge = WebViewFeature.isFeatureSupported(
-            WebViewFeature.WEB_MESSAGE_LISTENER,
+            WebViewFeature.CREATE_WEB_MESSAGE_CHANNEL,
+        ) && WebViewFeature.isFeatureSupported(
+            WebViewFeature.POST_WEB_MESSAGE,
+        ) && WebViewFeature.isFeatureSupported(
+            WebViewFeature.DOCUMENT_START_SCRIPT,
         )
         if (!supportsNativeBridge) {
             val provider = WebViewCompat.getCurrentWebViewPackage(this)
@@ -119,10 +123,17 @@ class MainActivity : ComponentActivity() {
                                 settings.javaScriptCanOpenWindowsAutomatically = false
                                 settings.setSupportMultipleWindows(false)
                                 settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                                webViewClient = Shell360WebViewClient(context)
+                                WebViewCompat.addDocumentStartJavaScript(
+                                    this,
+                                    DOCUMENT_START_SCRIPT,
+                                    setOf(BuildConfig.WEBVIEW_ORIGIN),
+                                )
 
                                 webView = this
                                 webViewBridge = WebViewBridge(this, router, rustBridge)
+                                webViewClient = Shell360WebViewClient(context) {
+                                    webViewBridge?.attach()
+                                }
                                 if (savedInstanceState?.let(::restoreState) == null) {
                                     loadUrl(BuildConfig.WEBVIEW_URL)
                                 }
@@ -168,6 +179,16 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val TAG = "Shell360Activity"
+        const val DOCUMENT_START_SCRIPT = """
+            (() => {
+              window.__shell360Native__ = true;
+              window.addEventListener('message', (event) => {
+                if (event.data !== 'shell360:port' || event.ports.length !== 1) return;
+                window.__shell360NativePort__ = event.ports[0];
+                window.dispatchEvent(new Event('shell360:native-port'));
+              });
+            })();
+        """
         const val BACK_REQUEST_SCRIPT =
             "window.dispatchEvent(new Event('shell360:back',{cancelable:true}))===false"
     }

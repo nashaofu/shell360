@@ -27,31 +27,26 @@ class BridgeRouter(
             val request = BridgeRequest.parse(message)
             requestId = request.id
 
+            try {
+                val result = rustBridge.route(request.method, request.clientId, request.params)
+                if (
+                    request.method == "data.resetCrypto" &&
+                    result is JSONObject &&
+                    result.optBoolean("restartRequired")
+                ) {
+                    resetApplication()
+                }
+                return BridgeResponse.success(
+                    request.id,
+                    result,
+                )
+            } catch (error: NativeBridgeException) {
+                if (error.code != "BRIDGE_UNSUPPORTED") {
+                    throw error
+                }
+            }
+
             when {
-                request.method == "bridge.health" -> {
-                    BridgeResponse.success(request.id, rustBridge.healthCheck())
-                }
-                request.method == "bridge.releaseClient" -> {
-                    rustBridge.releaseClient(request.clientId)
-                    BridgeResponse.success(request.id, null)
-                }
-                request.method == "keygen.generate" -> {
-                    BridgeResponse.success(request.id, rustBridge.invokeKeygen(request.params))
-                }
-                request.method.startsWith("data.") -> {
-                    val result = rustBridge.invokeData(request.method, request.params)
-                    if (
-                        request.method == "data.resetCrypto" &&
-                        result is JSONObject &&
-                        result.optBoolean("restartRequired")
-                    ) {
-                        resetApplication()
-                    }
-                    BridgeResponse.success(
-                        request.id,
-                        result,
-                    )
-                }
                 request.method == "ssh.sftp.uploadFile" -> {
                     BridgeResponse.success(
                         request.id,

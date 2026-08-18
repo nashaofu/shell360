@@ -19,6 +19,7 @@ type NativeMessageEvent = {
 export type NativeMessagePort = {
   postMessage(message: string): void;
   onmessage: ((event: NativeMessageEvent) => void) | null;
+  close?: () => void;
 };
 
 const SSH_AUTH_TIMEOUT_MS = 130_000;
@@ -27,6 +28,8 @@ const FILE_PICKER_TIMEOUT_MS = 300_000;
 declare global {
   interface Window {
     shell360Native?: NativeMessagePort;
+    __shell360Native__?: boolean;
+    __shell360NativePort__?: MessagePort;
   }
 }
 
@@ -110,6 +113,7 @@ export class NativeTransport {
         params: null,
       }),
     );
+    this.port.close?.();
   }
 }
 
@@ -526,19 +530,65 @@ function decodeBase64(data: string): Uint8Array {
   return bytes;
 }
 
-export function installNativeBackend(): NativeTransport {
-  const port = window.shell360Native;
-  if (!port) {
+export async function installNativeBackend(): Promise<NativeTransport> {
+  const listener = window.shell360Native;
+  if (!listener && !window.__shell360Native__) {
     throw new NativeBridgeError(
       "BRIDGE_NOT_AVAILABLE",
       "The Shell360 native bridge is not available.",
     );
   }
 
-  const transport = new NativeTransport(port);
+  const transport = await new Promise<NativeTransport>((resolve, reject) => {
+    const onPortReady = () => {
+      const port = window.__shell360NativePort__;
+      if (!port) {
+        return;
+      }
+      window.clearTimeout(timeoutId);
+      window.removeEventListener(PORT_READY_EVENT, onPortReady);
+      port.start();
+      let handler: ((event: NativeMessageEvent) => void) | null = null;
+      const nativePort: NativeMessagePort = {
+        postMessage: (data) => port.postMessage(data),
+        get onmessage() {
+          return handler;
+        },
+        set onmessage(next) {
+          handler = next;
+          port.onmessage = next
+            ? (event) => next({ data: String(event.data) })
+            : null;
+        },
+        close: () => port.close(),
+      };
+      resolve(new NativeTransport(nativePort));
+    };
+    const timeoutId = window.setTimeout(() => {
+      window.removeEventListener(PORT_READY_EVENT, onPortReady);
+      reject(
+        new NativeBridgeError(
+          "BRIDGE_TIMEOUT",
+          "The Shell360 native message port was not created.",
+        ),
+      );
+    }, 10_000);
+    window.addEventListener(PORT_READY_EVENT, onPortReady);
+    onPortReady();
+    listener?.postMessage("shell360:connect");
+  });
+
+  await transport.invoke("bridge.health");
   setBridgeBackend(createNativeBackend(transport));
-  window.addEventListener("pagehide", () => transport.dispose(), {
+  window.addEventListener("pagehide", (event) => {
+    if (event.persisted) {
+      return;
+    }
+    transport.dispose();
+  }, {
     once: true,
   });
   return transport;
 }
+
+const PORT_READY_EVENT = "shell360:native-port";

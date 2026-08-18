@@ -1,12 +1,11 @@
 {
-  "name": "entry",
-  "version": "1.0.0",
-  "description": "Please describe the basic information.",
-  "main": "",
-  "author": "",
-  "license": "",
-  "dependencies": {
-    "libentry.so": "file:./src/main/rust"
-  }
+  name: "entry",
+  version: "1.0.0",
+  description: "Please describe the basic information.",
+  main: "",
+  author: "",
+  license: "",
+  dependencies: {
+    shell360_ohrs: "file:../../crates/shell360_ohrs/package",
+  },
 }
-

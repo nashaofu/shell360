@@ -15,17 +15,17 @@ Shell360 的独立 HarmonyOS WebView 宿主，通过与 Android、iOS 共用的 
 
 ## 实施状态
 
-| 阶段 | 优先级 | 状态 | 目标 |
-| --- | --- | --- | --- |
-| 0 | P0 | 进行中 | 验证 Rust、N-API、ABI 和跨线程回调 |
-| 1 | P0 | 进行中 | 建立 WebView 宿主及 Debug/Release 页面加载 |
-| 2 | P0 | 进行中 | 建立 Web 与 ArkTS 的 Bridge v1 通道 |
-| 3 | P0 | 进行中 | 打通 Web → ArkTS → Rust 最小垂直链路 |
-| 4 | P1 | 进行中 | 接入 Keygen、Data、持久化和错误模型 |
-| 5 | P1 | 进行中 | 接入 SSH Terminal 与事件通道 |
-| 6 | P1 | 进行中 | 接入 SFTP 和 HarmonyOS 平台能力 |
-| 7 | P1 | 进行中 | 建立构建、增量开发、CI 和发布流程 |
-| 8 | P2 | 进行中 | 安全加固、稳定性验证和性能优化 |
+| 阶段 | 优先级 | 状态   | 目标                                       |
+| ---- | ------ | ------ | ------------------------------------------ |
+| 0    | P0     | 进行中 | 验证 Rust、N-API、ABI 和跨线程回调         |
+| 1    | P0     | 进行中 | 建立 WebView 宿主及 Debug/Release 页面加载 |
+| 2    | P0     | 进行中 | 建立 Web 与 ArkTS 的 Bridge v1 通道        |
+| 3    | P0     | 进行中 | 打通 Web → ArkTS → Rust 最小垂直链路       |
+| 4    | P1     | 进行中 | 接入 Keygen、Data、持久化和错误模型        |
+| 5    | P1     | 进行中 | 接入 SSH Terminal 与事件通道               |
+| 6    | P1     | 进行中 | 接入 SFTP 和 HarmonyOS 平台能力            |
+| 7    | P1     | 进行中 | 建立构建、增量开发、CI 和发布流程          |
+| 8    | P2     | 进行中 | 安全加固、稳定性验证和性能优化             |
 
 状态只使用：`未开始`、`进行中`、`已完成`、`阻塞`。
 
@@ -260,22 +260,22 @@ pnpm --filter mobile run build
 
 ### 推荐路线
 
-当前实现使用 `shell360-ffi` + `shell360-napi`：
+当前实现使用 `shell360-ffi` + `shell360_ohrs`：
 
 1. 继续复用 `Shell360Runtime` 和 JSON 路由。
-2. `shell360-napi` 使用 `napi-rs` 直接导出 HAP 中的 `libentry.so`。
+2. `shell360_ohrs` 使用 `napi-rs` 直接导出 HAP 中的 `libentry.so`。
 3. native module 暴露异步 `createRuntime`、`invoke`、`releaseClient` 和 `shutdown`。
 4. `napi-rs` 的 `AsyncTask` 在 native worker 调用 Rust Runtime，Promise 完成后回到 ArkTS JS 线程。
 5. Rust `FfiEventSink` 通过 `ThreadsafeFunction` 回到 ArkTS。
 
 ### 直接 Rust N-API 与 C ABI 回退
 
-| 方案 | 优点 | 风险 | 决策 |
-| --- | --- | --- | --- |
-| Rust 直接导出 N-API | 边界最薄，少一层 C++ | Rust N-API crate 对 OHOS target 和 API 26 的支持需验证 | 阶段 0 首选 spike |
-| 稳定 C ABI + C++ N-API | ABI、内存、错误和工具链可控 | 多一层极薄 wrapper | 必须保留的回退方案 |
-| 为 UniFFI 新增 ArkTS backend | 可能自动生成类型 | 生成器维护成本高，当前 JSON 边界收益低 | 不推荐 |
-| 复用 Kotlin UniFFI/JNI | 无 | ArkTS/HarmonyOS 不能消费 Kotlin/JNI 产物 | 不可行 |
+| 方案                         | 优点                        | 风险                                                   | 决策               |
+| ---------------------------- | --------------------------- | ------------------------------------------------------ | ------------------ |
+| Rust 直接导出 N-API          | 边界最薄，少一层 C++        | Rust N-API crate 对 OHOS target 和 API 26 的支持需验证 | 阶段 0 首选 spike  |
+| 稳定 C ABI + C++ N-API       | ABI、内存、错误和工具链可控 | 多一层极薄 wrapper                                     | 必须保留的回退方案 |
+| 为 UniFFI 新增 ArkTS backend | 可能自动生成类型            | 生成器维护成本高，当前 JSON 边界收益低                 | 不推荐             |
+| 复用 Kotlin UniFFI/JNI       | 无                          | ArkTS/HarmonyOS 不能消费 Kotlin/JNI 产物               | 不可行             |
 
 若直接 N-API 不可用，最小 C ABI 为：
 
@@ -303,11 +303,11 @@ void shell360_runtime_free(Shell360RuntimeHandle* runtime);
 
 API 26 Native toolchain 和当前 Rust toolchain 列出以下对应目标：
 
-| HAP ABI | Rust target | 用途 |
-| --- | --- | --- |
-| `arm64-v8a` | `aarch64-unknown-linux-ohos` | 真机，必须 |
-| `x86_64` | `x86_64-unknown-linux-ohos` | 模拟器和 CI，建议 |
-| `armeabi-v7a` | `armv7-unknown-linux-ohos` | 仅产品明确支持 32 位设备时增加 |
+| HAP ABI       | Rust target                  | 用途                           |
+| ------------- | ---------------------------- | ------------------------------ |
+| `arm64-v8a`   | `aarch64-unknown-linux-ohos` | 真机，必须                     |
+| `x86_64`      | `x86_64-unknown-linux-ohos`  | 模拟器和 CI，建议              |
+| `armeabi-v7a` | `armv7-unknown-linux-ohos`   | 仅产品明确支持 32 位设备时增加 |
 
 当前开发机只安装了 `x86_64-unknown-linux-ohos`。阶段 0 必须安装并验证 arm64 target，不能以
 模拟器通过代替真机验证。
