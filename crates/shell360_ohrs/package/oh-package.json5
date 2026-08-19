@@ -6,5 +6,8 @@
   types: "libs/index.d.ts",
   author: "",
   license: "Apache-2.0",
+  hooks: {
+    preInstall: "cd .. && ohrs build && ohrs artifact --name shell360_ohrs",
+  },
   dependencies: {},
 }
