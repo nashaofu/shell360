@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import timers from "node:timers/promises";
 import { execa, type Options, type ResultPromise } from "execa";
-import { EMULATOR, EMULATOR_INSTANCE_DIR, WORKSPACE_DIR } from "./constants.ts";
+import { EMULATOR, WORKSPACE_DIR } from "./constants.ts";
 import { getHdcProperty, getHdcTargets } from "./hdc.ts";
 
 const BOOT_ATTEMPTS = 180;
@@ -80,14 +80,11 @@ function parseEmulators(output: string): HarmonyOsEmulator[] {
 export async function getEmulators(
   cancelSignal?: AbortSignal,
 ): Promise<HarmonyOsEmulator[]> {
-  if (!fs.existsSync(EMULATOR) || !fs.existsSync(EMULATOR_INSTANCE_DIR)) {
+  if (!fs.existsSync(EMULATOR)) {
     return [];
   }
 
-  const { stdout } = await runEmulator(
-    ["-instancePath", EMULATOR_INSTANCE_DIR, "-list", "-details"],
-    { cancelSignal },
-  );
+  const { stdout } = await runEmulator(["-list", "-details"], { cancelSignal });
   return parseEmulators(stdout);
 }
 
@@ -97,10 +94,11 @@ export async function startEmulator(
   cancelSignal?: AbortSignal,
 ): Promise<string> {
   console.log(`[harmonyos] Starting emulator: ${emulator.name}`);
-  const process = runEmulator(
-    ["-start", emulator.name, "-instancePath", EMULATOR_INSTANCE_DIR],
-    { cancelSignal, cleanup: false, stdio: "ignore" },
-  );
+  const process = runEmulator(["-start", emulator.name], {
+    cancelSignal,
+    cleanup: false,
+    stdio: "ignore",
+  });
   let startupError: unknown;
   void process.catch((error: unknown) => {
     startupError = error;

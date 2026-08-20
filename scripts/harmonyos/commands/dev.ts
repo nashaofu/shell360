@@ -10,6 +10,7 @@ import {
 import { selectDevice } from "../devices.ts";
 import { hdc, monitorWebViewDebugPort } from "../hdc.ts";
 import { hvigorw } from "../hvigor.ts";
+import { ohpm } from "../ohpm.ts";
 
 export const HAP_PATH = path.join(
   HARMONYOS_DIR,
@@ -62,6 +63,11 @@ export async function dev({
     if (devServer.pid) {
       return fkill(devServer.pid, { silent: true, force: true, tree: true });
     }
+  });
+
+  await ohpm(["install"], {
+    stdio: "inherit",
+    cancelSignal: controller.signal,
   });
 
   await hvigorw(
