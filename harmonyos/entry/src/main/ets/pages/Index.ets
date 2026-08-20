@@ -4,7 +4,7 @@ import { BridgeRouter } from '../bridge/BridgeRouter';
 import { HarmonyNativeRuntime } from '../runtime/NativeRuntime';
 import { DEBUG, HARMONYOS_DEV_HOST, HARMONYOS_DEV_PORT } from 'BuildProfile';
 
-const WEBVIEW_URL = DEBUG ? `http://${HARMONYOS_DEV_HOST}:${HARMONYOS_DEV_PORT}` : $rawfile('www/index.html');
+const WEBVIEW_URL = DEBUG ? `http://${HARMONYOS_DEV_HOST}:${HARMONYOS_DEV_PORT}` : $rawfile('index.html');
 
 @Entry
 @Component
@@ -30,9 +30,7 @@ struct Index {
   }];
 
   aboutToAppear(): void {
-    console.info(
-      `[Shell360] WebView loading ${WEBVIEW_URL}`,
-    );
+    console.info(`[Shell360] WebView loading ${JSON.stringify(WEBVIEW_URL)}`);
   }
 
   build() {

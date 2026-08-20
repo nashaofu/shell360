@@ -30,7 +30,6 @@ hvigor.afterNodeEvaluate((node) => {
     "main",
     "resources",
     "rawfile",
-    "www",
   );
   if (buildMode === "debug") {
     fs.mkdirSync(webAssetsDir, { recursive: true });
@@ -38,7 +37,7 @@ hvigor.afterNodeEvaluate((node) => {
       path.join(webAssetsDir, "index.html"),
       "<!doctype html><html><body></body></html>\n",
     );
-  } else if (buildMode === "release") {
+  } else {
     const mobileDir = path.join(workspaceDir, "mobile");
     execSync("npm run build", {
       cwd: mobileDir,
