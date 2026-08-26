@@ -13,6 +13,7 @@
     "tsc": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "eventemitter3": "^5.0.4",
     "uuid": "^14.0.1"
   },
   "devDependencies": {
