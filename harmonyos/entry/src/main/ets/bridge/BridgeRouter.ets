@@ -130,14 +130,11 @@ export class BridgeRouter {
     if (parsed instanceof Error) {
       return serializeError('', 'BRIDGE_INVALID_REQUEST', parsed.message);
     }
-    if (this.activeClientId === '' && parsed.method === 'bridge.health') {
+    if (this.activeClientId === '') {
       this.activate(parsed.clientId);
     }
     if (parsed.clientId !== this.activeClientId || this.activeClientId === '') {
       return serializeError(parsed.id, 'BRIDGE_INVALID_REQUEST', 'Request belongs to an inactive page.');
-    }
-    if (parsed.method === 'bridge.health') {
-      return JSON.stringify({ id: parsed.id, result: 'ok' });
     }
     if (!RUST_METHODS.has(parsed.method)) {
       return serializeError(parsed.id, 'BRIDGE_UNSUPPORTED', `Unsupported method: ${parsed.method}`);

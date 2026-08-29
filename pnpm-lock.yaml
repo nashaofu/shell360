@@ -176,6 +176,9 @@ importers:
 
   jsb:
     dependencies:
+      eventemitter3:
+        specifier: ^5.0.4
+        version: 5.0.4
       uuid:
         specifier: ^14.0.1
         version: 14.0.1
@@ -2176,6 +2179,9 @@ packages:
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
     engines: {node: '>=6'}
+
+  eventemitter3@5.0.4:
+    resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
 
   execa@10.0.0:
     resolution: {integrity: sha512-Cxl6MKxB1dr1H0FHmiizJ+lavKF7pV+fcDZFyqMB8d5m7qUPm/OtZYcD5vPWePKxSnTQ57KuBd9mtdZ3oNCvyQ==}
@@ -4651,6 +4657,8 @@ snapshots:
       hasown: 2.0.4
 
   escalade@3.2.0: {}
+
+  eventemitter3@5.0.4: {}
 
   execa@10.0.0:
     dependencies:

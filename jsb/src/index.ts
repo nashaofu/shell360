@@ -1,20 +1,15 @@
-import { JSB } from "./jsb";
-
 export { JSBError } from "./error";
-export { JSB } from "./jsb";
+export { JSB, jsb, jsb as default } from "./jsb";
+export { JSBChannel, type JSBChannelMessage } from "./jsb_channel";
 export type {
   JSBEmitMessage,
   JSBErrorPayload,
   JSBEventListener,
   JSBEventMeta,
   JSBIncomingMessage,
-  JSBInvokeRequestMessage,
-  JSBInvokeResponseMessage,
-  JSBInvokeResponseMessageError,
-  JSBInvokeResponseMessageSuccess,
-  JSBPort,
-  JSBPortMessageEvent,
-  JSBPortMessageListener,
+  JSBInvokeRequest,
+  JSBInvokeResponse,
+  JSBInvokeResponseError,
+  JSBInvokeResponseSuccess,
+  JSBNativeBridge,
 } from "./types";
-
-export default new JSB();

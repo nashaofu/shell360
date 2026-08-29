@@ -1,4 +1,4 @@
-import type { NativeRuntime } from '../bridge/BridgeRouter';
+import type { NativeRuntime } from '../bridge/NativeRuntime';
 import {
   attachEventCallback,
   initializeRuntime,
@@ -68,6 +68,14 @@ export class HarmonyNativeRuntime implements NativeRuntime {
   }
 
   async invoke(method: string, clientId: string, paramsJson: string): Promise<string> {
+    if (method === 'window.close') {
+      const context = HarmonyNativeRuntime.context;
+      if (context === undefined) {
+        throw new Error('HarmonyOS ability context is unavailable.');
+      }
+      await context.terminateSelf();
+      return 'null';
+    }
     if (method === 'ssh.sftp.uploadFile' || method === 'ssh.sftp.downloadFile') {
       const params = JSON.parse(paramsJson) as Record<string, string>;
       const localFilename = params.localFilename;
@@ -75,7 +83,23 @@ export class HarmonyNativeRuntime implements NativeRuntime {
         params.localFilename = decodeURIComponent(localFilename.slice('file://'.length));
         paramsJson = JSON.stringify(params);
       } else if (typeof localFilename === 'string' && localFilename.includes('://')) {
-        throw new Error('SFTP transfers require a local file path; stage the selected URI first.');
+        const context = HarmonyNativeRuntime.context;
+        if (context === undefined) throw new Error('HarmonyOS ability context is unavailable.');
+        const stagedPath = `${context.cacheDir}/shell360-transfer-${util.generateRandomUUID()}`;
+        try {
+          if (method === 'ssh.sftp.uploadFile') {
+            await fileIo.copyFile(localFilename, stagedPath);
+          }
+          params.localFilename = stagedPath;
+          paramsJson = JSON.stringify(params);
+          const result = await this.invoke(method, clientId, paramsJson);
+          if (method === 'ssh.sftp.downloadFile') {
+            await fileIo.copyFile(stagedPath, localFilename);
+          }
+          return result;
+        } finally {
+          try { await fileIo.unlink(stagedPath); } catch (_) {}
+        }
       }
     }
     if (method === 'clipboard.readText') {

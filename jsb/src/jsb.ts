@@ -1,157 +1,166 @@
 import EventEmitter from "eventemitter3";
 import { v4 as uuid } from "uuid";
-import { JSBError } from "./error";
+import { JSBError, toJSBError } from "./error";
+import { JSBChannel } from "./jsb_channel";
+import { parseIncomingMessage, serializeInvokeRequest } from "./protocol";
 import type {
+  JSBEmitMessage,
   JSBEventListener,
   JSBEventMeta,
-  JSBIncomingMessage,
-  JSBInvokeRequestMessage,
-  JSBPort,
-  JSBPortMessageEvent,
+  JSBInvokeRequest,
+  JSBInvokeResponse,
 } from "./types";
 
 type PendingRequest = {
-  resolve(value: unknown): void;
   reject(error: JSBError): void;
+  resolve(value: unknown): void;
 };
-type QueuedRequest = { id: string; message: string };
-type JSBEvents = Record<string, JSBEventListener>;
-
-const MAX_QUEUE_SIZE = 256;
 
 export class JSB {
-  private port: JSBPort | undefined;
-  private readonly queue: QueuedRequest[] = [];
-  private readonly pending = new Map<string, PendingRequest>();
-  private readonly events = new EventEmitter<JSBEvents>();
+  private readonly channel = new JSBChannel<string>();
+  private readonly events = new EventEmitter<string>();
+  private readonly pendingRequests = new Map<string, PendingRequest>();
 
   constructor() {
-    if (!window.__JSB__) {
-      throw new JSBError(
-        "JSB_NOT_INITIALIZED",
-        "window.__JSB__ must be injected before JSB is initialized.",
-      );
-    }
-    window.__JSB__.port.then((port) => {
-      this.port = port;
-      this.port.addEventListener("message", (event) => {
-        this.onMessage(event);
-      });
-
-      while (this.queue.length > 0) {
-        const queued = this.queue.shift();
-        if (queued) {
-          this.postMessage(queued.id, queued.message);
-        }
-      }
-    });
+    this.channel.on("message", this.handleMessage);
+    this.channel.on("error", this.rejectPendingRequests);
+    this.channel.on("close", this.handleChannelClose);
   }
 
   invoke<TRequest = void, TResponse = void>(
     method: string,
     data?: TRequest,
   ): Promise<TResponse> {
-    return new Promise<TResponse>((resolve, reject) => {
-      if (this.queue.length >= MAX_QUEUE_SIZE) {
-        reject(new JSBError("JSB_QUEUE_FULL", "JSB request queue is full."));
-        return;
-      }
+    if (method.length === 0) {
+      return Promise.reject(
+        new JSBError("JSB_INVALID_METHOD", "JSB method must not be empty."),
+      );
+    }
 
+    return new Promise<TResponse>((resolve, reject) => {
       const id = uuid();
-      const request: JSBInvokeRequestMessage<TRequest> = {
+      const request: JSBInvokeRequest<TRequest> = {
         type: "invoke.request",
         id,
         method,
         data,
       };
-      const message = JSON.stringify(request);
 
-      this.pending.set(id, {
-        resolve: (value) => resolve(value as TResponse),
-        reject,
-      });
-      if (!this.port) {
-        this.queue.push({ id, message });
+      let message: string;
+      try {
+        message = serializeInvokeRequest(request);
+      } catch (error) {
+        reject(
+          toJSBError(
+            error,
+            "JSB_SERIALIZATION_ERROR",
+            "Could not serialize JSB request.",
+          ),
+        );
         return;
       }
-      this.postMessage(id, message);
+
+      this.pendingRequests.set(id, {
+        reject,
+        resolve: (value) => resolve(value as TResponse),
+      });
+
+      try {
+        this.channel.postMessage(message);
+      } catch (error) {
+        const pending = this.takePendingRequest(id);
+        pending?.reject(
+          toJSBError(
+            error,
+            "JSB_TRANSPORT_ERROR",
+            "Could not send JSB request.",
+          ),
+        );
+      }
     });
   }
 
-  on<TPayload = unknown>(event: string, listener: JSBEventListener<TPayload>) {
-    const callback = listener as JSBEventListener;
-    this.events.on(event, callback);
+  on<TPayload = unknown>(
+    event: string,
+    listener: JSBEventListener<TPayload>,
+  ): void {
+    this.events.on(event, listener);
   }
 
   once<TPayload = unknown>(
     event: string,
     listener: JSBEventListener<TPayload>,
-  ) {
-    const callback = listener as JSBEventListener;
-    this.events.once(event, callback);
+  ): void {
+    this.events.once(event, listener);
   }
 
   off<TPayload = unknown>(
     event: string,
     listener: JSBEventListener<TPayload>,
   ): void {
-    const callback = listener as JSBEventListener;
-    this.events.off(event, callback);
+    this.events.off(event, listener);
   }
 
-  private postMessage(id: string, message: string): void {
-    try {
-      this.port?.postMessage(message);
-    } catch (error) {
-      const pending = this.pending.get(id);
-      this.pending.delete(id);
-      if (!pending) {
-        return;
-      }
+  private readonly handleMessage = (message: string): void => {
+    const incoming = parseIncomingMessage(message);
+    if (!incoming) {
+      return;
+    }
+
+    if (incoming.type === "emit") {
+      this.emitEvent(incoming);
+      return;
+    }
+    this.resolveInvocation(incoming);
+  };
+
+  private emitEvent(message: JSBEmitMessage): void {
+    const meta: JSBEventMeta = {
+      event: message.event,
+      ...(message.targetId === undefined ? {} : { targetId: message.targetId }),
+      ...(message.clientId === undefined ? {} : { clientId: message.clientId }),
+      ...(message.sequence === undefined ? {} : { sequence: message.sequence }),
+    };
+    this.events.emit(message.event, message.payload, meta);
+  }
+
+  private resolveInvocation(response: JSBInvokeResponse): void {
+    const pending = this.takePendingRequest(response.id);
+    if (!pending) {
+      return;
+    }
+
+    if ("error" in response) {
       pending.reject(
         new JSBError(
-          "JSB_TRANSPORT_ERROR",
-          error instanceof Error ? error.message : "JSB port failed.",
+          response.error.code ?? "JSB_NATIVE_ERROR",
+          response.error.message ?? "JSB invocation failed.",
+          response.error.details,
         ),
       );
-    }
-  }
-
-  private onMessage(event: JSBPortMessageEvent): void {
-    console.log("Received message:", event);
-
-    const parsed = JSON.parse(event.data as string) as JSBIncomingMessage;
-
-    if (!parsed || typeof parsed !== "object") {
       return;
     }
-
-    if (parsed.type === "emit") {
-      const meta: JSBEventMeta = {
-        event: parsed.event,
-        ...(parsed.targetId ? { targetId: parsed.targetId } : {}),
-      };
-      this.events.emit(parsed.event, parsed.payload, meta);
-      return;
-    } else if (parsed.type === "invoke.response") {
-      const pending = this.pending.get(parsed.id);
-      this.pending.delete(parsed.id);
-      if (!pending) {
-        return;
-      }
-
-      if ("error" in parsed) {
-        pending.reject(
-          new JSBError(
-            parsed.error.code ?? "JSB_NATIVE_ERROR",
-            parsed.error.message ?? "JSB invocation failed.",
-            parsed.error.details,
-          ),
-        );
-        return;
-      }
-
-      pending.resolve(parsed.data);
-    }
+    pending.resolve(response.data);
   }
+
+  private takePendingRequest(id: string): PendingRequest | undefined {
+    const pending = this.pendingRequests.get(id);
+    this.pendingRequests.delete(id);
+    return pending;
+  }
+
+  private readonly rejectPendingRequests = (error: JSBError): void => {
+    for (const pending of this.pendingRequests.values()) {
+      pending.reject(error);
+    }
+    this.pendingRequests.clear();
+  };
+
+  private readonly handleChannelClose = (): void => {
+    this.rejectPendingRequests(
+      new JSBError("JSB_CHANNEL_CLOSED", "JSB channel is closed."),
+    );
+  };
 }
+
+export const jsb = new JSB();

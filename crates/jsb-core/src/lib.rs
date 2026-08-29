@@ -1,12 +1,11 @@
-use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
+use std::{
+  collections::{HashMap, HashSet},
+  sync::{Arc, Mutex, RwLock},
+};
 
-use async_trait::async_trait;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
-use tokio::sync::RwLock;
-
-pub type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 
 #[derive(Debug, Error)]
 pub enum JsbError {
@@ -14,167 +13,227 @@ pub enum JsbError {
   InvalidMessage(String),
   #[error("JSB method is not registered: {0}")]
   MethodNotFound(String),
-  #[error("JSB handler failed: {0}")]
-  Handler(String),
-  #[error("JSB transport failed: {0}")]
-  Transport(String),
+  #[error("duplicate JSB method: {0}")]
+  DuplicateMethod(String),
+  #[error("duplicate JSB request: {0}")]
+  DuplicateRequest(String),
+  #[error("JSB request is not pending: {0}")]
+  RequestNotPending(String),
+  #[error("JSB connection is closed")]
+  ConnectionClosed,
   #[error("JSB payload serialization failed: {0}")]
   Serialization(String),
 }
 
-#[async_trait]
-pub trait MessageSink: Send + Sync {
-  async fn send(&self, message: String) -> Result<(), JsbError>;
+#[derive(Default)]
+pub struct JsbRegistry {
+  methods: RwLock<HashSet<String>>,
 }
 
-pub trait JsbHandler: Send + Sync {
-  fn call(&self, params: Value) -> BoxFuture<Result<Value, JsbError>>;
-}
-
-impl<F, Fut> JsbHandler for F
-where
-  F: Fn(Value) -> Fut + Send + Sync,
-  Fut: Future<Output = Result<Value, JsbError>> + Send + 'static,
-{
-  fn call(&self, params: Value) -> BoxFuture<Result<Value, JsbError>> {
-    Box::pin(self(params))
-  }
-}
-
-#[derive(Clone)]
-pub struct Jsb {
-  handlers: Arc<RwLock<HashMap<String, Arc<dyn JsbHandler>>>>,
-  clients: Arc<RwLock<HashMap<String, Arc<dyn MessageSink>>>>,
-}
-
-impl Default for Jsb {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
-impl Jsb {
+impl JsbRegistry {
   pub fn new() -> Self {
-    Self {
-      handlers: Arc::new(RwLock::new(HashMap::new())),
-      clients: Arc::new(RwLock::new(HashMap::new())),
+    Self::default()
+  }
+
+  pub fn register(&self, method: impl Into<String>) -> Result<(), JsbError> {
+    let method = method.into();
+    if method.is_empty() {
+      return Err(JsbError::InvalidMessage("method must not be empty".into()));
     }
-  }
-
-  /// Registers the native handler invoked by JavaScript `jsb.invoke`.
-  pub async fn on<H>(&self, method: impl Into<String>, handler: H)
-  where
-    H: JsbHandler + 'static,
-  {
-    self
-      .handlers
-      .write()
-      .await
-      .insert(method.into(), Arc::new(handler));
-  }
-
-  pub async fn attach_client(&self, client_id: impl Into<String>, sink: Arc<dyn MessageSink>) {
-    self.clients.write().await.insert(client_id.into(), sink);
-  }
-
-  pub async fn release_client(&self, client_id: &str) {
-    self.clients.write().await.remove(client_id);
-  }
-
-  /// Emits an event to one client. The client id is explicit to prevent cross-WebView delivery.
-  pub async fn emit<T: Serialize>(
-    &self,
-    client_id: &str,
-    event: &str,
-    payload: &T,
-  ) -> Result<(), JsbError> {
-    let payload =
-      serde_json::to_value(payload).map_err(|e| JsbError::Serialization(e.to_string()))?;
-    let message = serde_json::to_string(&json!({
-      "type": "emit",
-      "event": event,
-      "payload": payload,
-    }))
-    .map_err(|e| JsbError::Serialization(e.to_string()))?;
-    let sink = self.clients.read().await.get(client_id).cloned();
-    match sink {
-      Some(sink) => sink.send(message).await,
-      None => Err(JsbError::Transport(format!(
-        "client is not attached: {client_id}"
-      ))),
-    }
-  }
-
-  pub async fn handle_message(&self, client_id: &str, message: &str) -> Result<(), JsbError> {
-    let request: Request =
-      serde_json::from_str(message).map_err(|e| JsbError::InvalidMessage(e.to_string()))?;
-    if request.kind != "invoke" || request.id.is_empty() || request.method.is_empty() {
-      return Err(JsbError::InvalidMessage(
-        "expected invoke with id and method".into(),
-      ));
-    }
-    let handler = self.handlers.read().await.get(&request.method).cloned();
-    let result = match handler {
-      Some(handler) => handler.call(request.params).await,
-      None => Err(JsbError::MethodNotFound(request.method)),
-    };
-    let response = match result {
-      Ok(result) => json!({ "type": "result", "id": request.id, "result": result }),
-      Err(error) => json!({
-        "type": "result",
-        "id": request.id,
-        "error": { "code": error_code(&error), "message": error.to_string() }
-      }),
-    };
-    let sink = self.clients.read().await.get(client_id).cloned();
-    if let Some(sink) = sink {
-      sink
-        .send(serde_json::to_string(&response).map_err(|e| JsbError::Serialization(e.to_string()))?)
-        .await?;
-    }
+    self.methods.write().unwrap().insert(method);
     Ok(())
   }
 
-  pub async fn on_typed<P, R, F, Fut>(&self, method: impl Into<String>, handler: F)
-  where
-    P: DeserializeOwned + Send + 'static,
-    R: Serialize + Send + 'static,
-    F: Fn(P) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<R, JsbError>> + Send + 'static,
-  {
-    let handler = Arc::new(handler);
-    self
-      .on(method, move |params: Value| {
-        let handler = Arc::clone(&handler);
-        let parsed =
-          serde_json::from_value::<P>(params).map_err(|e| JsbError::InvalidMessage(e.to_string()));
-        let future = async move {
-          let parsed = parsed?;
-          serde_json::to_value(handler(parsed).await?)
-            .map_err(|e| JsbError::Serialization(e.to_string()))
-        };
-        future
-      })
-      .await;
+  pub fn connect(self: &Arc<Self>) -> JsbConnection {
+    JsbConnection {
+      registry: Arc::clone(self),
+      state: Mutex::new(ConnectionState::default()),
+    }
+  }
+
+  pub fn methods(&self) -> Vec<String> {
+    let mut methods = self
+      .methods
+      .read()
+      .unwrap()
+      .iter()
+      .cloned()
+      .collect::<Vec<_>>();
+    methods.sort();
+    methods
   }
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Default)]
+struct ConnectionState {
+  client_id: Option<String>,
+  pending: HashMap<String, String>,
+  closed: bool,
+}
+
+pub struct JsbConnection {
+  registry: Arc<JsbRegistry>,
+  state: Mutex<ConnectionState>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsbCall {
+  pub request_id: String,
+  pub client_id: String,
+  pub method: String,
+  pub params_json: String,
+}
+
+impl JsbConnection {
+  pub fn dispatch(&self, message: &str) -> Result<JsbCall, JsbError> {
+    let request: Request =
+      serde_json::from_str(message).map_err(|error| JsbError::InvalidMessage(error.to_string()))?;
+    if request.kind != "invoke"
+      || request.id.is_empty()
+      || request.client_id.is_empty()
+      || request.method.is_empty()
+    {
+      return Err(JsbError::InvalidMessage(
+        "expected invoke with id, clientId, and method".into(),
+      ));
+    }
+    if !self
+      .registry
+      .methods
+      .read()
+      .unwrap()
+      .contains(&request.method)
+    {
+      return Err(JsbError::MethodNotFound(request.method));
+    }
+
+    let mut state = self.state.lock().unwrap();
+    if state.closed {
+      return Err(JsbError::ConnectionClosed);
+    }
+    match state.client_id.as_deref() {
+      Some(client_id) if client_id != request.client_id => {
+        return Err(JsbError::InvalidMessage(
+          "request belongs to another client".into(),
+        ));
+      }
+      None => state.client_id = Some(request.client_id.clone()),
+      _ => {}
+    }
+    if state
+      .pending
+      .insert(request.id.clone(), request.method.clone())
+      .is_some()
+    {
+      return Err(JsbError::DuplicateRequest(request.id));
+    }
+
+    Ok(JsbCall {
+      request_id: request.id,
+      client_id: request.client_id,
+      method: request.method,
+      params_json: serde_json::to_string(&request.params)
+        .map_err(|error| JsbError::Serialization(error.to_string()))?,
+    })
+  }
+
+  pub fn resolve(&self, request_id: &str, result_json: &str) -> Result<String, JsbError> {
+    self.finish(request_id)?;
+    let result: Value = serde_json::from_str(result_json)
+      .map_err(|error| JsbError::Serialization(error.to_string()))?;
+    serde_json::to_string(&json!({ "type": "result", "id": request_id, "result": result }))
+      .map_err(|error| JsbError::Serialization(error.to_string()))
+  }
+
+  pub fn reject(
+    &self,
+    request_id: &str,
+    code: &str,
+    message: &str,
+    details_json: Option<&str>,
+  ) -> Result<String, JsbError> {
+    self.finish(request_id)?;
+    let details: Option<Value> = details_json
+      .map(serde_json::from_str::<Value>)
+      .transpose()
+      .map_err(|error| JsbError::Serialization(error.to_string()))?;
+    serde_json::to_string(&json!({
+      "type": "result",
+      "id": request_id,
+      "error": { "code": code, "message": message, "details": details },
+    }))
+    .map_err(|error| JsbError::Serialization(error.to_string()))
+  }
+
+  pub fn close(&self) -> Option<String> {
+    let mut state = self.state.lock().unwrap();
+    state.closed = true;
+    state.pending.clear();
+    state.client_id.take()
+  }
+
+  fn finish(&self, request_id: &str) -> Result<(), JsbError> {
+    if self
+      .state
+      .lock()
+      .unwrap()
+      .pending
+      .remove(request_id)
+      .is_none()
+    {
+      return Err(JsbError::RequestNotPending(request_id.into()));
+    }
+    Ok(())
+  }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Request {
   #[serde(rename = "type")]
   kind: String,
   id: String,
+  client_id: String,
   method: String,
   #[serde(default)]
   params: Value,
 }
 
-fn error_code(error: &JsbError) -> &'static str {
-  match error {
-    JsbError::InvalidMessage(_) => "JSB_INVALID_MESSAGE",
-    JsbError::MethodNotFound(_) => "JSB_UNSUPPORTED",
-    JsbError::Handler(_) => "JSB_NATIVE_ERROR",
-    JsbError::Transport(_) => "JSB_TRANSPORT_ERROR",
-    JsbError::Serialization(_) => "JSB_SERIALIZATION_ERROR",
+#[cfg(test)]
+mod tests {
+  use std::sync::Arc;
+
+  use serde_json::Value;
+
+  use super::*;
+
+  #[test]
+  fn registers_dispatches_and_resolves() {
+    let registry = Arc::new(JsbRegistry::new());
+    registry.register("app.getVersion").unwrap();
+    let connection = registry.connect();
+    let call = connection
+      .dispatch(
+        r#"{"type":"invoke","id":"1","clientId":"client","method":"app.getVersion","params":null}"#,
+      )
+      .unwrap();
+    assert_eq!(call.method, "app.getVersion");
+    let response = connection.resolve("1", r#""1.0.0""#).unwrap();
+    let response: Value = serde_json::from_str(&response).unwrap();
+    assert_eq!(response["type"], "result");
+    assert_eq!(response["result"], "1.0.0");
+  }
+
+  #[test]
+  fn rejects_unregistered_methods() {
+    let registry = Arc::new(JsbRegistry::new());
+    let connection = registry.connect();
+    assert!(matches!(
+      connection.dispatch(
+        r#"{"type":"invoke","id":"1","clientId":"client","method":"missing","params":null}"#
+      ),
+      Err(JsbError::MethodNotFound(_))
+    ));
   }
 }

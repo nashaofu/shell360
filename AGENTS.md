@@ -98,7 +98,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 - Plugin TS wrappers (in each plugin's `ts/` folder) wrap `invoke` from `@tauri-apps/api/core` using namespaced command IDs like `plugin:ssh|shell_open`, `plugin:ssh|sftp_read_dir`. App code calls these wrappers, **not** `invoke` directly.
 - Long-lived connections (SSH shell, SFTP streams) use `Channel` for streaming.
 - The top-level `android/` project is the native Android host. Do not modify generated `src-tauri/gen/android` while the migration is in progress.
-- The Android WebView bridge requires `WEB_MESSAGE_LISTENER`, accepts messages only from the configured main-frame origin, and must fail with a diagnosable UI when the installed WebView provider lacks that feature. Keep external navigation on an explicit scheme allowlist and handle missing or rejected activities without crashing the host.
+- The Android WebView bridge uses `WebViewBuilder` with `RestrictionAllowlist` to inject `window.__JSB__` only for the configured origin. Require `WEBVIEW_BUILDER_EXPERIMENTAL_V1`, `CREATE_WEB_MESSAGE_CHANNEL`, and `POST_WEB_MESSAGE`, and show a diagnosable UI when the installed WebView provider lacks them. Keep external navigation on an explicit scheme allowlist and handle missing or rejected activities without crashing the host.
 
 ## Conventions
 

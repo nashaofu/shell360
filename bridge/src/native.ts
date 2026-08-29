@@ -12,27 +12,6 @@ import { setBridgeBackend } from "./backend";
 import type { SSHSessionOpts, SSHSftpOpts, SSHShellOpts } from "./ssh";
 import type { Store } from "./store";
 
-type NativeMessageEvent = {
-  data: string;
-};
-
-export type NativeMessagePort = {
-  postMessage(message: string): void;
-  onmessage: ((event: NativeMessageEvent) => void) | null;
-  close?: () => void;
-};
-
-const SSH_AUTH_TIMEOUT_MS = 130_000;
-const FILE_PICKER_TIMEOUT_MS = 300_000;
-
-declare global {
-  interface Window {
-    shell360Native?: NativeMessagePort;
-    __shell360Native__?: boolean;
-    __shell360NativePort__?: MessagePort;
-  }
-}
-
 export class NativeBridgeError extends Error {
   constructor(
     readonly code: string,
@@ -44,78 +23,26 @@ export class NativeBridgeError extends Error {
   }
 }
 
-export class NativeTransport {
-  private readonly clientId = uuidv4();
-
-  constructor(
-    private readonly port: NativeMessagePort,
-    private readonly timeoutMs = 30_000,
-  ) {
-    jsb.setClientId(this.clientId);
-    jsb.attachTransport({
-      send: (message) => this.port.postMessage(message),
-      setMessageHandler: (handler) => {
-        this.port.onmessage = handler ? (event) => handler(event.data) : null;
-      },
-    });
-  }
-
-  invoke<T>(
-    method: string,
-    params?: unknown,
-    timeoutMs = this.timeoutMs,
-  ): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(
-          new NativeBridgeError(
-            "BRIDGE_TIMEOUT",
-            `Native request timed out: ${method}`,
-          ),
-        );
-      }, timeoutMs);
-      void jsb
-        .invoke<unknown, T>(method, params)
-        .then((value) => {
-          clearTimeout(timeoutId);
-          resolve(value);
-        })
-        .catch((error: unknown) => {
-          clearTimeout(timeoutId);
-          reject(
-            error instanceof Error
-              ? error
-              : new NativeBridgeError("BRIDGE_NATIVE_ERROR", String(error)),
-          );
-        });
-    });
-  }
-
+type NativeJsb = {
+  invoke<T>(method: string, params?: unknown): Promise<T>;
   on(
     event: string,
     targetId: string | undefined,
     callback: (payload: unknown) => void,
-  ): () => void {
-    return jsb.on(event, (payload, meta) => {
-      if ((meta?.targetId ?? undefined) === targetId) callback(payload);
-    });
-  }
+  ): () => void;
+};
 
-  dispose(): void {
-    jsb.dispose();
-    this.port.onmessage = null;
-    this.port.postMessage(
-      JSON.stringify({
-        type: "invoke",
-        id: uuidv4(),
-        clientId: this.clientId,
-        method: "bridge.releaseClient",
-        params: null,
-      }),
-    );
-    this.port.close?.();
-  }
-}
+const nativeJsb: NativeJsb = {
+  invoke: <T>(method: string, params?: unknown) =>
+    jsb.invoke<unknown, T>(method, params),
+  on: (event, targetId, callback) => {
+    const listener = (payload: unknown, meta: { targetId?: string }) => {
+      if (meta.targetId === targetId) callback(payload);
+    };
+    jsb.on(event, listener);
+    return () => jsb.off(event, listener);
+  },
+};
 
 function unsupported(capability: string): Promise<never> {
   return Promise.reject(
@@ -164,7 +91,7 @@ class NativeStore implements Store {
 }
 
 function createSession(
-  transport: NativeTransport,
+  transport: NativeJsb,
   opts: SSHSessionOpts,
 ): SSHSessionImplementation {
   const sshSessionId = uuidv4();
@@ -185,41 +112,25 @@ function createSession(
         checkServerKey,
       }),
     authenticate_password: (authOpts) =>
-      transport.invoke(
-        "ssh.session.authenticatePassword",
-        {
-          sshSessionId,
-          ...authOpts,
-        },
-        SSH_AUTH_TIMEOUT_MS,
-      ),
+      transport.invoke("ssh.session.authenticatePassword", {
+        sshSessionId,
+        ...authOpts,
+      }),
     authenticate_public_key: (authOpts) =>
-      transport.invoke(
-        "ssh.session.authenticatePublicKey",
-        {
-          sshSessionId,
-          ...authOpts,
-        },
-        SSH_AUTH_TIMEOUT_MS,
-      ),
+      transport.invoke("ssh.session.authenticatePublicKey", {
+        sshSessionId,
+        ...authOpts,
+      }),
     authenticate_certificate: (authOpts) =>
-      transport.invoke(
-        "ssh.session.authenticateCertificate",
-        {
-          sshSessionId,
-          ...authOpts,
-        },
-        SSH_AUTH_TIMEOUT_MS,
-      ),
+      transport.invoke("ssh.session.authenticateCertificate", {
+        sshSessionId,
+        ...authOpts,
+      }),
     authenticate_keyboard_interactive: (authOpts) =>
-      transport.invoke(
-        "ssh.session.authenticateKeyboardInteractive",
-        {
-          sshSessionId,
-          ...authOpts,
-        },
-        SSH_AUTH_TIMEOUT_MS,
-      ),
+      transport.invoke("ssh.session.authenticateKeyboardInteractive", {
+        sshSessionId,
+        ...authOpts,
+      }),
     authenticate_agent: (authOpts) =>
       transport.invoke("ssh.session.authenticateAgent", {
         sshSessionId,
@@ -231,7 +142,7 @@ function createSession(
 }
 
 function createShell(
-  transport: NativeTransport,
+  transport: NativeJsb,
   session: SSHSessionImplementation,
   opts: Omit<SSHShellOpts, "session">,
 ): SSHShellImplementation {
@@ -265,7 +176,7 @@ function createShell(
 }
 
 function createSftp(
-  transport: NativeTransport,
+  transport: NativeJsb,
   session: SSHSessionImplementation,
   opts: Omit<SSHSftpOpts, "session">,
 ): SSHSftpImplementation {
@@ -331,7 +242,7 @@ function createSftp(
 }
 
 function createPortForwarding(
-  transport: NativeTransport,
+  transport: NativeJsb,
   session: SSHSessionImplementation,
 ): SSHPortForwardingImplementation {
   const sshPortForwardingId = uuidv4();
@@ -381,7 +292,7 @@ function browserOpenDialog(
   });
 }
 
-export function createNativeBackend(transport: NativeTransport): BridgeBackend {
+export function createNativeBackend(transport: NativeJsb): BridgeBackend {
   return {
     capabilities: {
       has: (capability) =>
@@ -456,11 +367,7 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
     dialog: {
       openDialog: (opts) =>
         transport
-          .invoke<string | string[] | null>(
-            "dialog.open",
-            opts,
-            FILE_PICKER_TIMEOUT_MS,
-          )
+          .invoke<string | string[] | null>("dialog.open", opts)
           .catch((error) => {
             if (
               error instanceof NativeBridgeError &&
@@ -470,8 +377,7 @@ export function createNativeBackend(transport: NativeTransport): BridgeBackend {
             }
             throw error;
           }),
-      saveDialog: (opts) =>
-        transport.invoke("dialog.save", opts, FILE_PICKER_TIMEOUT_MS),
+      saveDialog: (opts) => transport.invoke("dialog.save", opts),
       ask: async (message) => {
         if (typeof window.confirm === "function") {
           return window.confirm(message);
@@ -530,65 +436,13 @@ function decodeBase64(data: string): Uint8Array {
   return bytes;
 }
 
-export async function installNativeBackend(): Promise<NativeTransport> {
-  const listener = window.shell360Native;
-  if (!listener && !window.__shell360Native__) {
+export function installNativeBackend(): void {
+  if (!window.__JSB__) {
     throw new NativeBridgeError(
       "BRIDGE_NOT_AVAILABLE",
       "The Shell360 native bridge is not available.",
     );
   }
 
-  const transport = await new Promise<NativeTransport>((resolve, reject) => {
-    const onPortReady = () => {
-      const port = window.__shell360NativePort__;
-      if (!port) {
-        return;
-      }
-      window.clearTimeout(timeoutId);
-      window.removeEventListener(PORT_READY_EVENT, onPortReady);
-      port.start();
-      let handler: ((event: NativeMessageEvent) => void) | null = null;
-      const nativePort: NativeMessagePort = {
-        postMessage: (data) => port.postMessage(data),
-        get onmessage() {
-          return handler;
-        },
-        set onmessage(next) {
-          handler = next;
-          port.onmessage = next
-            ? (event) => next({ data: String(event.data) })
-            : null;
-        },
-        close: () => port.close(),
-      };
-      resolve(new NativeTransport(nativePort));
-    };
-    const timeoutId = window.setTimeout(() => {
-      window.removeEventListener(PORT_READY_EVENT, onPortReady);
-      reject(
-        new NativeBridgeError(
-          "BRIDGE_TIMEOUT",
-          "The Shell360 native message port was not created.",
-        ),
-      );
-    }, 10_000);
-    window.addEventListener(PORT_READY_EVENT, onPortReady);
-    onPortReady();
-    listener?.postMessage("shell360:connect");
-  });
-
-  await transport.invoke("bridge.health");
-  setBridgeBackend(createNativeBackend(transport));
-  window.addEventListener("pagehide", (event) => {
-    if (event.persisted) {
-      return;
-    }
-    transport.dispose();
-  }, {
-    once: true,
-  });
-  return transport;
+  setBridgeBackend(createNativeBackend(nativeJsb));
 }
-
-const PORT_READY_EVENT = "shell360:native-port";

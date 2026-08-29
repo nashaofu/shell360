@@ -3495,11 +3495,9 @@ dependencies = [
 name = "jsb-core"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
- "tokio",
 ]
 
 [[package]]
@@ -6441,6 +6439,7 @@ name = "shell360-ffi"
 version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
+ "jsb-core",
  "serde",
  "serde_json",
  "shell360-keygen",
@@ -6504,6 +6503,7 @@ dependencies = [
  "napi-build-ohos",
  "napi-derive-ohos",
  "napi-ohos",
+ "serde_json",
  "shell360-ffi",
 ]
 

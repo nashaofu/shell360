@@ -1,46 +1,48 @@
-export interface JSBInvokeRequestMessage<TRequest = unknown> {
-  type: "invoke.request";
-  id: string;
-  method: string;
-  data?: TRequest;
+export interface JSBInvokeRequest<TRequest = unknown> {
+  readonly type: "invoke.request";
+  readonly id: string;
+  readonly method: string;
+  readonly data?: TRequest;
 }
 
-export interface JSBInvokeResponseMessageSuccess<TResponse = unknown> {
-  type: "invoke.response";
-  id: string;
-  data: TResponse;
+export interface JSBInvokeResponseSuccess<TResponse = unknown> {
+  readonly type: "invoke.response";
+  readonly id: string;
+  readonly data: TResponse;
 }
 
 export interface JSBErrorPayload {
-  code?: string;
-  message?: string;
-  details?: unknown;
+  readonly code?: string;
+  readonly message?: string;
+  readonly details?: unknown;
 }
 
-export interface JSBInvokeResponseMessageError {
-  type: "invoke.response";
-  id: string;
-  error: JSBErrorPayload;
+export interface JSBInvokeResponseError {
+  readonly type: "invoke.response";
+  readonly id: string;
+  readonly error: JSBErrorPayload;
 }
 
-export type JSBInvokeResponseMessage<TResponse = unknown> =
-  | JSBInvokeResponseMessageSuccess<TResponse>
-  | JSBInvokeResponseMessageError;
+export type JSBInvokeResponse<TResponse = unknown> =
+  | JSBInvokeResponseSuccess<TResponse>
+  | JSBInvokeResponseError;
 
 export interface JSBEmitMessage<TPayload = unknown> {
-  type: "emit";
-  event: string;
-  targetId?: string;
-  payload?: TPayload;
-  clientId?: string;
-  sequence?: number;
+  readonly type: "emit";
+  readonly event: string;
+  readonly targetId?: string;
+  readonly payload?: TPayload;
+  readonly clientId?: string;
+  readonly sequence?: number;
 }
 
-export type JSBIncomingMessage = JSBInvokeResponseMessage | JSBEmitMessage;
+export type JSBIncomingMessage = JSBInvokeResponse | JSBEmitMessage;
 
 export interface JSBEventMeta {
-  event: string;
-  targetId?: string;
+  readonly event: string;
+  readonly targetId?: string;
+  readonly clientId?: string;
+  readonly sequence?: number;
 }
 
 export type JSBEventListener<T = unknown> = (
@@ -48,23 +50,13 @@ export type JSBEventListener<T = unknown> = (
   meta: JSBEventMeta,
 ) => void;
 
-export type JSBPortMessageEvent = { data: unknown };
-
-export type JSBPortMessageListener = (event: JSBPortMessageEvent) => void;
-
-export interface JSBPort {
-  postMessage(message: string): void;
-  addEventListener(type: "message", listener: JSBPortMessageListener): void;
-  removeEventListener(type: "message", listener: JSBPortMessageListener): void;
+export interface JSBNativeBridge {
+  openChannel(channelId: string): void;
+  closeChannel(channelId: string): void;
 }
-
-export type JSBGlobal = {
-  port: Promise<JSBPort>;
-  receive?: (message: string) => void;
-};
 
 declare global {
   interface Window {
-    __JSB__?: JSBGlobal;
+    __JSB__?: JSBNativeBridge;
   }
 }

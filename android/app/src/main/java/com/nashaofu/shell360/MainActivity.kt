@@ -22,34 +22,43 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
+import androidx.webkit.RestrictionAllowlist
 import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewBuilder
 import androidx.webkit.WebViewFeature
+import com.nashaofu.shell360.bridge.AndroidJsbInterface
 import com.nashaofu.shell360.bridge.BridgeRouter
 import com.nashaofu.shell360.bridge.AndroidFileBridge
 import com.nashaofu.shell360.bridge.WebViewBridge
+import com.nashaofu.shell360.bridge.Jsb
+import com.nashaofu.shell360.bridge.registerAndroidRoutes
 import com.nashaofu.shell360.ui.theme.Shell360Theme
 import com.nashaofu.shell360.webview.Shell360WebViewClient
 
 class MainActivity : ComponentActivity() {
     private var webView: WebView? = null
     private var webViewBridge: WebViewBridge? = null
+    private val jsbInterface = AndroidJsbInterface()
     private lateinit var fileBridge: AndroidFileBridge
 
+    @WebViewBuilder.Experimental
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
         val supportsNativeBridge = WebViewFeature.isFeatureSupported(
+            WebViewFeature.WEBVIEW_BUILDER_EXPERIMENTAL_V1,
+        ) && WebViewFeature.isFeatureSupported(
             WebViewFeature.CREATE_WEB_MESSAGE_CHANNEL,
         ) && WebViewFeature.isFeatureSupported(
             WebViewFeature.POST_WEB_MESSAGE,
         ) && WebViewFeature.isFeatureSupported(
-            WebViewFeature.DOCUMENT_START_SCRIPT,
+            WebViewFeature.WEB_MESSAGE_PORT_SET_MESSAGE_CALLBACK,
         )
         if (!supportsNativeBridge) {
             val provider = WebViewCompat.getCurrentWebViewPackage(this)
-            Log.e(TAG, "Web message listener is unavailable in WebView ${provider?.versionName}")
+            Log.e(TAG, "Native bridge is unavailable in WebView ${provider?.versionName}")
         }
 
         onBackPressedDispatcher.addCallback(
@@ -103,6 +112,9 @@ class MainActivity : ComponentActivity() {
                 }
             },
         )
+        val jsb = Jsb().apply {
+            registerAndroidRoutes(router, this@MainActivity)
+        }
 
         setContent {
             Shell360Theme {
@@ -111,7 +123,15 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize(),
                         factory = { context ->
-                            WebView(context).apply {
+                            WebViewBuilder(WebViewBuilder.PRESET_LEGACY)
+                                .restrictJavaScriptInterfaces()
+                                .addAllowlist(
+                                    RestrictionAllowlist.Builder(setOf(BuildConfig.WEBVIEW_ORIGIN))
+                                        .addJavaScriptInterface(jsbInterface, "__JSB__")
+                                        .build(),
+                                )
+                                .build(context)
+                                .apply {
                                 layoutParams = ViewGroup.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT,
                                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -123,16 +143,11 @@ class MainActivity : ComponentActivity() {
                                 settings.javaScriptCanOpenWindowsAutomatically = false
                                 settings.setSupportMultipleWindows(false)
                                 settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                                WebViewCompat.addDocumentStartJavaScript(
-                                    this,
-                                    DOCUMENT_START_SCRIPT,
-                                    setOf(BuildConfig.WEBVIEW_ORIGIN),
-                                )
-
                                 webView = this
-                                webViewBridge = WebViewBridge(this, router, rustBridge)
+                                webViewBridge = WebViewBridge(this, jsb, rustBridge)
+                                jsbInterface.attach(checkNotNull(webViewBridge))
                                 webViewClient = Shell360WebViewClient(context) {
-                                    webViewBridge?.attach()
+                                    webViewBridge?.closeChannels()
                                 }
                                 if (savedInstanceState?.let(::restoreState) == null) {
                                     loadUrl(BuildConfig.WEBVIEW_URL)
@@ -153,6 +168,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        jsbInterface.detach()
         fileBridge.dispose()
         webViewBridge?.dispose()
         webViewBridge = null
@@ -179,16 +195,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val TAG = "Shell360Activity"
-        const val DOCUMENT_START_SCRIPT = """
-            (() => {
-              window.__shell360Native__ = true;
-              window.addEventListener('message', (event) => {
-                if (event.data !== 'shell360:port' || event.ports.length !== 1) return;
-                window.__shell360NativePort__ = event.ports[0];
-                window.dispatchEvent(new Event('shell360:native-port'));
-              });
-            })();
-        """
         const val BACK_REQUEST_SCRIPT =
             "window.dispatchEvent(new Event('shell360:back',{cancelable:true}))===false"
     }

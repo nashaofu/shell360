@@ -1,18 +1,21 @@
 use std::sync::{Arc, LazyLock, Mutex};
 
+use napi_derive_ohos::napi;
 use napi_ohos::{
   Env, Error, Result, Status, Task,
   bindgen_prelude::{AsyncTask, Function, Unknown},
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
-use napi_derive_ohos::napi;
-use shell360_ffi::{FfiEventSink, Shell360Runtime};
+use shell360_ffi::{FfiEventSink, NativeJsbConnection, NativeJsbRegistry, Shell360Runtime};
 
 type EventCallback =
   ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
 
 static RUNTIME: LazyLock<Mutex<Option<Arc<Shell360Runtime>>>> = LazyLock::new(|| Mutex::new(None));
 static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mutex::new(None));
+static JSB_REGISTRY: LazyLock<Arc<NativeJsbRegistry>> = LazyLock::new(NativeJsbRegistry::new);
+static JSB_CONNECTION: LazyLock<Mutex<Option<Arc<NativeJsbConnection>>>> =
+  LazyLock::new(|| Mutex::new(None));
 
 struct EventSink {
   callback: Mutex<Option<EventCallback>>,
@@ -47,6 +50,73 @@ fn runtime() -> Result<Arc<Shell360Runtime>> {
     .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?
     .clone()
     .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))
+}
+
+fn jsb_connection() -> Result<Arc<NativeJsbConnection>> {
+  JSB_CONNECTION
+    .lock()
+    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
+    .clone()
+    .ok_or_else(|| Error::from_reason("JSB is not connected."))
+}
+
+#[napi]
+pub fn register_jsb(method: String) -> Result<()> {
+  JSB_REGISTRY.register(method).map_err(native_error)
+}
+
+#[napi]
+pub fn connect_jsb() -> Result<()> {
+  *JSB_CONNECTION
+    .lock()
+    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))? =
+    Some(JSB_REGISTRY.connect());
+  Ok(())
+}
+
+#[napi]
+pub fn dispatch_jsb(message: String) -> Result<String> {
+  let call = jsb_connection()?.dispatch(message).map_err(native_error)?;
+  serde_json::to_string(&serde_json::json!({
+    "requestId": call.request_id,
+    "clientId": call.client_id,
+    "method": call.method,
+    "paramsJson": call.params_json,
+  }))
+  .map_err(native_error)
+}
+
+#[napi]
+pub fn resolve_jsb(request_id: String, result_json: String) -> Result<String> {
+  jsb_connection()?
+    .resolve(request_id, result_json)
+    .map_err(native_error)
+}
+
+#[napi]
+pub fn reject_jsb(
+  request_id: String,
+  code: String,
+  message: String,
+  details_json: Option<String>,
+) -> Result<String> {
+  jsb_connection()?
+    .reject(request_id, code, message, details_json)
+    .map_err(native_error)
+}
+
+#[napi]
+pub fn close_jsb() -> Result<()> {
+  let connection = JSB_CONNECTION
+    .lock()
+    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
+    .take();
+  if let Some(connection) = connection
+    && let Some(client_id) = connection.disconnect()
+  {
+    runtime()?.release_client(client_id);
+  }
+  Ok(())
 }
 
 #[napi]
@@ -145,6 +215,7 @@ pub fn release_client(client_id: String) -> Result<()> {
 
 #[napi]
 pub fn shutdown() -> Result<()> {
+  close_jsb()?;
   let runtime = RUNTIME
     .lock()
     .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?

@@ -12,20 +12,47 @@ import org.json.JSONException
 import org.json.JSONObject
 
 class BridgeRouter(
-    private val context: Context,
-    private val rustBridge: RustBridge,
-    private val fileBridge: AndroidFileBridge? = null,
-    private val closeWindow: () -> Unit,
-    private val resetApplication: () -> Unit,
-    private val setSystemBarsAppearance: (Boolean) -> Unit,
+    internal val context: Context,
+    internal val rustBridge: RustBridge,
+    internal val fileBridge: AndroidFileBridge? = null,
+    internal val closeWindow: () -> Unit,
+    internal val resetApplication: () -> Unit,
+    internal val setSystemBarsAppearance: (Boolean) -> Unit,
 ) {
     private val preferences = context.getSharedPreferences("shell360-platform", Context.MODE_PRIVATE)
+    private var activeClientId: String? = null
+
+    fun getVersion(): String = BuildConfig.VERSION_NAME
+
+    fun readClipboardText(): String {
+        val clipboard = context.getSystemService(ClipboardManager::class.java)
+        return clipboard.primaryClip
+            ?.takeIf { it.itemCount > 0 }
+            ?.getItemAt(0)
+            ?.coerceToText(context)
+            ?.toString()
+            .orEmpty()
+    }
+
+    fun deactivate() {
+        activeClientId?.let(rustBridge::releaseClient)
+        activeClientId = null
+    }
 
     fun handle(message: String): String {
         var requestId: String? = null
         return try {
             val request = BridgeRequest.parse(message)
             requestId = request.id
+            val currentClientId = activeClientId
+            if (currentClientId == null) {
+                activeClientId = request.clientId
+            } else if (currentClientId != request.clientId) {
+                throw NativeBridgeException(
+                    "BRIDGE_INVALID_REQUEST",
+                    "Request belongs to an inactive page.",
+                )
+            }
 
             try {
                 val result = rustBridge.route(request.method, request.clientId, request.params)
@@ -166,7 +193,7 @@ class BridgeRouter(
         }
     }
 
-    private fun getMachineUid(): String {
+    internal fun getMachineUid(): String {
         preferences.getString(MACHINE_UID_KEY, null)?.let {
             return it
         }
@@ -176,7 +203,7 @@ class BridgeRouter(
         }
     }
 
-    private fun openUrl(value: String) {
+    internal fun openUrl(value: String) {
         val uri = Uri.parse(value)
         if (uri.scheme?.lowercase() !in EXTERNAL_SCHEMES) {
             throw NativeBridgeException(
@@ -210,7 +237,7 @@ class BridgeRouter(
         }
     }
 
-    private fun requireStringParam(params: Any?, name: String): String {
+    internal fun requireStringParam(params: Any?, name: String): String {
         val value = (params as? JSONObject)?.opt(name)
         if (value !is String) {
             throw NativeBridgeException(
@@ -221,12 +248,12 @@ class BridgeRouter(
         return value
     }
 
-    private fun requireFileBridge() = fileBridge ?: throw NativeBridgeException(
+    internal fun requireFileBridge() = fileBridge ?: throw NativeBridgeException(
         "BRIDGE_UNAVAILABLE",
         "The Android file picker is not available.",
     )
 
-    private fun readTextFile(path: String, params: JSONObject?): String {
+    internal fun readTextFile(path: String, params: JSONObject?): String {
         if (params?.optString("baseDir") == "appLocalData") {
             return resolveAppDataFile(path).readText()
         }
@@ -235,7 +262,7 @@ class BridgeRouter(
             ?: throw NativeBridgeException("BRIDGE_IO_ERROR", "The selected file could not be read.")
     }
 
-    private fun writeTextFile(path: String, contents: String, params: JSONObject?) {
+    internal fun writeTextFile(path: String, contents: String, params: JSONObject?) {
         if (params?.optString("baseDir") == "appLocalData") {
             val file = resolveAppDataFile(path)
             file.parentFile?.mkdirs()
@@ -268,7 +295,7 @@ class BridgeRouter(
         return uri
     }
 
-    private fun invokeSftpUpload(clientId: String, params: Any?): Any? {
+    internal fun invokeSftpUpload(clientId: String, params: Any?): Any? {
         val request = params as? JSONObject
             ?: throw NativeBridgeException(
                 "BRIDGE_INVALID_REQUEST",
@@ -290,7 +317,7 @@ class BridgeRouter(
         }
     }
 
-    private fun invokeSftpDownload(clientId: String, params: Any?): Any? {
+    internal fun invokeSftpDownload(clientId: String, params: Any?): Any? {
         val request = params as? JSONObject
             ?: throw NativeBridgeException(
                 "BRIDGE_INVALID_REQUEST",

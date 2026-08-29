@@ -51,6 +51,91 @@ pub trait FfiEventSink: Send + Sync {
   fn on_event(&self, event_json: String);
 }
 
+#[derive(Clone, uniffi::Record)]
+pub struct NativeJsbCall {
+  pub request_id: String,
+  pub client_id: String,
+  pub method: String,
+  pub params_json: String,
+}
+
+#[derive(uniffi::Object)]
+pub struct NativeJsbRegistry {
+  core: Arc<jsb_core::JsbRegistry>,
+}
+
+#[derive(uniffi::Object)]
+pub struct NativeJsbConnection {
+  core: jsb_core::JsbConnection,
+}
+
+#[uniffi::export]
+impl NativeJsbRegistry {
+  #[uniffi::constructor]
+  pub fn new() -> Arc<Self> {
+    Arc::new(Self {
+      core: Arc::new(jsb_core::JsbRegistry::new()),
+    })
+  }
+
+  pub fn register(&self, method: String) -> Result<(), FfiError> {
+    self
+      .core
+      .register(method)
+      .map_err(|error| FfiError::Internal(error.to_string()))
+  }
+
+  pub fn registered_methods(&self) -> Vec<String> {
+    self.core.methods()
+  }
+
+  pub fn connect(&self) -> Arc<NativeJsbConnection> {
+    Arc::new(NativeJsbConnection {
+      core: self.core.connect(),
+    })
+  }
+}
+
+#[uniffi::export]
+impl NativeJsbConnection {
+  pub fn dispatch(&self, message: String) -> Result<NativeJsbCall, FfiError> {
+    let call = self
+      .core
+      .dispatch(&message)
+      .map_err(|error| FfiError::Internal(error.to_string()))?;
+    Ok(NativeJsbCall {
+      request_id: call.request_id,
+      client_id: call.client_id,
+      method: call.method,
+      params_json: call.params_json,
+    })
+  }
+
+  pub fn resolve(&self, request_id: String, result_json: String) -> Result<String, FfiError> {
+    self
+      .core
+      .resolve(&request_id, &result_json)
+      .map_err(|error| FfiError::Internal(error.to_string()))
+  }
+
+  pub fn reject(
+    &self,
+    request_id: String,
+    code: String,
+    message: String,
+    details_json: Option<String>,
+  ) -> Result<String, FfiError> {
+    self
+      .core
+      .reject(&request_id, &code, &message, details_json.as_deref())
+      .map_err(|error| FfiError::Internal(error.to_string()))
+  }
+
+  pub fn disconnect(&self) -> Option<String> {
+    self.core.close()
+  }
+}
+
 #[derive(uniffi::Object)]
 pub struct Shell360Runtime {
   app_data_dir: PathBuf,
@@ -244,6 +329,7 @@ impl SshEventSink for FfiSshEventSink {
       SshEventPayload::Empty => serde_json::Value::Null,
     };
     let event = serde_json::json!({
+      "type": "emit",
       "clientId": event.client_id,
       "event": event.event,
       "targetId": event.target_id,
@@ -257,6 +343,7 @@ impl SshEventSink for FfiSshEventSink {
 impl DataEventSink for FfiDataEventSink {
   fn on_authed_change(&self, is_authed: bool) {
     let event = serde_json::json!({
+      "type": "emit",
       "event": "data.authedChange",
       "targetId": null,
       "sequence": self.sequence.fetch_add(1, Ordering::Relaxed),
@@ -382,6 +469,7 @@ impl Shell360Runtime {
 
   pub fn emit_health_event(&self, client_id: String) {
     let event = serde_json::json!({
+      "type": "emit",
       "clientId": client_id,
       "event": "bridge.health",
       "targetId": null,

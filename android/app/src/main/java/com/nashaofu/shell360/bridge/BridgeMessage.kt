@@ -24,9 +24,9 @@ data class BridgeRequest(
 object BridgeResponse {
     fun success(id: String, result: Any?): String {
         return JSONObject()
-            .put("type", "result")
+            .put("type", "invoke.response")
             .put("id", id)
-            .put("result", result ?: JSONObject.NULL)
+            .put("data", result ?: JSONObject.NULL)
             .toString()
     }
 
@@ -39,7 +39,7 @@ object BridgeResponse {
         }
 
         return JSONObject()
-            .put("type", "result")
+            .put("type", "invoke.response")
             .apply {
                 if (id != null) {
                     put("id", id)

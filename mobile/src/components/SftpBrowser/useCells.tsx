@@ -146,7 +146,9 @@ export default function useCells({
                     <div className={styles.fileName}>{item.name}</div>
                     <div className={styles.fileMeta}>
                       <span>{formatSftpMtime(item.mtime)}</span>
-                      <span className={styles.filePerms}>{item.permissions}</span>
+                      <span className={styles.filePerms}>
+                        {item.permissions}
+                      </span>
                     </div>
                   </>
                 )}

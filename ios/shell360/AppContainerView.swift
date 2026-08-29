@@ -4,7 +4,7 @@ struct AppContainerView: View {
     @ObservedObject var runtime: AppRuntime
 
     var body: some View {
-        WebViewContainer(router: runtime.bridgeRouter)
+        WebViewContainer(router: runtime.bridgeRouter, jsb: runtime.jsb)
             .ignoresSafeArea()
     }
 }
