@@ -2,25 +2,6 @@ package com.nashaofu.shell360.bridge
 
 import org.json.JSONObject
 
-data class BridgeRequest(
-    val id: String,
-    val clientId: String,
-    val method: String,
-    val params: Any?,
-) {
-    companion object {
-        fun parse(message: String): BridgeRequest {
-            val json = JSONObject(message)
-            return BridgeRequest(
-                id = json.getString("id"),
-                clientId = json.getString("clientId"),
-                method = json.getString("method"),
-                params = json.opt("params").takeUnless { it == JSONObject.NULL },
-            )
-        }
-    }
-}
-
 object BridgeResponse {
     fun success(id: String, result: Any?): String {
         return JSONObject()

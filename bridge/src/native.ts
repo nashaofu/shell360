@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import jsb from "../../jsb/src/index";
+import jsb, { JSBError } from "../../jsb/src/index";
 import type {
   BridgeBackend,
   PtyShellImplementation,
@@ -33,8 +33,16 @@ type NativeJsb = {
 };
 
 const nativeJsb: NativeJsb = {
-  invoke: <T>(method: string, params?: unknown) =>
-    jsb.invoke<unknown, T>(method, params),
+  invoke: async <T>(method: string, params?: unknown) => {
+    try {
+      return await jsb.invoke<unknown, T>(method, params);
+    } catch (error) {
+      if (error instanceof JSBError) {
+        throw new NativeBridgeError(error.code, error.message, error.details);
+      }
+      throw error;
+    }
+  },
   on: (event, targetId, callback) => {
     const listener = (payload: unknown, meta: { targetId?: string }) => {
       if (meta.targetId === targetId) callback(payload);

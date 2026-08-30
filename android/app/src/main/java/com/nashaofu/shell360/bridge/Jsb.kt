@@ -49,6 +49,13 @@ class Jsb {
         ) {
             return dispatchError(message, "JSB request must contain a non-empty id and method.")
         }
+        if (method !in handlers) {
+            return BridgeResponse.error(
+                requestId,
+                "JSB_UNSUPPORTED",
+                "JSB handler is unavailable: $method",
+            )
+        }
         val nativeRequest = JSONObject()
             .put("type", "invoke")
             .put("id", requestId)
@@ -61,15 +68,7 @@ class Jsb {
         } catch (error: FfiException) {
             return dispatchError(message, error.message ?: "JSB dispatch failed.")
         }
-        val handler = handlers[call.method]
-            ?: return response(
-                active.reject(
-                    call.requestId,
-                    "JSB_UNSUPPORTED",
-                    "JSB handler is unavailable: ${call.method}",
-                    null,
-                ),
-            )
+        val handler = checkNotNull(handlers[call.method])
         return try {
             val params = JSONTokener(call.paramsJson).nextValue().takeUnless { it == JSONObject.NULL }
             response(
@@ -137,7 +136,7 @@ class Jsb {
     }
 }
 
-fun Jsb.registerAndroidRoutes(router: BridgeRouter, context: Context) {
+fun Jsb.registerAndroidRoutes(router: AndroidBridgeServices, context: Context) {
     register("bridge.health") { _, _ -> mapOf("status" to "ok") }
     register("app.getVersion") { _, _ -> BuildConfig.VERSION_NAME }
     register("app.setSystemBarsAppearance") { _, params ->

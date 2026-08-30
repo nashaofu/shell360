@@ -4,11 +4,10 @@ import WebKit
 import UniformTypeIdentifiers
 
 struct WebViewContainer: UIViewRepresentable {
-    let router: BridgeRouter
     let jsb: Jsb
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(router: router, jsb: jsb)
+        Coordinator(jsb: jsb)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -44,7 +43,7 @@ struct WebViewContainer: UIViewRepresentable {
             }
         }
         jsb.connect()
-        router.eventHandler = { [weak webView] event in
+        jsb.eventHandler = { [weak webView] event in
             DispatchQueue.main.async {
                 let escaped = JavaScriptBridge.jsonStringLiteral(event)
                 webView?.evaluateJavaScript("window.__JSB__?.emit?.(\(escaped));")
@@ -59,7 +58,7 @@ struct WebViewContainer: UIViewRepresentable {
     static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "shell360Native")
         webView.navigationDelegate = nil
-        coordinator.router.eventHandler = nil
+        coordinator.jsb.eventHandler = nil
         coordinator.jsb.closeWindowHandler = nil
         coordinator.jsb.documentPickerHandler = nil
         coordinator.jsb.systemBarsHandler = nil
@@ -69,14 +68,12 @@ struct WebViewContainer: UIViewRepresentable {
 
     @MainActor
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, UIDocumentPickerDelegate {
-        let router: BridgeRouter
         let jsb: Jsb
         weak var webView: WKWebView?
         private var pickerContinuation: CheckedContinuation<Any?, Error>?
         private var pickerSourceURL: URL?
 
-        init(router: BridgeRouter, jsb: Jsb) {
-            self.router = router
+        init(jsb: Jsb) {
             self.jsb = jsb
         }
 

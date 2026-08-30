@@ -42,6 +42,11 @@ interface BridgeErrorPayload {
   details?: Object | null;
 }
 
+interface UnknownServerKeyDetails {
+  algorithm: string;
+  fingerprint: string;
+}
+
 interface BridgeResponse {
   id: string;
   result?: Object | null;
@@ -103,6 +108,16 @@ export class Jsb {
     if (this.clientId === '') {
       return this.errorResponse(request.id, new Error('JSB channel is not connected.'));
     }
+    if (!this.handlers.has(request.method)) {
+      return JSON.stringify({
+        type: 'invoke.response',
+        id: request.id,
+        error: {
+          code: 'JSB_UNSUPPORTED',
+          message: `JSB handler is unavailable: ${request.method}`,
+        },
+      } as JsbErrorResponse);
+    }
 
     const nativeRequest: JsbNativeRequest = {
       type: 'invoke',
@@ -117,24 +132,19 @@ export class Jsb {
     } catch (error) {
       return this.errorResponse(request.id, error);
     }
-    const handler = this.handlers.get(call.method);
-    if (handler === undefined) {
-      return this.response(
-        rejectJsb(call.requestId, 'JSB_UNSUPPORTED', `JSB handler is unavailable: ${call.method}`),
-      );
-    }
+    const handler = this.handlers.get(call.method) as JsbHandler;
     try {
       const params = JSON.parse(call.paramsJson) as Object | null;
       const result = await handler({ clientId: call.clientId, method: call.method }, params);
       return this.response(resolveJsb(call.requestId, JSON.stringify(result ?? null)));
     } catch (error) {
-      const bridgeError = error instanceof JsbCallbackError ? error : undefined;
+      const bridgeError = toBridgeError(error);
       return this.response(
         rejectJsb(
           call.requestId,
-          bridgeError?.code ?? 'JSB_NATIVE_ERROR',
-          error instanceof Error ? error.message : `${error}`,
-          bridgeError?.details === undefined ? undefined : JSON.stringify(bridgeError.details),
+          bridgeError.code,
+          bridgeError.message,
+          bridgeError.details === undefined ? undefined : JSON.stringify(bridgeError.details),
         ),
       );
     }
@@ -179,6 +189,38 @@ export class Jsb {
 
 function isNonEmptyString(value: string | undefined): boolean {
   return typeof value === 'string' && value.length > 0;
+}
+
+function toBridgeError(error: Object): BridgeErrorPayload {
+  if (error instanceof JsbCallbackError) {
+    return {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    };
+  }
+
+  const message = error instanceof Error ? error.message : `${error}`;
+  const sshPrefix = 'SSH operation failed (';
+  const codeEnd = message.indexOf('): ', sshPrefix.length);
+  if (message.startsWith(sshPrefix) && codeEnd > sshPrefix.length) {
+    const code = message.substring(sshPrefix.length, codeEnd);
+    const reason = message.substring(codeEnd + 3);
+    if (code === 'SSH_UNKNOWN_SERVER_KEY') {
+      const fingerprintSeparator = ' key fingerprint is ';
+      const fingerprintStart = reason.indexOf(fingerprintSeparator);
+      if (fingerprintStart > 0) {
+        const details: UnknownServerKeyDetails = {
+          algorithm: reason.substring(0, fingerprintStart),
+          fingerprint: reason.substring(fingerprintStart + fingerprintSeparator.length),
+        };
+        return { code, message: reason, details };
+      }
+    }
+    return { code, message: reason };
+  }
+
+  return { code: 'JSB_NATIVE_ERROR', message };
 }
 
 export function registerHarmonyRoutes(jsb: Jsb, runtime: NativeRuntime): void {

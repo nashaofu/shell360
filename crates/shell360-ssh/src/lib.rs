@@ -14,7 +14,8 @@ use rusocks::{
   socks5::{Socks5Handler, command::Socks5Command, method::Socks5Method, reply::Socks5Reply},
 };
 use russh::{
-  Channel as RusshChannel, ChannelId, Disconnect, Error as RusshError, MethodKind, MethodSet,
+  Channel as RusshChannel, ChannelId, ChannelMsg, ChannelReadHalf, ChannelWriteHalf, Disconnect,
+  Error as RusshError, MethodKind, MethodSet,
   client::{self, AuthResult, ChannelOpenHandle, Handle, KeyboardInteractiveAuthResponse},
   keys::{
     Certificate, HashAlg, PublicKey, decode_secret_key,
@@ -297,8 +298,7 @@ struct Session {
 struct Shell {
   client_id: String,
   session_id: String,
-  channel_id: ChannelId,
-  channel: Arc<Mutex<RusshChannel<client::Msg>>>,
+  channel: Arc<Mutex<ChannelWriteHalf<client::Msg>>>,
   events: mpsc::Sender<ShellMessage>,
   resize: watch::Sender<ShellSize>,
 }
@@ -364,35 +364,6 @@ impl State {
       sequence: current_sequence,
       payload,
     });
-  }
-
-  async fn route_shell_message(
-    &self,
-    session_id: &str,
-    channel_id: ChannelId,
-    message: ShellMessage,
-  ) -> SshResult<bool> {
-    let sender = {
-      let mut shells = self.shells.lock().await;
-      let shell_id = shells.iter().find_map(|(shell_id, shell)| {
-        (shell.session_id == session_id && shell.channel_id == channel_id).then(|| shell_id.clone())
-      });
-      match (&message, shell_id) {
-        (ShellMessage::Close, Some(shell_id)) => shells.remove(&shell_id).map(|shell| shell.events),
-        (_, Some(shell_id)) => shells.get(&shell_id).map(|shell| shell.events.clone()),
-        (_, None) => None,
-      }
-    };
-
-    if let Some(sender) = sender {
-      sender
-        .send(message)
-        .await
-        .map_err(|_| SshError::Other("Shell event queue is closed".to_string()))?;
-      Ok(true)
-    } else {
-      Ok(false)
-    }
   }
 
   async fn cleanup_session(&self, session_id: &str, emit_close: bool) {
@@ -698,20 +669,14 @@ impl SshService {
       session.1.lock().await.channel_open_session(),
     )
     .await??;
-    let channel_id = channel.id();
-    let channel = Arc::new(Mutex::new(channel));
     let envs = prepare_envs(options.envs.unwrap_or_default());
     for (key, value) in envs {
-      timeout(
-        OPERATION_TIMEOUT,
-        channel.lock().await.set_env(true, key, value),
-      )
-      .await??;
+      timeout(OPERATION_TIMEOUT, channel.set_env(true, key, value)).await??;
     }
     let term = options.term.unwrap_or_else(|| "xterm-256color".to_string());
     timeout(
       OPERATION_TIMEOUT,
-      channel.lock().await.request_pty(
+      channel.request_pty(
         true,
         &term,
         options.size.col,
@@ -722,8 +687,8 @@ impl SshService {
       ),
     )
     .await??;
-    timeout(OPERATION_TIMEOUT, channel.lock().await.request_shell(true)).await??;
-
+    let (reader, channel) = channel.split();
+    let channel = Arc::new(Mutex::new(channel));
     let (events, receiver) = mpsc::channel(SHELL_QUEUE_CAPACITY);
     spawn_shell_event_task(
       self.state.clone(),
@@ -731,6 +696,7 @@ impl SshService {
       shell_id.clone(),
       receiver,
     );
+    spawn_shell_reader_task(reader, events.clone());
     let (resize, resize_receiver) = watch::channel(options.size);
     spawn_resize_task(channel.clone(), resize_receiver);
     let previous = self.state.shells.lock().await.insert(
@@ -738,8 +704,7 @@ impl SshService {
       Shell {
         client_id,
         session_id,
-        channel_id,
-        channel,
+        channel: channel.clone(),
         events,
         resize,
       },
@@ -748,6 +713,21 @@ impl SshService {
       let _ = previous.events.send(ShellMessage::Close).await;
       let _ = previous.channel.lock().await.close().await;
     }
+
+    let request_result: SshResult<()> = async {
+      timeout(OPERATION_TIMEOUT, channel.lock().await.request_shell(true)).await??;
+      Ok(())
+    }
+    .await;
+    if let Err(error) = request_result {
+      let shell = self.state.shells.lock().await.remove(&shell_id);
+      if let Some(shell) = shell {
+        let _ = shell.events.send(ShellMessage::Close).await;
+        let _ = shell.channel.lock().await.close().await;
+      }
+      return Err(error);
+    }
+
     Ok(shell_id)
   }
 
@@ -1282,7 +1262,7 @@ impl SshService {
     &self,
     client_id: &str,
     shell_id: &str,
-  ) -> SshResult<Arc<Mutex<RusshChannel<client::Msg>>>> {
+  ) -> SshResult<Arc<Mutex<ChannelWriteHalf<client::Msg>>>> {
     let shells = self.state.shells.lock().await;
     let shell = shells.get(shell_id).ok_or(SshError::ShellNotFound)?;
     ensure_owner(client_id, &shell.client_id, "Shell")?;
@@ -1437,49 +1417,28 @@ impl client::Handler for SshClient {
 
   fn data(
     &mut self,
-    channel_id: ChannelId,
+    _channel_id: ChannelId,
     data: &[u8],
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-    let data = data.to_vec();
-    async move {
-      if let Some(state) = self.state.upgrade() {
-        state
-          .route_shell_message(&self.session_id, channel_id, ShellMessage::Data(data))
-          .await?;
-      }
-      Ok(())
-    }
+    let _ = data;
+    async move { Ok(()) }
   }
 
   fn channel_eof(
     &mut self,
-    channel_id: ChannelId,
+    _channel_id: ChannelId,
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-    async move {
-      if let Some(state) = self.state.upgrade() {
-        state
-          .route_shell_message(&self.session_id, channel_id, ShellMessage::Eof)
-          .await?;
-      }
-      Ok(())
-    }
+    async move { Ok(()) }
   }
 
   fn channel_close(
     &mut self,
-    channel_id: ChannelId,
+    _channel_id: ChannelId,
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-    async move {
-      if let Some(state) = self.state.upgrade() {
-        state
-          .route_shell_message(&self.session_id, channel_id, ShellMessage::Close)
-          .await?;
-      }
-      Ok(())
-    }
+    async move { Ok(()) }
   }
 
   fn server_channel_open_forwarded_tcpip(
@@ -1745,8 +1704,28 @@ fn spawn_shell_event_task(
   });
 }
 
+fn spawn_shell_reader_task(mut reader: ChannelReadHalf, events: mpsc::Sender<ShellMessage>) {
+  tokio::spawn(async move {
+    while let Some(message) = reader.wait().await {
+      let message = match message {
+        ChannelMsg::Data { data } | ChannelMsg::ExtendedData { data, .. } => {
+          ShellMessage::Data(data.to_vec())
+        }
+        ChannelMsg::Eof => ShellMessage::Eof,
+        ChannelMsg::Close => ShellMessage::Close,
+        _ => continue,
+      };
+      let close = matches!(message, ShellMessage::Close);
+      if events.send(message).await.is_err() || close {
+        break;
+      }
+    }
+    let _ = events.send(ShellMessage::Close).await;
+  });
+}
+
 fn spawn_resize_task(
-  channel: Arc<Mutex<RusshChannel<client::Msg>>>,
+  channel: Arc<Mutex<ChannelWriteHalf<client::Msg>>>,
   mut receiver: watch::Receiver<ShellSize>,
 ) {
   tokio::spawn(async move {

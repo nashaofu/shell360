@@ -2,6 +2,24 @@ import { webview } from '@kit.ArkWeb';
 import type { NativeRuntime } from './NativeRuntime';
 import { Jsb, registerHarmonyRoutes } from './Jsb';
 
+interface JsbErrorPayload {
+  code: string;
+  message: string;
+}
+
+interface ChannelControlMessage {
+  source: string;
+  type: string;
+  channelId: string;
+  error?: JsbErrorPayload;
+}
+
+interface InvokeErrorResponse {
+  type: string;
+  id: string;
+  error: JsbErrorPayload;
+}
+
 export class MessagePortBridge {
   private readonly channels: Map<string, webview.WebMessagePort> = new Map();
   private readonly controller: webview.WebviewController;
@@ -55,7 +73,7 @@ export class MessagePortBridge {
               nativePort.postMessageEvent(response);
             }
           })
-          .catch((error) => this.postError(nativePort, error));
+          .catch((error: Object) => this.postError(nativePort, error));
       });
     } catch (error) {
       this.channels.delete(channelId);
@@ -67,22 +85,24 @@ export class MessagePortBridge {
       if (this.channels.get(channelId) !== nativePort) {
         return;
       }
-      this.controller.postMessage(JSON.stringify({
+      const controlMessage: ChannelControlMessage = {
         source: 'shell360.jsb',
         type: 'channel.opened',
         channelId,
-      }), [webPort], '*');
+      };
+      this.controller.postMessage(JSON.stringify(controlMessage), [webPort], '*');
     }, 0);
   }
 
   private postChannelFailure(channelId: string, message: string): void {
     try {
-      this.controller.postMessage(JSON.stringify({
+      const controlMessage: ChannelControlMessage = {
         source: 'shell360.jsb',
         type: 'channel.open.failed',
         channelId,
         error: { code: 'JSB_CHANNEL_OPEN_FAILED', message },
-      }), [], '*');
+      };
+      this.controller.postMessage(JSON.stringify(controlMessage), [], '*');
     } catch (_) {
       // The page may already be navigating; there is no port to close here.
     }
@@ -90,11 +110,12 @@ export class MessagePortBridge {
 
   private postError(port: webview.WebMessagePort, error: Object): void {
     try {
-      port.postMessageEvent(JSON.stringify({
+      const response: InvokeErrorResponse = {
         type: 'invoke.response',
         id: '',
         error: { code: 'JSB_NATIVE_ERROR', message: error instanceof Error ? error.message : `${error}` },
-      }));
+      };
+      port.postMessageEvent(JSON.stringify(response));
     } catch (_) {}
   }
 

@@ -27,7 +27,7 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewBuilder
 import androidx.webkit.WebViewFeature
 import com.nashaofu.shell360.bridge.AndroidJsbInterface
-import com.nashaofu.shell360.bridge.BridgeRouter
+import com.nashaofu.shell360.bridge.AndroidBridgeServices
 import com.nashaofu.shell360.bridge.AndroidFileBridge
 import com.nashaofu.shell360.bridge.WebViewBridge
 import com.nashaofu.shell360.bridge.Jsb
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
         val rustBridge = (application as Shell360Application).rustBridge
         fileBridge = AndroidFileBridge(this)
-        val router = BridgeRouter(
+        val router = AndroidBridgeServices(
             context = this,
             rustBridge = rustBridge,
             fileBridge = fileBridge,

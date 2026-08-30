@@ -139,6 +139,7 @@ export class JSBChannel<
   };
 
   private readonly handleMessage = (event: MessageEvent<unknown>): void => {
+    console.log("channel-message", event);
     this.events.emit("message", event.data as TMessage);
   };
 

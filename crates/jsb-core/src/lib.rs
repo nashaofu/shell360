@@ -40,7 +40,10 @@ impl JsbRegistry {
     if method.is_empty() {
       return Err(JsbError::InvalidMessage("method must not be empty".into()));
     }
-    self.methods.write().unwrap().insert(method);
+    let mut methods = self.methods.write().unwrap();
+    if !methods.insert(method.clone()) {
+      return Err(JsbError::DuplicateMethod(method));
+    }
     Ok(())
   }
 
@@ -139,9 +142,9 @@ impl JsbConnection {
   }
 
   pub fn resolve(&self, request_id: &str, result_json: &str) -> Result<String, JsbError> {
-    self.finish(request_id)?;
     let result: Value = serde_json::from_str(result_json)
       .map_err(|error| JsbError::Serialization(error.to_string()))?;
+    self.finish(request_id)?;
     serde_json::to_string(&json!({ "type": "result", "id": request_id, "result": result }))
       .map_err(|error| JsbError::Serialization(error.to_string()))
   }
@@ -153,11 +156,11 @@ impl JsbConnection {
     message: &str,
     details_json: Option<&str>,
   ) -> Result<String, JsbError> {
-    self.finish(request_id)?;
     let details: Option<Value> = details_json
       .map(serde_json::from_str::<Value>)
       .transpose()
       .map_err(|error| JsbError::Serialization(error.to_string()))?;
+    self.finish(request_id)?;
     serde_json::to_string(&json!({
       "type": "result",
       "id": request_id,
@@ -235,5 +238,33 @@ mod tests {
       ),
       Err(JsbError::MethodNotFound(_))
     ));
+  }
+
+  #[test]
+  fn rejects_duplicate_method_registration() {
+    let registry = JsbRegistry::new();
+    registry.register("app.getVersion").unwrap();
+    assert!(matches!(
+      registry.register("app.getVersion"),
+      Err(JsbError::DuplicateMethod(method)) if method == "app.getVersion"
+    ));
+  }
+
+  #[test]
+  fn keeps_request_pending_when_result_serialization_fails() {
+    let registry = Arc::new(JsbRegistry::new());
+    registry.register("app.getVersion").unwrap();
+    let connection = registry.connect();
+    connection
+      .dispatch(
+        r#"{"type":"invoke","id":"1","clientId":"client","method":"app.getVersion","params":null}"#,
+      )
+      .unwrap();
+
+    assert!(matches!(
+      connection.resolve("1", "invalid"),
+      Err(JsbError::Serialization(_))
+    ));
+    assert!(connection.resolve("1", r#""1.0.0""#).is_ok());
   }
 }

@@ -27,7 +27,7 @@ impl FfiEventSink for EventSink {
       return;
     };
     if let Some(callback) = callback.as_ref() {
-      let _ = callback.call(event_json, ThreadsafeFunctionCallMode::NonBlocking);
+      let _ = callback.call(event_json, ThreadsafeFunctionCallMode::Blocking);
     }
   }
 }

@@ -123,9 +123,9 @@ class WebViewBridge(
                         }
 
                         webView.post {
-                            if (!disposed.get() && channels[channelId] === port) {
+                            if (!disposed.get() && channels[channelId] === nativePort) {
                                 try {
-                                    port.postMessage(WebMessageCompat(response))
+                                    nativePort.postMessage(WebMessageCompat(response))
                                 } catch (error: Exception) {
                                     Log.e(TAG, "Could not send a JSB response", error)
                                     closeChannel(channelId)

@@ -104,6 +104,12 @@ export class JSB {
   private readonly handleMessage = (message: string): void => {
     const incoming = parseIncomingMessage(message);
     if (!incoming) {
+      this.rejectPendingRequests(
+        new JSBError(
+          "JSB_INVALID_RESPONSE",
+          "The native bridge returned an invalid JSB message.",
+        ),
+      );
       return;
     }
 

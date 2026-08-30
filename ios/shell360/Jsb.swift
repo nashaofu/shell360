@@ -16,7 +16,12 @@ final class Jsb: @unchecked Sendable {
     private var clientId: String?
     var closeWindowHandler: (@Sendable () -> Void)?
     var documentPickerHandler: (@Sendable (Bool, Any?) async throws -> Any?)?
+    var eventHandler: (@Sendable (String) -> Void)?
     var systemBarsHandler: (@Sendable (Bool) -> Void)?
+
+    func emit(_ event: String) {
+        eventHandler?(event)
+    }
 
     func register(_ method: String, callback: @escaping JsbHandler) throws {
         lock.lock()
@@ -49,6 +54,12 @@ final class Jsb: @unchecked Sendable {
                   !method.isEmpty else {
                 return errorResponse(message, code: "JSB_INVALID_MESSAGE", reason: "JSB request is invalid.")
             }
+            lock.lock()
+            let isRegistered = handlers[method] != nil
+            lock.unlock()
+            guard isRegistered else {
+                return errorResponse(message, code: "JSB_UNSUPPORTED", reason: "JSB handler is unavailable: \(method)")
+            }
             let nativeRequest = json([
                 "type": "invoke",
                 "id": requestId,
@@ -60,14 +71,7 @@ final class Jsb: @unchecked Sendable {
             lock.lock()
             let handler = handlers[call.method]
             lock.unlock()
-            guard let handler else {
-                return response(try connection.reject(
-                    requestId: call.requestId,
-                    code: "JSB_UNSUPPORTED",
-                    message: "JSB handler is unavailable: \(call.method)",
-                    detailsJson: nil
-                ))
-            }
+            guard let handler else { preconditionFailure("Registered JSB handler disappeared.") }
             do {
                 let params = try JSONSerialization.jsonObject(with: Data(call.paramsJson.utf8), options: [.fragmentsAllowed])
                 let result = try await handler(JsbContext(clientId: call.clientId, method: call.method), params is NSNull ? nil : params)
@@ -151,6 +155,16 @@ func registerIosRoutes(jsb: Jsb, rustBridge: RustBridge) {
         return value is NSNull ? nil : value
     }
 
+    func decodeResult(_ value: String) throws -> Any? {
+        let result = try JSONSerialization.jsonObject(with: Data(value.utf8), options: [.fragmentsAllowed])
+        return result is NSNull ? nil : result
+    }
+
+    func localPath(_ value: String) -> String {
+        guard let url = URL(string: value), url.isFileURL else { return value }
+        return url.path
+    }
+
     func ssh(_ method: String, _ context: JsbContext, _ params: Any?) throws -> Any? {
         let value = try JSONSerialization.jsonObject(with: Data(rustBridge.invokeSsh(method: method, clientId: context.clientId, params: try jsonParams(params)).utf8), options: [.fragmentsAllowed])
         return value is NSNull ? nil : value
@@ -161,7 +175,9 @@ func registerIosRoutes(jsb: Jsb, rustBridge: RustBridge) {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
     }
     try? jsb.register("app.setSystemBarsAppearance") { [weak jsb] _, params in
-        let dark = (params as? [String: Any])?["dark"] as? Bool ?? false
+        guard let dark = (params as? [String: Any])?["dark"] as? Bool else {
+            throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "app.setSystemBarsAppearance requires dark.", details: nil)
+        }
         jsb?.systemBarsHandler?(dark)
         return nil
     }
@@ -178,7 +194,7 @@ func registerIosRoutes(jsb: Jsb, rustBridge: RustBridge) {
         return nil
     }
     try? jsb.register("core.openUrl") { _, params in
-        guard let value = params as? [String: Any], let raw = value["url"] as? String, let url = URL(string: raw) else { throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "core.openUrl requires url.", details: nil) }
+        guard let value = params as? [String: Any], let raw = value["url"] as? String, let url = URL(string: raw), ["http", "https", "mailto", "tel"].contains(url.scheme?.lowercased() ?? "") else { throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "core.openUrl requires an allowed URL.", details: nil) }
         DispatchQueue.main.async { UIApplication.shared.open(url) }
         return nil
     }
@@ -197,18 +213,20 @@ func registerIosRoutes(jsb: Jsb, rustBridge: RustBridge) {
     }
     try? jsb.register("fs.readTextFile") { _, params in
         guard let value = params as? [String: Any], let path = value["path"] as? String else { throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "fs.readTextFile requires path.", details: nil) }
-        return try String(contentsOfFile: path, encoding: .utf8)
+        return try String(contentsOfFile: localPath(path), encoding: .utf8)
     }
     try? jsb.register("fs.writeTextFile") { _, params in
         guard let value = params as? [String: Any], let path = value["path"] as? String, let contents = value["contents"] as? String else { throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "fs.writeTextFile requires path and contents.", details: nil) }
-        try contents.write(toFile: path, atomically: true, encoding: .utf8)
+        try contents.write(toFile: localPath(path), atomically: true, encoding: .utf8)
         return nil
     }
     try? jsb.register("window.close") { [weak jsb] _, _ in
         jsb?.closeWindowHandler?()
         return nil
     }
-    try? jsb.register("keygen.generate") { _, params in try rustBridge.invokeKeygen(params: try jsonParams(params)) }
+    try? jsb.register("keygen.generate") { _, params in
+        try decodeResult(rustBridge.invokeKeygen(params: try jsonParams(params)))
+    }
     try? jsb.register("data.checkIsEnableCrypto") { context, params in try data("data.checkIsEnableCrypto", params) }
     try? jsb.register("data.checkIsInitCrypto") { context, params in try data("data.checkIsInitCrypto", params) }
     try? jsb.register("data.checkIsAuthed") { context, params in try data("data.checkIsAuthed", params) }

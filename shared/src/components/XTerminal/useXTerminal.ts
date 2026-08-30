@@ -35,6 +35,17 @@ export type UseXTerminalOpts = {
   onOpenUrl?: (uri: string) => unknown;
 };
 
+function supportsWebgl2(): boolean {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("webgl2");
+  if (!context) {
+    return false;
+  }
+
+  context.getExtension("WEBGL_lose_context")?.loseContext();
+  return true;
+}
+
 export function useXTerminal({
   fontSize,
   fontFamily,
@@ -89,18 +100,27 @@ export function useXTerminal({
       onOpenUrlFn(uri);
     });
     const unicode11Addon = new Unicode11Addon();
-    const webglAddon = new WebglAddon();
+    let webglAddon: WebglAddon | undefined;
     const fitAddon = new FitAddon();
 
     terminal.loadAddon(webLinksAddon);
     terminal.loadAddon(unicode11Addon);
-    terminal.loadAddon(webglAddon);
     terminal.loadAddon(fitAddon);
 
     if (elRef.current) {
       terminal.open(elRef.current);
       elRef.current.dataset.xterminal = "true";
       elRef.current.__xterm = terminal;
+    }
+
+    if (supportsWebgl2()) {
+      try {
+        webglAddon = new WebglAddon();
+        terminal.loadAddon(webglAddon);
+      } catch {
+        webglAddon?.dispose();
+        webglAddon = undefined;
+      }
     }
 
     terminalRef.current = terminal;
@@ -114,7 +134,7 @@ export function useXTerminal({
       }
       webLinksAddon.dispose();
       unicode11Addon.dispose();
-      webglAddon.dispose();
+      webglAddon?.dispose();
       fitAddon.dispose();
       terminalRef.current = null;
       fitAddonRef.current = null;
