@@ -49,6 +49,7 @@ pub enum FfiError {
 #[uniffi::export(callback_interface)]
 pub trait FfiEventSink: Send + Sync {
   fn on_event(&self, event_json: String);
+  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>);
 }
 
 #[derive(Clone, uniffi::Record)]
@@ -325,7 +326,12 @@ impl SshEventSink for FfiSshEventSink {
       SshEventPayload::SessionDisconnect(reason) => {
         serde_json::to_value(reason).unwrap_or(serde_json::Value::Null)
       }
-      SshEventPayload::ShellData(data) => serde_json::Value::String(BASE64.encode(data)),
+      SshEventPayload::ShellData(data) => {
+        self
+          .event_sink
+          .on_ssh_shell_data(event.client_id, event.target_id, data);
+        return;
+      }
       SshEventPayload::Empty => serde_json::Value::Null,
     };
     let event = serde_json::json!({
@@ -449,6 +455,23 @@ impl Shell360Runtime {
     self
       .runtime
       .block_on(self.invoke_ssh_async(&method, client_id, &params_json))
+  }
+
+  pub fn ssh_shell_send_binary(
+    &self,
+    client_id: String,
+    ssh_shell_id: String,
+    data: Vec<u8>,
+  ) -> Result<(), FfiError> {
+    self
+      .runtime
+      .block_on(
+        self
+          .ssh_service
+          .shell_send(&client_id, &ssh_shell_id, &data),
+      )
+      .map(|_| ())
+      .map_err(ssh_error)
   }
 
   pub fn release_client(&self, client_id: String) {
@@ -1049,6 +1072,8 @@ mod tests {
     fn on_event(&self, event_json: String) {
       self.events.lock().expect("lock events").push(event_json);
     }
+
+    fn on_ssh_shell_data(&self, _client_id: String, _ssh_shell_id: String, _data: Vec<u8>) {}
   }
 
   #[test]

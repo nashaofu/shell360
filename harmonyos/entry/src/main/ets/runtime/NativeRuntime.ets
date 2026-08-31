@@ -1,9 +1,11 @@
-import type { NativeRuntime } from '../bridge/NativeRuntime';
+import type { NativeRuntime, SshShellDataEvent } from '../bridge/NativeRuntime';
 import {
   attachEventCallback,
   initializeRuntime,
   invoke,
   releaseClient,
+  sendSshShellData,
+  attachSshShellDataCallback,
   shutdown,
 } from 'shell360_ohrs';
 import { pasteboard } from '@kit.BasicServicesKit';
@@ -38,6 +40,18 @@ export class HarmonyNativeRuntime implements NativeRuntime {
 
   static setMainWindow(mainWindow: window.Window): void {
     HarmonyNativeRuntime.mainWindow = mainWindow;
+  }
+
+  static async moveToBackground(): Promise<void> {
+    const context = HarmonyNativeRuntime.context;
+    if (context === undefined) {
+      return;
+    }
+    try {
+      await context.moveAbilityToBackground();
+    } catch (_) {
+      console.error('[Shell360] Failed to move the ability to the background.');
+    }
   }
 
   private ensureRuntime(): void {
@@ -231,6 +245,16 @@ export class HarmonyNativeRuntime implements NativeRuntime {
 
   async releaseClient(clientId: string): Promise<void> {
     if (this.initialized) releaseClient(clientId);
+  }
+
+  onSshShellData(handler: (event: SshShellDataEvent) => void): void {
+    this.ensureRuntime();
+    attachSshShellDataCallback(handler);
+  }
+
+  async sendSshShellData(clientId: string, sshShellId: string, data: ArrayBuffer): Promise<void> {
+    if (!this.initialized) this.ensureRuntime();
+    sendSshShellData(clientId, sshShellId, Array.from(new Uint8Array(data)));
   }
 
   shutdown(): void {

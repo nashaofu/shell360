@@ -1,5 +1,5 @@
 import { webview } from '@kit.ArkWeb';
-import type { NativeRuntime } from './NativeRuntime';
+import type { NativeRuntime, SshShellDataEvent } from './NativeRuntime';
 import { Jsb, registerHarmonyRoutes } from './Jsb';
 
 interface JsbErrorPayload {
@@ -20,22 +20,37 @@ interface InvokeErrorResponse {
   error: JsbErrorPayload;
 }
 
+interface ShellBinding {
+  clientId: string;
+  sshShellId: string;
+}
+
 export class MessagePortBridge {
   private readonly channels: Map<string, webview.WebMessagePort> = new Map();
+  private readonly shellBindings: Map<string, ShellBinding> = new Map();
   private readonly controller: webview.WebviewController;
   private readonly jsb: Jsb = new Jsb();
   private readonly runtime: NativeRuntime;
+  private readonly pendingEvents: string[] = [];
 
   constructor(runtime: NativeRuntime, controller: webview.WebviewController) {
     this.runtime = runtime;
     this.controller = controller;
     registerHarmonyRoutes(this.jsb, runtime);
+    this.runtime.onSshShellData?.((rawEvent) => {
+      const event = normalizeSshShellDataEvent(rawEvent as Object);
+      if (event === undefined) {
+        return;
+      }
+      const channelId = this.findShellChannel(event.clientId, event.sshShellId);
+      const port = channelId === undefined ? undefined : this.channels.get(channelId);
+      if (port !== undefined) {
+        port.postMessageEvent(new Uint8Array(event.data).buffer);
+      }
+    });
     this.runtime.onEvent?.((event) => {
-      this.channels.forEach((port) => {
-        try {
-          port.postMessageEvent(event);
-        } catch (_) {}
-      });
+      const payload = normalizeNativeEvent(event as Object);
+      this.pendingEvents.push(payload);
     });
   }
 
@@ -63,14 +78,28 @@ export class MessagePortBridge {
     this.channels.set(channelId, nativePort);
     try {
       nativePort.onMessageEvent((message) => {
+        if (message instanceof ArrayBuffer) {
+          const binding = this.shellBindings.get(channelId);
+          if (binding) {
+            void this.runtime.sendSshShellData(binding.clientId, binding.sshShellId, message);
+          }
+          return;
+        }
         if (typeof message !== 'string') {
           return;
         }
 
+        this.flushPendingEvents(nativePort);
+        this.bindShellChannel(message);
         void this.jsb.dispatch(message)
           .then((response) => {
             if (this.channels.get(channelId) === nativePort) {
-              nativePort.postMessageEvent(response);
+              this.flushPendingEvents(nativePort);
+              try {
+                nativePort.postMessageEvent(response);
+              } catch (_) {
+                // The page may have closed the channel while the request was running.
+              }
             }
           })
           .catch((error: Object) => this.postError(nativePort, error));
@@ -92,6 +121,23 @@ export class MessagePortBridge {
       };
       this.controller.postMessage(JSON.stringify(controlMessage), [webPort], '*');
     }, 0);
+  }
+
+  private flushPendingEvents(port: webview.WebMessagePort): void {
+    if (this.pendingEvents.length === 0) {
+      return;
+    }
+
+    const pendingEvents = this.pendingEvents.splice(0);
+    const failedEvents: string[] = [];
+    pendingEvents.forEach((event) => {
+      try {
+        port.postMessageEvent(event);
+      } catch (_) {
+        failedEvents.push(event);
+      }
+    });
+    this.pendingEvents.unshift(...failedEvents);
   }
 
   private postChannelFailure(channelId: string, message: string): void {
@@ -120,6 +166,7 @@ export class MessagePortBridge {
   }
 
   closeChannel(channelId: string): void {
+    this.shellBindings.delete(channelId);
     const port = this.channels.get(channelId);
     if (port !== undefined) {
       this.channels.delete(channelId);
@@ -131,6 +178,35 @@ export class MessagePortBridge {
     if (this.channels.size === 0) {
       this.jsb.close();
     }
+  }
+
+  private bindShellChannel(message: string): void {
+    try {
+      const request = JSON.parse(message) as Record<string, Object>;
+      if (request.method !== 'ssh.shell.open') return;
+      const params = (request.data ?? request.params) as Record<string, Object>;
+      const dataChannelId = params.dataChannelId as string;
+      const sshShellId = params.sshShellId as string;
+      const clientId = this.jsb.getClientId();
+      if (this.channels.has(dataChannelId) && dataChannelId && sshShellId && clientId) {
+        const binding: ShellBinding = { clientId, sshShellId };
+        this.shellBindings.set(dataChannelId, binding);
+      }
+    } catch (_) {
+      // Ignore non-JSON or non-Shell requests.
+    }
+  }
+
+  private findShellChannel(clientId: string, sshShellId: string): string | undefined {
+    const entries = Array.from(this.shellBindings.entries());
+    for (let index = 0; index < entries.length; index += 1) {
+      const channelId = entries[index][0];
+      const binding = entries[index][1];
+      if (binding.clientId === clientId && binding.sshShellId === sshShellId) {
+        return channelId;
+      }
+    }
+    return undefined;
   }
 
   async close(): Promise<void> {
@@ -146,4 +222,30 @@ export class MessagePortBridge {
 
 function isValidChannelId(channelId: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(channelId);
+}
+
+function normalizeNativeEvent(event: Object): string {
+  if (typeof event === 'string') {
+    return event;
+  }
+  if (event instanceof Array && event.length > 0 && typeof event[0] === 'string') {
+    return event[0] as string;
+  }
+  return JSON.stringify(event);
+}
+
+function normalizeSshShellDataEvent(event: Object): SshShellDataEvent | undefined {
+  const value = event instanceof Array && event.length > 0 ? event[0] as Object : event;
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, Object>;
+  if (typeof record.clientId !== 'string' || typeof record.sshShellId !== 'string' || !(record.data instanceof Array)) {
+    return undefined;
+  }
+  return {
+    clientId: record.clientId,
+    sshShellId: record.sshShellId,
+    data: record.data as number[],
+  };
 }

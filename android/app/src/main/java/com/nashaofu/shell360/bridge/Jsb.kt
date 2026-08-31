@@ -33,6 +33,8 @@ class Jsb {
         return releasedClientId
     }
 
+    fun getClientId(): String? = clientId
+
     fun dispatch(message: String): String {
         val active = connection ?: return dispatchError(message, "JSB is not connected.")
         val request = try {
@@ -221,7 +223,6 @@ fun Jsb.registerAndroidRoutes(router: AndroidBridgeServices, context: Context) {
     register("ssh.session.authenticateAgent") { context, params -> router.rustBridge.invokeSsh("ssh.session.authenticateAgent", context.clientId, params) }
     register("ssh.session.disconnect") { context, params -> router.rustBridge.invokeSsh("ssh.session.disconnect", context.clientId, params) }
     register("ssh.shell.open") { context, params -> router.rustBridge.invokeSsh("ssh.shell.open", context.clientId, params) }
-    register("ssh.shell.send") { context, params -> router.rustBridge.invokeSsh("ssh.shell.send", context.clientId, params) }
     register("ssh.shell.resize") { context, params -> router.rustBridge.invokeSsh("ssh.shell.resize", context.clientId, params) }
     register("ssh.shell.close") { context, params -> router.rustBridge.invokeSsh("ssh.shell.close", context.clientId, params) }
     register("ssh.sftp.open") { context, params -> router.rustBridge.invokeSsh("ssh.sftp.open", context.clientId, params) }

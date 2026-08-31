@@ -28,8 +28,15 @@ export class JSBChannel<
   private readonly queue: TMessage[] = [];
   private port?: MessagePort;
   private state: JSBChannelState = "opening";
+  private readonly openPromise: Promise<void>;
+  private resolveOpen!: () => void;
+  private rejectOpen!: (error: JSBError) => void;
 
   constructor() {
+    this.openPromise = new Promise<void>((resolve, reject) => {
+      this.resolveOpen = resolve;
+      this.rejectOpen = reject;
+    });
     const error = requestNativeChannel(this.channelId, {
       attach: this.attachPort,
       fail: this.fail,
@@ -38,6 +45,10 @@ export class JSBChannel<
       // Allow callers to subscribe before reporting a synchronous bootstrap error.
       queueMicrotask(() => this.fail(error));
     }
+  }
+
+  waitUntilOpen(): Promise<void> {
+    return this.openPromise;
   }
 
   postMessage(message: TMessage): void {
@@ -61,6 +72,11 @@ export class JSBChannel<
     }
 
     this.state = "closed";
+    if (!this.port) {
+      this.rejectOpen(
+        new JSBError("JSB_CHANNEL_CLOSED", "JSB channel was closed before opening."),
+      );
+    }
     this.releaseResources();
 
     const error = closeNativeChannel(this.channelId);
@@ -104,6 +120,7 @@ export class JSBChannel<
       port.addEventListener("messageerror", this.handleMessageError);
       port.start();
       this.state = "open";
+      this.resolveOpen();
     } catch (error) {
       this.fail(
         toJSBError(
@@ -131,6 +148,7 @@ export class JSBChannel<
     }
 
     this.state = "failed";
+    this.rejectOpen(error);
     this.releaseResources();
     closeNativeChannel(this.channelId);
     this.events.emit("error", error);
@@ -139,7 +157,6 @@ export class JSBChannel<
   };
 
   private readonly handleMessage = (event: MessageEvent<unknown>): void => {
-    console.log("channel-message", event);
     this.events.emit("message", event.data as TMessage);
   };
 

@@ -10,6 +10,22 @@ use shell360_ffi::{FfiEventSink, NativeJsbConnection, NativeJsbRegistry, Shell36
 
 type EventCallback =
   ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
+type BinaryCallback = ThreadsafeFunction<
+  SshShellDataEvent,
+  Unknown<'static>,
+  Vec<SshShellDataEvent>,
+  Status,
+  false,
+  false,
+  0,
+>;
+
+#[napi(object)]
+pub struct SshShellDataEvent {
+  pub client_id: String,
+  pub ssh_shell_id: String,
+  pub data: Vec<u8>,
+}
 
 static RUNTIME: LazyLock<Mutex<Option<Arc<Shell360Runtime>>>> = LazyLock::new(|| Mutex::new(None));
 static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mutex::new(None));
@@ -19,6 +35,7 @@ static JSB_CONNECTION: LazyLock<Mutex<Option<Arc<NativeJsbConnection>>>> =
 
 struct EventSink {
   callback: Mutex<Option<EventCallback>>,
+  binary_callback: Mutex<Option<BinaryCallback>>,
 }
 
 impl FfiEventSink for EventSink {
@@ -30,6 +47,21 @@ impl FfiEventSink for EventSink {
       let _ = callback.call(event_json, ThreadsafeFunctionCallMode::Blocking);
     }
   }
+
+  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
+    if let Ok(callback) = self.binary_callback.lock()
+      && let Some(callback) = callback.as_ref()
+    {
+      let _ = callback.call(
+        SshShellDataEvent {
+          client_id,
+          ssh_shell_id,
+          data,
+        },
+        ThreadsafeFunctionCallMode::Blocking,
+      );
+    }
+  }
 }
 
 struct SharedEventSink(Arc<EventSink>);
@@ -37,6 +69,10 @@ struct SharedEventSink(Arc<EventSink>);
 impl FfiEventSink for SharedEventSink {
   fn on_event(&self, event_json: String) {
     self.0.on_event(event_json);
+  }
+
+  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
+    self.0.on_ssh_shell_data(client_id, ssh_shell_id, data);
   }
 }
 
@@ -132,6 +168,7 @@ pub fn initialize_runtime(app_data_dir: String, cache_dir: String) -> Result<()>
   if guard.is_none() {
     let event_sink = Arc::new(EventSink {
       callback: Mutex::new(None),
+      binary_callback: Mutex::new(None),
     });
     *guard = Some(
       Shell360Runtime::new(
@@ -211,6 +248,36 @@ pub fn invoke(method: String, client_id: String, params_json: String) -> AsyncTa
 pub fn release_client(client_id: String) -> Result<()> {
   runtime()?.release_client(client_id);
   Ok(())
+}
+
+#[napi]
+pub fn attach_ssh_shell_data_callback(
+  #[napi(ts_arg_type = "(event: SshShellDataEvent) => void")] callback: Function<
+    'static,
+    Unknown<'static>,
+    Unknown<'static>,
+  >,
+) -> Result<()> {
+  let callback = callback
+    .build_threadsafe_function::<SshShellDataEvent>()
+    .build_callback(|context| Ok(vec![context.value]))?;
+  let event_sink = EVENT_SINK
+    .lock()
+    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))?
+    .clone()
+    .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))?;
+  *event_sink
+    .binary_callback
+    .lock()
+    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = Some(callback);
+  Ok(())
+}
+
+#[napi]
+pub fn send_ssh_shell_data(client_id: String, ssh_shell_id: String, data: Vec<u8>) -> Result<()> {
+  runtime()?
+    .ssh_shell_send_binary(client_id, ssh_shell_id, data)
+    .map_err(native_error)
 }
 
 #[napi]

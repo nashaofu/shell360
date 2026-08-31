@@ -95,6 +95,10 @@ export class Jsb {
     connectJsb();
   }
 
+  getClientId(): string {
+    return this.clientId;
+  }
+
   async dispatch(message: string): Promise<string> {
     let request: JsbInvokeRequest;
     try {

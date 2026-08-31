@@ -1,5 +1,5 @@
+import jsb, { JSBChannel, JSBError } from "jsb";
 import { v4 as uuidv4 } from "uuid";
-import jsb, { JSBError } from "../../jsb/src/index";
 import type {
   BridgeBackend,
   PtyShellImplementation,
@@ -155,29 +155,44 @@ function createShell(
   opts: Omit<SSHShellOpts, "session">,
 ): SSHShellImplementation {
   const sshShellId = uuidv4();
-  transport.on("ssh.shell.data", sshShellId, (payload) => {
-    if (typeof payload === "string") {
-      opts.onData?.(decodeBase64(payload));
+  const dataChannel = new JSBChannel<ArrayBuffer>();
+  dataChannel.on("message", (message) => {
+    if (message instanceof ArrayBuffer) {
+      opts.onData?.(new Uint8Array(message));
     }
   });
   transport.on("ssh.shell.eof", sshShellId, () => opts.onEof?.());
-  transport.on("ssh.shell.close", sshShellId, () => opts.onClose?.());
+  transport.on("ssh.shell.close", sshShellId, () => {
+    dataChannel.close();
+    opts.onClose?.();
+  });
   return {
     sshShellId,
-    open: (openOpts) =>
-      transport.invoke("ssh.shell.open", {
+    open: async (openOpts) => {
+      await dataChannel.waitUntilOpen();
+      return transport.invoke("ssh.shell.open", {
         sshSessionId: session.sshSessionId,
         sshShellId,
+        dataChannelId: dataChannel.channelId,
         ...openOpts,
-      }),
-    close: () => transport.invoke("ssh.shell.close", { sshShellId }),
-    send: (data) =>
-      transport.invoke("ssh.shell.send", {
-        sshShellId,
-        data: encodeBase64(
-          typeof data === "string" ? new TextEncoder().encode(data) : data,
-        ),
-      }),
+      });
+    },
+    close: async () => {
+      try {
+        return await transport.invoke<string>("ssh.shell.close", {
+          sshShellId,
+        });
+      } finally {
+        dataChannel.close();
+      }
+    },
+    send: async (data) => {
+      const bytes =
+        typeof data === "string" ? new TextEncoder().encode(data) : data;
+      const buffer = Uint8Array.from(bytes).buffer;
+      dataChannel.postMessage(buffer);
+      return "";
+    },
     resize: (size) =>
       transport.invoke("ssh.shell.resize", { sshShellId, size }),
   };
@@ -425,23 +440,6 @@ export function createNativeBackend(transport: NativeJsb): BridgeBackend {
       relaunch: () => unsupported("process.relaunch"),
     },
   };
-}
-
-function encodeBase64(data: Uint8Array): string {
-  let binary = "";
-  for (let offset = 0; offset < data.length; offset += 0x8000) {
-    binary += String.fromCharCode(...data.subarray(offset, offset + 0x8000));
-  }
-  return btoa(binary);
-}
-
-function decodeBase64(data: string): Uint8Array {
-  const binary = atob(data);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
 }
 
 export function installNativeBackend(): void {

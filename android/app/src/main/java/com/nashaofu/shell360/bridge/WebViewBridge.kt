@@ -21,11 +21,12 @@ class WebViewBridge(
     private val callbackThread = HandlerThread("shell360-jsb").apply { start() }
     private val callbackHandler = Handler(callbackThread.looper)
     private val channels = mutableMapOf<String, WebMessagePortCompat>()
+    private val shellBindings = mutableMapOf<String, Pair<String, String>>()
     private val disposed = AtomicBoolean()
     private val listenerOwner = Any()
 
     init {
-        rustBridge.setEventListener(listenerOwner) { event ->
+        rustBridge.setEventListener(listenerOwner, { event ->
             webView.post {
                 if (disposed.get()) {
                     return@post
@@ -44,7 +45,13 @@ class WebViewBridge(
                 }
                 closeConnectionIfUnused()
             }
-        }
+        }, { clientId, sshShellId, data ->
+            webView.post {
+                val channelId = shellBindings.entries.firstOrNull { it.value.first == clientId && it.value.second == sshShellId }?.key
+                val port = channelId?.let { channels[it] } ?: return@post
+                runCatching { port.postMessage(WebMessageCompat(data)) }.onFailure { closeChannel(channelId) }
+            }
+        })
     }
 
     fun openChannel(channelId: String) {
@@ -97,6 +104,17 @@ class WebViewBridge(
                         port: WebMessagePortCompat,
                         message: WebMessageCompat?,
                     ) {
+                        val binary = message?.takeIf { it.type == WebMessageCompat.TYPE_ARRAY_BUFFER }
+                            ?.arrayBuffer
+                        if (binary != null) {
+                            val binding = shellBindings[channelId]
+                            if (binding != null) {
+                                runCatching {
+                                    rustBridge.sendSshShellData(binding.first, binding.second, binary)
+                                }.onFailure { closeChannel(channelId) }
+                            }
+                            return
+                        }
                         val body = message
                             ?.takeIf { it.type == WebMessageCompat.TYPE_STRING }
                             ?.data
@@ -113,7 +131,11 @@ class WebViewBridge(
                                     "JSB requests are limited to $MAX_MESSAGE_SIZE bytes.",
                                 )
                             }
-                            else -> runCatching { jsb.dispatch(body) }.getOrElse { error ->
+                            else -> runCatching {
+                                bindShellChannel(body)
+                                val response = jsb.dispatch(body)
+                                response
+                            }.getOrElse { error ->
                                 BridgeResponse.error(
                                     requestId(body),
                                     "JSB_NATIVE_ERROR",
@@ -162,6 +184,7 @@ class WebViewBridge(
     }
 
     fun closeChannel(channelId: String) {
+        shellBindings.remove(channelId)
         channels.remove(channelId)?.let(::closePort)
         closeConnectionIfUnused()
     }
@@ -169,6 +192,7 @@ class WebViewBridge(
     fun closeChannels() {
         channels.values.forEach(::closePort)
         channels.clear()
+        shellBindings.clear()
         closeConnectionIfUnused()
     }
 
@@ -236,6 +260,18 @@ class WebViewBridge(
     private fun closePort(port: WebMessagePortCompat) {
         runCatching(port::close).onFailure { error ->
             Log.w(TAG, "Could not close JSB message port", error)
+        }
+    }
+
+    private fun bindShellChannel(body: String) {
+        val request = runCatching { JSONObject(body) }.getOrNull() ?: return
+        if (request.optString("method") != "ssh.shell.open") return
+        val params = request.optJSONObject("data") ?: request.optJSONObject("params") ?: return
+        val shellId = params.optString("sshShellId").takeIf { it.isNotBlank() } ?: return
+        val dataChannelId = params.optString("dataChannelId").takeIf { it.isNotBlank() } ?: return
+        val clientId = jsb.getClientId() ?: return
+        if (channels.containsKey(dataChannelId)) {
+            shellBindings[dataChannelId] = clientId to shellId
         }
     }
 

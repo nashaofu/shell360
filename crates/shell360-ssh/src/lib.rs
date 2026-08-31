@@ -1707,17 +1707,26 @@ fn spawn_shell_event_task(
 fn spawn_shell_reader_task(mut reader: ChannelReadHalf, events: mpsc::Sender<ShellMessage>) {
   tokio::spawn(async move {
     while let Some(message) = reader.wait().await {
-      let message = match message {
+      match message {
         ChannelMsg::Data { data } | ChannelMsg::ExtendedData { data, .. } => {
-          ShellMessage::Data(data.to_vec())
+          if events
+            .send(ShellMessage::Data(data.to_vec()))
+            .await
+            .is_err()
+          {
+            break;
+          }
         }
-        ChannelMsg::Eof => ShellMessage::Eof,
-        ChannelMsg::Close => ShellMessage::Close,
+        ChannelMsg::Eof => {
+          if events.send(ShellMessage::Eof).await.is_err() {
+            break;
+          }
+        }
+        ChannelMsg::Close => {
+          let _ = events.send(ShellMessage::Close).await;
+          return;
+        }
         _ => continue,
-      };
-      let close = matches!(message, ShellMessage::Close);
-      if events.send(message).await.is_err() || close {
-        break;
       }
     }
     let _ = events.send(ShellMessage::Close).await;

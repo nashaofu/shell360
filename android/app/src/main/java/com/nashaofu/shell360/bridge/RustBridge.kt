@@ -18,11 +18,15 @@ class RustBridge(context: Context) {
             override fun onEvent(eventJson: String) {
                 eventListener?.callback?.invoke(eventJson)
             }
+
+            override fun onSshShellData(clientId: String, sshShellId: String, data: ByteArray) {
+                eventListener?.binaryCallback?.invoke(clientId, sshShellId, data)
+            }
         },
     )
 
-    fun setEventListener(owner: Any, listener: (String) -> Unit) {
-        eventListener = EventListener(owner, listener)
+    fun setEventListener(owner: Any, listener: (String) -> Unit, binaryListener: (String, String, ByteArray) -> Unit = { _, _, _ -> }) {
+        eventListener = EventListener(owner, listener, binaryListener)
     }
 
     fun clearEventListener(owner: Any) {
@@ -85,6 +89,14 @@ class RustBridge(context: Context) {
         }
     }
 
+    fun sendSshShellData(clientId: String, sshShellId: String, data: ByteArray) {
+        try {
+            runtime.sshShellSendBinary(clientId, sshShellId, data)
+        } catch (error: FfiException.Ssh) {
+            throw NativeBridgeException(error.code, error.reason)
+        }
+    }
+
     fun releaseClient(clientId: String) {
         runtime.releaseClient(clientId)
     }
@@ -103,6 +115,7 @@ class RustBridge(context: Context) {
     private data class EventListener(
         val owner: Any,
         val callback: (String) -> Unit,
+        val binaryCallback: (String, String, ByteArray) -> Unit,
     )
 }
 
