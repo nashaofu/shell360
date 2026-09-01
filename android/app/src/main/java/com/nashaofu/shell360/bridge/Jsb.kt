@@ -58,44 +58,31 @@ class Jsb {
                 "JSB handler is unavailable: $method",
             )
         }
-        val nativeRequest = JSONObject()
-            .put("type", "invoke")
-            .put("id", requestId)
-            .put("clientId", clientId)
-            .put("method", method)
-            .put("params", if (request.has("data")) request.opt("data") else JSONObject.NULL)
-            .toString()
         val call = try {
-            active.dispatch(nativeRequest)
+            active.dispatch(message, checkNotNull(clientId))
         } catch (error: FfiException) {
             return dispatchError(message, error.message ?: "JSB dispatch failed.")
         }
         val handler = checkNotNull(handlers[call.method])
         return try {
             val params = JSONTokener(call.paramsJson).nextValue().takeUnless { it == JSONObject.NULL }
-            response(
-                active.resolve(
-                    call.requestId,
-                    handler(JsbContext(call.clientId, call.method), params).toJson(),
-                ),
+            active.resolve(
+                call.requestId,
+                handler(JsbContext(call.clientId, call.method), params).toJson(),
             )
         } catch (error: NativeBridgeException) {
-            response(
-                active.reject(
-                    call.requestId,
-                    error.code,
-                    error.message,
-                    error.details?.toJson(),
-                ),
+            active.reject(
+                call.requestId,
+                error.code,
+                error.message,
+                error.details?.toJson(),
             )
         } catch (error: Exception) {
-            response(
-                active.reject(
-                    call.requestId,
-                    "JSB_NATIVE_ERROR",
-                    error.message ?: "JSB handler failed.",
-                    null,
-                ),
+            active.reject(
+                call.requestId,
+                "JSB_NATIVE_ERROR",
+                error.message ?: "JSB handler failed.",
+                null,
             )
         }
     }
@@ -110,23 +97,6 @@ class Jsb {
     private fun dispatchError(message: String, reason: String): String {
         val id = runCatching { JSONObject(message).optString("id") }.getOrDefault("")
         return BridgeResponse.error(id, "JSB_INVALID_MESSAGE", reason)
-    }
-
-    private fun response(message: String): String {
-        val response = JSONObject(message)
-        return if (response.has("error")) {
-            BridgeResponse.error(
-                response.optString("id"),
-                response.getJSONObject("error").optString("code"),
-                response.getJSONObject("error").optString("message"),
-                response.getJSONObject("error").opt("details").takeUnless { it == JSONObject.NULL },
-            )
-        } else {
-            BridgeResponse.success(
-                response.optString("id"),
-                response.opt("result").takeUnless { it == JSONObject.NULL },
-            )
-        }
     }
 
     private fun Any?.toJson(): String {

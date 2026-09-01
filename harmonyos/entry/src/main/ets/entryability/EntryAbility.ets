@@ -15,11 +15,9 @@ export default class EntryAbility extends UIAbility {
     } catch (error) {
       hilog.error(DOMAIN, 'testTag', 'Failed to configure WebView debugging. Cause: %{public}s', JSON.stringify(error));
     }
-    try {
-      HarmonyNativeRuntime.initializeGlobal();
-    } catch (error) {
+    void HarmonyNativeRuntime.initializeGlobal().catch((error: Error) => {
       hilog.error(DOMAIN, 'testTag', 'Failed to initialize native runtime. Cause: %{public}s', JSON.stringify(error));
-    }
+    });
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     } catch (err) {

@@ -28,35 +28,10 @@ interface JsbInvokeRequest {
   data?: Object | null;
 }
 
-interface JsbNativeRequest {
-  type: string;
-  id: string;
-  clientId: string;
-  method: string;
-  params: Object | null;
-}
-
 interface BridgeErrorPayload {
   code: string;
   message: string;
   details?: Object | null;
-}
-
-interface UnknownServerKeyDetails {
-  algorithm: string;
-  fingerprint: string;
-}
-
-interface BridgeResponse {
-  id: string;
-  result?: Object | null;
-  error?: BridgeErrorPayload;
-}
-
-interface JsbSuccessResponse {
-  type: string;
-  id: string;
-  data: Object | null;
 }
 
 interface JsbErrorResponse {
@@ -123,16 +98,9 @@ export class Jsb {
       } as JsbErrorResponse);
     }
 
-    const nativeRequest: JsbNativeRequest = {
-      type: 'invoke',
-      id: request.id,
-      clientId: this.clientId,
-      method: request.method,
-      params: request.data ?? null,
-    };
     let call: JsbCall;
     try {
-      call = JSON.parse(dispatchJsb(JSON.stringify(nativeRequest))) as JsbCall;
+      call = JSON.parse(dispatchJsb(message, this.clientId)) as JsbCall;
     } catch (error) {
       return this.errorResponse(request.id, error);
     }
@@ -140,42 +108,21 @@ export class Jsb {
     try {
       const params = JSON.parse(call.paramsJson) as Object | null;
       const result = await handler({ clientId: call.clientId, method: call.method }, params);
-      return this.response(resolveJsb(call.requestId, JSON.stringify(result ?? null)));
+      return resolveJsb(call.requestId, JSON.stringify(result ?? null));
     } catch (error) {
       const bridgeError = toBridgeError(error);
-      return this.response(
-        rejectJsb(
-          call.requestId,
-          bridgeError.code,
-          bridgeError.message,
-          bridgeError.details === undefined ? undefined : JSON.stringify(bridgeError.details),
-        ),
+      return rejectJsb(
+        call.requestId,
+        bridgeError.code,
+        bridgeError.message,
+        bridgeError.details === undefined ? undefined : JSON.stringify(bridgeError.details),
       );
     }
   }
 
-  close(): void {
+  async close(): Promise<void> {
     this.clientId = '';
-    closeJsb();
-  }
-
-  private response(message: string): string {
-    const response = JSON.parse(message) as BridgeResponse;
-    if (response.error !== undefined) {
-      const errorResponse: JsbErrorResponse = {
-        type: 'invoke.response',
-        id: response.id,
-        error: response.error,
-      };
-      return JSON.stringify(errorResponse);
-    }
-
-    const successResponse: JsbSuccessResponse = {
-      type: 'invoke.response',
-      id: response.id,
-      data: response.result ?? null,
-    };
-    return JSON.stringify(successResponse);
+    await closeJsb();
   }
 
   private errorResponse(id: string, error: Object): string {
@@ -205,23 +152,13 @@ function toBridgeError(error: Object): BridgeErrorPayload {
   }
 
   const message = error instanceof Error ? error.message : `${error}`;
-  const sshPrefix = 'SSH operation failed (';
-  const codeEnd = message.indexOf('): ', sshPrefix.length);
-  if (message.startsWith(sshPrefix) && codeEnd > sshPrefix.length) {
-    const code = message.substring(sshPrefix.length, codeEnd);
-    const reason = message.substring(codeEnd + 3);
-    if (code === 'SSH_UNKNOWN_SERVER_KEY') {
-      const fingerprintSeparator = ' key fingerprint is ';
-      const fingerprintStart = reason.indexOf(fingerprintSeparator);
-      if (fingerprintStart > 0) {
-        const details: UnknownServerKeyDetails = {
-          algorithm: reason.substring(0, fingerprintStart),
-          fingerprint: reason.substring(fingerprintStart + fingerprintSeparator.length),
-        };
-        return { code, message: reason, details };
-      }
+  try {
+    const payload = JSON.parse(message) as BridgeErrorPayload;
+    if (typeof payload.code === 'string' && typeof payload.message === 'string') {
+      return payload;
     }
-    return { code, message: reason };
+  } catch (_) {
+    // Non-Rust platform errors do not use the structured FFI error envelope.
   }
 
   return { code: 'JSB_NATIVE_ERROR', message };

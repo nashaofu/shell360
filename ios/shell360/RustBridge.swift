@@ -3,7 +3,10 @@ import Foundation
 final class RustBridge: @unchecked Sendable {
     private let runtime: Shell360Runtime?
 
-    init(onEvent: @escaping @Sendable (String) -> Void = { _ in }) {
+    init(
+        onEvent: @escaping @Sendable (String) -> Void = { _ in },
+        onSshShellData: @escaping @Sendable (String, String, Data) -> Void = { _, _, _ in }
+    ) {
         let fileManager = FileManager.default
         let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -16,7 +19,7 @@ final class RustBridge: @unchecked Sendable {
         runtime = try? Shell360Runtime(
             appDataDir: appData.path,
             cacheDir: cache.path,
-            eventSink: RustEventSink(onEvent: onEvent)
+            eventSink: RustEventSink(onEvent: onEvent, onSshShellData: onSshShellData)
         )
     }
 
@@ -39,6 +42,15 @@ final class RustBridge: @unchecked Sendable {
         return try runtime.invokeSsh(method: method, clientId: clientId, paramsJson: params)
     }
 
+    func sendSshShellData(clientId: String, sshShellId: String, data: Data) throws {
+        guard let runtime else { throw RustBridgeError.unavailable }
+        try runtime.sshShellSendBinary(
+            clientId: clientId,
+            sshShellId: sshShellId,
+            data: data
+        )
+    }
+
     func releaseClient(_ clientId: String) {
         runtime?.releaseClient(clientId: clientId)
     }
@@ -54,12 +66,21 @@ enum RustBridgeError: Error {
 
 final class RustEventSink: FfiEventSink, @unchecked Sendable {
     private let onEvent: @Sendable (String) -> Void
+    private let onSshShellDataCallback: @Sendable (String, String, Data) -> Void
 
-    init(onEvent: @escaping @Sendable (String) -> Void) {
+    init(
+        onEvent: @escaping @Sendable (String) -> Void,
+        onSshShellData: @escaping @Sendable (String, String, Data) -> Void
+    ) {
         self.onEvent = onEvent
+        onSshShellDataCallback = onSshShellData
     }
 
     func onEvent(eventJson: String) {
         onEvent(eventJson)
+    }
+
+    func onSshShellData(clientId: String, sshShellId: String, data: Data) {
+        onSshShellDataCallback(clientId, sshShellId, data)
     }
 }

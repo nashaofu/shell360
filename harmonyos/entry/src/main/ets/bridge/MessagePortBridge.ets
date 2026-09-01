@@ -176,7 +176,7 @@ export class MessagePortBridge {
     }
 
     if (this.channels.size === 0) {
-      this.jsb.close();
+      void this.jsb.close();
     }
   }
 
@@ -216,7 +216,7 @@ export class MessagePortBridge {
       } catch (_) {}
     });
     this.channels.clear();
-    this.jsb.close();
+    await this.jsb.close();
   }
 }
 

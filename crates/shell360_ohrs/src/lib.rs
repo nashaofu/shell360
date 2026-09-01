@@ -6,7 +6,9 @@ use napi_ohos::{
   bindgen_prelude::{AsyncTask, Function, Unknown},
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
-use shell360_ffi::{FfiEventSink, NativeJsbConnection, NativeJsbRegistry, Shell360Runtime};
+use shell360_ffi::{
+  FfiError, FfiEventSink, NativeJsbConnection, NativeJsbRegistry, Shell360Runtime,
+};
 
 type EventCallback =
   ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
@@ -76,8 +78,19 @@ impl FfiEventSink for SharedEventSink {
   }
 }
 
-fn native_error(error: impl std::fmt::Display) -> Error {
-  Error::from_reason(error.to_string())
+fn native_error(error: FfiError) -> Error {
+  let details = error.details_json().map(|value| {
+    serde_json::from_str::<serde_json::Value>(value)
+      .unwrap_or(serde_json::Value::String(value.to_string()))
+  });
+  Error::from_reason(
+    serde_json::json!({
+      "code": error.code(),
+      "message": error.reason(),
+      "details": details,
+    })
+    .to_string(),
+  )
 }
 
 fn runtime() -> Result<Arc<Shell360Runtime>> {
@@ -111,15 +124,17 @@ pub fn connect_jsb() -> Result<()> {
 }
 
 #[napi]
-pub fn dispatch_jsb(message: String) -> Result<String> {
-  let call = jsb_connection()?.dispatch(message).map_err(native_error)?;
+pub fn dispatch_jsb(message: String, client_id: String) -> Result<String> {
+  let call = jsb_connection()?
+    .dispatch(message, client_id)
+    .map_err(native_error)?;
   serde_json::to_string(&serde_json::json!({
     "requestId": call.request_id,
     "clientId": call.client_id,
     "method": call.method,
     "paramsJson": call.params_json,
   }))
-  .map_err(native_error)
+  .map_err(|error| Error::from_reason(error.to_string()))
 }
 
 #[napi]
@@ -141,18 +156,40 @@ pub fn reject_jsb(
     .map_err(native_error)
 }
 
-#[napi]
-pub fn close_jsb() -> Result<()> {
+fn disconnect_jsb() -> Result<Option<String>> {
   let connection = JSB_CONNECTION
     .lock()
     .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
     .take();
-  if let Some(connection) = connection
-    && let Some(client_id) = connection.disconnect()
-  {
-    runtime()?.release_client(client_id);
+  Ok(connection.and_then(|connection| connection.disconnect()))
+}
+
+pub struct CloseJsbTask {
+  client_id: Option<String>,
+}
+
+#[napi]
+impl Task for CloseJsbTask {
+  type Output = ();
+  type JsValue = ();
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    if let Some(client_id) = self.client_id.take() {
+      runtime()?.release_client(client_id);
+    }
+    Ok(())
   }
-  Ok(())
+
+  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+#[napi]
+pub fn close_jsb() -> Result<AsyncTask<CloseJsbTask>> {
+  Ok(AsyncTask::new(CloseJsbTask {
+    client_id: disconnect_jsb()?,
+  }))
 }
 
 #[napi]
@@ -160,20 +197,31 @@ pub fn health_check() -> String {
   "ok".to_string()
 }
 
+pub struct InitializeRuntimeTask {
+  app_data_dir: String,
+  cache_dir: String,
+}
+
 #[napi]
-pub fn initialize_runtime(app_data_dir: String, cache_dir: String) -> Result<()> {
-  let mut guard = RUNTIME
-    .lock()
-    .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?;
-  if guard.is_none() {
+impl Task for InitializeRuntimeTask {
+  type Output = ();
+  type JsValue = ();
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    let mut guard = RUNTIME
+      .lock()
+      .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?;
+    if guard.is_some() {
+      return Ok(());
+    }
     let event_sink = Arc::new(EventSink {
       callback: Mutex::new(None),
       binary_callback: Mutex::new(None),
     });
     *guard = Some(
       Shell360Runtime::new(
-        app_data_dir,
-        cache_dir,
+        std::mem::take(&mut self.app_data_dir),
+        std::mem::take(&mut self.cache_dir),
         Box::new(SharedEventSink(Arc::clone(&event_sink))),
       )
       .map_err(native_error)?,
@@ -181,8 +229,23 @@ pub fn initialize_runtime(app_data_dir: String, cache_dir: String) -> Result<()>
     *EVENT_SINK
       .lock()
       .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = Some(event_sink);
+    Ok(())
   }
-  Ok(())
+
+  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+#[napi]
+pub fn initialize_runtime(
+  app_data_dir: String,
+  cache_dir: String,
+) -> AsyncTask<InitializeRuntimeTask> {
+  AsyncTask::new(InitializeRuntimeTask {
+    app_data_dir,
+    cache_dir,
+  })
 }
 
 #[napi]
@@ -244,10 +307,28 @@ pub fn invoke(method: String, client_id: String, params_json: String) -> AsyncTa
   })
 }
 
+pub struct ReleaseClientTask {
+  client_id: String,
+}
+
 #[napi]
-pub fn release_client(client_id: String) -> Result<()> {
-  runtime()?.release_client(client_id);
-  Ok(())
+impl Task for ReleaseClientTask {
+  type Output = ();
+  type JsValue = ();
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    runtime()?.release_client(std::mem::take(&mut self.client_id));
+    Ok(())
+  }
+
+  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+#[napi]
+pub fn release_client(client_id: String) -> AsyncTask<ReleaseClientTask> {
+  AsyncTask::new(ReleaseClientTask { client_id })
 }
 
 #[napi]
@@ -273,16 +354,50 @@ pub fn attach_ssh_shell_data_callback(
   Ok(())
 }
 
+pub struct SendSshShellDataTask {
+  client_id: String,
+  ssh_shell_id: String,
+  data: Vec<u8>,
+}
+
 #[napi]
-pub fn send_ssh_shell_data(client_id: String, ssh_shell_id: String, data: Vec<u8>) -> Result<()> {
-  runtime()?
-    .ssh_shell_send_binary(client_id, ssh_shell_id, data)
-    .map_err(native_error)
+impl Task for SendSshShellDataTask {
+  type Output = ();
+  type JsValue = ();
+
+  fn compute(&mut self) -> Result<Self::Output> {
+    runtime()?
+      .ssh_shell_send_binary(
+        std::mem::take(&mut self.client_id),
+        std::mem::take(&mut self.ssh_shell_id),
+        std::mem::take(&mut self.data),
+      )
+      .map_err(native_error)
+  }
+
+  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
+    Ok(output)
+  }
+}
+
+#[napi]
+pub fn send_ssh_shell_data(
+  client_id: String,
+  ssh_shell_id: String,
+  data: Vec<u8>,
+) -> AsyncTask<SendSshShellDataTask> {
+  AsyncTask::new(SendSshShellDataTask {
+    client_id,
+    ssh_shell_id,
+    data,
+  })
 }
 
 #[napi]
 pub fn shutdown() -> Result<()> {
-  close_jsb()?;
+  if let Some(client_id) = disconnect_jsb()? {
+    runtime()?.release_client(client_id);
+  }
   let runtime = RUNTIME
     .lock()
     .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?

@@ -49,6 +49,11 @@ struct WebViewContainer: UIViewRepresentable {
                 webView?.evaluateJavaScript("window.__JSB__?.emit?.(\(escaped));")
             }
         }
+        jsb.sshShellEventHandler = { [weak coordinator = context.coordinator] clientId, sshShellId, data in
+            DispatchQueue.main.async {
+                coordinator?.receiveSshShellData(clientId: clientId, sshShellId: sshShellId, data: data)
+            }
+        }
         WebContentLoader.load(in: webView)
         return webView
     }
@@ -59,6 +64,7 @@ struct WebViewContainer: UIViewRepresentable {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "shell360Native")
         webView.navigationDelegate = nil
         coordinator.jsb.eventHandler = nil
+        coordinator.jsb.sshShellEventHandler = nil
         coordinator.jsb.closeWindowHandler = nil
         coordinator.jsb.documentPickerHandler = nil
         coordinator.jsb.systemBarsHandler = nil
@@ -72,6 +78,7 @@ struct WebViewContainer: UIViewRepresentable {
         weak var webView: WKWebView?
         private var pickerContinuation: CheckedContinuation<Any?, Error>?
         private var pickerSourceURL: URL?
+        private var shellBindings: [String: (clientId: String, sshShellId: String)] = [:]
 
         init(jsb: Jsb) {
             self.jsb = jsb
@@ -80,19 +87,73 @@ struct WebViewContainer: UIViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             guard message.name == "shell360Native",
                   let body = message.body as? [String: Any],
+                  body["version"] as? Int == 1,
+                  let kind = body["kind"] as? String,
                   let channelId = body["channelId"] as? String,
-                  let request = body["message"] as? String else {
+                  let payload = body["payload"] as? String else {
                 return
             }
+            if kind == "channel.close" {
+                shellBindings.removeValue(forKey: channelId)
+                return
+            }
+            if kind == "binary" {
+                guard let binding = shellBindings[channelId],
+                      let data = Data(base64Encoded: payload) else {
+                    return
+                }
+                Task.detached { [jsb] in
+                    try? jsb.sendSshShellData(
+                        clientId: binding.clientId,
+                        sshShellId: binding.sshShellId,
+                        data: data
+                    )
+                }
+                return
+            }
+            guard kind == "text" else { return }
+            bindShellChannel(request: payload)
             let webView = webView
             Task.detached { [jsb] in
-                let response = await jsb.dispatch(request)
+                let response = await jsb.dispatch(payload)
                 await MainActor.run {
-                    let escapedChannelId = JavaScriptBridge.jsonStringLiteral(channelId)
-                    let escaped = JavaScriptBridge.jsonStringLiteral(response)
-                    webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(escapedChannelId), \(escaped));")
+                    let envelope = JavaScriptBridge.jsonObjectLiteral([
+                        "version": 1,
+                        "kind": "text",
+                        "channelId": channelId,
+                        "payload": response
+                    ])
+                    webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
                 }
             }
+        }
+
+        func receiveSshShellData(clientId: String, sshShellId: String, data: Data) {
+            guard let channelId = shellBindings.first(where: {
+                $0.value.clientId == clientId && $0.value.sshShellId == sshShellId
+            })?.key else {
+                return
+            }
+            let envelope = JavaScriptBridge.jsonObjectLiteral([
+                "version": 1,
+                "kind": "binary",
+                "channelId": channelId,
+                "payload": data.base64EncodedString()
+            ])
+            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+        }
+
+        private func bindShellChannel(request: String) {
+            guard let data = request.data(using: .utf8),
+                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  object["method"] as? String == "ssh.shell.open",
+                  let params = object["data"] as? [String: Any],
+                  let dataChannelId = params["dataChannelId"] as? String,
+                  let sshShellId = params["sshShellId"] as? String,
+                  let clientId = jsb.currentClientId() else {
+                return
+            }
+            shellBindings[dataChannelId] = (clientId, sshShellId)
         }
 
         func pickDocument(save: Bool, params: Any?) async throws -> Any? {
@@ -143,6 +204,7 @@ struct WebViewContainer: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
+            shellBindings.removeAll()
             jsb.connect()
         }
 

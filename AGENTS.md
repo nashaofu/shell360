@@ -99,6 +99,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 - Long-lived connections (SSH shell, SFTP streams) use `Channel` for streaming.
 - The top-level `android/` project is the native Android host. Do not modify generated `src-tauri/gen/android` while the migration is in progress.
 - The Android WebView bridge uses `WebViewBuilder` with `RestrictionAllowlist` to inject `window.__JSB__` only for the configured origin. Require `WEBVIEW_BUILDER_EXPERIMENTAL_V1`, `CREATE_WEB_MESSAGE_CHANNEL`, and `POST_WEB_MESSAGE`, and show a diagnosable UI when the installed WebView provider lacks them. Keep external navigation on an explicit scheme allowlist and handle missing or rejected activities without crashing the host.
+- The iOS document-start adapter keeps JSB control messages as strings and carries independent Channel binary data through a versioned WKScriptMessage envelope (`version`, `kind`, `channelId`, `payload`), with Base64 used only inside that iOS transport adapter. Do not mix binary payloads into the public JSON invoke protocol.
 
 ## Conventions
 

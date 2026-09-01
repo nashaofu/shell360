@@ -6,6 +6,7 @@ enum JavaScriptBridge {
       const handler = window.webkit?.messageHandlers?.shell360Native;
       if (!handler) return;
 
+      const protocolVersion = 1;
       const nativePorts = new Map();
       const controlMessage = (type, channelId) => JSON.stringify({
         source: 'shell360.jsb',
@@ -21,11 +22,38 @@ enum JavaScriptBridge {
           const nativePort = channel.port1;
           nativePorts.set(channelId, nativePort);
           nativePort.addEventListener('message', (event) => {
-            if (typeof event.data !== 'string') {
-              nativePort.dispatchEvent(new MessageEvent('messageerror'));
+            if (typeof event.data === 'string') {
+              handler.postMessage({
+                version: protocolVersion,
+                kind: 'text',
+                channelId,
+                payload: event.data
+              });
               return;
             }
-            handler.postMessage({ channelId, message: event.data });
+            if (event.data instanceof ArrayBuffer) {
+              const bytes = new Uint8Array(event.data);
+              let binary = '';
+              const chunkSize = 0x8000;
+              for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+              }
+              handler.postMessage({
+                version: protocolVersion,
+                kind: 'binary',
+                channelId,
+                payload: btoa(binary)
+              });
+              return;
+            }
+            if (ArrayBuffer.isView(event.data)) {
+              const view = event.data;
+              nativePort.postMessage(view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength));
+              return;
+            }
+            {
+              nativePort.dispatchEvent(new MessageEvent('messageerror'));
+            }
           });
           nativePort.start();
           try {
@@ -51,9 +79,29 @@ enum JavaScriptBridge {
         closeChannel(channelId) {
           nativePorts.get(channelId)?.close();
           nativePorts.delete(channelId);
+          handler.postMessage({
+            version: protocolVersion,
+            kind: 'channel.close',
+            channelId,
+            payload: ''
+          });
         },
-        receive(channelId, message) {
-          nativePorts.get(channelId)?.postMessage(message);
+        receive(envelope) {
+          if (!envelope || envelope.version !== protocolVersion) return;
+          const port = nativePorts.get(envelope.channelId);
+          if (!port) return;
+          if (envelope.kind === 'text' && typeof envelope.payload === 'string') {
+            port.postMessage(envelope.payload);
+            return;
+          }
+          if (envelope.kind === 'binary' && typeof envelope.payload === 'string') {
+            const binary = atob(envelope.payload);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index += 1) {
+              bytes[index] = binary.charCodeAt(index);
+            }
+            port.postMessage(bytes.buffer, [bytes.buffer]);
+          }
         },
         emit(message) {
           nativePorts.forEach((port) => port.postMessage(message));
@@ -69,5 +117,13 @@ enum JavaScriptBridge {
             return "\"\""
         }
         return String(encoded.dropFirst().dropLast())
+    }
+
+    static func jsonObjectLiteral(_ value: [String: Any]) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: value),
+              let encoded = String(data: data, encoding: .utf8) else {
+            return "{}"
+        }
+        return encoded
     }
 }

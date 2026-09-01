@@ -14,31 +14,95 @@ final class Jsb: @unchecked Sendable {
     private var handlers: [String: JsbHandler] = [:]
     private var connection: NativeJsbConnection?
     private var clientId: String?
-    var closeWindowHandler: (@Sendable () -> Void)?
-    var documentPickerHandler: (@Sendable (Bool, Any?) async throws -> Any?)?
-    var eventHandler: (@Sendable (String) -> Void)?
-    var systemBarsHandler: (@Sendable (Bool) -> Void)?
+    private var closeWindowCallback: (@Sendable () -> Void)?
+    private var documentPickerCallback: (@Sendable (Bool, Any?) async throws -> Any?)?
+    private var eventCallback: (@Sendable (String) -> Void)?
+    private var releaseClientCallback: (@Sendable (String) -> Void)?
+    private var sshShellDataCallback: (@Sendable (String, String, Data) throws -> Void)?
+    private var sshShellEventCallback: (@Sendable (String, String, Data) -> Void)?
+    private var systemBarsCallback: (@Sendable (Bool) -> Void)?
+
+    var closeWindowHandler: (@Sendable () -> Void)? {
+        get { withLock { closeWindowCallback } }
+        set { withLock { closeWindowCallback = newValue } }
+    }
+
+    var documentPickerHandler: (@Sendable (Bool, Any?) async throws -> Any?)? {
+        get { withLock { documentPickerCallback } }
+        set { withLock { documentPickerCallback = newValue } }
+    }
+
+    var eventHandler: (@Sendable (String) -> Void)? {
+        get { withLock { eventCallback } }
+        set { withLock { eventCallback = newValue } }
+    }
+
+    var handlersReleaseClient: (@Sendable (String) -> Void)? {
+        get { withLock { releaseClientCallback } }
+        set { withLock { releaseClientCallback = newValue } }
+    }
+
+    var sshShellDataHandler: (@Sendable (String, String, Data) throws -> Void)? {
+        get { withLock { sshShellDataCallback } }
+        set { withLock { sshShellDataCallback = newValue } }
+    }
+
+    var sshShellEventHandler: (@Sendable (String, String, Data) -> Void)? {
+        get { withLock { sshShellEventCallback } }
+        set { withLock { sshShellEventCallback = newValue } }
+    }
+
+    var systemBarsHandler: (@Sendable (Bool) -> Void)? {
+        get { withLock { systemBarsCallback } }
+        set { withLock { systemBarsCallback = newValue } }
+    }
 
     func emit(_ event: String) {
         eventHandler?(event)
     }
 
+    func emitSshShellData(clientId: String, sshShellId: String, data: Data) {
+        sshShellEventHandler?(clientId, sshShellId, data)
+    }
+
+    func sendSshShellData(clientId: String, sshShellId: String, data: Data) throws {
+        guard let handler = sshShellDataHandler else {
+            throw BridgeCallbackError(
+                code: "BRIDGE_UNAVAILABLE",
+                message: "The SSH binary bridge is unavailable.",
+                details: nil
+            )
+        }
+        try handler(clientId, sshShellId, data)
+    }
+
+    func currentClientId() -> String? {
+        withLock { clientId }
+    }
+
     func register(_ method: String, callback: @escaping JsbHandler) throws {
-        lock.lock()
-        defer { lock.unlock() }
-        precondition(handlers[method] == nil, "Duplicate JSB method: \(method)")
         try registry.register(method: method)
-        handlers[method] = callback
+        withLock {
+            precondition(handlers[method] == nil, "Duplicate JSB method: \(method)")
+            handlers[method] = callback
+        }
     }
 
     func connect() {
-        close()
-        connection = registry.connect()
-        clientId = UUID().uuidString
+        let previous = withLock { () -> NativeJsbConnection? in
+            let previous = connection
+            connection = registry.connect()
+            clientId = UUID().uuidString
+            return previous
+        }
+        release(previous)
     }
 
     func dispatch(_ message: String) async -> String {
-        guard let connection, let clientId else {
+        guard let (connection, clientId) = withLock({
+            guard let connection, let clientId else { return nil }
+            return (connection, clientId)
+        }) else {
             return errorResponse(message, code: "JSB_NOT_CONNECTED", reason: "JSB is not connected.")
         }
         do {
@@ -54,42 +118,31 @@ final class Jsb: @unchecked Sendable {
                   !method.isEmpty else {
                 return errorResponse(message, code: "JSB_INVALID_MESSAGE", reason: "JSB request is invalid.")
             }
-            lock.lock()
-            let isRegistered = handlers[method] != nil
-            lock.unlock()
+            let isRegistered = withLock { handlers[method] != nil }
             guard isRegistered else {
                 return errorResponse(message, code: "JSB_UNSUPPORTED", reason: "JSB handler is unavailable: \(method)")
             }
-            let nativeRequest = json([
-                "type": "invoke",
-                "id": requestId,
-                "clientId": clientId,
-                "method": method,
-                "params": request["data"] ?? NSNull()
-            ])
-            let call = try connection.dispatch(message: nativeRequest)
-            lock.lock()
-            let handler = handlers[call.method]
-            lock.unlock()
+            let call = try connection.dispatch(message: message, clientId: clientId)
+            let handler = withLock { handlers[call.method] }
             guard let handler else { preconditionFailure("Registered JSB handler disappeared.") }
             do {
                 let params = try JSONSerialization.jsonObject(with: Data(call.paramsJson.utf8), options: [.fragmentsAllowed])
                 let result = try await handler(JsbContext(clientId: call.clientId, method: call.method), params is NSNull ? nil : params)
-                return response(try connection.resolve(requestId: call.requestId, resultJson: json(result)))
+                return try connection.resolve(requestId: call.requestId, resultJson: json(result))
             } catch let error as BridgeCallbackError {
-                return response(try connection.reject(
+                return try connection.reject(
                     requestId: call.requestId,
                     code: error.code,
                     message: error.message,
                     detailsJson: error.details.map(json)
-                ))
+                )
             } catch {
-                return response(try connection.reject(
+                return try connection.reject(
                     requestId: call.requestId,
                     code: "JSB_NATIVE_ERROR",
                     message: error.localizedDescription,
                     detailsJson: nil
-                ))
+                )
             }
         } catch {
             return errorResponse(message, code: "JSB_INVALID_MESSAGE", reason: error.localizedDescription)
@@ -97,37 +150,30 @@ final class Jsb: @unchecked Sendable {
     }
 
     func close() {
+        let previous = withLock { () -> NativeJsbConnection? in
+            let previous = connection
+            connection = nil
+            clientId = nil
+            return previous
+        }
+        release(previous)
+    }
+
+    private func release(_ connection: NativeJsbConnection?) {
         if let clientId = connection?.disconnect() {
             handlersReleaseClient?(clientId)
         }
-        connection = nil
-        clientId = nil
     }
 
-    var handlersReleaseClient: (@Sendable (String) -> Void)?
+    private func withLock<T>(_ body: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try body()
+    }
 
     private func errorResponse(_ message: String, code: String, reason: String) -> String {
         let id = ((try? JSONSerialization.jsonObject(with: Data(message.utf8))) as? [String: Any])?["id"] as? String ?? ""
         return json(["type": "invoke.response", "id": id, "error": ["code": code, "message": reason]])
-    }
-
-    private func response(_ message: String) -> String {
-        guard let object = try? JSONSerialization.jsonObject(
-            with: Data(message.utf8),
-            options: [.fragmentsAllowed]
-        ),
-              let value = object as? [String: Any],
-              let id = value["id"] as? String else {
-            return errorResponse(message, code: "JSB_INVALID_RESPONSE", reason: "JSB response is invalid.")
-        }
-        if let error = value["error"] {
-            return json(["type": "invoke.response", "id": id, "error": error])
-        }
-        return json([
-            "type": "invoke.response",
-            "id": id,
-            "data": value["result"] ?? NSNull()
-        ])
     }
 
     private func json(_ value: Any?) -> String {
@@ -187,10 +233,12 @@ func registerIosRoutes(jsb: Jsb, rustBridge: RustBridge) {
         UserDefaults.standard.set(value, forKey: key)
         return value
     }
-    try? jsb.register("clipboard.readText") { _, _ in UIPasteboard.general.string ?? "" }
+    try? jsb.register("clipboard.readText") { _, _ in
+        await MainActor.run { UIPasteboard.general.string ?? "" }
+    }
     try? jsb.register("clipboard.writeText") { _, params in
         guard let value = params as? [String: Any], let text = value["text"] as? String else { throw BridgeCallbackError(code: "BRIDGE_INVALID_REQUEST", message: "clipboard.writeText requires text.", details: nil) }
-        UIPasteboard.general.string = text
+        await MainActor.run { UIPasteboard.general.string = text }
         return nil
     }
     try? jsb.register("core.openUrl") { _, params in

@@ -18,6 +18,7 @@ import picker from '@ohos.file.picker';
 export class HarmonyNativeRuntime implements NativeRuntime {
   private static context: common.UIAbilityContext | undefined;
   private static mainWindow: window.Window | undefined;
+  private static initialization: Promise<void> | undefined;
   private initialized: boolean = false;
   private eventAttached: boolean = false;
   private machineId: Promise<string> | undefined;
@@ -28,14 +29,24 @@ export class HarmonyNativeRuntime implements NativeRuntime {
 
   static shutdownGlobal(): void {
     shutdown();
+    HarmonyNativeRuntime.initialization = undefined;
   }
 
-  static initializeGlobal(): void {
+  static initializeGlobal(): Promise<void> {
+    if (HarmonyNativeRuntime.initialization !== undefined) {
+      return HarmonyNativeRuntime.initialization;
+    }
     const context = HarmonyNativeRuntime.context;
     if (context === undefined) {
-      throw new Error('HarmonyOS ability context is unavailable.');
+      return Promise.reject(new Error('HarmonyOS ability context is unavailable.'));
     }
-    initializeRuntime(context.filesDir, context.cacheDir);
+    const initialization = initializeRuntime(context.filesDir, context.cacheDir)
+      .catch((error: Object) => {
+        HarmonyNativeRuntime.initialization = undefined;
+        throw error instanceof Error ? error : new Error(`${error}`);
+      });
+    HarmonyNativeRuntime.initialization = initialization;
+    return initialization;
   }
 
   static setMainWindow(mainWindow: window.Window): void {
@@ -54,9 +65,9 @@ export class HarmonyNativeRuntime implements NativeRuntime {
     }
   }
 
-  private ensureRuntime(): void {
+  private async ensureRuntime(): Promise<void> {
     if (!this.initialized) {
-      HarmonyNativeRuntime.initializeGlobal();
+      await HarmonyNativeRuntime.initializeGlobal();
       this.initialized = true;
     }
     if (!this.eventAttached) {
@@ -230,8 +241,8 @@ export class HarmonyNativeRuntime implements NativeRuntime {
         throw new Error('HarmonyOS file write failed.');
       }
     }
-    this.ensureRuntime();
-    return invoke(method, clientId, paramsJson);
+    await this.ensureRuntime();
+    return await invoke(method, clientId, paramsJson);
   }
 
   private resolveFilePath(path: string, baseDir: string | undefined): string {
@@ -244,23 +255,29 @@ export class HarmonyNativeRuntime implements NativeRuntime {
   }
 
   async releaseClient(clientId: string): Promise<void> {
-    if (this.initialized) releaseClient(clientId);
+    if (!this.initialized && HarmonyNativeRuntime.initialization === undefined) {
+      return;
+    }
+    await this.ensureRuntime();
+    await releaseClient(clientId);
   }
 
   onSshShellData(handler: (event: SshShellDataEvent) => void): void {
-    this.ensureRuntime();
-    attachSshShellDataCallback(handler);
+    void this.ensureRuntime().then(() => {
+      attachSshShellDataCallback(handler);
+    });
   }
 
   async sendSshShellData(clientId: string, sshShellId: string, data: ArrayBuffer): Promise<void> {
-    if (!this.initialized) this.ensureRuntime();
-    sendSshShellData(clientId, sshShellId, Array.from(new Uint8Array(data)));
+    await this.ensureRuntime();
+    await sendSshShellData(clientId, sshShellId, Array.from(new Uint8Array(data)));
   }
 
   shutdown(): void {
     if (this.initialized) {
       shutdown();
       this.initialized = false;
+      HarmonyNativeRuntime.initialization = undefined;
     }
   }
 }

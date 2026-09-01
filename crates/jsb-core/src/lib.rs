@@ -89,16 +89,16 @@ pub struct JsbCall {
 }
 
 impl JsbConnection {
-  pub fn dispatch(&self, message: &str) -> Result<JsbCall, JsbError> {
+  pub fn dispatch(&self, message: &str, client_id: &str) -> Result<JsbCall, JsbError> {
     let request: Request =
       serde_json::from_str(message).map_err(|error| JsbError::InvalidMessage(error.to_string()))?;
-    if request.kind != "invoke"
+    if request.kind != "invoke.request"
       || request.id.is_empty()
-      || request.client_id.is_empty()
+      || client_id.is_empty()
       || request.method.is_empty()
     {
       return Err(JsbError::InvalidMessage(
-        "expected invoke with id, clientId, and method".into(),
+        "expected invoke.request with id and method".into(),
       ));
     }
     if !self
@@ -116,12 +116,12 @@ impl JsbConnection {
       return Err(JsbError::ConnectionClosed);
     }
     match state.client_id.as_deref() {
-      Some(client_id) if client_id != request.client_id => {
+      Some(active_client_id) if active_client_id != client_id => {
         return Err(JsbError::InvalidMessage(
           "request belongs to another client".into(),
         ));
       }
-      None => state.client_id = Some(request.client_id.clone()),
+      None => state.client_id = Some(client_id.to_string()),
       _ => {}
     }
     if state
@@ -134,9 +134,9 @@ impl JsbConnection {
 
     Ok(JsbCall {
       request_id: request.id,
-      client_id: request.client_id,
+      client_id: client_id.to_string(),
       method: request.method,
-      params_json: serde_json::to_string(&request.params)
+      params_json: serde_json::to_string(&request.data)
         .map_err(|error| JsbError::Serialization(error.to_string()))?,
     })
   }
@@ -145,7 +145,7 @@ impl JsbConnection {
     let result: Value = serde_json::from_str(result_json)
       .map_err(|error| JsbError::Serialization(error.to_string()))?;
     self.finish(request_id)?;
-    serde_json::to_string(&json!({ "type": "result", "id": request_id, "result": result }))
+    serde_json::to_string(&json!({ "type": "invoke.response", "id": request_id, "data": result }))
       .map_err(|error| JsbError::Serialization(error.to_string()))
   }
 
@@ -162,7 +162,7 @@ impl JsbConnection {
       .map_err(|error| JsbError::Serialization(error.to_string()))?;
     self.finish(request_id)?;
     serde_json::to_string(&json!({
-      "type": "result",
+      "type": "invoke.response",
       "id": request_id,
       "error": { "code": code, "message": message, "details": details },
     }))
@@ -197,10 +197,9 @@ struct Request {
   #[serde(rename = "type")]
   kind: String,
   id: String,
-  client_id: String,
   method: String,
   #[serde(default)]
-  params: Value,
+  data: Value,
 }
 
 #[cfg(test)]
@@ -218,14 +217,15 @@ mod tests {
     let connection = registry.connect();
     let call = connection
       .dispatch(
-        r#"{"type":"invoke","id":"1","clientId":"client","method":"app.getVersion","params":null}"#,
+        r#"{"type":"invoke.request","id":"1","method":"app.getVersion","data":null}"#,
+        "client",
       )
       .unwrap();
     assert_eq!(call.method, "app.getVersion");
     let response = connection.resolve("1", r#""1.0.0""#).unwrap();
     let response: Value = serde_json::from_str(&response).unwrap();
-    assert_eq!(response["type"], "result");
-    assert_eq!(response["result"], "1.0.0");
+    assert_eq!(response["type"], "invoke.response");
+    assert_eq!(response["data"], "1.0.0");
   }
 
   #[test]
@@ -234,7 +234,8 @@ mod tests {
     let connection = registry.connect();
     assert!(matches!(
       connection.dispatch(
-        r#"{"type":"invoke","id":"1","clientId":"client","method":"missing","params":null}"#
+        r#"{"type":"invoke.request","id":"1","method":"missing","data":null}"#,
+        "client",
       ),
       Err(JsbError::MethodNotFound(_))
     ));
@@ -257,7 +258,8 @@ mod tests {
     let connection = registry.connect();
     connection
       .dispatch(
-        r#"{"type":"invoke","id":"1","clientId":"client","method":"app.getVersion","params":null}"#,
+        r#"{"type":"invoke.request","id":"1","method":"app.getVersion","data":null}"#,
+        "client",
       )
       .unwrap();
 

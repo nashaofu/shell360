@@ -3,14 +3,6 @@ package com.nashaofu.shell360.bridge
 import org.json.JSONObject
 
 object BridgeResponse {
-    fun success(id: String, result: Any?): String {
-        return JSONObject()
-            .put("type", "invoke.response")
-            .put("id", id)
-            .put("data", result ?: JSONObject.NULL)
-            .toString()
-    }
-
     fun error(id: String?, code: String, message: String, details: Any? = null): String {
         val error = JSONObject()
             .put("code", code)

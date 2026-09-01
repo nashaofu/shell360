@@ -46,6 +46,39 @@ pub enum FfiError {
   Internal(String),
 }
 
+impl FfiError {
+  pub fn code(&self) -> &str {
+    match self {
+      Self::InvalidRequest(_) => "BRIDGE_INVALID_REQUEST",
+      Self::Keygen(_) => "KEYGEN_ERROR",
+      Self::Serialization(_) => "JSB_INVALID_RESPONSE",
+      Self::Data { code, .. } | Self::Ssh { code, .. } => code,
+      Self::Runtime(_) => "BRIDGE_UNAVAILABLE",
+      Self::UnsupportedMethod(_) => "BRIDGE_UNSUPPORTED",
+      Self::Internal(_) => "JSB_NATIVE_ERROR",
+    }
+  }
+
+  pub fn reason(&self) -> &str {
+    match self {
+      Self::InvalidRequest(reason)
+      | Self::Keygen(reason)
+      | Self::Serialization(reason)
+      | Self::Runtime(reason)
+      | Self::UnsupportedMethod(reason)
+      | Self::Internal(reason) => reason,
+      Self::Data { reason, .. } | Self::Ssh { reason, .. } => reason,
+    }
+  }
+
+  pub fn details_json(&self) -> Option<&str> {
+    match self {
+      Self::Ssh { details, .. } => details.as_deref(),
+      _ => None,
+    }
+  }
+}
+
 #[uniffi::export(callback_interface)]
 pub trait FfiEventSink: Send + Sync {
   fn on_event(&self, event_json: String);
@@ -99,10 +132,10 @@ impl NativeJsbRegistry {
 
 #[uniffi::export]
 impl NativeJsbConnection {
-  pub fn dispatch(&self, message: String) -> Result<NativeJsbCall, FfiError> {
+  pub fn dispatch(&self, message: String, client_id: String) -> Result<NativeJsbCall, FfiError> {
     let call = self
       .core
-      .dispatch(&message)
+      .dispatch(&message, &client_id)
       .map_err(|error| FfiError::Internal(error.to_string()))?;
     Ok(NativeJsbCall {
       request_id: call.request_id,
