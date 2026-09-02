@@ -56,10 +56,10 @@ class NativeBridgeInstrumentedTest {
     }
 
     @Test
-    fun appVersionUsesAndroidHostService() {
+    fun appVersionResolvesFromRustRuntime() {
         val response = JSONObject(createEngine().dispatch(request("app.getVersion")))
 
-        assertEquals(BuildConfig.VERSION_NAME, response.getString("data"))
+        assertEquals("0.1.0", response.getString("data"))
     }
 
     private fun createEngine(): EngineHarness {

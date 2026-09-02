@@ -56,6 +56,12 @@ enum JavaScriptBridge {
             }
           });
           nativePort.start();
+          handler.postMessage({
+            version: protocolVersion,
+            kind: 'channel.open',
+            channelId,
+            payload: ''
+          });
           try {
             window.postMessage(
               controlMessage('channel.opened', channelId),
@@ -90,6 +96,11 @@ enum JavaScriptBridge {
           if (!envelope || envelope.version !== protocolVersion) return;
           const port = nativePorts.get(envelope.channelId);
           if (!port) return;
+          if (envelope.kind === 'close') {
+            nativePorts.delete(envelope.channelId);
+            port.close();
+            return;
+          }
           if (envelope.kind === 'text' && typeof envelope.payload === 'string') {
             port.postMessage(envelope.payload);
             return;

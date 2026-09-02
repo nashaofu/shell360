@@ -4,7 +4,7 @@ struct AppContainerView: View {
     @ObservedObject var runtime: AppRuntime
 
     var body: some View {
-        WebViewContainer(jsb: runtime.jsb)
+        WebViewContainer(rustBridge: runtime.rustBridge)
             .ignoresSafeArea()
     }
 }

@@ -6,12 +6,13 @@
 - `RustMethodInvoker` keeps `jsb-core` independent of the application crate. `shell360-ffi` implements it with the existing `Shell360Runtime`; SSH/data/keygen code is not duplicated.
 - UniFFI exposes `NativeJsbEngine`, `NativeEngineOutput`, and the asynchronous `HostServices.onHostCall` delivery boundary. A HostCall is delivered once through the callback; `completeHostCall` returns the resulting reply output.
 - OHRS exposes matching channel-open, channel-close, control-frame, binary-frame, and HostCall-completion functions. HostCalls use a thread-safe callback.
-- Existing Registry/Connection and OHRS register/connect/dispatch/resolve/reject/close exports remain available for the three unchanged hosts during P2 migration. They are compatibility-only and scheduled for removal after all three hosts switch.
+- The legacy Registry/Connection and OHRS register/connect/dispatch/resolve/reject/close exports were compatibility-only and have been removed now that all three hosts run `JsbEngine` (P2 cleanup complete).
 
 ## Deliberately deferred
 
 - No Android, iOS, or HarmonyOS host calls the engine yet.
-- `machineUid` and app-local `fs` retain their existing runtime behavior until P3. During the per-host P2 migration they are represented as transitional Host primitives so a host can switch to `JsbEngine` without changing persistence or path behavior; P3 removes those primitives after Rust takes ownership.
+- `app.getVersion` and `machineUid.getMachineUid` have moved back to Rust (P3): the version is `env!("CARGO_PKG_VERSION")` and the machine UID is a UUID v4 persisted at `app_data_dir/machine_uid`. Their transitional `GetAppVersion`/`GetMachineUid` Host primitives are removed. The legacy per-host machine UID values still need a one-time migration read.
+- app-local `fs` remains a transitional Host primitive: `fs.readTextFile`/`writeTextFile` carry both app-local (known_hosts) and scoped URI (import/export/add-key) semantics, so moving the method to Rust requires first splitting those two paths at the business layer.
 - Scoped SFTP upload/download is orchestrated by the engine around `readScopedFile`/`writeScopedFile`. The host only moves bytes between a user-authorized URI and an engine-managed staging path.
 - `core.healthCheck` and JSON `ssh.shell.send` remain in the union table until P3 validates the iOS binary path and chooses removal or cross-platform alignment.
 - Generated TypeScript text is deterministic and tested through `method_typescript`; wiring the generated declaration into `jsb/` belongs to P4.

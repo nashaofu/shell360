@@ -8,7 +8,7 @@ use napi_ohos::{
 };
 use shell360_ffi::{
   FfiError, FfiEventSink, HostServices, NativeEngineOutput, NativeEngineOutputKind,
-  NativeJsbConnection, NativeJsbEngine, NativeJsbRegistry, Shell360Runtime,
+  NativeJsbEngine, Shell360Runtime,
 };
 
 type EventCallback =
@@ -34,9 +34,6 @@ pub struct SshShellDataEvent {
 
 static RUNTIME: LazyLock<Mutex<Option<Arc<Shell360Runtime>>>> = LazyLock::new(|| Mutex::new(None));
 static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mutex::new(None));
-static JSB_REGISTRY: LazyLock<Arc<NativeJsbRegistry>> = LazyLock::new(NativeJsbRegistry::new);
-static JSB_CONNECTION: LazyLock<Mutex<Option<Arc<NativeJsbConnection>>>> =
-  LazyLock::new(|| Mutex::new(None));
 static JSB_ENGINE: LazyLock<Mutex<Option<Arc<NativeJsbEngine>>>> =
   LazyLock::new(|| Mutex::new(None));
 static HOST_CALL_CALLBACK: LazyLock<Mutex<Option<HostCallCallback>>> =
@@ -125,14 +122,6 @@ fn runtime() -> Result<Arc<Shell360Runtime>> {
     .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?
     .clone()
     .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))
-}
-
-fn jsb_connection() -> Result<Arc<NativeJsbConnection>> {
-  JSB_CONNECTION
-    .lock()
-    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
-    .clone()
-    .ok_or_else(|| Error::from_reason("JSB is not connected."))
 }
 
 fn jsb_engine() -> Result<Arc<NativeJsbEngine>> {
@@ -261,89 +250,6 @@ pub fn jsb_engine_push_shell_binary(
       .push_shell_binary(client_id, shell_id, bytes)
       .map_err(native_error)?,
   )
-}
-
-#[napi]
-pub fn register_jsb(method: String) -> Result<()> {
-  JSB_REGISTRY.register(method).map_err(native_error)
-}
-
-#[napi]
-pub fn connect_jsb() -> Result<()> {
-  *JSB_CONNECTION
-    .lock()
-    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))? =
-    Some(JSB_REGISTRY.connect());
-  Ok(())
-}
-
-#[napi]
-pub fn dispatch_jsb(message: String, client_id: String) -> Result<String> {
-  let call = jsb_connection()?
-    .dispatch(message, client_id)
-    .map_err(native_error)?;
-  serde_json::to_string(&serde_json::json!({
-    "requestId": call.request_id,
-    "clientId": call.client_id,
-    "method": call.method,
-    "paramsJson": call.params_json,
-  }))
-  .map_err(|error| Error::from_reason(error.to_string()))
-}
-
-#[napi]
-pub fn resolve_jsb(request_id: String, result_json: String) -> Result<String> {
-  jsb_connection()?
-    .resolve(request_id, result_json)
-    .map_err(native_error)
-}
-
-#[napi]
-pub fn reject_jsb(
-  request_id: String,
-  code: String,
-  message: String,
-  details_json: Option<String>,
-) -> Result<String> {
-  jsb_connection()?
-    .reject(request_id, code, message, details_json)
-    .map_err(native_error)
-}
-
-fn disconnect_jsb() -> Result<Option<String>> {
-  let connection = JSB_CONNECTION
-    .lock()
-    .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
-    .take();
-  Ok(connection.and_then(|connection| connection.disconnect()))
-}
-
-pub struct CloseJsbTask {
-  client_id: Option<String>,
-}
-
-#[napi]
-impl Task for CloseJsbTask {
-  type Output = ();
-  type JsValue = ();
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    if let Some(client_id) = self.client_id.take() {
-      runtime()?.release_client(client_id);
-    }
-    Ok(())
-  }
-
-  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-pub fn close_jsb() -> Result<AsyncTask<CloseJsbTask>> {
-  Ok(AsyncTask::new(CloseJsbTask {
-    client_id: disconnect_jsb()?,
-  }))
 }
 
 #[napi]
@@ -549,9 +455,6 @@ pub fn send_ssh_shell_data(
 
 #[napi]
 pub fn shutdown() -> Result<()> {
-  if let Some(client_id) = disconnect_jsb()? {
-    runtime()?.release_client(client_id);
-  }
   let runtime = RUNTIME
     .lock()
     .map_err(|_| Error::from_reason("Native runtime lock is poisoned."))?

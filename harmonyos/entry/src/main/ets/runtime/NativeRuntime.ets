@@ -1,35 +1,26 @@
-import type { NativeRuntime, SshShellDataEvent } from '../bridge/NativeRuntime';
-import {
-  attachEventCallback,
-  initializeRuntime,
-  invoke,
-  releaseClient,
-  sendSshShellData,
-  attachSshShellDataCallback,
-  shutdown,
-} from 'shell360_ohrs';
-import { pasteboard } from '@kit.BasicServicesKit';
-import { abilityAccessCtrl, common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
-import { util } from '@kit.ArkTS';
-import { fileIo } from '@kit.CoreFileKit';
-import picker from '@ohos.file.picker';
+import { initializeRuntime, shutdown } from 'shell360_ohrs';
 
-export class HarmonyNativeRuntime implements NativeRuntime {
+export class HarmonyNativeRuntime {
   private static context: common.UIAbilityContext | undefined;
   private static mainWindow: window.Window | undefined;
   private static initialization: Promise<void> | undefined;
-  private initialized: boolean = false;
-  private eventAttached: boolean = false;
-  private machineId: Promise<string> | undefined;
 
   static setContext(context: common.UIAbilityContext): void {
     HarmonyNativeRuntime.context = context;
   }
 
-  static shutdownGlobal(): void {
-    shutdown();
-    HarmonyNativeRuntime.initialization = undefined;
+  static getContext(): common.UIAbilityContext | undefined {
+    return HarmonyNativeRuntime.context;
+  }
+
+  static setMainWindow(mainWindow: window.Window): void {
+    HarmonyNativeRuntime.mainWindow = mainWindow;
+  }
+
+  static getMainWindow(): window.Window | undefined {
+    return HarmonyNativeRuntime.mainWindow;
   }
 
   static initializeGlobal(): Promise<void> {
@@ -49,8 +40,9 @@ export class HarmonyNativeRuntime implements NativeRuntime {
     return initialization;
   }
 
-  static setMainWindow(mainWindow: window.Window): void {
-    HarmonyNativeRuntime.mainWindow = mainWindow;
+  static shutdownGlobal(): void {
+    shutdown();
+    HarmonyNativeRuntime.initialization = undefined;
   }
 
   static async moveToBackground(): Promise<void> {
@@ -62,222 +54,6 @@ export class HarmonyNativeRuntime implements NativeRuntime {
       await context.moveAbilityToBackground();
     } catch (_) {
       console.error('[Shell360] Failed to move the ability to the background.');
-    }
-  }
-
-  private async ensureRuntime(): Promise<void> {
-    if (!this.initialized) {
-      await HarmonyNativeRuntime.initializeGlobal();
-      this.initialized = true;
-    }
-    if (!this.eventAttached) {
-      this.attachEventCallback();
-      this.eventAttached = true;
-    }
-  }
-
-  private eventHandler: ((event: string) => void) | undefined;
-
-  onEvent(handler: (event: string) => void): void {
-    this.eventHandler = handler;
-    if (this.initialized && !this.eventAttached) {
-      this.attachEventCallback();
-      this.eventAttached = true;
-    }
-  }
-
-  private attachEventCallback(): void {
-    attachEventCallback((event: string) => {
-      this.eventHandler?.(event);
-    });
-  }
-
-  async invoke(method: string, clientId: string, paramsJson: string): Promise<string> {
-    if (method === 'window.close') {
-      const context = HarmonyNativeRuntime.context;
-      if (context === undefined) {
-        throw new Error('HarmonyOS ability context is unavailable.');
-      }
-      await context.terminateSelf();
-      return 'null';
-    }
-    if (method === 'ssh.sftp.uploadFile' || method === 'ssh.sftp.downloadFile') {
-      const params = JSON.parse(paramsJson) as Record<string, string>;
-      const localFilename = params.localFilename;
-      if (typeof localFilename === 'string' && localFilename.startsWith('file://')) {
-        params.localFilename = decodeURIComponent(localFilename.slice('file://'.length));
-        paramsJson = JSON.stringify(params);
-      } else if (typeof localFilename === 'string' && localFilename.includes('://')) {
-        const context = HarmonyNativeRuntime.context;
-        if (context === undefined) throw new Error('HarmonyOS ability context is unavailable.');
-        const stagedPath = `${context.cacheDir}/shell360-transfer-${util.generateRandomUUID()}`;
-        try {
-          if (method === 'ssh.sftp.uploadFile') {
-            await fileIo.copyFile(localFilename, stagedPath);
-          }
-          params.localFilename = stagedPath;
-          paramsJson = JSON.stringify(params);
-          const result = await this.invoke(method, clientId, paramsJson);
-          if (method === 'ssh.sftp.downloadFile') {
-            await fileIo.copyFile(stagedPath, localFilename);
-          }
-          return result;
-        } finally {
-          try { await fileIo.unlink(stagedPath); } catch (_) {}
-        }
-      }
-    }
-    if (method === 'clipboard.readText') {
-      try {
-        const context = HarmonyNativeRuntime.context;
-        if (context === undefined) {
-          throw new Error('HarmonyOS ability context is unavailable.');
-        }
-        const permissionResult = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
-          context,
-          ['ohos.permission.READ_PASTEBOARD'],
-        );
-        if (permissionResult.authResults[0] !== abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-          throw new Error('HarmonyOS clipboard read permission was denied.');
-        }
-        const data = await pasteboard.getSystemPasteboard().getData();
-        return JSON.stringify(data.getPrimaryText());
-      } catch (error) {
-        if (error instanceof Error && error.message === 'HarmonyOS clipboard read permission was denied.') {
-          throw error;
-        }
-        throw new Error('HarmonyOS clipboard read failed.');
-      }
-    }
-    if (method === 'clipboard.writeText') {
-      try {
-        const params = JSON.parse(paramsJson) as Record<string, string>;
-        await pasteboard.getSystemPasteboard().setData(pasteboard.createData('text/plain', params.text));
-        return 'null';
-      } catch (_) {
-        throw new Error('HarmonyOS clipboard write failed.');
-      }
-    }
-    if (method === 'core.openUrl') {
-      const params = JSON.parse(paramsJson) as Record<string, string>;
-      if (!/^https?:|^mailto:|^tel:/i.test(params.url)) {
-        throw new Error('URL scheme is not allowed.');
-      }
-      const context = HarmonyNativeRuntime.context;
-      if (context === undefined) {
-        throw new Error('HarmonyOS ability context is unavailable.');
-      }
-      await context.openLink(params.url);
-      return 'null';
-    }
-    if (method === 'app.setSystemBarsAppearance') {
-      const params = JSON.parse(paramsJson) as Record<string, boolean>;
-      const mainWindow = HarmonyNativeRuntime.mainWindow;
-      if (mainWindow === undefined) throw new Error('HarmonyOS main window is unavailable.');
-      try {
-        await mainWindow.setWindowSystemBarProperties({
-          isStatusBarLightIcon: !params.dark,
-          isNavigationBarLightIcon: !params.dark,
-        });
-      } catch (_) {
-        throw new Error('HarmonyOS system bar appearance update failed.');
-      }
-      return 'null';
-    }
-    if (method === 'machineUid.getMachineUid') {
-      const context = HarmonyNativeRuntime.context;
-      if (context === undefined) {
-        throw new Error('HarmonyOS ability context is unavailable.');
-      }
-      if (this.machineId === undefined) {
-        const path = `${context.filesDir}/machine-id`;
-        this.machineId = fileIo.readText(path).catch(async () => {
-          const value = `shell360-${util.generateRandomUUID()}`;
-          const file = await fileIo.open(
-            path,
-            fileIo.OpenMode.WRITE_ONLY | fileIo.OpenMode.CREATE | fileIo.OpenMode.TRUNC,
-          );
-          await fileIo.write(file.fd, value);
-          fileIo.close(file.fd);
-          return value;
-        });
-      }
-      return JSON.stringify(await this.machineId);
-    }
-    if (method === 'dialog.open' || method === 'dialog.save') {
-      const context = HarmonyNativeRuntime.context;
-      if (context === undefined) {
-        throw new Error('HarmonyOS ability context is unavailable.');
-      }
-      const documentPicker = new picker.DocumentViewPicker(context);
-      const params = JSON.parse(paramsJson) as Record<string, boolean>;
-      const options = new picker.DocumentSelectOptions();
-      if (params.multiple === true) options.maxSelectNumber = 500;
-      const uris = method === 'dialog.save'
-        ? await documentPicker.save()
-        : await documentPicker.select(options);
-      return JSON.stringify(params.multiple === true ? uris : (uris[0] ?? null));
-    }
-    if (method === 'fs.readTextFile') {
-      const params = JSON.parse(paramsJson) as Record<string, string>;
-      try {
-        return JSON.stringify(await fileIo.readText(this.resolveFilePath(params.path, params.baseDir)));
-      } catch (_) {
-        throw new Error('HarmonyOS file read failed.');
-      }
-    }
-    if (method === 'fs.writeTextFile') {
-      const params = JSON.parse(paramsJson) as Record<string, string>;
-      const path = this.resolveFilePath(params.path, params.baseDir);
-      try {
-        const file = await fileIo.open(
-          path,
-          fileIo.OpenMode.WRITE_ONLY | fileIo.OpenMode.CREATE | fileIo.OpenMode.TRUNC,
-        );
-        await fileIo.write(file.fd, params.contents);
-        fileIo.close(file.fd);
-        return 'null';
-      } catch (_) {
-        throw new Error('HarmonyOS file write failed.');
-      }
-    }
-    await this.ensureRuntime();
-    return await invoke(method, clientId, paramsJson);
-  }
-
-  private resolveFilePath(path: string, baseDir: string | undefined): string {
-    if (baseDir === 'appLocalData') {
-      const context = HarmonyNativeRuntime.context;
-      if (context === undefined) throw new Error('HarmonyOS ability context is unavailable.');
-      return `${context.filesDir}/${path}`;
-    }
-    return path;
-  }
-
-  async releaseClient(clientId: string): Promise<void> {
-    if (!this.initialized && HarmonyNativeRuntime.initialization === undefined) {
-      return;
-    }
-    await this.ensureRuntime();
-    await releaseClient(clientId);
-  }
-
-  onSshShellData(handler: (event: SshShellDataEvent) => void): void {
-    void this.ensureRuntime().then(() => {
-      attachSshShellDataCallback(handler);
-    });
-  }
-
-  async sendSshShellData(clientId: string, sshShellId: string, data: ArrayBuffer): Promise<void> {
-    await this.ensureRuntime();
-    await sendSshShellData(clientId, sshShellId, Array.from(new Uint8Array(data)));
-  }
-
-  shutdown(): void {
-    if (this.initialized) {
-      shutdown();
-      this.initialized = false;
-      HarmonyNativeRuntime.initialization = undefined;
     }
   }
 }

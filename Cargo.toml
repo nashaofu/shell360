@@ -2,6 +2,7 @@
 members = [
   "crates/jsb-core",
   "crates/shell360-store",
+  "crates/shell360-runtime",
   "crates/shell360-ffi",
   "crates/shell360_ohrs",
   "crates/shell360-keygen",

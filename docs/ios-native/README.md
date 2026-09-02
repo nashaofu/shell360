@@ -224,8 +224,8 @@ ios/
 | `keygen.*` | 转发 Rust |
 | `data.*` | 转发 Rust |
 | `ssh.*` | 转发 Rust，文件中转除外 |
-| `app.*` | Swift 实现 |
-| `machineUid.*` | Swift 实现 |
+| `app.*` | `getVersion` 由 Rust 实现（`CARGO_PKG_VERSION`）；`setSystemBarsAppearance` 由 Swift 实现 |
+| `machineUid.*` | Rust 实现（`app_data_dir/machine_uid` 持久化 UUID v4） |
 | `core.openUrl` | Swift 实现，scheme 白名单 |
 | `dialog.*` | Swift 实现 |
 | `fs.*` | Swift 实现，受控路径 |
@@ -550,9 +550,9 @@ Rust SFTP → App cache 临时文件 → UIDocumentPicker/export → 用户目�
 
 | 方法 | iOS 实现 |
 | --- | --- |
-| `app.getVersion` | Bundle metadata |
+| `app.getVersion` | Rust（`CARGO_PKG_VERSION`） |
 | `app.setSystemBarsAppearance` | SwiftUI/UIKit 外观适配 |
-| `machineUid.getMachineUid` | 随机 UUID，优先 Keychain |
+| `machineUid.getMachineUid` | Rust（`app_data_dir/machine_uid` UUID v4） |
 | `core.openUrl` | `UIApplication.open` + scheme allowlist |
 | `clipboard.readText` | `UIPasteboard` |
 | `clipboard.writeText` | `UIPasteboard` |

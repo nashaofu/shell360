@@ -1,7 +1,42 @@
-use std::sync::Arc;
-
-use jsb_core::JsbRegistry;
+use jsb_core::{
+  EngineOutput, InvokeOutcome, JsbEngine, MethodKind, MethodSpec, RustInvokeError,
+  RustMethodInvoker,
+};
 use serde_json::Value;
+
+struct HealthInvoker;
+
+impl RustMethodInvoker for HealthInvoker {
+  fn invoke(
+    &self,
+    method: &str,
+    _client_id: &str,
+    _params_json: &str,
+  ) -> Result<InvokeOutcome, RustInvokeError> {
+    assert_eq!(method, "bridge.health");
+    Ok(InvokeOutcome {
+      result_json: r#"{"status":"ok"}"#.into(),
+      host_actions: Vec::new(),
+    })
+  }
+
+  fn send_binary(
+    &self,
+    _client_id: &str,
+    _shell_id: &str,
+    _bytes: &[u8],
+  ) -> Result<(), RustInvokeError> {
+    Ok(())
+  }
+
+  fn create_staging_path(&self, _call_id: &str) -> Result<String, RustInvokeError> {
+    Ok(String::new())
+  }
+
+  fn cleanup_staging_path(&self, _path: &str) {}
+
+  fn release_client(&self, _client_id: &str) {}
+}
 
 fn fixture() -> Value {
   serde_json::from_str(include_str!("fixtures/current_protocol.json")).unwrap()
@@ -10,24 +45,30 @@ fn fixture() -> Value {
 #[test]
 fn current_invoke_request_and_response_match_the_golden_contract() {
   let fixture = fixture();
-  let registry = Arc::new(JsbRegistry::new());
-  registry.register("bridge.health").unwrap();
-  let connection = registry.connect();
+  let specs = vec![MethodSpec {
+    name: "bridge.health",
+    kind: MethodKind::Rust,
+    binary: false,
+    events: &[],
+    error_domain: "rust",
+    scoped_file: None,
+    binary_bind: None,
+  }];
+  let mut engine = JsbEngine::new(HealthInvoker, specs);
+  let channel_id = fixture["channelId"].as_str().unwrap();
+  assert!(matches!(
+    engine.on_channel_open(channel_id).as_slice(),
+    [EngineOutput::OpenChannel { .. }]
+  ));
 
-  let call = connection
-    .dispatch(
-      fixture["frames"]["request"].as_str().unwrap(),
-      fixture["clientId"].as_str().unwrap(),
-    )
-    .unwrap();
-  assert_eq!(call.request_id, "request-1");
-  assert_eq!(call.method, "bridge.health");
-  assert_eq!(call.params_json, "null");
-
-  let response = connection
-    .resolve("request-1", r#"{"status":"ok"}"#)
-    .unwrap();
-  assert_eq!(response, fixture["frames"]["response"]);
+  let outputs = engine.on_control_frame(channel_id, fixture["frames"]["request"].as_str().unwrap());
+  let [EngineOutput::ReplyText { text, .. }] = outputs.as_slice() else {
+    panic!("expected a reply frame");
+  };
+  assert_eq!(
+    text.as_str(),
+    fixture["frames"]["response"].as_str().unwrap()
+  );
 }
 
 #[test]

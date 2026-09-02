@@ -1,13 +1,14 @@
+import Darwin
 import SwiftUI
 import UIKit
 import WebKit
 import UniformTypeIdentifiers
 
 struct WebViewContainer: UIViewRepresentable {
-    let jsb: Jsb
+    let rustBridge: RustBridge
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(jsb: jsb)
+        Coordinator(rustBridge: rustBridge)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -27,33 +28,7 @@ struct WebViewContainer: UIViewRepresentable {
         if #available(iOS 16.4, *) {
             webView.isInspectable = AppEnvironment.isDebug
         }
-        context.coordinator.webView = webView
-        jsb.closeWindowHandler = { [weak webView] in
-            DispatchQueue.main.async {
-                webView?.window?.rootViewController?.dismiss(animated: true)
-            }
-        }
-        jsb.documentPickerHandler = { [weak coordinator = context.coordinator] save, params in
-            try await coordinator?.pickDocument(save: save, params: params) ?? NSNull()
-        }
-        jsb.systemBarsHandler = { [weak webView] dark in
-            DispatchQueue.main.async {
-                webView?.window?.overrideUserInterfaceStyle = dark ? .dark : .light
-                webView?.window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
-            }
-        }
-        jsb.connect()
-        jsb.eventHandler = { [weak webView] event in
-            DispatchQueue.main.async {
-                let escaped = JavaScriptBridge.jsonStringLiteral(event)
-                webView?.evaluateJavaScript("window.__JSB__?.emit?.(\(escaped));")
-            }
-        }
-        jsb.sshShellEventHandler = { [weak coordinator = context.coordinator] clientId, sshShellId, data in
-            DispatchQueue.main.async {
-                coordinator?.receiveSshShellData(clientId: clientId, sshShellId: sshShellId, data: data)
-            }
-        }
+        context.coordinator.attach(to: webView)
         WebContentLoader.load(in: webView)
         return webView
     }
@@ -63,25 +38,87 @@ struct WebViewContainer: UIViewRepresentable {
     static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "shell360Native")
         webView.navigationDelegate = nil
-        coordinator.jsb.eventHandler = nil
-        coordinator.jsb.sshShellEventHandler = nil
-        coordinator.jsb.closeWindowHandler = nil
-        coordinator.jsb.documentPickerHandler = nil
-        coordinator.jsb.systemBarsHandler = nil
-        coordinator.jsb.close()
-        coordinator.webView = nil
+        coordinator.detach()
     }
 
     @MainActor
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, UIDocumentPickerDelegate {
-        let jsb: Jsb
-        weak var webView: WKWebView?
+        private let rustBridge: RustBridge
+        private weak var webView: WKWebView?
+        private var engine: NativeJsbEngine?
+        private var hostServices: IosHostServices?
+        private var openChannels: Set<String> = []
         private var pickerContinuation: CheckedContinuation<Any?, Error>?
         private var pickerSourceURL: URL?
-        private var shellBindings: [String: (clientId: String, sshShellId: String)] = [:]
 
-        init(jsb: Jsb) {
-            self.jsb = jsb
+        init(rustBridge: RustBridge) {
+            self.rustBridge = rustBridge
+        }
+
+        func attach(to webView: WKWebView) {
+            self.webView = webView
+            let rustBridge = self.rustBridge
+
+            let hostServices = IosHostServices(
+                closeWindow: { [weak webView] in
+                    DispatchQueue.main.async {
+                        webView?.window?.rootViewController?.dismiss(animated: true)
+                    }
+                },
+                resetApplication: {
+                    rustBridge.shutdown()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        exit(0)
+                    }
+                },
+                setSystemBarsAppearance: { [weak webView] dark in
+                    DispatchQueue.main.async {
+                        webView?.window?.overrideUserInterfaceStyle = dark ? .dark : .light
+                        webView?.window?.rootViewController?.setNeedsStatusBarAppearanceUpdate()
+                    }
+                },
+                documentPicker: { [weak self] save, params in
+                    guard let self else { return NSNull() }
+                    return try await self.pickDocument(save: save, params: params)
+                }
+            )
+            self.hostServices = hostServices
+
+            guard let engine = rustBridge.createJsbEngine(hostServices: hostServices) else {
+                return
+            }
+            self.engine = engine
+
+            hostServices.attachCompletion { [weak self] callId, resultJson in
+                Task { @MainActor [weak self] in
+                    guard let self, let engine = self.engine else { return }
+                    self.executeOutputs((try? engine.completeHostCall(callId: callId, resultJson: resultJson)) ?? [])
+                }
+            }
+
+            rustBridge.setEventListener(
+                owner: self,
+                onEvent: { [weak self] event in
+                    Task { @MainActor [weak self] in
+                        guard let self, let engine = self.engine else { return }
+                        self.executeOutputs((try? engine.emit(eventJson: event)) ?? [])
+                    }
+                },
+                onSshShellData: { [weak self] clientId, sshShellId, data in
+                    Task { @MainActor [weak self] in
+                        guard let self, let engine = self.engine else { return }
+                        self.executeOutputs((try? engine.pushShellBinary(clientId: clientId, shellId: sshShellId, bytes: data)) ?? [])
+                    }
+                }
+            )
+        }
+
+        func detach() {
+            hostServices?.detachCompletion()
+            rustBridge.clearEventListener(owner: self)
+            engine = nil
+            hostServices = nil
+            webView = nil
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -90,75 +127,31 @@ struct WebViewContainer: UIViewRepresentable {
                   body["version"] as? Int == 1,
                   let kind = body["kind"] as? String,
                   let channelId = body["channelId"] as? String,
-                  let payload = body["payload"] as? String else {
+                  let payload = body["payload"] as? String,
+                  let engine = self.engine else {
                 return
             }
-            if kind == "channel.close" {
-                shellBindings.removeValue(forKey: channelId)
-                return
-            }
-            if kind == "binary" {
-                guard let binding = shellBindings[channelId],
-                      let data = Data(base64Encoded: payload) else {
-                    return
-                }
-                Task.detached { [jsb] in
-                    try? jsb.sendSshShellData(
-                        clientId: binding.clientId,
-                        sshShellId: binding.sshShellId,
-                        data: data
-                    )
-                }
-                return
-            }
-            guard kind == "text" else { return }
-            bindShellChannel(request: payload)
-            let webView = webView
-            Task.detached { [jsb] in
-                let response = await jsb.dispatch(payload)
-                await MainActor.run {
-                    let envelope = JavaScriptBridge.jsonObjectLiteral([
-                        "version": 1,
-                        "kind": "text",
-                        "channelId": channelId,
-                        "payload": response
-                    ])
-                    webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
-                }
-            }
-        }
 
-        func receiveSshShellData(clientId: String, sshShellId: String, data: Data) {
-            guard let channelId = shellBindings.first(where: {
-                $0.value.clientId == clientId && $0.value.sshShellId == sshShellId
-            })?.key else {
-                return
+            switch kind {
+            case "channel.open":
+                openChannels.insert(channelId)
+                executeOutputs((try? engine.onChannelOpen(channelId: channelId)) ?? [])
+            case "channel.close":
+                openChannels.remove(channelId)
+                executeOutputs((try? engine.onChannelClose(channelId: channelId)) ?? [])
+            case "text":
+                executeOutputs((try? engine.onControlFrame(channelId: channelId, text: payload)) ?? [])
+            case "binary":
+                guard let data = Data(base64Encoded: payload) else { return }
+                executeOutputs((try? engine.onBinaryFrame(channelId: channelId, bytes: data)) ?? [])
+            default:
+                break
             }
-            let envelope = JavaScriptBridge.jsonObjectLiteral([
-                "version": 1,
-                "kind": "binary",
-                "channelId": channelId,
-                "payload": data.base64EncodedString()
-            ])
-            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
-        }
-
-        private func bindShellChannel(request: String) {
-            guard let data = request.data(using: .utf8),
-                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  object["method"] as? String == "ssh.shell.open",
-                  let params = object["data"] as? [String: Any],
-                  let dataChannelId = params["dataChannelId"] as? String,
-                  let sshShellId = params["sshShellId"] as? String,
-                  let clientId = jsb.currentClientId() else {
-                return
-            }
-            shellBindings[dataChannelId] = (clientId, sshShellId)
         }
 
         func pickDocument(save: Bool, params: Any?) async throws -> Any? {
             guard pickerContinuation == nil else {
-                throw BridgeCallbackError(code: "BRIDGE_BUSY", message: "A document picker is already open.", details: nil)
+                throw NativeBridgeError(code: "BRIDGE_BUSY", message: "A document picker is already open.")
             }
             return try await withCheckedThrowingContinuation { continuation in
                 pickerContinuation = continuation
@@ -204,8 +197,11 @@ struct WebViewContainer: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
-            shellBindings.removeAll()
-            jsb.connect()
+            guard let engine = self.engine else { return }
+            for channelId in openChannels {
+                executeOutputs((try? engine.onChannelClose(channelId: channelId)) ?? [])
+            }
+            openChannels.removeAll()
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -235,6 +231,66 @@ struct WebViewContainer: UIViewRepresentable {
             #if DEBUG
             WebContentLoader.loadBundle(in: webView)
             #endif
+        }
+
+        private func executeOutputs(_ outputs: [NativeEngineOutput]) {
+            for output in outputs {
+                executeOutput(output)
+            }
+        }
+
+        private func executeOutput(_ output: NativeEngineOutput) {
+            switch output.kind {
+            case .replyText:
+                guard let channelId = output.channelId, let text = output.text else { return }
+                receiveText(channelId: channelId, text: text)
+            case .pushBinary:
+                guard let channelId = output.channelId, let bytes = output.bytes else { return }
+                receiveBinary(channelId: channelId, bytes: bytes)
+            case .openChannel:
+                break
+            case .failChannel:
+                guard let text = output.text else { return }
+                postControl(text)
+            case .closePort:
+                guard let channelId = output.channelId else { return }
+                receiveClose(channelId: channelId)
+            }
+        }
+
+        private func receiveText(channelId: String, text: String) {
+            let envelope = JavaScriptBridge.jsonObjectLiteral([
+                "version": 1,
+                "kind": "text",
+                "channelId": channelId,
+                "payload": text
+            ])
+            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+        }
+
+        private func receiveBinary(channelId: String, bytes: Data) {
+            let envelope = JavaScriptBridge.jsonObjectLiteral([
+                "version": 1,
+                "kind": "binary",
+                "channelId": channelId,
+                "payload": bytes.base64EncodedString()
+            ])
+            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+        }
+
+        private func receiveClose(channelId: String) {
+            let envelope = JavaScriptBridge.jsonObjectLiteral([
+                "version": 1,
+                "kind": "close",
+                "channelId": channelId,
+                "payload": ""
+            ])
+            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+        }
+
+        private func postControl(_ text: String) {
+            let escaped = JavaScriptBridge.jsonStringLiteral(text)
+            webView?.evaluateJavaScript("window.postMessage(\(escaped), window.location.origin);")
         }
     }
 }

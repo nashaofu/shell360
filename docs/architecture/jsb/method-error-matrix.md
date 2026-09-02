@@ -84,10 +84,10 @@ Platform presence: Android has every union item except `ssh.shell.send` and `cor
 | --- | --- | --- | --- | --- |
 | `bridge.health` | local | local | Rust pass-through | drifted |
 | `core.healthCheck` | absent | local/Rust | absent | iOS-only redundant route |
-| `app.*` | local | local | Rust pass-through | drifted |
-| `machineUid.*` | SharedPreferences | UserDefaults | Rust/Harmony file | drifted persistence |
+| `app.*` | Rust | Rust | Rust | Rust-owned (P3, `CARGO_PKG_VERSION`) |
+| `machineUid.*` | Rust | Rust | Rust | Rust-owned (P3, `app_data_dir/machine_uid` UUID v4) |
 | `clipboard.*`, `dialog.*`, `core.openUrl`, `window.close` | platform | platform | Rust-to-platform runtime | host capabilities |
-| `fs.*` | platform scoped logic | local file APIs | Rust-to-platform runtime | drifted path boundary |
+| `fs.*` | platform scoped logic | local file APIs | Rust-to-platform runtime | transitional Host primitive; app-local vs scoped split pending |
 | `keygen.*`, `data.*`, `ssh.*` | Rust pass-through | Rust pass-through | Rust pass-through | duplicated routing |
 
 `ssh.shell.open` is additionally parsed in all three transport bridges to bind `dataChannelId` to `(clientId, sshShellId)`. iOS also retains the JSON/base64 `ssh.shell.send` invoke route while its normal data path is binary.

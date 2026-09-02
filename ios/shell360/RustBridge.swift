@@ -2,11 +2,10 @@ import Foundation
 
 final class RustBridge: @unchecked Sendable {
     private let runtime: Shell360Runtime?
+    private let lock = NSLock()
+    private var eventListener: EventListener?
 
-    init(
-        onEvent: @escaping @Sendable (String) -> Void = { _ in },
-        onSshShellData: @escaping @Sendable (String, String, Data) -> Void = { _, _, _ in }
-    ) {
+    init() {
         let fileManager = FileManager.default
         let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -19,49 +18,69 @@ final class RustBridge: @unchecked Sendable {
         runtime = try? Shell360Runtime(
             appDataDir: appData.path,
             cacheDir: cache.path,
-            eventSink: RustEventSink(onEvent: onEvent, onSshShellData: onSshShellData)
+            eventSink: RustEventSink(
+                onEvent: { [weak self] event in
+                    self?.currentEventListener()?.onEvent(event)
+                },
+                onSshShellData: { [weak self] clientId, sshShellId, data in
+                    self?.currentEventListener()?.onSshShellData(clientId, sshShellId, data)
+                }
+            )
         )
+    }
+
+    func createJsbEngine(hostServices: HostServices) -> NativeJsbEngine? {
+        guard let runtime else { return nil }
+        return NativeJsbEngine(runtime: runtime, hostServices: hostServices)
+    }
+
+    func setEventListener(
+        owner: AnyObject,
+        onEvent: @escaping @Sendable (String) -> Void,
+        onSshShellData: @escaping @Sendable (String, String, Data) -> Void
+    ) {
+        lock.lock()
+        defer { lock.unlock() }
+        eventListener = EventListener(owner: owner, onEvent: onEvent, onSshShellData: onSshShellData)
+    }
+
+    func clearEventListener(owner: AnyObject) {
+        lock.lock()
+        defer { lock.unlock() }
+        if eventListener?.owner === owner {
+            eventListener = nil
+        }
     }
 
     func healthCheck() -> String {
         runtime?.healthCheck() ?? "unavailable"
     }
 
-    func invokeKeygen(params: String) throws -> String {
-        guard let runtime else { throw RustBridgeError.unavailable }
-        return try runtime.invokeKeygen(paramsJson: params)
-    }
-
-    func invokeData(method: String, params: String) throws -> String {
-        guard let runtime else { throw RustBridgeError.unavailable }
-        return try runtime.invokeData(method: method, paramsJson: params)
-    }
-
-    func invokeSsh(method: String, clientId: String, params: String) throws -> String {
-        guard let runtime else { throw RustBridgeError.unavailable }
-        return try runtime.invokeSsh(method: method, clientId: clientId, paramsJson: params)
-    }
-
-    func sendSshShellData(clientId: String, sshShellId: String, data: Data) throws {
-        guard let runtime else { throw RustBridgeError.unavailable }
-        try runtime.sshShellSendBinary(
-            clientId: clientId,
-            sshShellId: sshShellId,
-            data: data
-        )
-    }
-
-    func releaseClient(_ clientId: String) {
-        runtime?.releaseClient(clientId: clientId)
-    }
-
     func shutdown() {
         runtime?.shutdown()
     }
-}
 
-enum RustBridgeError: Error {
-    case unavailable
+    private func currentEventListener() -> EventListener? {
+        lock.lock()
+        defer { lock.unlock() }
+        return eventListener
+    }
+
+    private final class EventListener {
+        let owner: AnyObject
+        let onEvent: @Sendable (String) -> Void
+        let onSshShellData: @Sendable (String, String, Data) -> Void
+
+        init(
+            owner: AnyObject,
+            onEvent: @escaping @Sendable (String) -> Void,
+            onSshShellData: @escaping @Sendable (String, String, Data) -> Void
+        ) {
+            self.owner = owner
+            self.onEvent = onEvent
+            self.onSshShellData = onSshShellData
+        }
+    }
 }
 
 final class RustEventSink: FfiEventSink, @unchecked Sendable {

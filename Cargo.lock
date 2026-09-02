@@ -3497,7 +3497,6 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
- "thiserror 2.0.20",
  "uuid",
 ]
 
@@ -6439,6 +6438,26 @@ dependencies = [
 name = "shell360-ffi"
 version = "0.1.0"
 dependencies = [
+ "jsb-core",
+ "shell360-runtime",
+ "tempfile",
+ "thiserror 2.0.20",
+ "uniffi",
+]
+
+[[package]]
+name = "shell360-keygen"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "ssh-key 0.6.7",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "shell360-runtime"
+version = "0.1.0"
+dependencies = [
  "base64 0.23.1",
  "jsb-core",
  "serde",
@@ -6450,16 +6469,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.20",
  "tokio",
- "uniffi",
-]
-
-[[package]]
-name = "shell360-keygen"
-version = "0.1.0"
-dependencies = [
- "serde",
- "ssh-key 0.6.7",
- "thiserror 2.0.20",
+ "uuid",
 ]
 
 [[package]]

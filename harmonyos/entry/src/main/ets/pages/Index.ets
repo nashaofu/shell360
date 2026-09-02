@@ -1,5 +1,6 @@
 import { webview } from '@kit.ArkWeb';
 import { MessagePortBridge } from '../bridge/MessagePortBridge';
+import { HarmonyHostServices } from '../bridge/HarmonyHostServices';
 import { HarmonyNativeRuntime } from '../runtime/NativeRuntime';
 import { DEBUG, HARMONYOS_DEV_HOST, HARMONYOS_DEV_PORT } from 'BuildProfile';
 
@@ -11,13 +12,17 @@ const BACK_REQUEST_SCRIPT =
 @Component
 struct Index {
   private readonly controller: webview.WebviewController = new webview.WebviewController();
+  private readonly hostServices: HarmonyHostServices = new HarmonyHostServices();
   private readonly bridge: MessagePortBridge = new MessagePortBridge(
-    new HarmonyNativeRuntime(),
     this.controller,
+    this.hostServices,
   );
   private backRequestPending: boolean = false;
 
   aboutToAppear(): void {
+    void this.bridge.initialize().catch((error: Error) => {
+      console.error(`[Shell360] Failed to initialize JSB engine: ${error.message}`);
+    });
     console.info(`[Shell360] WebView loading ${JSON.stringify(WEBVIEW_URL)}`);
   }
 

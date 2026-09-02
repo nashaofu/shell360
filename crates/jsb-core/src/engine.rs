@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use crate::{HostPrimitive, MethodKind, method_specs};
+use crate::{BinaryBindSpec, HostPrimitive, MethodKind, MethodSpec, ScopedFileKind};
 
 pub const MAX_FRAME_SIZE: usize = 1024 * 1024;
 const SOURCE: &str = "shell360.jsb";
@@ -16,13 +16,19 @@ pub struct RustInvokeError {
   pub details_json: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvokeOutcome {
+  pub result_json: String,
+  pub host_actions: Vec<HostPrimitive>,
+}
+
 pub trait RustMethodInvoker: Send + Sync {
   fn invoke(
     &self,
     method: &str,
     client_id: &str,
     params_json: &str,
-  ) -> Result<String, RustInvokeError>;
+  ) -> Result<InvokeOutcome, RustInvokeError>;
   fn send_binary(
     &self,
     client_id: &str,
@@ -126,6 +132,7 @@ struct InvokeRequest {
 
 pub struct JsbEngine<I> {
   invoker: I,
+  specs: HashMap<String, MethodSpec>,
   channels: HashSet<String>,
   control_channel_id: Option<String>,
   client_id: Option<String>,
@@ -136,9 +143,14 @@ pub struct JsbEngine<I> {
 }
 
 impl<I: RustMethodInvoker> JsbEngine<I> {
-  pub fn new(invoker: I) -> Self {
+  pub fn new(invoker: I, specs: Vec<MethodSpec>) -> Self {
+    let specs = specs
+      .into_iter()
+      .map(|spec| (spec.name.to_string(), spec))
+      .collect();
     Self {
       invoker,
+      specs,
       channels: HashSet::new(),
       control_channel_id: None,
       client_id: None,
@@ -274,10 +286,7 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
         None,
       )];
     }
-    let Some(spec) = method_specs()
-      .iter()
-      .find(|spec| spec.name == request.method)
-    else {
+    let Some(spec) = self.specs.get(&request.method).copied() else {
       return vec![reply_error(
         channel_id,
         &request.id,
@@ -296,26 +305,25 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
       )];
     }
     let params_json = request.data.to_string();
-    if request.method == "core.openUrl"
-      && let Err(message) = validate_external_url(&request.data)
-    {
-      return vec![reply_error(
-        channel_id,
-        &request.id,
-        "BRIDGE_INVALID_REQUEST",
-        message,
-        None,
-      )];
-    }
-    if request.method == "ssh.sftp.uploadFile" {
-      return self.begin_scoped_upload(channel_id, request);
-    }
-    if request.method == "ssh.sftp.downloadFile" {
-      return self.begin_scoped_download(channel_id, request);
+    match spec.scoped_file {
+      Some(ScopedFileKind::Upload) => return self.begin_scoped_upload(channel_id, request),
+      Some(ScopedFileKind::Download) => return self.begin_scoped_download(channel_id, request),
+      None => {}
     }
     match spec.kind {
-      MethodKind::Rust => self.invoke_rust(channel_id, request, params_json),
+      MethodKind::Rust => self.invoke_rust(channel_id, request, params_json, spec),
       MethodKind::Host(primitive) => {
+        if primitive == HostPrimitive::OpenExternal
+          && let Err(message) = validate_external_url(&request.data)
+        {
+          return vec![reply_error(
+            channel_id,
+            &request.id,
+            "BRIDGE_INVALID_REQUEST",
+            message,
+            None,
+          )];
+        }
         self.pending_request_ids.insert(request.id.clone());
         self.next_call_id += 1;
         let call_id = format!("host-{}", self.next_call_id);
@@ -455,40 +463,19 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     channel_id: &str,
     request: InvokeRequest,
     params_json: String,
+    spec: MethodSpec,
   ) -> Vec<EngineOutput> {
     let client_id = self.client_id.clone().unwrap_or_default();
     match self
       .invoker
       .invoke(&request.method, &client_id, &params_json)
     {
-      Ok(result_json) => match serde_json::from_str::<Value>(&result_json) {
-        Ok(result) => {
-          if request.method == "ssh.shell.open" {
-            self.bind_shell(&request.data, &client_id);
-          }
-          let restart_required = request.method == "data.resetCrypto"
-            && result
-              .get("restartRequired")
-              .and_then(Value::as_bool)
-              .unwrap_or(false);
-          let mut outputs = vec![reply_success(channel_id, &request.id, result)];
-          if restart_required {
-            outputs.push(EngineOutput::HostCall(HostCall {
-              call_id: self.next_host_call_id(),
-              primitive: HostPrimitive::ResetApplication,
-              params_json: "null".into(),
-            }));
-          }
-          outputs
+      Ok(outcome) => {
+        if let Some(bind) = spec.binary_bind {
+          self.bind_shell(&request.data, &client_id, bind);
         }
-        Err(error) => vec![reply_error(
-          channel_id,
-          &request.id,
-          "JSB_INVALID_RESPONSE",
-          "Rust method returned invalid JSON.",
-          Some(json!({ "reason": error.to_string() })),
-        )],
-      },
+        self.reply_from_outcome(channel_id, &request.id, outcome)
+      }
       Err(error) => vec![reply_error(
         channel_id,
         &request.id,
@@ -589,11 +576,11 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
       object.insert("localFilename".into(), Value::String(staging_path.clone()));
     }
     let client_id = self.client_id.clone().unwrap_or_default();
-    let result_json = match self
+    let outcome = match self
       .invoker
       .invoke(&request.method, &client_id, &data.to_string())
     {
-      Ok(result) => result,
+      Ok(outcome) => outcome,
       Err(error) => {
         self.invoker.cleanup_staging_path(&staging_path);
         return vec![reply_error(
@@ -605,7 +592,7 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
         )];
       }
     };
-    let result = match serde_json::from_str(&result_json) {
+    let result = match serde_json::from_str(&outcome.result_json) {
       Ok(result) => result,
       Err(error) => {
         self.invoker.cleanup_staging_path(&staging_path);
@@ -638,7 +625,7 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
   }
 
   fn invoke_with_data(
-    &self,
+    &mut self,
     channel_id: &str,
     request_id: &str,
     method: &str,
@@ -646,22 +633,41 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     data: &Value,
   ) -> Vec<EngineOutput> {
     match self.invoker.invoke(method, client_id, &data.to_string()) {
-      Ok(result_json) => match serde_json::from_str(&result_json) {
-        Ok(result) => vec![reply_success(channel_id, request_id, result)],
-        Err(error) => vec![reply_error(
-          channel_id,
-          request_id,
-          "JSB_INVALID_RESPONSE",
-          "Rust method returned invalid JSON.",
-          Some(json!({ "reason": error.to_string() })),
-        )],
-      },
+      Ok(outcome) => self.reply_from_outcome(channel_id, request_id, outcome),
       Err(error) => vec![reply_error(
         channel_id,
         request_id,
         &error.code,
         &error.message,
         parse_details(error.details_json.as_deref()),
+      )],
+    }
+  }
+
+  fn reply_from_outcome(
+    &mut self,
+    channel_id: &str,
+    request_id: &str,
+    outcome: InvokeOutcome,
+  ) -> Vec<EngineOutput> {
+    match serde_json::from_str::<Value>(&outcome.result_json) {
+      Ok(result) => {
+        let mut outputs = vec![reply_success(channel_id, request_id, result)];
+        for primitive in outcome.host_actions {
+          outputs.push(EngineOutput::HostCall(HostCall {
+            call_id: self.next_host_call_id(),
+            primitive,
+            params_json: "null".into(),
+          }));
+        }
+        outputs
+      }
+      Err(error) => vec![reply_error(
+        channel_id,
+        request_id,
+        "JSB_INVALID_RESPONSE",
+        "Rust method returned invalid JSON.",
+        Some(json!({ "reason": error.to_string() })),
       )],
     }
   }
@@ -681,11 +687,11 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     }
   }
 
-  fn bind_shell(&mut self, data: &Value, client_id: &str) {
-    let Some(channel_id) = data.get("dataChannelId").and_then(Value::as_str) else {
+  fn bind_shell(&mut self, data: &Value, client_id: &str, spec: BinaryBindSpec) {
+    let Some(channel_id) = data.get(spec.channel_field).and_then(Value::as_str) else {
       return;
     };
-    let Some(shell_id) = data.get("sshShellId").and_then(Value::as_str) else {
+    let Some(shell_id) = data.get(spec.shell_field).and_then(Value::as_str) else {
       return;
     };
     if self.channels.contains(channel_id) {
@@ -708,11 +714,11 @@ fn validate_external_url(data: &Value) -> Result<(), &'static str> {
   let url = data
     .get("url")
     .and_then(Value::as_str)
-    .ok_or("core.openUrl requires url.")?;
+    .ok_or("openExternal requires url.")?;
   let scheme = url
     .split_once(':')
     .map(|(scheme, _)| scheme.to_ascii_lowercase())
-    .ok_or("core.openUrl requires an absolute URL.")?;
+    .ok_or("openExternal requires an absolute URL.")?;
   if ["http", "https", "mailto", "tel"].contains(&scheme.as_str()) {
     Ok(())
   } else {
@@ -771,16 +777,25 @@ mod tests {
       method: &str,
       client_id: &str,
       params_json: &str,
-    ) -> Result<String, RustInvokeError> {
+    ) -> Result<InvokeOutcome, RustInvokeError> {
       self
         .calls
         .lock()
         .unwrap()
         .push((method.into(), client_id.into(), params_json.into()));
       Ok(match method {
-        "bridge.health" => r#"{"status":"ok"}"#.into(),
-        "data.resetCrypto" => r#"{"restartRequired":true}"#.into(),
-        _ => "null".into(),
+        "bridge.health" => InvokeOutcome {
+          result_json: r#"{"status":"ok"}"#.into(),
+          host_actions: Vec::new(),
+        },
+        "data.resetCrypto" => InvokeOutcome {
+          result_json: r#"{"restartRequired":true}"#.into(),
+          host_actions: vec![HostPrimitive::ResetApplication],
+        },
+        _ => InvokeOutcome {
+          result_json: "null".into(),
+          host_actions: Vec::new(),
+        },
       })
     }
 
@@ -811,9 +826,71 @@ mod tests {
     }
   }
 
+  fn test_specs() -> Vec<MethodSpec> {
+    vec![
+      MethodSpec {
+        name: "bridge.health",
+        kind: MethodKind::Rust,
+        binary: false,
+        events: &[],
+        error_domain: "rust",
+        scoped_file: None,
+        binary_bind: None,
+      },
+      MethodSpec {
+        name: "data.resetCrypto",
+        kind: MethodKind::Rust,
+        binary: false,
+        events: &[],
+        error_domain: "rust",
+        scoped_file: None,
+        binary_bind: None,
+      },
+      MethodSpec {
+        name: "ssh.shell.open",
+        kind: MethodKind::Rust,
+        binary: true,
+        events: &[],
+        error_domain: "rust",
+        scoped_file: None,
+        binary_bind: Some(BinaryBindSpec {
+          channel_field: "dataChannelId",
+          shell_field: "sshShellId",
+        }),
+      },
+      MethodSpec {
+        name: "ssh.sftp.uploadFile",
+        kind: MethodKind::Rust,
+        binary: false,
+        events: &[],
+        error_domain: "rust",
+        scoped_file: Some(ScopedFileKind::Upload),
+        binary_bind: None,
+      },
+      MethodSpec {
+        name: "ssh.sftp.downloadFile",
+        kind: MethodKind::Rust,
+        binary: false,
+        events: &[],
+        error_domain: "rust",
+        scoped_file: Some(ScopedFileKind::Download),
+        binary_bind: None,
+      },
+      MethodSpec {
+        name: "clipboard.readText",
+        kind: MethodKind::Host(HostPrimitive::ReadClipboard),
+        binary: false,
+        events: &[],
+        error_domain: "host",
+        scoped_file: None,
+        binary_bind: None,
+      },
+    ]
+  }
+
   fn opened_engine() -> (JsbEngine<FakeInvoker>, FakeInvoker) {
     let invoker = FakeInvoker::default();
-    let mut engine = JsbEngine::new(invoker.clone());
+    let mut engine = JsbEngine::new(invoker.clone(), test_specs());
     assert!(matches!(
       engine.on_channel_open(CONTROL).as_slice(),
       [EngineOutput::OpenChannel { .. }]
@@ -824,7 +901,7 @@ mod tests {
   #[test]
   fn opens_valid_channels_and_rejects_invalid_ids() {
     let invoker = FakeInvoker::default();
-    let mut engine = JsbEngine::new(invoker);
+    let mut engine = JsbEngine::new(invoker, test_specs());
     assert!(matches!(
       engine.on_channel_open("bad").as_slice(),
       [EngineOutput::FailChannel { .. }]

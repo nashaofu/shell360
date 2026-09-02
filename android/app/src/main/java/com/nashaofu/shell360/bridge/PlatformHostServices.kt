@@ -6,10 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.nashaofu.shell360.BuildConfig
 import com.nashaofu.shell360.ffi.HostServices
 import java.io.File
-import java.util.UUID
 import org.json.JSONObject
 import org.json.JSONTokener
 
@@ -47,8 +45,6 @@ class PlatformHostServices(
 
     private fun execute(primitive: String, params: JSONObject): Any? {
         return when (primitive) {
-            "getAppVersion" -> BuildConfig.VERSION_NAME
-            "getMachineUid" -> getMachineUid()
             "setSystemBarsAppearance" -> {
                 setSystemBarsAppearance(requireBoolean(params, "dark"))
                 null
@@ -91,13 +87,6 @@ class PlatformHostServices(
                 "BRIDGE_UNSUPPORTED",
                 "Android HostServices primitive is unavailable: $primitive",
             )
-        }
-    }
-
-    private fun getMachineUid(): String {
-        val preferences = context.getSharedPreferences("shell360-platform", Context.MODE_PRIVATE)
-        return preferences.getString("machine_uid", null) ?: UUID.randomUUID().toString().also {
-            preferences.edit().putString("machine_uid", it).apply()
         }
     }
 

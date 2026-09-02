@@ -1,0 +1,23 @@
+[package]
+name = "shell360-runtime"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+base64.workspace = true
+jsb-core = { path = "../jsb-core" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+shell360-store = { path = "../shell360-store" }
+shell360-keygen = { path = "../shell360-keygen" }
+shell360-ssh = { path = "../shell360-ssh" }
+thiserror.workspace = true
+tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
+uuid = { workspace = true, features = ["v4"] }
+
+[dev-dependencies]
+ssh-key = { version = "0.6.7", features = ["ed25519"] }
+tempfile = "3.26.0"
