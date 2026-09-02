@@ -7,7 +7,8 @@ use napi_ohos::{
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use shell360_ffi::{
-  FfiError, FfiEventSink, NativeJsbConnection, NativeJsbRegistry, Shell360Runtime,
+  FfiError, FfiEventSink, HostServices, NativeEngineOutput, NativeEngineOutputKind,
+  NativeJsbConnection, NativeJsbEngine, NativeJsbRegistry, Shell360Runtime,
 };
 
 type EventCallback =
@@ -21,6 +22,8 @@ type BinaryCallback = ThreadsafeFunction<
   false,
   0,
 >;
+type HostCallCallback =
+  ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
 
 #[napi(object)]
 pub struct SshShellDataEvent {
@@ -34,6 +37,29 @@ static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mu
 static JSB_REGISTRY: LazyLock<Arc<NativeJsbRegistry>> = LazyLock::new(NativeJsbRegistry::new);
 static JSB_CONNECTION: LazyLock<Mutex<Option<Arc<NativeJsbConnection>>>> =
   LazyLock::new(|| Mutex::new(None));
+static JSB_ENGINE: LazyLock<Mutex<Option<Arc<NativeJsbEngine>>>> =
+  LazyLock::new(|| Mutex::new(None));
+static HOST_CALL_CALLBACK: LazyLock<Mutex<Option<HostCallCallback>>> =
+  LazyLock::new(|| Mutex::new(None));
+
+struct OhrsHostServices;
+
+impl HostServices for OhrsHostServices {
+  fn on_host_call(&self, call_id: String, primitive: String, params_json: String) {
+    let Ok(callback) = HOST_CALL_CALLBACK.lock() else {
+      return;
+    };
+    if let Some(callback) = callback.as_ref() {
+      let message = serde_json::json!({
+        "callId": call_id,
+        "primitive": primitive,
+        "paramsJson": params_json,
+      })
+      .to_string();
+      let _ = callback.call(message, ThreadsafeFunctionCallMode::Blocking);
+    }
+  }
+}
 
 struct EventSink {
   callback: Mutex<Option<EventCallback>>,
@@ -107,6 +133,134 @@ fn jsb_connection() -> Result<Arc<NativeJsbConnection>> {
     .map_err(|_| Error::from_reason("JSB connection lock is poisoned."))?
     .clone()
     .ok_or_else(|| Error::from_reason("JSB is not connected."))
+}
+
+fn jsb_engine() -> Result<Arc<NativeJsbEngine>> {
+  JSB_ENGINE
+    .lock()
+    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))?
+    .clone()
+    .ok_or_else(|| Error::from_reason("JSB engine is not initialized."))
+}
+
+fn serialize_engine_outputs(outputs: Vec<NativeEngineOutput>) -> Result<String> {
+  let outputs = outputs
+    .into_iter()
+    .map(|output| {
+      let kind = match output.kind {
+        NativeEngineOutputKind::ReplyText => "replyText",
+        NativeEngineOutputKind::PushBinary => "pushBinary",
+        NativeEngineOutputKind::OpenChannel => "openChannel",
+        NativeEngineOutputKind::FailChannel => "failChannel",
+        NativeEngineOutputKind::ClosePort => "closePort",
+      };
+      serde_json::json!({
+        "kind": kind,
+        "channelId": output.channel_id,
+        "text": output.text,
+        "bytes": output.bytes,
+      })
+    })
+    .collect::<Vec<_>>();
+  serde_json::to_string(&outputs).map_err(|error| Error::from_reason(error.to_string()))
+}
+
+#[napi]
+pub fn initialize_jsb_engine() -> Result<()> {
+  let engine = NativeJsbEngine::new(runtime()?, Box::new(OhrsHostServices));
+  *JSB_ENGINE
+    .lock()
+    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))? = Some(engine);
+  Ok(())
+}
+
+#[napi]
+pub fn attach_host_call_callback(
+  #[napi(ts_arg_type = "(call: string) => void")] callback: Function<
+    'static,
+    Unknown<'static>,
+    Unknown<'static>,
+  >,
+) -> Result<()> {
+  let callback = callback
+    .build_threadsafe_function::<String>()
+    .build_callback(|context| Ok(vec![context.value]))?;
+  *HOST_CALL_CALLBACK
+    .lock()
+    .map_err(|_| Error::from_reason("HostCall callback lock is poisoned."))? = Some(callback);
+  Ok(())
+}
+
+#[napi]
+pub fn jsb_engine_channel_open(channel_id: String) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .on_channel_open(channel_id)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_channel_close(channel_id: String) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .on_channel_close(channel_id)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_channel_open_failed(channel_id: String, reason: String) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .on_channel_open_failed(channel_id, reason)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_control_frame(channel_id: String, text: String) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .on_control_frame(channel_id, text)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_binary_frame(channel_id: String, bytes: Vec<u8>) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .on_binary_frame(channel_id, bytes)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_complete_host_call(call_id: String, result_json: String) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .complete_host_call(call_id, result_json)
+      .map_err(native_error)?,
+  )
+}
+
+#[napi]
+pub fn jsb_engine_emit(event_json: String) -> Result<String> {
+  serialize_engine_outputs(jsb_engine()?.emit(event_json).map_err(native_error)?)
+}
+
+#[napi]
+pub fn jsb_engine_push_shell_binary(
+  client_id: String,
+  shell_id: String,
+  bytes: Vec<u8>,
+) -> Result<String> {
+  serialize_engine_outputs(
+    jsb_engine()?
+      .push_shell_binary(client_id, shell_id, bytes)
+      .map_err(native_error)?,
+  )
 }
 
 #[napi]
@@ -408,5 +562,11 @@ pub fn shutdown() -> Result<()> {
   *EVENT_SINK
     .lock()
     .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = None;
+  *JSB_ENGINE
+    .lock()
+    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))? = None;
+  *HOST_CALL_CALLBACK
+    .lock()
+    .map_err(|_| Error::from_reason("HostCall callback lock is poisoned."))? = None;
   Ok(())
 }

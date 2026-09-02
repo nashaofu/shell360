@@ -27,17 +27,16 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewBuilder
 import androidx.webkit.WebViewFeature
 import com.nashaofu.shell360.bridge.AndroidJsbInterface
-import com.nashaofu.shell360.bridge.AndroidBridgeServices
 import com.nashaofu.shell360.bridge.AndroidFileBridge
-import com.nashaofu.shell360.bridge.WebViewBridge
-import com.nashaofu.shell360.bridge.Jsb
-import com.nashaofu.shell360.bridge.registerAndroidRoutes
+import com.nashaofu.shell360.bridge.JsbPortBridge
+import com.nashaofu.shell360.bridge.PlatformHostServices
 import com.nashaofu.shell360.ui.theme.Shell360Theme
 import com.nashaofu.shell360.webview.Shell360WebViewClient
 
 class MainActivity : ComponentActivity() {
     private var webView: WebView? = null
-    private var webViewBridge: WebViewBridge? = null
+    private var jsbPortBridge: JsbPortBridge? = null
+    private var backRequestPending = false
     private val jsbInterface = AndroidJsbInterface()
     private lateinit var fileBridge: AndroidFileBridge
 
@@ -65,15 +64,21 @@ class MainActivity : ComponentActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    val currentWebView = webView
-                    if (currentWebView == null) {
-                        finish()
+                    if (backRequestPending) {
                         return
                     }
 
+                    val currentWebView = webView
+                    if (currentWebView == null) {
+                        moveTaskToBack(true)
+                        return
+                    }
+
+                    backRequestPending = true
                     currentWebView.evaluateJavascript(BACK_REQUEST_SCRIPT) { handled ->
+                        backRequestPending = false
                         if (handled != "true") {
-                            finish()
+                            moveTaskToBack(true)
                         }
                     }
                 }
@@ -82,9 +87,8 @@ class MainActivity : ComponentActivity() {
 
         val rustBridge = (application as Shell360Application).rustBridge
         fileBridge = AndroidFileBridge(this)
-        val router = AndroidBridgeServices(
+        val hostServices = PlatformHostServices(
             context = this,
-            rustBridge = rustBridge,
             fileBridge = fileBridge,
             closeWindow = {
                 runOnUiThread {
@@ -112,10 +116,6 @@ class MainActivity : ComponentActivity() {
                 }
             },
         )
-        val jsb = Jsb().apply {
-            registerAndroidRoutes(router, this@MainActivity)
-        }
-
         setContent {
             Shell360Theme {
                 if (supportsNativeBridge) {
@@ -144,10 +144,10 @@ class MainActivity : ComponentActivity() {
                                 settings.setSupportMultipleWindows(false)
                                 settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                                 webView = this
-                                webViewBridge = WebViewBridge(this, jsb, rustBridge)
-                                jsbInterface.attach(checkNotNull(webViewBridge))
+                                jsbPortBridge = JsbPortBridge(this, rustBridge, hostServices)
+                                jsbInterface.attach(checkNotNull(jsbPortBridge))
                                 webViewClient = Shell360WebViewClient(context) {
-                                    webViewBridge?.closeChannels()
+                                    jsbPortBridge?.closeChannels()
                                 }
                                 if (savedInstanceState?.let(::restoreState) == null) {
                                     loadUrl(BuildConfig.WEBVIEW_URL)
@@ -170,8 +170,8 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         jsbInterface.detach()
         fileBridge.dispose()
-        webViewBridge?.dispose()
-        webViewBridge = null
+        jsbPortBridge?.dispose()
+        jsbPortBridge = null
         webView?.destroy()
         webView = null
         super.onDestroy()

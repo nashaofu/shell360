@@ -1,12 +1,13 @@
 package com.nashaofu.shell360
 
-import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.nashaofu.shell360.bridge.AndroidBridgeServices
-import com.nashaofu.shell360.bridge.Jsb
+import com.nashaofu.shell360.bridge.PlatformHostServices
 import com.nashaofu.shell360.bridge.RustBridge
-import com.nashaofu.shell360.bridge.registerAndroidRoutes
+import com.nashaofu.shell360.ffi.NativeEngineOutput
+import com.nashaofu.shell360.ffi.NativeEngineOutputKind
+import com.nashaofu.shell360.ffi.NativeJsbEngine
+import java.util.UUID
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,9 +19,8 @@ import org.junit.runner.RunWith
 class NativeBridgeInstrumentedTest {
     @Test
     fun keygenRequestCallsRustLibrary() {
-        val jsb = createJsb()
         val response = JSONObject(
-            jsb.dispatch(
+            createEngine().dispatch(
                 request(
                     "keygen.generate",
                     JSONObject()
@@ -41,7 +41,7 @@ class NativeBridgeInstrumentedTest {
 
     @Test
     fun malformedRequestReturnsStructuredError() {
-        val response = JSONObject(createJsb().dispatch("not-json"))
+        val response = JSONObject(createEngine().dispatch("not-json"))
 
         assertEquals("invoke.response", response.getString("type"))
         assertEquals("JSB_INVALID_MESSAGE", response.getJSONObject("error").getString("code"))
@@ -49,33 +49,30 @@ class NativeBridgeInstrumentedTest {
 
     @Test
     fun unsupportedMethodReturnsStructuredError() {
-        val response = JSONObject(createJsb().dispatch(request("unknown.method")))
+        val response = JSONObject(createEngine().dispatch(request("unknown.method")))
 
         assertEquals("request-1", response.getString("id"))
         assertEquals("JSB_UNSUPPORTED", response.getJSONObject("error").getString("code"))
     }
 
     @Test
-    fun appVersionUsesRegisteredAndroidCallback() {
-        val response = JSONObject(createJsb().dispatch(request("app.getVersion")))
+    fun appVersionUsesAndroidHostService() {
+        val response = JSONObject(createEngine().dispatch(request("app.getVersion")))
 
         assertEquals(BuildConfig.VERSION_NAME, response.getString("data"))
     }
 
-    private fun createJsb(): Jsb {
+    private fun createEngine(): EngineHarness {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val rustBridge = RustBridge(context)
-        val services = AndroidBridgeServices(
+        val hostServices = PlatformHostServices(
             context = context,
-            rustBridge = rustBridge,
+            fileBridge = null,
             closeWindow = {},
             resetApplication = {},
             setSystemBarsAppearance = {},
         )
-        return Jsb().apply {
-            registerAndroidRoutes(services, context)
-            connect()
-        }
+        return EngineHarness(rustBridge.createJsbEngine(hostServices), hostServices)
     }
 
     private fun request(method: String, data: Any? = null): String {
@@ -87,5 +84,29 @@ class NativeBridgeInstrumentedTest {
                 if (data != null) put("data", data)
             }
             .toString()
+    }
+
+    private class EngineHarness(
+        private val engine: NativeJsbEngine,
+        hostServices: PlatformHostServices,
+    ) {
+        private val channelId = UUID.randomUUID().toString()
+        private val completed = mutableListOf<NativeEngineOutput>()
+
+        init {
+            hostServices.attachCompletion { callId, resultJson ->
+                completed += engine.completeHostCall(callId, resultJson)
+            }
+            engine.onChannelOpen(channelId)
+        }
+
+        fun dispatch(message: String): String {
+            completed.clear()
+            val outputs = engine.onControlFrame(channelId, message) + completed
+            return outputs
+                .first { it.kind == NativeEngineOutputKind.REPLY_TEXT }
+                .text
+                .orEmpty()
+        }
     }
 }

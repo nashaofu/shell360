@@ -85,6 +85,28 @@ pub trait FfiEventSink: Send + Sync {
   fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>);
 }
 
+#[uniffi::export(callback_interface)]
+pub trait HostServices: Send + Sync {
+  fn on_host_call(&self, call_id: String, primitive: String, params_json: String);
+}
+
+#[derive(Clone, uniffi::Enum)]
+pub enum NativeEngineOutputKind {
+  ReplyText,
+  PushBinary,
+  OpenChannel,
+  FailChannel,
+  ClosePort,
+}
+
+#[derive(Clone, uniffi::Record)]
+pub struct NativeEngineOutput {
+  pub kind: NativeEngineOutputKind,
+  pub channel_id: Option<String>,
+  pub text: Option<String>,
+  pub bytes: Option<Vec<u8>>,
+}
+
 #[derive(Clone, uniffi::Record)]
 pub struct NativeJsbCall {
   pub request_id: String,
@@ -101,6 +123,227 @@ pub struct NativeJsbRegistry {
 #[derive(uniffi::Object)]
 pub struct NativeJsbConnection {
   core: jsb_core::JsbConnection,
+}
+
+#[derive(Clone)]
+struct RuntimeInvoker(Arc<Shell360Runtime>);
+
+impl jsb_core::RustMethodInvoker for RuntimeInvoker {
+  fn invoke(
+    &self,
+    method: &str,
+    client_id: &str,
+    params_json: &str,
+  ) -> Result<String, jsb_core::RustInvokeError> {
+    self
+      .0
+      .invoke(
+        method.to_string(),
+        client_id.to_string(),
+        params_json.to_string(),
+      )
+      .map_err(|error| jsb_core::RustInvokeError {
+        code: error.code().to_string(),
+        message: error.reason().to_string(),
+        details_json: error.details_json().map(str::to_string),
+      })
+  }
+
+  fn send_binary(
+    &self,
+    client_id: &str,
+    shell_id: &str,
+    bytes: &[u8],
+  ) -> Result<(), jsb_core::RustInvokeError> {
+    self
+      .0
+      .ssh_shell_send_binary(client_id.to_string(), shell_id.to_string(), bytes.to_vec())
+      .map_err(|error| jsb_core::RustInvokeError {
+        code: error.code().to_string(),
+        message: error.reason().to_string(),
+        details_json: error.details_json().map(str::to_string),
+      })
+  }
+
+  fn create_staging_path(&self, call_id: &str) -> Result<String, jsb_core::RustInvokeError> {
+    let directory = std::path::Path::new(&self.0.cache_dir()).join("transfers");
+    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::RustInvokeError {
+      code: "BRIDGE_IO_ERROR".into(),
+      message: error.to_string(),
+      details_json: None,
+    })?;
+    Ok(directory.join(call_id).to_string_lossy().into_owned())
+  }
+
+  fn cleanup_staging_path(&self, path: &str) {
+    let _ = std::fs::remove_file(path);
+  }
+
+  fn release_client(&self, client_id: &str) {
+    self.0.release_client(client_id.to_string());
+  }
+}
+
+#[derive(uniffi::Object)]
+pub struct NativeJsbEngine {
+  core: std::sync::Mutex<jsb_core::JsbEngine<RuntimeInvoker>>,
+  host_services: Arc<dyn HostServices>,
+}
+
+#[uniffi::export]
+impl NativeJsbEngine {
+  #[uniffi::constructor]
+  pub fn new(runtime: Arc<Shell360Runtime>, host_services: Box<dyn HostServices>) -> Arc<Self> {
+    Arc::new(Self {
+      core: std::sync::Mutex::new(jsb_core::JsbEngine::new(RuntimeInvoker(runtime))),
+      host_services: Arc::from(host_services),
+    })
+  }
+
+  pub fn on_channel_open(&self, channel_id: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.on_channel_open(&channel_id))
+  }
+
+  pub fn on_channel_close(&self, channel_id: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.on_channel_close(&channel_id))
+  }
+
+  pub fn on_channel_open_failed(
+    &self,
+    channel_id: String,
+    reason: String,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.on_channel_open_failed(&channel_id, &reason))
+  }
+
+  pub fn on_control_frame(
+    &self,
+    channel_id: String,
+    text: String,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.on_control_frame(&channel_id, &text))
+  }
+
+  pub fn on_binary_frame(
+    &self,
+    channel_id: String,
+    bytes: Vec<u8>,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.on_binary_frame(&channel_id, &bytes))
+  }
+
+  pub fn complete_host_call(
+    &self,
+    call_id: String,
+    result_json: String,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.complete_host_call(&call_id, &result_json))
+  }
+
+  pub fn emit(&self, event_json: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.emit(event_json))
+  }
+
+  pub fn push_shell_binary(
+    &self,
+    client_id: String,
+    shell_id: String,
+    bytes: Vec<u8>,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    self.with_engine(|engine| engine.push_shell_binary(&client_id, &shell_id, bytes))
+  }
+
+  pub fn registered_methods(&self) -> Vec<String> {
+    jsb_core::method_specs()
+      .iter()
+      .map(|method| method.name.to_string())
+      .collect()
+  }
+}
+
+impl NativeJsbEngine {
+  fn with_engine(
+    &self,
+    operation: impl FnOnce(&mut jsb_core::JsbEngine<RuntimeInvoker>) -> Vec<jsb_core::EngineOutput>,
+  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+    let mut engine = self
+      .core
+      .lock()
+      .map_err(|_| FfiError::Internal("JSB engine lock is poisoned.".into()))?;
+    let outputs = operation(&mut engine);
+    drop(engine);
+    Ok(
+      outputs
+        .into_iter()
+        .filter_map(|output| self.convert_output(output))
+        .collect(),
+    )
+  }
+
+  fn convert_output(&self, output: jsb_core::EngineOutput) -> Option<NativeEngineOutput> {
+    use jsb_core::EngineOutput;
+    match output {
+      EngineOutput::ReplyText { channel_id, text } => Some(native_output(
+        NativeEngineOutputKind::ReplyText,
+        Some(channel_id),
+        Some(text),
+        None,
+      )),
+      EngineOutput::PushBinary { channel_id, bytes } => Some(native_output(
+        NativeEngineOutputKind::PushBinary,
+        Some(channel_id),
+        None,
+        Some(bytes),
+      )),
+      EngineOutput::OpenChannel {
+        channel_id,
+        control_text,
+      } => Some(native_output(
+        NativeEngineOutputKind::OpenChannel,
+        Some(channel_id),
+        Some(control_text),
+        None,
+      )),
+      EngineOutput::FailChannel {
+        channel_id,
+        control_text,
+      } => Some(native_output(
+        NativeEngineOutputKind::FailChannel,
+        Some(channel_id),
+        Some(control_text),
+        None,
+      )),
+      EngineOutput::ClosePort { channel_id } => Some(native_output(
+        NativeEngineOutputKind::ClosePort,
+        Some(channel_id),
+        None,
+        None,
+      )),
+      EngineOutput::HostCall(call) => {
+        let primitive = call.primitive.as_str().to_string();
+        self.host_services.on_host_call(
+          call.call_id.clone(),
+          primitive.clone(),
+          call.params_json.clone(),
+        );
+        None
+      }
+    }
+  }
+}
+
+fn native_output(
+  kind: NativeEngineOutputKind,
+  channel_id: Option<String>,
+  text: Option<String>,
+  bytes: Option<Vec<u8>>,
+) -> NativeEngineOutput {
+  NativeEngineOutput {
+    kind,
+    channel_id,
+    text,
+    bytes,
+  }
 }
 
 #[uniffi::export]
@@ -402,6 +645,8 @@ impl Shell360Runtime {
   ) -> Result<String, FfiError> {
     match method.as_str() {
       "bridge.health" => serde_json::to_string(&self.health_check())
+        .map_err(|value| FfiError::Internal(value.to_string())),
+      "core.healthCheck" => serde_json::to_string(&self.health_check())
         .map_err(|value| FfiError::Internal(value.to_string())),
       "bridge.releaseClient" => {
         self.release_client(client_id);
@@ -1090,11 +1335,13 @@ fn required<T>(value: Option<T>, name: &str) -> Result<T, FfiError> {
 
 #[cfg(test)]
 mod tests {
-  use std::sync::Mutex;
+  use std::sync::{Arc, Mutex};
 
   use ssh_key::PrivateKey;
 
-  use super::{FfiError, FfiEventSink, Shell360Runtime};
+  use super::{
+    FfiError, FfiEventSink, HostServices, NativeEngineOutputKind, NativeJsbEngine, Shell360Runtime,
+  };
 
   #[derive(Debug, Default)]
   struct TestEventSink {
@@ -1107,6 +1354,57 @@ mod tests {
     }
 
     fn on_ssh_shell_data(&self, _client_id: String, _ssh_shell_id: String, _data: Vec<u8>) {}
+  }
+
+  struct TestHostServices(Arc<Mutex<Vec<(String, String, String)>>>);
+
+  impl HostServices for TestHostServices {
+    fn on_host_call(&self, call_id: String, primitive: String, params_json: String) {
+      self
+        .0
+        .lock()
+        .expect("lock host calls")
+        .push((call_id, primitive, params_json));
+    }
+  }
+
+  #[test]
+  fn engine_routes_runtime_methods_without_platform_registration() {
+    let directory = tempfile::tempdir().expect("create temp directory");
+    let runtime = Shell360Runtime::new(
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
+      Box::new(TestEventSink::default()),
+    )
+    .expect("create runtime");
+    let host_calls = Arc::new(Mutex::new(Vec::new()));
+    let engine = NativeJsbEngine::new(runtime, Box::new(TestHostServices(Arc::clone(&host_calls))));
+    let channel_id = "123e4567-e89b-42d3-a456-426614174000".to_string();
+    assert!(matches!(
+      engine.on_channel_open(channel_id.clone()).unwrap()[0].kind,
+      NativeEngineOutputKind::OpenChannel
+    ));
+    let outputs = engine
+      .on_control_frame(
+        channel_id,
+        r#"{"type":"invoke.request","id":"1","method":"bridge.health"}"#.into(),
+      )
+      .unwrap();
+    assert!(matches!(outputs[0].kind, NativeEngineOutputKind::ReplyText));
+    assert!(outputs[0].text.as_deref().unwrap().contains("ok"));
+    let outputs = engine
+      .on_control_frame(
+        "123e4567-e89b-42d3-a456-426614174000".into(),
+        r#"{"type":"invoke.request","id":"2","method":"clipboard.readText"}"#.into(),
+      )
+      .unwrap();
+    assert!(outputs.is_empty());
+    assert_eq!(host_calls.lock().unwrap()[0].1, "readClipboard");
+    assert_eq!(engine.registered_methods().len(), 69);
   }
 
   #[test]

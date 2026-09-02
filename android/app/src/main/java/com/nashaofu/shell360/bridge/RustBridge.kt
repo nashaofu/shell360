@@ -3,6 +3,8 @@ package com.nashaofu.shell360.bridge
 import android.content.Context
 import com.nashaofu.shell360.ffi.FfiEventSink
 import com.nashaofu.shell360.ffi.FfiException
+import com.nashaofu.shell360.ffi.HostServices
+import com.nashaofu.shell360.ffi.NativeJsbEngine
 import com.nashaofu.shell360.ffi.Shell360Runtime
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -87,6 +89,10 @@ class RustBridge(context: Context) {
         } catch (error: FfiException.InvalidRequest) {
             throw NativeBridgeException("BRIDGE_INVALID_REQUEST", error.v1)
         }
+    }
+
+    fun createJsbEngine(hostServices: HostServices): NativeJsbEngine {
+        return NativeJsbEngine(runtime, hostServices)
     }
 
     fun sendSshShellData(clientId: String, sshShellId: String, data: ByteArray) {

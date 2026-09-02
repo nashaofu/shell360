@@ -7,6 +7,15 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 
+mod engine;
+mod methods;
+
+pub use engine::{
+  EngineErrorPayload, EngineOutput, HostCall, HostCallResult, JsbEngine, MAX_FRAME_SIZE,
+  RustInvokeError, RustMethodInvoker,
+};
+pub use methods::{HostPrimitive, MethodKind, MethodSpec, method_specs, method_typescript};
+
 #[derive(Debug, Error)]
 pub enum JsbError {
   #[error("invalid JSB message: {0}")]

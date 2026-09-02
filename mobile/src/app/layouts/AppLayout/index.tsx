@@ -22,7 +22,14 @@ export default function AppLayout() {
 
   useEffect(() => {
     const handleNativeBack = (event: Event) => {
-      if (location.pathname === "/" && overlay.length === 0) {
+      if (overlay.length) {
+        event.preventDefault();
+        const fn = overlay.pop();
+        fn?.();
+        return;
+      }
+
+      if (location.pathname === "/") {
         return;
       }
 

@@ -8,9 +8,9 @@ class AndroidJsbInterface {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     @Volatile
-    private var bridge: WebViewBridge? = null
+    private var bridge: JsbPortBridge? = null
 
-    fun attach(bridge: WebViewBridge) {
+    fun attach(bridge: JsbPortBridge) {
         this.bridge = bridge
     }
 

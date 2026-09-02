@@ -84,7 +84,6 @@ export function closePorts(ports: readonly MessagePort[]): void {
 }
 
 function handleControlMessage(event: MessageEvent<unknown>): void {
-  console.log("window-message", event);
   const isSameWindowMessage =
     event.source === window && event.origin === window.location.origin;
   const isNativeWebViewMessage =
