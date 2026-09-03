@@ -1,5 +1,5 @@
 export { JSBError } from "./error";
-export { JSB, jsb, jsb as default } from "./jsb";
+export { default } from "./jsb";
 export { JSBChannel, type JSBChannelMessage } from "./jsb_channel";
 export type {
   JSBEmitMessage,

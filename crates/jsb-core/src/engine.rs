@@ -4,10 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use crate::{BinaryBindSpec, MethodSpec, READ_SCOPED_FILE, ScopedFileKind, WRITE_SCOPED_FILE};
-
 pub const MAX_FRAME_SIZE: usize = 1024 * 1024;
-const SOURCE: &str = "shell360.jsb";
+const SOURCE: &str = "jsb.channel";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvokerError {
@@ -36,6 +34,7 @@ pub enum InvokeFlow {
   Delegate {
     primitive: String,
     params_json: String,
+    continuation: Option<String>,
   },
 }
 
@@ -46,9 +45,19 @@ pub trait MethodInvoker: Send + Sync {
     client_id: &str,
     params_json: &str,
   ) -> Result<InvokeFlow, InvokerError>;
-  fn send_binary(&self, client_id: &str, shell_id: &str, bytes: &[u8]) -> Result<(), InvokerError>;
-  fn create_staging_path(&self, call_id: &str) -> Result<String, InvokerError>;
-  fn cleanup_staging_path(&self, path: &str);
+  fn send_binary(
+    &self,
+    client_id: &str,
+    channel_id: &str,
+    bytes: &[u8],
+  ) -> Result<(), InvokerError>;
+  fn close_channel(&self, client_id: &str, channel_id: &str);
+  fn resume_host_call(
+    &self,
+    continuation: &str,
+    data_json: &str,
+  ) -> Result<InvokeFlow, InvokerError>;
+  fn cancel_host_call(&self, continuation: &str);
   fn release_client(&self, client_id: &str);
 }
 
@@ -109,27 +118,7 @@ struct PendingHostCall {
 #[derive(Debug)]
 enum PendingHostAction {
   Reply,
-  InvokeUpload {
-    method: String,
-    client_id: String,
-    data: Value,
-    staging_path: String,
-  },
-  FinishDownload {
-    result: Value,
-    staging_path: String,
-  },
-}
-
-impl PendingHostAction {
-  fn staging_path(&self) -> Option<&str> {
-    match self {
-      Self::InvokeUpload { staging_path, .. } | Self::FinishDownload { staging_path, .. } => {
-        Some(staging_path)
-      }
-      Self::Reply => None,
-    }
-  }
+  Resume(String),
 }
 
 #[derive(Debug, Deserialize)]
@@ -144,31 +133,25 @@ struct InvokeRequest {
 
 pub struct JsbEngine<I> {
   invoker: I,
-  specs: HashMap<String, MethodSpec>,
+  methods: HashSet<String>,
   channels: HashSet<String>,
   control_channel_id: Option<String>,
   client_id: Option<String>,
   pending_host_calls: HashMap<String, PendingHostCall>,
   pending_request_ids: HashSet<String>,
-  shell_bindings: HashMap<String, (String, String)>,
   next_call_id: u64,
 }
 
 impl<I: MethodInvoker> JsbEngine<I> {
-  pub fn new(invoker: I, specs: Vec<MethodSpec>) -> Self {
-    let specs = specs
-      .into_iter()
-      .map(|spec| (spec.name.to_string(), spec))
-      .collect();
+  pub fn new(invoker: I, methods: impl IntoIterator<Item = impl Into<String>>) -> Self {
     Self {
       invoker,
-      specs,
+      methods: methods.into_iter().map(Into::into).collect(),
       channels: HashSet::new(),
       control_channel_id: None,
       client_id: None,
       pending_host_calls: HashMap::new(),
       pending_request_ids: HashSet::new(),
-      shell_bindings: HashMap::new(),
       next_call_id: 0,
     }
   }
@@ -210,15 +193,17 @@ impl<I: MethodInvoker> JsbEngine<I> {
     if !self.channels.remove(channel_id) {
       return Vec::new();
     }
-    self.shell_bindings.remove(channel_id);
-    let staging_paths = self
+    if let Some(client_id) = self.client_id.as_deref() {
+      self.invoker.close_channel(client_id, channel_id);
+    }
+    for pending in self
       .pending_host_calls
       .values()
       .filter(|pending| pending.channel_id == channel_id)
-      .filter_map(|pending| pending.action.staging_path().map(str::to_string))
-      .collect::<Vec<_>>();
-    for path in staging_paths {
-      self.invoker.cleanup_staging_path(&path);
+    {
+      if let PendingHostAction::Resume(continuation) = &pending.action {
+        self.invoker.cancel_host_call(continuation);
+      }
     }
     self.pending_host_calls.retain(|_, pending| {
       let retain = pending.channel_id != channel_id;
@@ -240,7 +225,6 @@ impl<I: MethodInvoker> JsbEngine<I> {
       self.control_channel_id = None;
       self.pending_host_calls.clear();
       self.pending_request_ids.clear();
-      self.shell_bindings.clear();
     }
     outputs.shrink_to_fit();
     outputs
@@ -298,7 +282,7 @@ impl<I: MethodInvoker> JsbEngine<I> {
         None,
       )];
     }
-    let Some(spec) = self.specs.get(&request.method).copied() else {
+    if !self.methods.contains(&request.method) {
       return vec![reply_error(
         channel_id,
         &request.id,
@@ -306,7 +290,7 @@ impl<I: MethodInvoker> JsbEngine<I> {
         &format!("JSB method is unavailable: {}", request.method),
         None,
       )];
-    };
+    }
     if self.pending_request_ids.contains(&request.id) {
       return vec![reply_error(
         channel_id,
@@ -315,11 +299,6 @@ impl<I: MethodInvoker> JsbEngine<I> {
         "JSB request ID is already pending.",
         None,
       )];
-    }
-    match spec.scoped_file {
-      Some(ScopedFileKind::Upload) => return self.begin_scoped_upload(channel_id, request),
-      Some(ScopedFileKind::Download) => return self.begin_scoped_download(channel_id, request),
-      None => {}
     }
     let client_id = self.client_id.clone().unwrap_or_default();
     self.run_invocation(
@@ -337,12 +316,8 @@ impl<I: MethodInvoker> JsbEngine<I> {
         channel_id: channel_id.to_string(),
       }];
     }
-    let Some((client_id, shell_id)) = self.shell_bindings.get(channel_id) else {
-      return vec![EngineOutput::ClosePort {
-        channel_id: channel_id.to_string(),
-      }];
-    };
-    match self.invoker.send_binary(client_id, shell_id, bytes) {
+    let client_id = self.client_id.as_deref().unwrap_or_default();
+    match self.invoker.send_binary(client_id, channel_id, bytes) {
       Ok(()) => Vec::new(),
       Err(_) => vec![EngineOutput::ClosePort {
         channel_id: channel_id.to_string(),
@@ -358,6 +333,9 @@ impl<I: MethodInvoker> JsbEngine<I> {
     let result: HostCallResult = match serde_json::from_str(result_json) {
       Ok(result) => result,
       Err(error) => {
+        if let PendingHostAction::Resume(continuation) = &pending.action {
+          self.invoker.cancel_host_call(continuation);
+        }
         return vec![reply_error(
           &pending.channel_id,
           &pending.request_id,
@@ -369,7 +347,9 @@ impl<I: MethodInvoker> JsbEngine<I> {
     };
     match result {
       HostCallResult::Error { error } => {
-        self.cleanup_pending_action(&pending.action);
+        if let PendingHostAction::Resume(continuation) = &pending.action {
+          self.invoker.cancel_host_call(continuation);
+        }
         vec![reply_error(
           &pending.channel_id,
           &pending.request_id,
@@ -384,33 +364,19 @@ impl<I: MethodInvoker> JsbEngine<I> {
           &pending.request_id,
           data,
         )],
-        PendingHostAction::InvokeUpload {
-          method,
-          client_id,
-          data,
-          staging_path,
-        } => {
-          let result = self.run_invocation(
+        PendingHostAction::Resume(continuation) => match self
+          .invoker
+          .resume_host_call(&continuation, &data.to_string())
+        {
+          Ok(flow) => self.handle_invoke_flow(&pending.channel_id, &pending.request_id, flow),
+          Err(error) => vec![reply_error(
             &pending.channel_id,
             &pending.request_id,
-            &method,
-            &client_id,
-            &data,
-          );
-          self.invoker.cleanup_staging_path(&staging_path);
-          result
-        }
-        PendingHostAction::FinishDownload {
-          result,
-          staging_path,
-        } => {
-          self.invoker.cleanup_staging_path(&staging_path);
-          vec![reply_success(
-            &pending.channel_id,
-            &pending.request_id,
-            result,
-          )]
-        }
+            &error.code,
+            &error.message,
+            parse_details(error.details_json.as_deref()),
+          )],
+        },
       },
     }
   }
@@ -427,22 +393,14 @@ impl<I: MethodInvoker> JsbEngine<I> {
       .collect()
   }
 
-  pub fn push_shell_binary(
-    &self,
-    client_id: &str,
-    shell_id: &str,
-    bytes: Vec<u8>,
-  ) -> Vec<EngineOutput> {
-    self
-      .shell_bindings
-      .iter()
-      .find(|(_, binding)| binding.0 == client_id && binding.1 == shell_id)
-      .map(|(channel_id, _)| EngineOutput::PushBinary {
-        channel_id: channel_id.clone(),
-        bytes,
-      })
-      .into_iter()
-      .collect()
+  pub fn push_binary(&self, channel_id: &str, bytes: Vec<u8>) -> Vec<EngineOutput> {
+    if !self.channels.contains(channel_id) || bytes.len() > MAX_FRAME_SIZE {
+      return Vec::new();
+    }
+    vec![EngineOutput::PushBinary {
+      channel_id: channel_id.to_string(),
+      bytes,
+    }]
   }
 
   fn run_invocation(
@@ -454,32 +412,7 @@ impl<I: MethodInvoker> JsbEngine<I> {
     data: &Value,
   ) -> Vec<EngineOutput> {
     match self.invoker.invoke(method, client_id, &data.to_string()) {
-      Ok(InvokeFlow::Complete(outcome)) => {
-        if let Some(bind) = self.specs.get(method).and_then(|spec| spec.binary_bind) {
-          self.bind_shell(data, client_id, bind);
-        }
-        self.reply_from_outcome(channel_id, request_id, outcome)
-      }
-      Ok(InvokeFlow::Delegate {
-        primitive,
-        params_json,
-      }) => {
-        self.pending_request_ids.insert(request_id.to_string());
-        let call_id = self.next_host_call_id();
-        self.pending_host_calls.insert(
-          call_id.clone(),
-          PendingHostCall {
-            channel_id: channel_id.to_string(),
-            request_id: request_id.to_string(),
-            action: PendingHostAction::Reply,
-          },
-        );
-        vec![EngineOutput::HostCall(HostCall {
-          call_id,
-          primitive,
-          params_json,
-        })]
-      }
+      Ok(flow) => self.handle_invoke_flow(channel_id, request_id, flow),
       Err(error) => vec![reply_error(
         channel_id,
         request_id,
@@ -490,152 +423,38 @@ impl<I: MethodInvoker> JsbEngine<I> {
     }
   }
 
-  fn begin_scoped_upload(&mut self, channel_id: &str, request: InvokeRequest) -> Vec<EngineOutput> {
-    let Some(source) = request
-      .data
-      .get("localFilename")
-      .and_then(Value::as_str)
-      .map(str::to_string)
-    else {
-      return vec![reply_error(
-        channel_id,
-        &request.id,
-        "BRIDGE_INVALID_REQUEST",
-        "localFilename must be a string.",
-        None,
-      )];
-    };
-    let call_id = self.next_host_call_id();
-    let staging_path = match self.invoker.create_staging_path(&call_id) {
-      Ok(path) => path,
-      Err(error) => {
-        return vec![reply_error(
-          channel_id,
-          &request.id,
-          &error.code,
-          &error.message,
-          parse_details(error.details_json.as_deref()),
-        )];
-      }
-    };
-    let mut data = request.data;
-    if let Some(object) = data.as_object_mut() {
-      object.insert("localFilename".into(), Value::String(staging_path.clone()));
-    }
-    self.pending_request_ids.insert(request.id.clone());
-    self.pending_host_calls.insert(
-      call_id.clone(),
-      PendingHostCall {
-        channel_id: channel_id.to_string(),
-        request_id: request.id,
-        action: PendingHostAction::InvokeUpload {
-          method: request.method,
-          client_id: self.client_id.clone().unwrap_or_default(),
-          data,
-          staging_path: staging_path.clone(),
-        },
-      },
-    );
-    vec![EngineOutput::HostCall(HostCall {
-      call_id,
-      primitive: READ_SCOPED_FILE.to_string(),
-      params_json: json!({ "source": source, "targetPath": staging_path }).to_string(),
-    })]
-  }
-
-  fn begin_scoped_download(
+  fn handle_invoke_flow(
     &mut self,
     channel_id: &str,
-    request: InvokeRequest,
+    request_id: &str,
+    flow: InvokeFlow,
   ) -> Vec<EngineOutput> {
-    let Some(target) = request
-      .data
-      .get("localFilename")
-      .and_then(Value::as_str)
-      .map(str::to_string)
-    else {
-      return vec![reply_error(
-        channel_id,
-        &request.id,
-        "BRIDGE_INVALID_REQUEST",
-        "localFilename must be a string.",
-        None,
-      )];
-    };
-    let call_id = self.next_host_call_id();
-    let staging_path = match self.invoker.create_staging_path(&call_id) {
-      Ok(path) => path,
-      Err(error) => {
-        return vec![reply_error(
-          channel_id,
-          &request.id,
-          &error.code,
-          &error.message,
-          parse_details(error.details_json.as_deref()),
-        )];
+    match flow {
+      InvokeFlow::Complete(outcome) => self.reply_from_outcome(channel_id, request_id, outcome),
+      InvokeFlow::Delegate {
+        primitive,
+        params_json,
+        continuation,
+      } => {
+        self.pending_request_ids.insert(request_id.to_string());
+        let call_id = self.next_host_call_id();
+        self.pending_host_calls.insert(
+          call_id.clone(),
+          PendingHostCall {
+            channel_id: channel_id.to_string(),
+            request_id: request_id.to_string(),
+            action: continuation
+              .map(PendingHostAction::Resume)
+              .unwrap_or(PendingHostAction::Reply),
+          },
+        );
+        vec![EngineOutput::HostCall(HostCall {
+          call_id,
+          primitive,
+          params_json,
+        })]
       }
-    };
-    let mut data = request.data;
-    if let Some(object) = data.as_object_mut() {
-      object.insert("localFilename".into(), Value::String(staging_path.clone()));
     }
-    let client_id = self.client_id.clone().unwrap_or_default();
-    let outcome = match self
-      .invoker
-      .invoke(&request.method, &client_id, &data.to_string())
-    {
-      Ok(InvokeFlow::Complete(outcome)) => outcome,
-      Ok(InvokeFlow::Delegate { .. }) => {
-        self.invoker.cleanup_staging_path(&staging_path);
-        return vec![reply_error(
-          channel_id,
-          &request.id,
-          "JSB_NATIVE_ERROR",
-          "Scoped-file methods must complete in Rust before the staging hand-off.",
-          None,
-        )];
-      }
-      Err(error) => {
-        self.invoker.cleanup_staging_path(&staging_path);
-        return vec![reply_error(
-          channel_id,
-          &request.id,
-          &error.code,
-          &error.message,
-          parse_details(error.details_json.as_deref()),
-        )];
-      }
-    };
-    let result = match serde_json::from_str(&outcome.result_json) {
-      Ok(result) => result,
-      Err(error) => {
-        self.invoker.cleanup_staging_path(&staging_path);
-        return vec![reply_error(
-          channel_id,
-          &request.id,
-          "JSB_INVALID_RESPONSE",
-          "Rust method returned invalid JSON.",
-          Some(json!({ "reason": error.to_string() })),
-        )];
-      }
-    };
-    self.pending_request_ids.insert(request.id.clone());
-    self.pending_host_calls.insert(
-      call_id.clone(),
-      PendingHostCall {
-        channel_id: channel_id.to_string(),
-        request_id: request.id,
-        action: PendingHostAction::FinishDownload {
-          result,
-          staging_path: staging_path.clone(),
-        },
-      },
-    );
-    vec![EngineOutput::HostCall(HostCall {
-      call_id,
-      primitive: WRITE_SCOPED_FILE.to_string(),
-      params_json: json!({ "sourcePath": staging_path, "target": target }).to_string(),
-    })]
   }
 
   fn reply_from_outcome(
@@ -669,31 +488,6 @@ impl<I: MethodInvoker> JsbEngine<I> {
   fn next_host_call_id(&mut self) -> String {
     self.next_call_id += 1;
     format!("host-{}", self.next_call_id)
-  }
-
-  fn cleanup_pending_action(&self, action: &PendingHostAction) {
-    match action {
-      PendingHostAction::InvokeUpload { staging_path, .. }
-      | PendingHostAction::FinishDownload { staging_path, .. } => {
-        self.invoker.cleanup_staging_path(staging_path);
-      }
-      PendingHostAction::Reply => {}
-    }
-  }
-
-  fn bind_shell(&mut self, data: &Value, client_id: &str, spec: BinaryBindSpec) {
-    let Some(channel_id) = data.get(spec.channel_field).and_then(Value::as_str) else {
-      return;
-    };
-    let Some(shell_id) = data.get(spec.shell_field).and_then(Value::as_str) else {
-      return;
-    };
-    if self.channels.contains(channel_id) {
-      self.shell_bindings.insert(
-        channel_id.to_string(),
-        (client_id.to_string(), shell_id.to_string()),
-      );
-    }
   }
 }
 
@@ -745,8 +539,9 @@ mod tests {
   struct FakeInvoker {
     calls: Arc<Mutex<Vec<(String, String, String)>>>,
     binary: Arc<Mutex<Vec<BinaryCall>>>,
+    resumed: Arc<Mutex<Vec<(String, String)>>>,
+    cancelled: Arc<Mutex<Vec<String>>>,
     released: Arc<Mutex<Vec<String>>>,
-    cleaned: Arc<Mutex<Vec<String>>>,
   }
 
   impl MethodInvoker for FakeInvoker {
@@ -765,6 +560,14 @@ mod tests {
         return Ok(InvokeFlow::Delegate {
           primitive: "readClipboard".into(),
           params_json: params_json.to_string(),
+          continuation: None,
+        });
+      }
+      if method == "deferred.operation" {
+        return Ok(InvokeFlow::Delegate {
+          primitive: "prepareDeferredOperation".into(),
+          params_json: params_json.to_string(),
+          continuation: Some("continuation-1".into()),
         });
       }
       Ok(InvokeFlow::Complete(match method {
@@ -789,23 +592,37 @@ mod tests {
     fn send_binary(
       &self,
       client_id: &str,
-      shell_id: &str,
+      channel_id: &str,
       bytes: &[u8],
     ) -> Result<(), InvokerError> {
       self
         .binary
         .lock()
         .unwrap()
-        .push((client_id.into(), shell_id.into(), bytes.to_vec()));
+        .push((client_id.into(), channel_id.into(), bytes.to_vec()));
       Ok(())
     }
 
-    fn create_staging_path(&self, call_id: &str) -> Result<String, InvokerError> {
-      Ok(format!("/tmp/{call_id}"))
+    fn close_channel(&self, _client_id: &str, _channel_id: &str) {}
+
+    fn resume_host_call(
+      &self,
+      continuation: &str,
+      data_json: &str,
+    ) -> Result<InvokeFlow, InvokerError> {
+      self
+        .resumed
+        .lock()
+        .unwrap()
+        .push((continuation.into(), data_json.into()));
+      Ok(InvokeFlow::Complete(InvokeOutcome {
+        result_json: r#"{"finished":true}"#.into(),
+        host_actions: Vec::new(),
+      }))
     }
 
-    fn cleanup_staging_path(&self, path: &str) {
-      self.cleaned.lock().unwrap().push(path.into());
+    fn cancel_host_call(&self, continuation: &str) {
+      self.cancelled.lock().unwrap().push(continuation.into());
     }
 
     fn release_client(&self, client_id: &str) {
@@ -813,59 +630,15 @@ mod tests {
     }
   }
 
-  fn test_specs() -> Vec<MethodSpec> {
+  fn test_specs() -> Vec<&'static str> {
     vec![
-      MethodSpec {
-        name: "bridge.health",
-        binary: false,
-        events: &[],
-        error_domain: "rust",
-        scoped_file: None,
-        binary_bind: None,
-      },
-      MethodSpec {
-        name: "data.resetCrypto",
-        binary: false,
-        events: &[],
-        error_domain: "rust",
-        scoped_file: None,
-        binary_bind: None,
-      },
-      MethodSpec {
-        name: "ssh.shell.open",
-        binary: true,
-        events: &[],
-        error_domain: "rust",
-        scoped_file: None,
-        binary_bind: Some(BinaryBindSpec {
-          channel_field: "dataChannelId",
-          shell_field: "sshShellId",
-        }),
-      },
-      MethodSpec {
-        name: "ssh.sftp.uploadFile",
-        binary: false,
-        events: &[],
-        error_domain: "rust",
-        scoped_file: Some(ScopedFileKind::Upload),
-        binary_bind: None,
-      },
-      MethodSpec {
-        name: "ssh.sftp.downloadFile",
-        binary: false,
-        events: &[],
-        error_domain: "rust",
-        scoped_file: Some(ScopedFileKind::Download),
-        binary_bind: None,
-      },
-      MethodSpec {
-        name: "clipboard.readText",
-        binary: false,
-        events: &[],
-        error_domain: "host",
-        scoped_file: None,
-        binary_bind: None,
-      },
+      "bridge.health",
+      "data.resetCrypto",
+      "ssh.shell.open",
+      "ssh.sftp.uploadFile",
+      "ssh.sftp.downloadFile",
+      "clipboard.readText",
+      "deferred.operation",
     ]
   }
 
@@ -953,7 +726,44 @@ mod tests {
   }
 
   #[test]
-  fn binds_shell_binary_in_rust_and_releases_only_after_last_channel() {
+  fn resumes_and_cancels_opaque_host_call_continuations() {
+    let (mut engine, invoker) = opened_engine();
+    let output = engine.on_control_frame(
+      CONTROL,
+      r#"{"type":"invoke.request","id":"deferred","method":"deferred.operation","data":{"value":1}}"#,
+    );
+    let [EngineOutput::HostCall(call)] = output.as_slice() else {
+      panic!("expected deferred HostCall")
+    };
+    let reply = engine.complete_host_call(&call.call_id, r#"{"data":{"ready":true}}"#);
+    let [EngineOutput::ReplyText { text, .. }] = reply.as_slice() else {
+      panic!("expected resumed reply")
+    };
+    assert_eq!(
+      serde_json::from_str::<Value>(text).unwrap()["data"]["finished"],
+      true
+    );
+    assert_eq!(
+      &*invoker.resumed.lock().unwrap(),
+      &[("continuation-1".into(), r#"{"ready":true}"#.into())]
+    );
+
+    let output = engine.on_control_frame(
+      CONTROL,
+      r#"{"type":"invoke.request","id":"cancelled","method":"deferred.operation"}"#,
+    );
+    let [EngineOutput::HostCall(call)] = output.as_slice() else {
+      panic!("expected deferred HostCall")
+    };
+    engine.complete_host_call(
+      &call.call_id,
+      r#"{"error":{"code":"CANCELLED","message":"cancelled"}}"#,
+    );
+    assert_eq!(&*invoker.cancelled.lock().unwrap(), &["continuation-1"]);
+  }
+
+  #[test]
+  fn routes_binary_by_channel_and_releases_only_after_last_channel() {
     let (mut engine, invoker) = opened_engine();
     engine.on_channel_open(DATA);
     let client_id = engine.client_id().unwrap().to_string();
@@ -964,10 +774,10 @@ mod tests {
     assert!(engine.on_binary_frame(DATA, &[0, 1, 255]).is_empty());
     assert_eq!(
       invoker.binary.lock().unwrap()[0],
-      (client_id.clone(), "shell-1".into(), vec![0, 1, 255])
+      (client_id.clone(), DATA.into(), vec![0, 1, 255])
     );
 
-    let pushed = engine.push_shell_binary(&client_id, "shell-1", vec![9, 8]);
+    let pushed = engine.push_binary(DATA, vec![9, 8]);
     assert_eq!(
       pushed,
       vec![EngineOutput::PushBinary {
@@ -999,50 +809,6 @@ mod tests {
         channel_id: CONTROL.into(),
         text: "event".into()
       }]
-    );
-  }
-
-  #[test]
-  fn orchestrates_scoped_sftp_transfers_and_cleans_staging_files() {
-    let (mut engine, invoker) = opened_engine();
-    let upload = engine.on_control_frame(
-      CONTROL,
-      r#"{"type":"invoke.request","id":"upload","method":"ssh.sftp.uploadFile","data":{"sshSftpId":"sftp","localFilename":"content://upload","remoteFilename":"/tmp/a"}}"#,
-    );
-    let [EngineOutput::HostCall(call)] = upload.as_slice() else {
-      panic!("expected readScopedFile")
-    };
-    assert_eq!(call.primitive, READ_SCOPED_FILE);
-    let upload_reply = engine.complete_host_call(&call.call_id, r#"{"data":null}"#);
-    assert!(matches!(
-      upload_reply.as_slice(),
-      [EngineOutput::ReplyText { .. }]
-    ));
-    let calls = invoker.calls.lock().unwrap();
-    let upload_call = calls
-      .iter()
-      .find(|call| call.0 == "ssh.sftp.uploadFile")
-      .unwrap();
-    assert!(upload_call.2.contains("/tmp/host-1"));
-    drop(calls);
-    assert_eq!(&*invoker.cleaned.lock().unwrap(), &["/tmp/host-1"]);
-
-    let download = engine.on_control_frame(
-      CONTROL,
-      r#"{"type":"invoke.request","id":"download","method":"ssh.sftp.downloadFile","data":{"sshSftpId":"sftp","localFilename":"content://download","remoteFilename":"/tmp/a"}}"#,
-    );
-    let [EngineOutput::HostCall(call)] = download.as_slice() else {
-      panic!("expected writeScopedFile")
-    };
-    assert_eq!(call.primitive, WRITE_SCOPED_FILE);
-    let download_reply = engine.complete_host_call(&call.call_id, r#"{"data":null}"#);
-    assert!(matches!(
-      download_reply.as_slice(),
-      [EngineOutput::ReplyText { .. }]
-    ));
-    assert_eq!(
-      &*invoker.cleaned.lock().unwrap(),
-      &["/tmp/host-1", "/tmp/host-2"]
     );
   }
 

@@ -10,11 +10,11 @@ type PendingChannel = {
 type ChannelControlMessage = {
   channelId: string;
   error?: JSBErrorPayload;
-  source: "shell360.jsb";
+  source: "jsb.channel";
   type: "channel.open.failed" | "channel.opened";
 };
 
-const CONTROL_MESSAGE_SOURCE = "shell360.jsb";
+const CONTROL_MESSAGE_SOURCE = "jsb.channel";
 const pendingChannels = new Map<string, PendingChannel>();
 
 function parseControlError(value: unknown): JSBErrorPayload | undefined {

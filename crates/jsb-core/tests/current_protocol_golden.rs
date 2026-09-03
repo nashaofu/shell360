@@ -1,4 +1,4 @@
-use jsb_core::{EngineOutput, InvokeFlow, InvokeOutcome, JsbEngine, MethodInvoker, MethodSpec};
+use jsb_core::{EngineOutput, InvokeFlow, InvokeOutcome, JsbEngine, MethodInvoker};
 use serde_json::Value;
 
 struct HealthInvoker;
@@ -20,17 +20,23 @@ impl MethodInvoker for HealthInvoker {
   fn send_binary(
     &self,
     _client_id: &str,
-    _shell_id: &str,
+    _channel_id: &str,
     _bytes: &[u8],
   ) -> Result<(), jsb_core::InvokerError> {
     Ok(())
   }
 
-  fn create_staging_path(&self, _call_id: &str) -> Result<String, jsb_core::InvokerError> {
-    Ok(String::new())
+  fn close_channel(&self, _client_id: &str, _channel_id: &str) {}
+
+  fn resume_host_call(
+    &self,
+    _continuation: &str,
+    _data_json: &str,
+  ) -> Result<InvokeFlow, jsb_core::InvokerError> {
+    unreachable!()
   }
 
-  fn cleanup_staging_path(&self, _path: &str) {}
+  fn cancel_host_call(&self, _continuation: &str) {}
 
   fn release_client(&self, _client_id: &str) {}
 }
@@ -42,15 +48,7 @@ fn fixture() -> Value {
 #[test]
 fn current_invoke_request_and_response_match_the_golden_contract() {
   let fixture = fixture();
-  let specs = vec![MethodSpec {
-    name: "bridge.health",
-    binary: false,
-    events: &[],
-    error_domain: "rust",
-    scoped_file: None,
-    binary_bind: None,
-  }];
-  let mut engine = JsbEngine::new(HealthInvoker, specs);
+  let mut engine = JsbEngine::new(HealthInvoker, ["bridge.health"]);
   let channel_id = fixture["channelId"].as_str().unwrap();
   assert!(matches!(
     engine.on_channel_open(channel_id).as_slice(),
@@ -78,7 +76,7 @@ fn current_control_and_binary_fixtures_are_well_formed() {
     fixture["frames"]["opened"]
       .as_str()
       .unwrap()
-      .contains("shell360.jsb")
+      .contains("jsb.channel")
   );
   assert_eq!(fixture["binary"]["upstream"].as_array().unwrap().len(), 5);
   assert_eq!(fixture["binary"]["downstream"].as_array().unwrap().len(), 4);

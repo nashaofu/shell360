@@ -2,11 +2,11 @@
   "channelId": "123e4567-e89b-42d3-a456-426614174000",
   "clientId": "client-1",
   "frames": {
-    "opened": "{\"source\":\"shell360.jsb\",\"type\":\"channel.opened\",\"channelId\":\"123e4567-e89b-42d3-a456-426614174000\"}",
+    "opened": "{\"source\":\"jsb.channel\",\"type\":\"channel.opened\",\"channelId\":\"123e4567-e89b-42d3-a456-426614174000\"}",
     "request": "{\"type\":\"invoke.request\",\"id\":\"request-1\",\"method\":\"bridge.health\",\"data\":null}",
     "response": "{\"data\":{\"status\":\"ok\"},\"id\":\"request-1\",\"type\":\"invoke.response\"}",
     "emit": "{\"type\":\"emit\",\"event\":\"data.authedChange\",\"payload\":true}",
-    "openFailed": "{\"source\":\"shell360.jsb\",\"type\":\"channel.open.failed\",\"channelId\":\"123e4567-e89b-42d3-a456-426614174000\",\"error\":{\"code\":\"JSB_CHANNEL_OPEN_FAILED\",\"message\":\"Could not open JSB channel.\"}}"
+    "openFailed": "{\"source\":\"jsb.channel\",\"type\":\"channel.open.failed\",\"channelId\":\"123e4567-e89b-42d3-a456-426614174000\",\"error\":{\"code\":\"JSB_CHANNEL_OPEN_FAILED\",\"message\":\"Could not open JSB channel.\"}}"
   },
   "binary": {
     "upstream": [0, 27, 91, 65, 255],

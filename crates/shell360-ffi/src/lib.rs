@@ -222,6 +222,7 @@ pub struct NativeEngineOutput {
 #[derive(uniffi::Object)]
 pub struct NativeJsbEngine {
   core: std::sync::Mutex<jsb_core::JsbEngine<RuntimeInvoker>>,
+  invoker: RuntimeInvoker,
   host_services: Arc<dyn HostServices>,
 }
 
@@ -229,11 +230,15 @@ pub struct NativeJsbEngine {
 impl NativeJsbEngine {
   #[uniffi::constructor]
   pub fn new(runtime: Arc<Shell360Runtime>, host_services: Box<dyn HostServices>) -> Arc<Self> {
+    let invoker = RuntimeInvoker::new(Arc::clone(&runtime.inner));
     Arc::new(Self {
       core: std::sync::Mutex::new(jsb_core::JsbEngine::new(
-        RuntimeInvoker(Arc::clone(&runtime.inner)),
-        shell360_runtime::method_specs().to_vec(),
+        invoker.clone(),
+        shell360_runtime::method_specs()
+          .iter()
+          .map(|method| method.name),
       )),
+      invoker,
       host_services: Arc::from(host_services),
     })
   }
@@ -288,7 +293,10 @@ impl NativeJsbEngine {
     shell_id: String,
     bytes: Vec<u8>,
   ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.push_shell_binary(&client_id, &shell_id, bytes))
+    let Some(channel_id) = self.invoker.shell_channel(&client_id, &shell_id) else {
+      return Ok(Vec::new());
+    };
+    self.with_engine(|engine| engine.push_binary(&channel_id, bytes))
   }
 
   pub fn registered_methods(&self) -> Vec<String> {

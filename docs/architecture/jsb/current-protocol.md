@@ -6,7 +6,7 @@ Status: P0 static baseline. Device captures remain outstanding as listed in `REA
 
 1. Page calls `window.__JSB__.openChannel(channelId)` with a UUID.
 2. Host transfers one web port and posts a window control string:
-   `{"source":"shell360.jsb","type":"channel.opened","channelId":"..."}`.
+   `{"source":"jsb.channel","type":"channel.opened","channelId":"..."}`.
 3. Page writes an invoke string to the port:
    `{"type":"invoke.request","id":"...","method":"bridge.health","data":null}`.
 4. Host writes a response string to the same port:
@@ -19,7 +19,7 @@ Status: P0 static baseline. Device captures remain outstanding as listed in `REA
 ## Open failure
 
 The window control string is
-`{"source":"shell360.jsb","type":"channel.open.failed","channelId":"...","error":{"code":"JSB_CHANNEL_OPEN_FAILED","message":"..."}}`.
+`{"source":"jsb.channel","type":"channel.open.failed","channelId":"...","error":{"code":"JSB_CHANNEL_OPEN_FAILED","message":"..."}}`.
 Android can additionally report `JSB_CHANNEL_INVALID_ID`; HarmonyOS currently folds invalid IDs into `JSB_CHANNEL_OPEN_FAILED`; the iOS adapter silently returns for an empty ID.
 
 ## Invoke error envelope

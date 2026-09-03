@@ -16,7 +16,7 @@ type PendingRequest = {
   resolve(value: unknown): void;
 };
 
-export class JSB {
+class JSB {
   private readonly channel = new JSBChannel<string>();
   private readonly events = new EventEmitter<string>();
   private readonly pendingRequests = new Map<string, PendingRequest>();
@@ -169,4 +169,6 @@ export class JSB {
   };
 }
 
-export const jsb = new JSB();
+const jsb = new JSB();
+
+export default jsb;

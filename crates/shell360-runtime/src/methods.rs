@@ -1,8 +1,14 @@
 use std::sync::LazyLock;
 
-use jsb_core::{BinaryBindSpec, MethodSpec, ScopedFileKind};
-
 pub static METHOD_SPECS: LazyLock<Vec<MethodSpec>> = LazyLock::new(build_specs);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MethodSpec {
+  pub name: &'static str,
+  pub binary: bool,
+  pub events: &'static [&'static str],
+  pub error_domain: &'static str,
+}
 
 /// Business-owned host routing table: JS-visible method -> opaque host
 /// primitive executed by the platform HostServices implementations.
@@ -108,8 +114,6 @@ fn host(name: &'static str) -> MethodSpec {
     binary: false,
     events: &[],
     error_domain: "host",
-    scoped_file: None,
-    binary_bind: None,
   }
 }
 
@@ -119,19 +123,6 @@ fn rust(name: &'static str) -> MethodSpec {
     binary: name == "ssh.shell.open" || name == "ssh.shell.send",
     events: method_events(name),
     error_domain: "rust",
-    scoped_file: match name {
-      "ssh.sftp.uploadFile" => Some(ScopedFileKind::Upload),
-      "ssh.sftp.downloadFile" => Some(ScopedFileKind::Download),
-      _ => None,
-    },
-    binary_bind: if name == "ssh.shell.open" {
-      Some(BinaryBindSpec {
-        channel_field: "dataChannelId",
-        shell_field: "sshShellId",
-      })
-    } else {
-      None
-    },
   }
 }
 

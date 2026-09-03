@@ -2,7 +2,7 @@ use std::{
   collections::HashMap,
   path::PathBuf,
   sync::{
-    Arc,
+    Arc, Mutex,
     atomic::{AtomicU64, Ordering},
   },
 };
@@ -309,7 +309,166 @@ pub struct Shell360Runtime {
   machine_uid: std::sync::Mutex<Option<String>>,
 }
 
-pub struct RuntimeInvoker(pub Arc<Shell360Runtime>);
+#[derive(Clone)]
+pub struct RuntimeInvoker {
+  runtime: Arc<Shell360Runtime>,
+  shell_channels: Arc<Mutex<HashMap<(String, String), String>>>,
+  transfers: Arc<Mutex<HashMap<String, PendingTransfer>>>,
+}
+
+enum PendingTransfer {
+  Upload {
+    method: String,
+    client_id: String,
+    params_json: String,
+    staging_path: String,
+  },
+  Download {
+    result_json: String,
+    staging_path: String,
+  },
+}
+
+impl PendingTransfer {
+  fn staging_path(&self) -> &str {
+    match self {
+      Self::Upload { staging_path, .. } | Self::Download { staging_path, .. } => staging_path,
+    }
+  }
+}
+
+impl RuntimeInvoker {
+  pub fn new(runtime: Arc<Shell360Runtime>) -> Self {
+    Self {
+      runtime,
+      shell_channels: Arc::new(Mutex::new(HashMap::new())),
+      transfers: Arc::new(Mutex::new(HashMap::new())),
+    }
+  }
+
+  pub fn shell_channel(&self, client_id: &str, shell_id: &str) -> Option<String> {
+    self
+      .shell_channels
+      .lock()
+      .expect("lock shell channels")
+      .get(&(client_id.to_string(), shell_id.to_string()))
+      .cloned()
+  }
+
+  fn bind_shell_channel(&self, client_id: &str, params_json: &str) {
+    let Ok(params) = serde_json::from_str::<serde_json::Value>(params_json) else {
+      return;
+    };
+    let Some(channel_id) = params
+      .get("dataChannelId")
+      .and_then(serde_json::Value::as_str)
+    else {
+      return;
+    };
+    let Some(shell_id) = params.get("sshShellId").and_then(serde_json::Value::as_str) else {
+      return;
+    };
+    self
+      .shell_channels
+      .lock()
+      .expect("lock shell channels")
+      .insert(
+        (client_id.to_string(), shell_id.to_string()),
+        channel_id.to_string(),
+      );
+  }
+
+  fn staging_path(&self, continuation: &str) -> Result<String, jsb_core::InvokerError> {
+    let directory = std::path::Path::new(&self.runtime.cache_dir()).join("transfers");
+    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::InvokerError {
+      code: "BRIDGE_IO_ERROR".into(),
+      message: error.to_string(),
+      details_json: None,
+    })?;
+    Ok(directory.join(continuation).to_string_lossy().into_owned())
+  }
+
+  fn cleanup_transfer(transfer: &PendingTransfer) {
+    let _ = std::fs::remove_file(transfer.staging_path());
+  }
+
+  fn begin_upload(
+    &self,
+    method: &str,
+    client_id: &str,
+    params_json: &str,
+  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
+    let mut data: serde_json::Value =
+      serde_json::from_str(params_json).map_err(invoker_json_error)?;
+    let source = data
+      .get("localFilename")
+      .and_then(serde_json::Value::as_str)
+      .ok_or_else(|| invoker_request_error("localFilename must be a string."))?
+      .to_string();
+    let continuation = Uuid::new_v4().to_string();
+    let staging_path = self.staging_path(&continuation)?;
+    if let Some(object) = data.as_object_mut() {
+      object.insert("localFilename".into(), staging_path.clone().into());
+    }
+    self.transfers.lock().expect("lock transfers").insert(
+      continuation.clone(),
+      PendingTransfer::Upload {
+        method: method.to_string(),
+        client_id: client_id.to_string(),
+        params_json: data.to_string(),
+        staging_path: staging_path.clone(),
+      },
+    );
+    Ok(jsb_core::InvokeFlow::Delegate {
+      primitive: "readScopedFile".into(),
+      params_json: serde_json::json!({ "source": source, "targetPath": staging_path }).to_string(),
+      continuation: Some(continuation),
+    })
+  }
+
+  fn begin_download(
+    &self,
+    method: &str,
+    client_id: &str,
+    params_json: &str,
+  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
+    let mut data: serde_json::Value =
+      serde_json::from_str(params_json).map_err(invoker_json_error)?;
+    let target = data
+      .get("localFilename")
+      .and_then(serde_json::Value::as_str)
+      .ok_or_else(|| invoker_request_error("localFilename must be a string."))?
+      .to_string();
+    let continuation = Uuid::new_v4().to_string();
+    let staging_path = self.staging_path(&continuation)?;
+    if let Some(object) = data.as_object_mut() {
+      object.insert("localFilename".into(), staging_path.clone().into());
+    }
+    let result_json =
+      match self
+        .runtime
+        .invoke(method.to_string(), client_id.to_string(), data.to_string())
+      {
+        Ok(result_json) => result_json,
+        Err(error) => {
+          let _ = std::fs::remove_file(&staging_path);
+          return Err(runtime_invoker_error(error));
+        }
+      };
+    self.transfers.lock().expect("lock transfers").insert(
+      continuation.clone(),
+      PendingTransfer::Download {
+        result_json,
+        staging_path: staging_path.clone(),
+      },
+    );
+    Ok(jsb_core::InvokeFlow::Delegate {
+      primitive: "writeScopedFile".into(),
+      params_json: serde_json::json!({ "sourcePath": staging_path, "target": target }).to_string(),
+      continuation: Some(continuation),
+    })
+  }
+}
 
 impl jsb_core::MethodInvoker for RuntimeInvoker {
   fn invoke(
@@ -318,6 +477,11 @@ impl jsb_core::MethodInvoker for RuntimeInvoker {
     client_id: &str,
     params_json: &str,
   ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
+    match method {
+      "ssh.sftp.uploadFile" => return self.begin_upload(method, client_id, params_json),
+      "ssh.sftp.downloadFile" => return self.begin_download(method, client_id, params_json),
+      _ => {}
+    }
     if let Some(primitive) = crate::methods::host_primitive(method) {
       if primitive == "openExternal" {
         validate_external_url(params_json)?;
@@ -325,10 +489,11 @@ impl jsb_core::MethodInvoker for RuntimeInvoker {
       return Ok(jsb_core::InvokeFlow::Delegate {
         primitive: primitive.to_string(),
         params_json: params_json.to_string(),
+        continuation: None,
       });
     }
     let result_json = self
-      .0
+      .runtime
       .invoke(
         method.to_string(),
         client_id.to_string(),
@@ -339,7 +504,10 @@ impl jsb_core::MethodInvoker for RuntimeInvoker {
         message: error.reason().to_string(),
         details_json: error.details_json().map(str::to_string),
       })?;
-    let host_actions = self.0.host_actions_for(method, &result_json);
+    if method == "ssh.shell.open" {
+      self.bind_shell_channel(client_id, params_json);
+    }
+    let host_actions = self.runtime.host_actions_for(method, &result_json);
     Ok(jsb_core::InvokeFlow::Complete(jsb_core::InvokeOutcome {
       result_json,
       host_actions,
@@ -349,11 +517,24 @@ impl jsb_core::MethodInvoker for RuntimeInvoker {
   fn send_binary(
     &self,
     client_id: &str,
-    shell_id: &str,
+    channel_id: &str,
     bytes: &[u8],
   ) -> Result<(), jsb_core::InvokerError> {
+    let shell_id = self
+      .shell_channels
+      .lock()
+      .expect("lock shell channels")
+      .iter()
+      .find_map(|((bound_client_id, shell_id), bound_channel_id)| {
+        (bound_client_id == client_id && bound_channel_id == channel_id).then(|| shell_id.clone())
+      })
+      .ok_or_else(|| jsb_core::InvokerError {
+        code: "JSB_CHANNEL_NOT_BOUND".into(),
+        message: "JSB binary channel is not bound to an SSH shell.".into(),
+        details_json: None,
+      })?;
     self
-      .0
+      .runtime
       .ssh_shell_send_binary(client_id.to_string(), shell_id.to_string(), bytes.to_vec())
       .map_err(|error| jsb_core::InvokerError {
         code: error.code().to_string(),
@@ -362,22 +543,83 @@ impl jsb_core::MethodInvoker for RuntimeInvoker {
       })
   }
 
-  fn create_staging_path(&self, call_id: &str) -> Result<String, jsb_core::InvokerError> {
-    let directory = std::path::Path::new(&self.0.cache_dir()).join("transfers");
-    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::InvokerError {
-      code: "BRIDGE_IO_ERROR".into(),
-      message: error.to_string(),
-      details_json: None,
-    })?;
-    Ok(directory.join(call_id).to_string_lossy().into_owned())
+  fn close_channel(&self, client_id: &str, channel_id: &str) {
+    self
+      .shell_channels
+      .lock()
+      .expect("lock shell channels")
+      .retain(|(bound_client_id, _), bound_channel_id| {
+        bound_client_id != client_id || bound_channel_id != channel_id
+      });
   }
 
-  fn cleanup_staging_path(&self, path: &str) {
-    let _ = std::fs::remove_file(path);
+  fn resume_host_call(
+    &self,
+    continuation: &str,
+    _data_json: &str,
+  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
+    let transfer = self
+      .transfers
+      .lock()
+      .expect("lock transfers")
+      .remove(continuation)
+      .ok_or_else(|| invoker_request_error("Unknown host-call continuation."))?;
+    let result = match &transfer {
+      PendingTransfer::Upload {
+        method,
+        client_id,
+        params_json,
+        ..
+      } => self.invoke(method, client_id, params_json),
+      PendingTransfer::Download { result_json, .. } => {
+        Ok(jsb_core::InvokeFlow::Complete(jsb_core::InvokeOutcome {
+          result_json: result_json.clone(),
+          host_actions: Vec::new(),
+        }))
+      }
+    };
+    Self::cleanup_transfer(&transfer);
+    result
+  }
+
+  fn cancel_host_call(&self, continuation: &str) {
+    if let Some(transfer) = self
+      .transfers
+      .lock()
+      .expect("lock transfers")
+      .remove(continuation)
+    {
+      Self::cleanup_transfer(&transfer);
+    }
   }
 
   fn release_client(&self, client_id: &str) {
-    self.0.release_client(client_id.to_string());
+    self
+      .shell_channels
+      .lock()
+      .expect("lock shell channels")
+      .retain(|(bound_client_id, _), _| bound_client_id != client_id);
+    self.runtime.release_client(client_id.to_string());
+  }
+}
+
+fn invoker_request_error(message: &str) -> jsb_core::InvokerError {
+  jsb_core::InvokerError {
+    code: "BRIDGE_INVALID_REQUEST".into(),
+    message: message.into(),
+    details_json: None,
+  }
+}
+
+fn invoker_json_error(error: serde_json::Error) -> jsb_core::InvokerError {
+  invoker_request_error(&error.to_string())
+}
+
+fn runtime_invoker_error(error: RuntimeError) -> jsb_core::InvokerError {
+  jsb_core::InvokerError {
+    code: error.code().to_string(),
+    message: error.reason().to_string(),
+    details_json: error.details_json().map(str::to_string),
   }
 }
 
@@ -1305,7 +1547,7 @@ mod tests {
   #[test]
   fn invoker_delegates_host_methods_with_their_primitives() {
     let (_directory, runtime) = temp_runtime();
-    let invoker = RuntimeInvoker(runtime);
+    let invoker = RuntimeInvoker::new(runtime);
     let params = r#"{"text":"hello"}"#;
     let flow = invoker
       .invoke("clipboard.writeText", "client", params)
@@ -1314,6 +1556,7 @@ mod tests {
       jsb_core::InvokeFlow::Delegate {
         primitive,
         params_json,
+        ..
       } => {
         assert_eq!(primitive, "writeClipboard");
         assert_eq!(params_json, params);
@@ -1325,7 +1568,7 @@ mod tests {
   #[test]
   fn invoker_validates_open_url_before_delegating() {
     let (_directory, runtime) = temp_runtime();
-    let invoker = RuntimeInvoker(runtime);
+    let invoker = RuntimeInvoker::new(runtime);
 
     for url in ["javascript:alert(1)", "file:///etc/hosts", "not-a-url"] {
       let error = invoker
@@ -1348,6 +1591,37 @@ mod tests {
       flow,
       jsb_core::InvokeFlow::Delegate { ref primitive, .. } if primitive == "openExternal"
     ));
+  }
+
+  #[test]
+  fn upload_continuation_owns_and_cleans_its_staging_file() {
+    let (_directory, runtime) = temp_runtime();
+    let invoker = RuntimeInvoker::new(runtime);
+    let flow = invoker
+      .invoke(
+        "ssh.sftp.uploadFile",
+        "client",
+        r#"{"localFilename":"content://document/source","remoteFilename":"/target"}"#,
+      )
+      .expect("prepare upload");
+    let jsb_core::InvokeFlow::Delegate {
+      primitive,
+      params_json,
+      continuation: Some(continuation),
+    } = flow
+    else {
+      panic!("expected upload host continuation")
+    };
+    assert_eq!(primitive, "readScopedFile");
+    let params: serde_json::Value = serde_json::from_str(&params_json).expect("parse params");
+    let staging_path = params["targetPath"].as_str().expect("staging path");
+    std::fs::write(staging_path, b"temporary").expect("write staging file");
+    assert!(std::path::Path::new(staging_path).exists());
+
+    invoker.cancel_host_call(&continuation);
+
+    assert!(!std::path::Path::new(staging_path).exists());
+    assert!(invoker.transfers.lock().expect("lock transfers").is_empty());
   }
 
   #[test]

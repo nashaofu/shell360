@@ -9,7 +9,7 @@ enum JavaScriptBridge {
       const protocolVersion = 1;
       const nativePorts = new Map();
       const controlMessage = (type, channelId) => JSON.stringify({
-        source: 'shell360.jsb',
+        source: 'jsb.channel',
         type,
         channelId
       });
@@ -73,7 +73,7 @@ enum JavaScriptBridge {
             nativePort.close();
             window.postMessage(
               JSON.stringify({
-                source: 'shell360.jsb',
+                source: 'jsb.channel',
                 type: 'channel.open.failed',
                 channelId,
                 error: { code: 'JSB_CHANNEL_OPEN_FAILED', message: String(error) }
