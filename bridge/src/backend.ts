@@ -169,6 +169,8 @@ export interface BridgeBackend {
   app: {
     getVersion(): Promise<string>;
     setSystemBarsAppearance(dark: boolean): Promise<void>;
+    onBackPress(callback: () => void): Promise<() => void>;
+    backToBackground(): Promise<void>;
   };
   machineUid: {
     getMachineUid(): Promise<string | undefined>;

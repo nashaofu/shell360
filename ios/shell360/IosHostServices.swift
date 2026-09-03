@@ -79,6 +79,10 @@ final class IosHostServices: HostServices, @unchecked Sendable {
         case "closeWindow":
             closeWindow()
             return nil
+        case "backToBackground":
+            // iOS has no platform "move to background" primitive; back navigation is
+            // handled entirely by the frontend router, so this is a no-op.
+            return nil
         case "readScopedFile":
             try Self.readScopedFile(params)
             return nil

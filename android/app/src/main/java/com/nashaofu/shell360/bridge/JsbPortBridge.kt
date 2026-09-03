@@ -61,6 +61,14 @@ class JsbPortBridge(
         }
     }
 
+    fun emitBackPress() {
+        dispatchOutputs {
+            engine.emit(
+                """{"type":"emit","event":"app.back","targetId":null,"payload":{}}""",
+            )
+        }
+    }
+
     fun dispose() {
         if (!disposed.compareAndSet(false, true)) {
             return

@@ -15,6 +15,7 @@ class PlatformHostServices(
     private val context: Context,
     private val fileBridge: AndroidFileBridge?,
     private val closeWindow: () -> Unit,
+    private val backToBackground: () -> Unit,
     private val resetApplication: () -> Unit,
     private val setSystemBarsAppearance: (Boolean) -> Unit,
 ) : HostServices {
@@ -69,6 +70,10 @@ class PlatformHostServices(
             }
             "closeWindow" -> {
                 closeWindow()
+                null
+            }
+            "backToBackground" -> {
+                backToBackground()
                 null
             }
             "readScopedFile" -> {

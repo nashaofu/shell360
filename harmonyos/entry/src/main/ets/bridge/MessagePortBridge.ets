@@ -78,6 +78,14 @@ export class MessagePortBridge {
     });
   }
 
+  emitBackPress(): void {
+    void this.ready.then(() => {
+      this.executeOutputs(jsbEngineEmit('{"type":"emit","event":"app.back","targetId":null,"payload":{}}'));
+    }).catch((error: Object) => {
+      console.error(`[Shell360] JSB engine is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
+    });
+  }
+
   async close(): Promise<void> {
     await this.ready.catch(() => {});
     const channelIds = Array.from(this.channels.keys());

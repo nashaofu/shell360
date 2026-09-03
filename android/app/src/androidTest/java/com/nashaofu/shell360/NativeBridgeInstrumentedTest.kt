@@ -69,6 +69,7 @@ class NativeBridgeInstrumentedTest {
             context = context,
             fileBridge = null,
             closeWindow = {},
+            backToBackground = {},
             resetApplication = {},
             setSystemBarsAppearance = {},
         )

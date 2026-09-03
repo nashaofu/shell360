@@ -379,6 +379,9 @@ export function createNativeBackend(transport: NativeJsb): BridgeBackend {
       getVersion: () => transport.invoke("app.getVersion"),
       setSystemBarsAppearance: (dark) =>
         transport.invoke("app.setSystemBarsAppearance", { dark }),
+      onBackPress: async (callback) =>
+        transport.on("app.back", undefined, () => callback()),
+      backToBackground: () => transport.invoke("app.backToBackground"),
     },
     machineUid: {
       getMachineUid: () => transport.invoke("machineUid.getMachineUid"),

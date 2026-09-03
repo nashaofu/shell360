@@ -64,6 +64,9 @@ export class HarmonyHostServices {
       case 'closeWindow':
         await this.closeWindow();
         return null;
+      case 'backToBackground':
+        await HarmonyNativeRuntime.moveToBackground();
+        return null;
       case 'readScopedFile':
         await this.readScopedFile(params);
         return null;

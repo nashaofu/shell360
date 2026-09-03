@@ -36,7 +36,6 @@ import com.nashaofu.shell360.webview.Shell360WebViewClient
 class MainActivity : ComponentActivity() {
     private var webView: WebView? = null
     private var jsbPortBridge: JsbPortBridge? = null
-    private var backRequestPending = false
     private val jsbInterface = AndroidJsbInterface()
     private lateinit var fileBridge: AndroidFileBridge
 
@@ -64,23 +63,12 @@ class MainActivity : ComponentActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (backRequestPending) {
-                        return
-                    }
-
-                    val currentWebView = webView
-                    if (currentWebView == null) {
+                    val bridge = jsbPortBridge
+                    if (bridge == null) {
                         moveTaskToBack(true)
                         return
                     }
-
-                    backRequestPending = true
-                    currentWebView.evaluateJavascript(BACK_REQUEST_SCRIPT) { handled ->
-                        backRequestPending = false
-                        if (handled != "true") {
-                            moveTaskToBack(true)
-                        }
-                    }
+                    bridge.emitBackPress()
                 }
             },
         )
@@ -93,6 +81,11 @@ class MainActivity : ComponentActivity() {
             closeWindow = {
                 runOnUiThread {
                     finishAndRemoveTask()
+                }
+            },
+            backToBackground = {
+                runOnUiThread {
+                    moveTaskToBack(true)
                 }
             },
             resetApplication = {
@@ -195,7 +188,5 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val TAG = "Shell360Activity"
-        const val BACK_REQUEST_SCRIPT =
-            "window.dispatchEvent(new Event('shell360:back',{cancelable:true}))===false"
     }
 }

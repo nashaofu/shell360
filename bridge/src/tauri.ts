@@ -94,6 +94,8 @@ function createTauriBackend(): BridgeBackend {
     app: {
       getVersion,
       setSystemBarsAppearance: async () => {},
+      onBackPress: async () => () => {},
+      backToBackground: async () => {},
     },
     machineUid: {
       async getMachineUid() {

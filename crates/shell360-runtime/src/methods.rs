@@ -15,6 +15,7 @@ pub struct MethodSpec {
 pub fn host_primitive(method: &str) -> Option<&'static str> {
   match method {
     "app.setSystemBarsAppearance" => Some("setSystemBarsAppearance"),
+    "app.backToBackground" => Some("backToBackground"),
     "clipboard.readText" => Some("readClipboard"),
     "clipboard.writeText" => Some("writeClipboard"),
     "core.openUrl" => Some("openExternal"),
@@ -30,6 +31,7 @@ pub fn host_primitive(method: &str) -> Option<&'static str> {
 fn build_specs() -> Vec<MethodSpec> {
   let host_methods = [
     "app.setSystemBarsAppearance",
+    "app.backToBackground",
     "clipboard.readText",
     "clipboard.writeText",
     "core.openUrl",
@@ -162,7 +164,7 @@ mod tests {
       .iter()
       .map(|method| method.name)
       .collect::<HashSet<_>>();
-    assert_eq!(methods.len(), 69);
+    assert_eq!(methods.len(), 70);
     assert_eq!(unique.len(), methods.len());
     let declaration = method_typescript();
     assert!(declaration.contains("\"ssh.shell.open\""));
