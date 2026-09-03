@@ -8,6 +8,7 @@ This directory freezes the P0 protocol baseline before `JsbEngine` changes runti
 - `adr-0002-host-services.md` fixes the host primitive boundary.
 - `adr-0003-typescript-adaptation.md` bounds TypeScript and business-layer changes.
 - `p1-engine.md` records the implemented P1 compatibility surface and deferred behavior.
+- `rust-owned-webview-transport.md` proposes replacing platform-interpreted output lists with a Rust-owned JSB transport while keeping all concrete methods in `shell360-runtime`.
 
 The executable copy of the current frame fixture is
 `crates/jsb-core/tests/fixtures/current_protocol.json`. It is a static baseline reconstructed from source, not a device capture.
