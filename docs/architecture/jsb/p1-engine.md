@@ -2,8 +2,9 @@
 
 ## Implemented
 
-- `jsb-core::JsbEngine` owns UUID/channel state, the first/last channel client lifecycle, the 1 MiB text and binary frame limit, invoke validation, the 69-method union table, Rust/Host routing, pending HostCalls, unified response envelopes, control-channel events, and `(clientId, sshShellId) -> dataChannelId` binary routing.
-- `RustMethodInvoker` keeps `jsb-core` independent of the application crate. `shell360-ffi` implements it with the existing `Shell360Runtime`; SSH/data/keygen code is not duplicated.
+- `jsb-core::JsbEngine` owns UUID/channel state, the first/last channel client lifecycle, the 1 MiB text and binary frame limit, invoke validation, the 69-method union table, pending HostCalls, unified response envelopes, control-channel events, and `(clientId, sshShellId) -> dataChannelId` binary routing.
+- `MethodInvoker` keeps `jsb-core` independent of the application crate. `shell360-runtime` implements it with the existing `Shell360Runtime`; SSH/data/keygen code is not duplicated.
+- **Updated (2026-09-02, P4-jscore)**: Rust/Host routing is no longer a static `MethodKind` classification inside the engine. `HostPrimitive` and `MethodKind` were deleted; `MethodInvoker::invoke` now returns `InvokeFlow::Complete(outcome)` or `InvokeFlow::Delegate { primitive, params_json }`, where the primitive is an opaque, business-minted string. The method-to-primitive routing table (`shell360-runtime::methods::host_primitive`) and the `core.openUrl` URL scheme allowlist moved to `shell360-runtime`. `jsb-core` keeps only the staging protocol constants `READ_SCOPED_FILE`/`WRITE_SCOPED_FILE`.
 - UniFFI exposes `NativeJsbEngine`, `NativeEngineOutput`, and the asynchronous `HostServices.onHostCall` delivery boundary. A HostCall is delivered once through the callback; `completeHostCall` returns the resulting reply output.
 - OHRS exposes matching channel-open, channel-close, control-frame, binary-frame, and HostCall-completion functions. HostCalls use a thread-safe callback.
 - The legacy Registry/Connection and OHRS register/connect/dispatch/resolve/reject/close exports were compatibility-only and have been removed now that all three hosts run `JsbEngine` (P2 cleanup complete).

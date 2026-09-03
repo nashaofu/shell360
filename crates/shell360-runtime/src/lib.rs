@@ -311,13 +311,22 @@ pub struct Shell360Runtime {
 
 pub struct RuntimeInvoker(pub Arc<Shell360Runtime>);
 
-impl jsb_core::RustMethodInvoker for RuntimeInvoker {
+impl jsb_core::MethodInvoker for RuntimeInvoker {
   fn invoke(
     &self,
     method: &str,
     client_id: &str,
     params_json: &str,
-  ) -> Result<jsb_core::InvokeOutcome, jsb_core::RustInvokeError> {
+  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
+    if let Some(primitive) = crate::methods::host_primitive(method) {
+      if primitive == "openExternal" {
+        validate_external_url(params_json)?;
+      }
+      return Ok(jsb_core::InvokeFlow::Delegate {
+        primitive: primitive.to_string(),
+        params_json: params_json.to_string(),
+      });
+    }
     let result_json = self
       .0
       .invoke(
@@ -325,16 +334,16 @@ impl jsb_core::RustMethodInvoker for RuntimeInvoker {
         client_id.to_string(),
         params_json.to_string(),
       )
-      .map_err(|error| jsb_core::RustInvokeError {
+      .map_err(|error| jsb_core::InvokerError {
         code: error.code().to_string(),
         message: error.reason().to_string(),
         details_json: error.details_json().map(str::to_string),
       })?;
     let host_actions = self.0.host_actions_for(method, &result_json);
-    Ok(jsb_core::InvokeOutcome {
+    Ok(jsb_core::InvokeFlow::Complete(jsb_core::InvokeOutcome {
       result_json,
       host_actions,
-    })
+    }))
   }
 
   fn send_binary(
@@ -342,20 +351,20 @@ impl jsb_core::RustMethodInvoker for RuntimeInvoker {
     client_id: &str,
     shell_id: &str,
     bytes: &[u8],
-  ) -> Result<(), jsb_core::RustInvokeError> {
+  ) -> Result<(), jsb_core::InvokerError> {
     self
       .0
       .ssh_shell_send_binary(client_id.to_string(), shell_id.to_string(), bytes.to_vec())
-      .map_err(|error| jsb_core::RustInvokeError {
+      .map_err(|error| jsb_core::InvokerError {
         code: error.code().to_string(),
         message: error.reason().to_string(),
         details_json: error.details_json().map(str::to_string),
       })
   }
 
-  fn create_staging_path(&self, call_id: &str) -> Result<String, jsb_core::RustInvokeError> {
+  fn create_staging_path(&self, call_id: &str) -> Result<String, jsb_core::InvokerError> {
     let directory = std::path::Path::new(&self.0.cache_dir()).join("transfers");
-    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::RustInvokeError {
+    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::InvokerError {
       code: "BRIDGE_IO_ERROR".into(),
       message: error.to_string(),
       details_json: None,
@@ -369,6 +378,28 @@ impl jsb_core::RustMethodInvoker for RuntimeInvoker {
 
   fn release_client(&self, client_id: &str) {
     self.0.release_client(client_id.to_string());
+  }
+}
+
+fn validate_external_url(params_json: &str) -> Result<(), jsb_core::InvokerError> {
+  let invalid_request = |message: &str| jsb_core::InvokerError {
+    code: "BRIDGE_INVALID_REQUEST".into(),
+    message: message.into(),
+    details_json: None,
+  };
+  let data: serde_json::Value = serde_json::from_str(params_json).unwrap_or_default();
+  let url = data
+    .get("url")
+    .and_then(serde_json::Value::as_str)
+    .ok_or_else(|| invalid_request("openExternal requires url."))?;
+  let scheme = url
+    .split_once(':')
+    .map(|(scheme, _)| scheme.to_ascii_lowercase())
+    .ok_or_else(|| invalid_request("openExternal requires an absolute URL."))?;
+  if ["http", "https", "mailto", "tel"].contains(&scheme.as_str()) {
+    Ok(())
+  } else {
+    Err(invalid_request("External URL scheme is not allowed."))
   }
 }
 
@@ -550,7 +581,7 @@ impl Shell360Runtime {
     &self,
     method: &str,
     result_json: &str,
-  ) -> Vec<jsb_core::HostPrimitive> {
+  ) -> Vec<jsb_core::HostAction> {
     if method == "data.resetCrypto"
       && let Ok(value) = serde_json::from_str::<serde_json::Value>(result_json)
       && value
@@ -558,7 +589,10 @@ impl Shell360Runtime {
         .and_then(serde_json::Value::as_bool)
         .unwrap_or(false)
     {
-      return vec![jsb_core::HostPrimitive::ResetApplication];
+      return vec![jsb_core::HostAction {
+        primitive: "resetApplication".into(),
+        params_json: "null".into(),
+      }];
     }
     Vec::new()
   }
@@ -1122,6 +1156,7 @@ fn required<T>(value: Option<T>, name: &str) -> Result<T, RuntimeError> {
 mod tests {
   use std::sync::{Arc, Mutex};
 
+  use jsb_core::MethodInvoker;
   use ssh_key::PrivateKey;
   use uuid::Uuid;
 
@@ -1265,5 +1300,67 @@ mod tests {
       .expect_err("missing SSH session must fail");
 
     assert!(matches!(error, RuntimeError::Ssh { ref code, .. } if code == "SSH_SESSION_NOT_FOUND"));
+  }
+
+  #[test]
+  fn invoker_delegates_host_methods_with_their_primitives() {
+    let (_directory, runtime) = temp_runtime();
+    let invoker = RuntimeInvoker(runtime);
+    let params = r#"{"text":"hello"}"#;
+    let flow = invoker
+      .invoke("clipboard.writeText", "client", params)
+      .expect("delegate clipboard write");
+    match flow {
+      jsb_core::InvokeFlow::Delegate {
+        primitive,
+        params_json,
+      } => {
+        assert_eq!(primitive, "writeClipboard");
+        assert_eq!(params_json, params);
+      }
+      other => panic!("expected delegation, got {other:?}"),
+    }
+  }
+
+  #[test]
+  fn invoker_validates_open_url_before_delegating() {
+    let (_directory, runtime) = temp_runtime();
+    let invoker = RuntimeInvoker(runtime);
+
+    for url in ["javascript:alert(1)", "file:///etc/hosts", "not-a-url"] {
+      let error = invoker
+        .invoke(
+          "core.openUrl",
+          "client",
+          &serde_json::json!({ "url": url }).to_string(),
+        )
+        .expect_err("disallowed scheme must fail");
+      assert_eq!(error.code, "BRIDGE_INVALID_REQUEST");
+    }
+    let flow = invoker
+      .invoke(
+        "core.openUrl",
+        "client",
+        &serde_json::json!({ "url": "https://example.com" }).to_string(),
+      )
+      .expect("https url delegates");
+    assert!(matches!(
+      flow,
+      jsb_core::InvokeFlow::Delegate { ref primitive, .. } if primitive == "openExternal"
+    ));
+  }
+
+  #[test]
+  fn host_actions_declare_reset_application_with_null_params() {
+    let (_directory, runtime) = temp_runtime();
+    let actions = runtime.host_actions_for("data.resetCrypto", r#"{"restartRequired":true}"#);
+    assert_eq!(actions.len(), 1);
+    assert_eq!(actions[0].primitive, "resetApplication");
+    assert_eq!(actions[0].params_json, "null");
+    assert!(
+      runtime
+        .host_actions_for("data.resetCrypto", r#"{"restartRequired":false}"#)
+        .is_empty()
+    );
   }
 }

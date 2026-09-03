@@ -4,38 +4,50 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use crate::{BinaryBindSpec, HostPrimitive, MethodKind, MethodSpec, ScopedFileKind};
+use crate::{BinaryBindSpec, MethodSpec, READ_SCOPED_FILE, ScopedFileKind, WRITE_SCOPED_FILE};
 
 pub const MAX_FRAME_SIZE: usize = 1024 * 1024;
 const SOURCE: &str = "shell360.jsb";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RustInvokeError {
+pub struct InvokerError {
   pub code: String,
   pub message: String,
   pub details_json: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvokeOutcome {
-  pub result_json: String,
-  pub host_actions: Vec<HostPrimitive>,
+pub struct HostAction {
+  pub primitive: String,
+  pub params_json: String,
 }
 
-pub trait RustMethodInvoker: Send + Sync {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvokeOutcome {
+  pub result_json: String,
+  pub host_actions: Vec<HostAction>,
+}
+
+/// Result of consulting the invoker: either the invocation finished in Rust,
+/// or it is delegated to the host through an opaque business-minted primitive.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InvokeFlow {
+  Complete(InvokeOutcome),
+  Delegate {
+    primitive: String,
+    params_json: String,
+  },
+}
+
+pub trait MethodInvoker: Send + Sync {
   fn invoke(
     &self,
     method: &str,
     client_id: &str,
     params_json: &str,
-  ) -> Result<InvokeOutcome, RustInvokeError>;
-  fn send_binary(
-    &self,
-    client_id: &str,
-    shell_id: &str,
-    bytes: &[u8],
-  ) -> Result<(), RustInvokeError>;
-  fn create_staging_path(&self, call_id: &str) -> Result<String, RustInvokeError>;
+  ) -> Result<InvokeFlow, InvokerError>;
+  fn send_binary(&self, client_id: &str, shell_id: &str, bytes: &[u8]) -> Result<(), InvokerError>;
+  fn create_staging_path(&self, call_id: &str) -> Result<String, InvokerError>;
   fn cleanup_staging_path(&self, path: &str);
   fn release_client(&self, client_id: &str);
 }
@@ -52,7 +64,7 @@ pub struct EngineErrorPayload {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HostCall {
   pub call_id: String,
-  pub primitive: HostPrimitive,
+  pub primitive: String,
   pub params_json: String,
 }
 
@@ -142,7 +154,7 @@ pub struct JsbEngine<I> {
   next_call_id: u64,
 }
 
-impl<I: RustMethodInvoker> JsbEngine<I> {
+impl<I: MethodInvoker> JsbEngine<I> {
   pub fn new(invoker: I, specs: Vec<MethodSpec>) -> Self {
     let specs = specs
       .into_iter()
@@ -304,44 +316,19 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
         None,
       )];
     }
-    let params_json = request.data.to_string();
     match spec.scoped_file {
       Some(ScopedFileKind::Upload) => return self.begin_scoped_upload(channel_id, request),
       Some(ScopedFileKind::Download) => return self.begin_scoped_download(channel_id, request),
       None => {}
     }
-    match spec.kind {
-      MethodKind::Rust => self.invoke_rust(channel_id, request, params_json, spec),
-      MethodKind::Host(primitive) => {
-        if primitive == HostPrimitive::OpenExternal
-          && let Err(message) = validate_external_url(&request.data)
-        {
-          return vec![reply_error(
-            channel_id,
-            &request.id,
-            "BRIDGE_INVALID_REQUEST",
-            message,
-            None,
-          )];
-        }
-        self.pending_request_ids.insert(request.id.clone());
-        self.next_call_id += 1;
-        let call_id = format!("host-{}", self.next_call_id);
-        self.pending_host_calls.insert(
-          call_id.clone(),
-          PendingHostCall {
-            channel_id: channel_id.to_string(),
-            request_id: request.id,
-            action: PendingHostAction::Reply,
-          },
-        );
-        vec![EngineOutput::HostCall(HostCall {
-          call_id,
-          primitive,
-          params_json,
-        })]
-      }
-    }
+    let client_id = self.client_id.clone().unwrap_or_default();
+    self.run_invocation(
+      channel_id,
+      &request.id,
+      &request.method,
+      &client_id,
+      &request.data,
+    )
   }
 
   pub fn on_binary_frame(&self, channel_id: &str, bytes: &[u8]) -> Vec<EngineOutput> {
@@ -403,7 +390,7 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
           data,
           staging_path,
         } => {
-          let result = self.invoke_with_data(
+          let result = self.run_invocation(
             &pending.channel_id,
             &pending.request_id,
             &method,
@@ -458,27 +445,44 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
       .collect()
   }
 
-  fn invoke_rust(
+  fn run_invocation(
     &mut self,
     channel_id: &str,
-    request: InvokeRequest,
-    params_json: String,
-    spec: MethodSpec,
+    request_id: &str,
+    method: &str,
+    client_id: &str,
+    data: &Value,
   ) -> Vec<EngineOutput> {
-    let client_id = self.client_id.clone().unwrap_or_default();
-    match self
-      .invoker
-      .invoke(&request.method, &client_id, &params_json)
-    {
-      Ok(outcome) => {
-        if let Some(bind) = spec.binary_bind {
-          self.bind_shell(&request.data, &client_id, bind);
+    match self.invoker.invoke(method, client_id, &data.to_string()) {
+      Ok(InvokeFlow::Complete(outcome)) => {
+        if let Some(bind) = self.specs.get(method).and_then(|spec| spec.binary_bind) {
+          self.bind_shell(data, client_id, bind);
         }
-        self.reply_from_outcome(channel_id, &request.id, outcome)
+        self.reply_from_outcome(channel_id, request_id, outcome)
+      }
+      Ok(InvokeFlow::Delegate {
+        primitive,
+        params_json,
+      }) => {
+        self.pending_request_ids.insert(request_id.to_string());
+        let call_id = self.next_host_call_id();
+        self.pending_host_calls.insert(
+          call_id.clone(),
+          PendingHostCall {
+            channel_id: channel_id.to_string(),
+            request_id: request_id.to_string(),
+            action: PendingHostAction::Reply,
+          },
+        );
+        vec![EngineOutput::HostCall(HostCall {
+          call_id,
+          primitive,
+          params_json,
+        })]
       }
       Err(error) => vec![reply_error(
         channel_id,
-        &request.id,
+        request_id,
         &error.code,
         &error.message,
         parse_details(error.details_json.as_deref()),
@@ -534,7 +538,7 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     );
     vec![EngineOutput::HostCall(HostCall {
       call_id,
-      primitive: HostPrimitive::ReadScopedFile,
+      primitive: READ_SCOPED_FILE.to_string(),
       params_json: json!({ "source": source, "targetPath": staging_path }).to_string(),
     })]
   }
@@ -580,7 +584,17 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
       .invoker
       .invoke(&request.method, &client_id, &data.to_string())
     {
-      Ok(outcome) => outcome,
+      Ok(InvokeFlow::Complete(outcome)) => outcome,
+      Ok(InvokeFlow::Delegate { .. }) => {
+        self.invoker.cleanup_staging_path(&staging_path);
+        return vec![reply_error(
+          channel_id,
+          &request.id,
+          "JSB_NATIVE_ERROR",
+          "Scoped-file methods must complete in Rust before the staging hand-off.",
+          None,
+        )];
+      }
       Err(error) => {
         self.invoker.cleanup_staging_path(&staging_path);
         return vec![reply_error(
@@ -619,29 +633,9 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     );
     vec![EngineOutput::HostCall(HostCall {
       call_id,
-      primitive: HostPrimitive::WriteScopedFile,
+      primitive: WRITE_SCOPED_FILE.to_string(),
       params_json: json!({ "sourcePath": staging_path, "target": target }).to_string(),
     })]
-  }
-
-  fn invoke_with_data(
-    &mut self,
-    channel_id: &str,
-    request_id: &str,
-    method: &str,
-    client_id: &str,
-    data: &Value,
-  ) -> Vec<EngineOutput> {
-    match self.invoker.invoke(method, client_id, &data.to_string()) {
-      Ok(outcome) => self.reply_from_outcome(channel_id, request_id, outcome),
-      Err(error) => vec![reply_error(
-        channel_id,
-        request_id,
-        &error.code,
-        &error.message,
-        parse_details(error.details_json.as_deref()),
-      )],
-    }
   }
 
   fn reply_from_outcome(
@@ -653,11 +647,11 @@ impl<I: RustMethodInvoker> JsbEngine<I> {
     match serde_json::from_str::<Value>(&outcome.result_json) {
       Ok(result) => {
         let mut outputs = vec![reply_success(channel_id, request_id, result)];
-        for primitive in outcome.host_actions {
+        for action in outcome.host_actions {
           outputs.push(EngineOutput::HostCall(HostCall {
             call_id: self.next_host_call_id(),
-            primitive,
-            params_json: "null".into(),
+            primitive: action.primitive,
+            params_json: action.params_json,
           }));
         }
         outputs
@@ -710,22 +704,6 @@ fn request_id(text: &str) -> String {
     .unwrap_or_default()
 }
 
-fn validate_external_url(data: &Value) -> Result<(), &'static str> {
-  let url = data
-    .get("url")
-    .and_then(Value::as_str)
-    .ok_or("openExternal requires url.")?;
-  let scheme = url
-    .split_once(':')
-    .map(|(scheme, _)| scheme.to_ascii_lowercase())
-    .ok_or("openExternal requires an absolute URL.")?;
-  if ["http", "https", "mailto", "tel"].contains(&scheme.as_str()) {
-    Ok(())
-  } else {
-    Err("External URL scheme is not allowed.")
-  }
-}
-
 fn parse_details(details: Option<&str>) -> Option<Value> {
   details
     .map(|value| serde_json::from_str(value).unwrap_or_else(|_| Value::String(value.to_string())))
@@ -771,32 +749,41 @@ mod tests {
     cleaned: Arc<Mutex<Vec<String>>>,
   }
 
-  impl RustMethodInvoker for FakeInvoker {
+  impl MethodInvoker for FakeInvoker {
     fn invoke(
       &self,
       method: &str,
       client_id: &str,
       params_json: &str,
-    ) -> Result<InvokeOutcome, RustInvokeError> {
+    ) -> Result<InvokeFlow, InvokerError> {
       self
         .calls
         .lock()
         .unwrap()
         .push((method.into(), client_id.into(), params_json.into()));
-      Ok(match method {
+      if method == "clipboard.readText" {
+        return Ok(InvokeFlow::Delegate {
+          primitive: "readClipboard".into(),
+          params_json: params_json.to_string(),
+        });
+      }
+      Ok(InvokeFlow::Complete(match method {
         "bridge.health" => InvokeOutcome {
           result_json: r#"{"status":"ok"}"#.into(),
           host_actions: Vec::new(),
         },
         "data.resetCrypto" => InvokeOutcome {
           result_json: r#"{"restartRequired":true}"#.into(),
-          host_actions: vec![HostPrimitive::ResetApplication],
+          host_actions: vec![HostAction {
+            primitive: "resetApplication".into(),
+            params_json: "null".into(),
+          }],
         },
         _ => InvokeOutcome {
           result_json: "null".into(),
           host_actions: Vec::new(),
         },
-      })
+      }))
     }
 
     fn send_binary(
@@ -804,7 +791,7 @@ mod tests {
       client_id: &str,
       shell_id: &str,
       bytes: &[u8],
-    ) -> Result<(), RustInvokeError> {
+    ) -> Result<(), InvokerError> {
       self
         .binary
         .lock()
@@ -813,7 +800,7 @@ mod tests {
       Ok(())
     }
 
-    fn create_staging_path(&self, call_id: &str) -> Result<String, RustInvokeError> {
+    fn create_staging_path(&self, call_id: &str) -> Result<String, InvokerError> {
       Ok(format!("/tmp/{call_id}"))
     }
 
@@ -830,7 +817,6 @@ mod tests {
     vec![
       MethodSpec {
         name: "bridge.health",
-        kind: MethodKind::Rust,
         binary: false,
         events: &[],
         error_domain: "rust",
@@ -839,7 +825,6 @@ mod tests {
       },
       MethodSpec {
         name: "data.resetCrypto",
-        kind: MethodKind::Rust,
         binary: false,
         events: &[],
         error_domain: "rust",
@@ -848,7 +833,6 @@ mod tests {
       },
       MethodSpec {
         name: "ssh.shell.open",
-        kind: MethodKind::Rust,
         binary: true,
         events: &[],
         error_domain: "rust",
@@ -860,7 +844,6 @@ mod tests {
       },
       MethodSpec {
         name: "ssh.sftp.uploadFile",
-        kind: MethodKind::Rust,
         binary: false,
         events: &[],
         error_domain: "rust",
@@ -869,7 +852,6 @@ mod tests {
       },
       MethodSpec {
         name: "ssh.sftp.downloadFile",
-        kind: MethodKind::Rust,
         binary: false,
         events: &[],
         error_domain: "rust",
@@ -878,7 +860,6 @@ mod tests {
       },
       MethodSpec {
         name: "clipboard.readText",
-        kind: MethodKind::Host(HostPrimitive::ReadClipboard),
         binary: false,
         events: &[],
         error_domain: "host",
@@ -931,7 +912,7 @@ mod tests {
     let [EngineOutput::HostCall(call)] = host.as_slice() else {
       panic!("expected HostCall")
     };
-    assert_eq!(call.primitive, HostPrimitive::ReadClipboard);
+    assert_eq!(call.primitive, "readClipboard");
     let reply = engine.complete_host_call(&call.call_id, r#"{"data":"clipboard"}"#);
     let [EngineOutput::ReplyText { text, .. }] = reply.as_slice() else {
       panic!("expected reply")
@@ -1031,7 +1012,7 @@ mod tests {
     let [EngineOutput::HostCall(call)] = upload.as_slice() else {
       panic!("expected readScopedFile")
     };
-    assert_eq!(call.primitive, HostPrimitive::ReadScopedFile);
+    assert_eq!(call.primitive, READ_SCOPED_FILE);
     let upload_reply = engine.complete_host_call(&call.call_id, r#"{"data":null}"#);
     assert!(matches!(
       upload_reply.as_slice(),
@@ -1053,7 +1034,7 @@ mod tests {
     let [EngineOutput::HostCall(call)] = download.as_slice() else {
       panic!("expected writeScopedFile")
     };
-    assert_eq!(call.primitive, HostPrimitive::WriteScopedFile);
+    assert_eq!(call.primitive, WRITE_SCOPED_FILE);
     let download_reply = engine.complete_host_call(&call.call_id, r#"{"data":null}"#);
     assert!(matches!(
       download_reply.as_slice(),
@@ -1066,7 +1047,7 @@ mod tests {
   }
 
   #[test]
-  fn requests_android_reset_as_a_host_primitive_after_rust_reply() {
+  fn emits_business_declared_host_actions_after_rust_reply() {
     let (mut engine, _) = opened_engine();
     let outputs = engine.on_control_frame(
       CONTROL,
@@ -1076,6 +1057,7 @@ mod tests {
     let EngineOutput::HostCall(call) = &outputs[1] else {
       panic!("expected reset HostCall")
     };
-    assert_eq!(call.primitive, HostPrimitive::ResetApplication);
+    assert_eq!(call.primitive, "resetApplication");
+    assert_eq!(call.params_json, "null");
   }
 }

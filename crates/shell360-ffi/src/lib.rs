@@ -358,10 +358,9 @@ impl NativeJsbEngine {
         None,
       )),
       EngineOutput::HostCall(call) => {
-        let primitive = call.primitive.as_str().to_string();
         self.host_services.on_host_call(
           call.call_id.clone(),
-          primitive.clone(),
+          call.primitive.clone(),
           call.params_json.clone(),
         );
         None

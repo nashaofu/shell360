@@ -1,43 +1,8 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum HostPrimitive {
-  PickDocuments,
-  SaveDocument,
-  ReadClipboard,
-  WriteClipboard,
-  OpenExternal,
-  SetSystemBarsAppearance,
-  CloseWindow,
-  ReadTextFile,
-  WriteTextFile,
-  ReadScopedFile,
-  WriteScopedFile,
-  ResetApplication,
-}
-
-impl HostPrimitive {
-  pub fn as_str(self) -> &'static str {
-    match self {
-      Self::PickDocuments => "pickDocuments",
-      Self::SaveDocument => "saveDocument",
-      Self::ReadClipboard => "readClipboard",
-      Self::WriteClipboard => "writeClipboard",
-      Self::OpenExternal => "openExternal",
-      Self::SetSystemBarsAppearance => "setSystemBarsAppearance",
-      Self::CloseWindow => "closeWindow",
-      Self::ReadTextFile => "readTextFile",
-      Self::WriteTextFile => "writeTextFile",
-      Self::ReadScopedFile => "readScopedFile",
-      Self::WriteScopedFile => "writeScopedFile",
-      Self::ResetApplication => "resetApplication",
-    }
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MethodKind {
-  Rust,
-  Host(HostPrimitive),
-}
+/// Staging transfer primitives minted by the engine itself (not business
+/// vocabulary): scoped-file methods are orchestrated around these protocol
+/// names, the same way `channel.opened` control frames are.
+pub const READ_SCOPED_FILE: &str = "readScopedFile";
+pub const WRITE_SCOPED_FILE: &str = "writeScopedFile";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScopedFileKind {
@@ -51,10 +16,12 @@ pub struct BinaryBindSpec {
   pub shell_field: &'static str,
 }
 
+/// Declarative method description. The engine consumes `name` (registry),
+/// `scoped_file`, and `binary_bind`; the remaining fields are embedder
+/// metadata with no engine semantics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MethodSpec {
   pub name: &'static str,
-  pub kind: MethodKind,
   pub binary: bool,
   pub events: &'static [&'static str],
   pub error_domain: &'static str,

@@ -1,23 +1,37 @@
 use std::sync::LazyLock;
 
-use jsb_core::{BinaryBindSpec, HostPrimitive, MethodKind, MethodSpec, ScopedFileKind};
+use jsb_core::{BinaryBindSpec, MethodSpec, ScopedFileKind};
 
 pub static METHOD_SPECS: LazyLock<Vec<MethodSpec>> = LazyLock::new(build_specs);
 
+/// Business-owned host routing table: JS-visible method -> opaque host
+/// primitive executed by the platform HostServices implementations.
+pub fn host_primitive(method: &str) -> Option<&'static str> {
+  match method {
+    "app.setSystemBarsAppearance" => Some("setSystemBarsAppearance"),
+    "clipboard.readText" => Some("readClipboard"),
+    "clipboard.writeText" => Some("writeClipboard"),
+    "core.openUrl" => Some("openExternal"),
+    "dialog.open" => Some("pickDocuments"),
+    "dialog.save" => Some("saveDocument"),
+    "window.close" => Some("closeWindow"),
+    "fs.readTextFile" => Some("readTextFile"),
+    "fs.writeTextFile" => Some("writeTextFile"),
+    _ => None,
+  }
+}
+
 fn build_specs() -> Vec<MethodSpec> {
   let host_methods = [
-    host(
-      "app.setSystemBarsAppearance",
-      HostPrimitive::SetSystemBarsAppearance,
-    ),
-    host("clipboard.readText", HostPrimitive::ReadClipboard),
-    host("clipboard.writeText", HostPrimitive::WriteClipboard),
-    host("core.openUrl", HostPrimitive::OpenExternal),
-    host("dialog.open", HostPrimitive::PickDocuments),
-    host("dialog.save", HostPrimitive::SaveDocument),
-    host("window.close", HostPrimitive::CloseWindow),
-    host("fs.readTextFile", HostPrimitive::ReadTextFile),
-    host("fs.writeTextFile", HostPrimitive::WriteTextFile),
+    "app.setSystemBarsAppearance",
+    "clipboard.readText",
+    "clipboard.writeText",
+    "core.openUrl",
+    "dialog.open",
+    "dialog.save",
+    "window.close",
+    "fs.readTextFile",
+    "fs.writeTextFile",
   ];
   let rust_methods = [
     "bridge.health",
@@ -83,14 +97,14 @@ fn build_specs() -> Vec<MethodSpec> {
   ];
   host_methods
     .into_iter()
+    .map(host)
     .chain(rust_methods.map(rust))
     .collect()
 }
 
-fn host(name: &'static str, primitive: HostPrimitive) -> MethodSpec {
+fn host(name: &'static str) -> MethodSpec {
   MethodSpec {
     name,
-    kind: MethodKind::Host(primitive),
     binary: false,
     events: &[],
     error_domain: "host",
@@ -102,7 +116,6 @@ fn host(name: &'static str, primitive: HostPrimitive) -> MethodSpec {
 fn rust(name: &'static str) -> MethodSpec {
   MethodSpec {
     name,
-    kind: MethodKind::Rust,
     binary: name == "ssh.shell.open" || name == "ssh.shell.send",
     events: method_events(name),
     error_domain: "rust",
@@ -164,5 +177,22 @@ mod tests {
     assert!(declaration.contains("\"ssh.shell.open\""));
     assert!(declaration.contains("\"clipboard.readText\""));
     assert!(declaration.contains("core.healthCheck"));
+  }
+
+  #[test]
+  fn host_routing_table_covers_exactly_the_host_error_domain() {
+    let host_names = method_specs()
+      .iter()
+      .filter(|method| method.error_domain == "host")
+      .map(|method| method.name)
+      .collect::<HashSet<_>>();
+    let routed = method_specs()
+      .iter()
+      .map(|method| method.name)
+      .filter(|name| host_primitive(name).is_some())
+      .collect::<HashSet<_>>();
+    assert_eq!(host_names, routed);
+    assert_eq!(host_primitive("clipboard.readText"), Some("readClipboard"));
+    assert_eq!(host_primitive("bridge.health"), None);
   }
 }

@@ -12,12 +12,13 @@
 
 ## 1. 结论摘要
 
-- 统一的“锚点”已经存在：`crates/jsb-core::JsbEngine` 是传输无关的路由/校验/信封/生命周期引擎，配合 `HostPrimitive` 原语枚举，已经是“jsb core 统一”的完整 Rust 实现。
-- ✅（已修复，2026-09-02）`jsb-core` 的**业务泄漏已消除**：`methods.rs::METHOD_SPECS`（69 个业务方法名）与业务事件名、`engine.rs` 的 5 处按方法名写死的特例（`core.openUrl`/`ssh.sftp.uploadFile`/`downloadFile`/`ssh.shell.open`/`data.resetCrypto`）已外移到业务后端 `shell360-runtime`；`jsb-core` 现在只保留 `MethodSpec`/`MethodKind`/`HostPrimitive`/`ScopedFileKind`/`BinaryBindSpec` 泛型类型，方法表由构造注入。
+- 统一的“锚点”已经存在：`crates/jsb-core::JsbEngine` 是传输无关的路由/校验/信封/生命周期引擎，配合注入式 `MethodInvoker`（`InvokeFlow::Complete` / `Delegate`）委托机制，已经是“jsb core 统一”的完整 Rust 实现；宿主原语词汇不再由引擎持有。
+- ✅（已修复，2026-09-02）`jsb-core` 的**业务泄漏已消除**：`methods.rs::METHOD_SPECS`（69 个业务方法名）与业务事件名、`engine.rs` 按方法名写死的特例（`ssh.sftp.uploadFile`/`downloadFile`/`ssh.shell.open`/`data.resetCrypto`）已外移到业务后端 `shell360-runtime`；方法表由构造注入。
+- ✅（已修复，2026-09-02 追加）**宿主原语词汇也已移出引擎**：`HostPrimitive` 枚举与 `MethodKind` 分类已删除，改由 `shell360-runtime::methods::host_primitive()` 路由表在 `MethodInvoker::invoke` 中返回 `InvokeFlow::Delegate { primitive, params_json }`；`core.openUrl` 的 scheme 校验随之迁到 `shell360-runtime`。`jsb-core` 现在只保留 `MethodSpec`/`ScopedFileKind`/`BinaryBindSpec` 声明式类型与 `READ_SCOPED_FILE`/`WRITE_SCOPED_FILE` staging 协议常量，可作为通用 JSB 框架复用。
 - 三端进度已对齐：**Android / iOS / HarmonyOS 三端宿主均已迁移完成**（Android `JsbPortBridge` + `PlatformHostServices`；iOS `WebViewContainer` + `IosHostServices`；HarmonyOS `MessagePortBridge` + `HarmonyHostServices`），全部驱动 `jsb-core` 引擎。
 - 统一范围只应是“基础框架”：方法路由、invoke 校验、pending 请求、响应/错误信封、事件、逻辑通道绑定、1 MiB 帧上限、UUID 校验、首/末通道 client 生命周期。这些已全部收敛到 `JsbEngine`。
 - 明确不统一的三块，本质上是“平台适配层”，必须保留各自实现：
-  1. **业务方法**（`keygen.*` / `data.*` / `ssh.*`）——由 `RustMethodInvoker` 在 Rust 侧单一实现（`shell360-ffi::RuntimeInvoker` → `Shell360Runtime`），已是统一的，不在此次改动。
+  1. **业务方法**（`keygen.*` / `data.*` / `ssh.*`）——由 `MethodInvoker` 在 Rust 侧单一实现（`shell360-runtime::RuntimeInvoker` → `Shell360Runtime`），已是统一的，不在此次改动。
   2. **系统原语**（`HostServices`：剪贴板、文件选择、打开 URL、系统栏、关窗、scoped 文件、生物识别等）——各平台各写一份原语实现，但**编排、校验、错误模型归 Rust**。
   3. **传输适配器**（Android WebMessagePort / iOS WKScriptMessage+Base64 / HarmonyOS WebMessagePort）——协议骨架一致，但物理通道各平台不同，属于不可统一部分。
 
@@ -32,13 +33,13 @@
 | 前端能力 API | `bridge/src/*.ts`（`data/ssh/fs/dialog/…` + `backend.ts`） | 保持现状 | 对外暴露的 `BridgeBackend` 接口与调用签名不变（ADR-0003） |
 | 前端 JSB 框架 | `jsb/src/*.ts`（`jsb.ts`/`jsb_channel.ts`/`channel_registry.ts`/`protocol.ts`） | 保持现状 | 只通过 `window.__JSB__.openChannel/closeChannel` + MessagePort 协议与原生通信 |
 | 原生传输 | 各宿主 | 平台各自实现 | Android/HarmonyOS 用 WebMessagePort；iOS 用 WKScriptMessage（二进制走 Base64，仅适配器内部） |
-| **JSB 引擎（统一点）** | `crates/jsb-core` | **Rust 统一** | `JsbEngine` + `MethodSpec` 表 + `HostPrimitive` |
+| **JSB 引擎（统一点）** | `crates/jsb-core` | **Rust 统一** | `JsbEngine` + `MethodSpec` 表 + `MethodInvoker` 委托（`InvokeFlow`） |
 | FFI 边界 | `crates/shell360-ffi`（UniFFI → Kotlin/Swift）、`crates/shell360_ohrs`（NAPI → ArkTS） | 统一生成 | 同一份引擎导出到三端；`shell360-ffi` 已瘦身为仅绑定层 |
 | 业务运行时 | `crates/shell360-runtime::Shell360Runtime`（`keygen/data/ssh` + `shell360-store/ssh/keygen`） | Rust 统一 | 已从 `shell360-ffi` 抽出，唯一业务实现 |
 
 ### 2.2 jsb core 的“双轨”已收敛
 
-✅（已清理，2026-09-02）`crates/jsb-core/src/lib.rs` 只保留统一 API `JsbEngine`（`on_channel_open/close/failed`、`on_control_frame`、`on_binary_frame`、`complete_host_call`、`emit`、`push_shell_binary`）+ `methods.rs` 的框架类型 `MethodSpec`/`MethodKind`/`HostPrimitive`/`ScopedFileKind`/`BinaryBindSpec`。旧的 `JsbRegistry`/`JsbConnection` 双轨，以及投影到两个 FFI 边界的 `NativeJsbRegistry`/`NativeJsbConnection`、`register_jsb/connect_jsb/dispatch_jsb/resolve_jsb/reject_jsb/close_jsb` 均已删除，三端宿主已全部切到 `JsbEngine`。
+✅（已清理，2026-09-02）`crates/jsb-core/src/lib.rs` 只保留统一 API `JsbEngine`（`on_channel_open/close/failed`、`on_control_frame`、`on_binary_frame`、`complete_host_call`、`emit`、`push_shell_binary`）+ `methods.rs` 的框架类型 `MethodSpec`/`ScopedFileKind`/`BinaryBindSpec` 与 `READ_SCOPED_FILE`/`WRITE_SCOPED_FILE` 协议常量。旧的 `JsbRegistry`/`JsbConnection` 双轨，以及投影到两个 FFI 边界的 `NativeJsbRegistry`/`NativeJsbConnection`、`register_jsb/connect_jsb/dispatch_jsb/resolve_jsb/reject_jsb/close_jsb` 均已删除，三端宿主已全部切到 `JsbEngine`。
 
 ### 2.3 三端宿主对照
 
@@ -56,7 +57,9 @@
 
 ### 3.1 统一（= jsb core 基础框架，全部收敛到 `JsbEngine`）
 
-> ✅ 已落地（2026-09-02）：方法表内容（69 个业务方法名）已从 `jsb-core` 移到业务后端 `shell360-runtime`；`jsb-core` 只保留 `MethodSpec`/`MethodKind`/`HostPrimitive`/`ScopedFileKind`/`BinaryBindSpec` 泛型类型，表由构造注入（详见 `layering.md` §3.1）。
+> ✅ 已落地（2026-09-02）：方法表内容（69 个业务方法名）已从 `jsb-core` 移到业务后端 `shell360-runtime`；`jsb-core` 只保留 `MethodSpec`/`ScopedFileKind`/`BinaryBindSpec` 声明式类型，表由构造注入。
+>
+> ✅ 已落地（2026-09-02 追加）：宿主路由也从 `jsb-core` 移到 `shell360-runtime`——引擎不再有 `MethodKind::Host`，只有 `InvokeFlow::Delegate`（原语名对引擎不透明）；`core.openUrl` 的 scheme 校验由业务层在委托前执行（详见 `layering.md` §3.1）。
 
 - 方法路由：`JsbEngine` 按注入的方法表决定 `Rust`/`Host` 归属、`binary` 标记、`events`、`error_domain`；方法表本身由业务层维护。
 - invoke 校验：`type/id/method` 非空、`invoke.request` 类型、未注册方法（`JSB_UNSUPPORTED`）、重复 pending（`JSB_DUPLICATE_REQUEST`）。
@@ -70,7 +73,7 @@
 
 | 不统一项 | 归属 | 理由 |
 | --- | --- | --- |
-| `keygen.*`/`data.*`/`ssh.*` 业务方法 | Rust `RustMethodInvoker`（单实现） | 已是单一 Rust 实现，无需也不应在平台重复 |
+| `keygen.*`/`data.*`/`ssh.*` 业务方法 | Rust `MethodInvoker`（单实现） | 已是单一 Rust 实现，无需也不应在平台重复 |
 | `HostServices` 系统原语实现 | 各平台各一份 | 剪贴板/文件选择/系统栏/生物识别等只能调平台 API；Rust 只负责参数校验、URL scheme 校验、路径 canonicalize、staging、错误模型（ADR-0002） |
 | 传输适配器 | 各平台各一份 | 物理通道不同：Android/HarmonyOS = WebMessagePort，iOS = WKScriptMessage（Base64 仅 iOS 适配器内部） |
 | 前端 `bridge/*` API | 不变 | ADR-0003：`jsb/` 只改协议内部 + 消费生成的 TS 方法名声明 |

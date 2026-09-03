@@ -1,23 +1,20 @@
-use jsb_core::{
-  EngineOutput, InvokeOutcome, JsbEngine, MethodKind, MethodSpec, RustInvokeError,
-  RustMethodInvoker,
-};
+use jsb_core::{EngineOutput, InvokeFlow, InvokeOutcome, JsbEngine, MethodInvoker, MethodSpec};
 use serde_json::Value;
 
 struct HealthInvoker;
 
-impl RustMethodInvoker for HealthInvoker {
+impl MethodInvoker for HealthInvoker {
   fn invoke(
     &self,
     method: &str,
     _client_id: &str,
     _params_json: &str,
-  ) -> Result<InvokeOutcome, RustInvokeError> {
+  ) -> Result<InvokeFlow, jsb_core::InvokerError> {
     assert_eq!(method, "bridge.health");
-    Ok(InvokeOutcome {
+    Ok(InvokeFlow::Complete(InvokeOutcome {
       result_json: r#"{"status":"ok"}"#.into(),
       host_actions: Vec::new(),
-    })
+    }))
   }
 
   fn send_binary(
@@ -25,11 +22,11 @@ impl RustMethodInvoker for HealthInvoker {
     _client_id: &str,
     _shell_id: &str,
     _bytes: &[u8],
-  ) -> Result<(), RustInvokeError> {
+  ) -> Result<(), jsb_core::InvokerError> {
     Ok(())
   }
 
-  fn create_staging_path(&self, _call_id: &str) -> Result<String, RustInvokeError> {
+  fn create_staging_path(&self, _call_id: &str) -> Result<String, jsb_core::InvokerError> {
     Ok(String::new())
   }
 
@@ -47,7 +44,6 @@ fn current_invoke_request_and_response_match_the_golden_contract() {
   let fixture = fixture();
   let specs = vec![MethodSpec {
     name: "bridge.health",
-    kind: MethodKind::Rust,
     binary: false,
     events: &[],
     error_domain: "rust",
