@@ -16,6 +16,43 @@ pub struct JsbErrorPayload {
   pub details: Option<Value>,
 }
 
+/// Protocol-level `emit` message sent from Rust to the TypeScript JSB client.
+/// Event names and payloads remain opaque business data.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsbEmitMessage {
+  #[serde(rename = "type")]
+  kind: JsbEmitMessageKind,
+  pub event: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub target_id: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub payload: Option<Value>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub client_id: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub sequence: Option<u64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+enum JsbEmitMessageKind {
+  #[serde(rename = "emit")]
+  Emit,
+}
+
+impl JsbEmitMessage {
+  pub fn new(event: impl Into<String>) -> Self {
+    Self {
+      kind: JsbEmitMessageKind::Emit,
+      event: event.into(),
+      target_id: None,
+      payload: None,
+      client_id: None,
+      sequence: None,
+    }
+  }
+}
+
 impl JsbErrorPayload {
   pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
     Self {

@@ -424,16 +424,11 @@ OHRS 不再把 Rust 输出序列化成 JSON 数组，删除 `serialize_engine_ou
 最终生成的绑定表面：
 
 ```text
-interface FfiEventSink {            // 业务事件 sink（运行时构造时注入）
-  onEvent(eventJson: String)
-  onSshShellData(clientId, sshShellId, data: ByteArray)
-}
-
 interface HostServices {           // 平台能力异步边界
   onHostCall(callId, primitive, paramsJson)
 }
 
-interface JsbTransport {           // Rust -> WebView，infallible
+interface JsbTransport {           // Rust -> WebView
   openChannel(channelId, controlMessage)
   failChannel(channelId, controlMessage)
   sendText(channelId, message)
@@ -442,7 +437,7 @@ interface JsbTransport {           // Rust -> WebView，infallible
 }
 
 object Shell360Runtime {
-  constructor(appDataDir, cacheDir, eventSink)
+  constructor(appDataDir, cacheDir)
   shutdown()
 }
 
@@ -456,10 +451,10 @@ object NativeJsb {
 }
 ```
 
-`JsbTransport` callback 在 UniFFI 边界声明为 infallible：平台端口失败由平台
-自行恢复（回写 `channelOpenFailed` 或关闭 Channel），FFI 内部的
-`FfiJsbTransport` 适配器始终返回 `Ok`。除 `completeHostCall` 外，
-`NativeJsb` 所有入口返回 `Result<Unit, FfiError>`，不返回输出集合。
+`JsbTransport` callback 在 UniFFI 边界返回 `Result`；`FfiJsbTransport` 将平台
+错误转换回 `jsb-core::JsbTransportError`。除 `completeHostCall` 外，
+`NativeJsb` 所有入口返回 `Result<Unit, FfiError>`，不返回输出集合。运行时事件
+和 SSH shell 二进制由 Rust 内部直接路由到 `NativeJsb`，不再经过平台事件 callback。
 旧的直连入口（`invoke`/`invokeKeygen`/`invokeData`/`invokeSsh`/
 `releaseClient`/`sendSshShellData`/`healthCheck` 等）已从绑定中删除。
 
@@ -469,7 +464,6 @@ object NativeJsb {
 
 ```text
 initializeRuntime(appDataDir, cacheDir) / shutdown()
-attachEventCallback / attachSshShellDataCallback
 attachHostCallCallback / attachJsbTransportCallback
 initializeJsb()
 
@@ -680,7 +674,7 @@ Android 先作为单平台试点；本阶段不同时改 iOS/HarmonyOS 的宿主
 - 重复 request ID；
 - malformed JSON；
 - 未注册方法；
-- 文本和二进制 1 MiB 限制；
+- 默认文本 1 MiB、二进制 10 MiB；平台可在打开首个 Channel 前覆盖实例限制；
 - emit 只发送到 control Channel；
 - Channel 关闭时取消 pending invoke；
 - close 与 completion 并发；

@@ -1,15 +1,12 @@
 import { webview } from '@kit.ArkWeb';
 import {
-  attachEventCallback,
   attachHostCallCallback,
   attachJsbTransportCallback,
-  attachSshShellDataCallback,
   initializeJsb,
   jsbChannelOpenFailed,
   jsbCloseChannel,
   jsbEmit,
   jsbOpenChannel,
-  jsbPushShellBinary,
   jsbReceiveBinary,
   jsbReceiveText,
 } from 'shell360_ohrs';
@@ -21,12 +18,6 @@ interface JsbTransportEvent {
   channelId: string;
   text?: string;
   data?: number[];
-}
-
-interface SshShellDataEvent {
-  clientId: string;
-  sshShellId: string;
-  data: number[];
 }
 
 export class MessagePortBridge {
@@ -53,16 +44,6 @@ export class MessagePortBridge {
         return;
       }
       this.handleTransportEvent(normalized);
-    });
-    attachEventCallback((event: string) => {
-      this.runNative(() => jsbEmit(normalizeNativeEvent(event as Object)));
-    });
-    attachSshShellDataCallback((event: SshShellDataEvent) => {
-      const normalized = normalizeSshShellDataEvent(event as Object);
-      if (normalized === undefined) {
-        return;
-      }
-      this.runNative(() => jsbPushShellBinary(normalized.clientId, normalized.sshShellId, normalized.data));
     });
   }
 
@@ -123,6 +104,7 @@ export class MessagePortBridge {
         this.writeBinary(event.channelId, event.data ?? []);
         break;
       case 'closeChannel':
+        this.postControl(channelClosedMessage(event.channelId));
         this.closePort(event.channelId);
         break;
       default:
@@ -234,14 +216,12 @@ export class MessagePortBridge {
   }
 }
 
-function normalizeNativeEvent(event: Object): string {
-  if (typeof event === 'string') {
-    return event;
-  }
-  if (event instanceof Array && event.length > 0 && typeof event[0] === 'string') {
-    return event[0] as string;
-  }
-  return JSON.stringify(event);
+function channelClosedMessage(channelId: string): string {
+  return JSON.stringify({
+    source: 'jsb.channel',
+    type: 'channel.closed',
+    channelId,
+  });
 }
 
 function normalizeTransportEvent(event: Object): JsbTransportEvent | undefined {
@@ -258,21 +238,5 @@ function normalizeTransportEvent(event: Object): JsbTransportEvent | undefined {
     channelId: record.channelId,
     text: typeof record.text === 'string' ? record.text : undefined,
     data: record.data instanceof Array ? record.data as number[] : undefined,
-  };
-}
-
-function normalizeSshShellDataEvent(event: Object): SshShellDataEvent | undefined {
-  const value = event instanceof Array && event.length > 0 ? event[0] as Object : event;
-  if (typeof value !== 'object' || value === null) {
-    return undefined;
-  }
-  const record = value as Record<string, Object>;
-  if (typeof record.clientId !== 'string' || typeof record.sshShellId !== 'string' || !(record.data instanceof Array)) {
-    return undefined;
-  }
-  return {
-    clientId: record.clientId,
-    sshShellId: record.sshShellId,
-    data: record.data as number[],
   };
 }

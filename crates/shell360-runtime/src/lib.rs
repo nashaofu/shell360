@@ -478,27 +478,40 @@ impl RuntimeInvoker {
     }
   }
 
-  fn bind_shell_channel(&self, client_id: &str, params_json: &str) {
+  fn bind_shell_channel(
+    &self,
+    client_id: &str,
+    params_json: &str,
+  ) -> Option<((String, String), Option<String>)> {
     let Ok(params) = serde_json::from_str::<serde_json::Value>(params_json) else {
-      return;
+      return None;
     };
     let Some(channel_id) = params
       .get("dataChannelId")
       .and_then(serde_json::Value::as_str)
     else {
-      return;
+      return None;
     };
     let Some(shell_id) = params.get("sshShellId").and_then(serde_json::Value::as_str) else {
-      return;
+      return None;
     };
-    self
+    let key = (client_id.to_string(), shell_id.to_string());
+    let previous = self
       .shell_channels
       .lock()
       .expect("lock shell channels")
-      .insert(
-        (client_id.to_string(), shell_id.to_string()),
-        channel_id.to_string(),
-      );
+      .insert(key.clone(), channel_id.to_string());
+    Some((key, previous))
+  }
+
+  fn rollback_shell_channel_binding(&self, binding: ((String, String), Option<String>)) {
+    let (key, previous) = binding;
+    let mut shell_channels = self.shell_channels.lock().expect("lock shell channels");
+    if let Some(channel_id) = previous {
+      shell_channels.insert(key, channel_id);
+    } else {
+      shell_channels.remove(&key);
+    }
   }
 
   fn staging_path(&self, call_id: &str) -> Result<String, JsbErrorPayload> {
@@ -709,22 +722,27 @@ impl RuntimeInvoker {
         .host_call(call_id, primitive.to_string(), params_json);
       return;
     }
+    let shell_binding = (method == "ssh.shell.open")
+      .then(|| self.bind_shell_channel(&context.client_id, &params_json))
+      .flatten();
     match self.runtime.invoke(
       method.clone(),
       context.client_id.clone(),
       params_json.clone(),
     ) {
       Ok(result_json) => {
-        if method == "ssh.shell.open" {
-          self.bind_shell_channel(&context.client_id, &params_json);
-        }
         let action = self.runtime.post_invoke_host_call(&method, &result_json);
         completion.resolve(result_json);
         if let Some((primitive, params)) = action {
           self.dispatch_host_call(primitive, params);
         }
       }
-      Err(error) => completion.reject(runtime_error_payload(&error)),
+      Err(error) => {
+        if let Some(binding) = shell_binding {
+          self.rollback_shell_channel_binding(binding);
+        }
+        completion.reject(runtime_error_payload(&error));
+      }
     }
   }
 }

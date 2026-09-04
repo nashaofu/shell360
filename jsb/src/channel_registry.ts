@@ -11,11 +11,12 @@ type ChannelControlMessage = {
   channelId: string;
   error?: JSBErrorPayload;
   source: "jsb.channel";
-  type: "channel.open.failed" | "channel.opened";
+  type: "channel.closed" | "channel.open.failed" | "channel.opened";
 };
 
 const CONTROL_MESSAGE_SOURCE = "jsb.channel";
 const pendingChannels = new Map<string, PendingChannel>();
+const activeChannels = new Map<string, PendingChannel>();
 
 function parseControlError(value: unknown): JSBErrorPayload | undefined {
   if (!isRecord(value)) {
@@ -49,7 +50,8 @@ function parseControlMessage(
       message.source !== CONTROL_MESSAGE_SOURCE ||
       typeof message.channelId !== "string" ||
       (message.type !== "channel.opened" &&
-        message.type !== "channel.open.failed")
+        message.type !== "channel.open.failed" &&
+        message.type !== "channel.closed")
     ) {
       return undefined;
     }
@@ -98,6 +100,17 @@ function handleControlMessage(event: MessageEvent<unknown>): void {
     return;
   }
 
+  if (message.type === "channel.closed") {
+    activeChannels.get(message.channelId)?.fail(
+      new JSBError(
+        message.error?.code ?? "JSB_CHANNEL_CLOSED",
+        message.error?.message ?? "The native JSB channel was closed.",
+        message.error?.details,
+      ),
+    );
+    return;
+  }
+
   const pending = pendingChannels.get(message.channelId);
   if (!pending) {
     closePorts(event.ports);
@@ -128,6 +141,7 @@ function handleControlMessage(event: MessageEvent<unknown>): void {
     return;
   }
 
+  activeChannels.set(message.channelId, pending);
   pending.attach(event.ports[0]);
 }
 
@@ -161,6 +175,7 @@ export function requestNativeChannel(
 
 export function cancelNativeChannelRequest(channelId: string): void {
   pendingChannels.delete(channelId);
+  activeChannels.delete(channelId);
 }
 
 export function closeNativeChannel(channelId: string): JSBError | undefined {

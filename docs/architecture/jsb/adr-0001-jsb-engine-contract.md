@@ -6,7 +6,7 @@ Status: Superseded by `rust-owned-webview-transport.md` (was: Accepted for P1 im
 
 ## Decision
 
-`jsb-core::JsbEngine` is the sole transport-independent owner of method routing, invoke validation, pending requests, response/error envelopes, events, logical channel bindings, the 1 MiB frame limit, UUID validation, and first/last channel client lifecycle.
+`jsb-core::JsbEngine` is the sole transport-independent owner of method routing, invoke validation, pending requests, response/error envelopes, events, logical channel bindings, configurable frame limits, UUID validation, and first/last channel client lifecycle.
 
 Inputs are `on_control_frame(channel_id, text)`, `on_binary_frame(channel_id, bytes)`, `on_channel_open(channel_id)`, `on_channel_close(channel_id)`, and `complete_host_call(call_id, result_json)`. Every input returns an ordered `Vec<EngineOutput>`.
 
@@ -14,7 +14,7 @@ Outputs are `ReplyText`, `PushBinary`, `OpenChannel`, `FailChannel`, `ClosePort`
 
 The declarative Rust method table records dotted-camel method name, `Rust` or `Host` kind, Rust handler or host primitive, events, binary behavior, error domain, and capability metadata. It drives routing, binding export lists, generated TypeScript method-name declarations, and contract-case generation.
 
-Channel IDs are RFC 4122 UUID strings. Text input is rejected above 1 MiB before JSON parsing. Binary input uses the same 1 MiB per-frame limit. Deterministic tests inject the client/call ID source; production IDs remain UUIDs.
+Channel IDs are RFC 4122 UUID strings. Frame limits default to 1 MiB for text and 10 MiB for binary; each platform may override them before opening the first Channel. Text input is checked before JSON parsing. Deterministic tests inject the client/call ID source; production IDs remain UUIDs.
 
 ## Compatibility decision
 

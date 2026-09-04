@@ -4,7 +4,7 @@
 
 ## Implemented
 
-- `jsb-core::JsbEngine` owns UUID/channel state, the first/last channel client lifecycle, the 1 MiB text and binary frame limit, invoke validation, the 69-method union table, pending HostCalls, unified response envelopes, control-channel events, and `(clientId, sshShellId) -> dataChannelId` binary routing.
+- `jsb-core::JsbEngine` owns UUID/channel state, the first/last channel client lifecycle, configurable frame limits (default 1 MiB text and 10 MiB binary), invoke validation, the 69-method union table, pending HostCalls, unified response envelopes, control-channel events, and `(clientId, sshShellId) -> dataChannelId` binary routing.
 - `MethodInvoker` keeps `jsb-core` independent of the application crate. `shell360-runtime` implements it with the existing `Shell360Runtime`; SSH/data/keygen code is not duplicated.
 - **Updated (2026-09-03)**: Rust/Host routing is no longer a static classification inside the engine. `MethodInvoker::invoke` returns `InvokeFlow::Complete(outcome)` or `InvokeFlow::Delegate { primitive, params_json, continuation }`, where the primitive and optional continuation are opaque to the engine. Shell channel bindings and scoped-file staging live in `shell360-runtime`; `jsb-core` only resumes or cancels opaque continuations.
 - UniFFI exposes `NativeJsbEngine`, `NativeEngineOutput`, and the asynchronous `HostServices.onHostCall` delivery boundary. A HostCall is delivered once through the callback; `completeHostCall` returns the resulting reply output.

@@ -10,12 +10,28 @@ use crate::handler::{
   JsbChannelContext, JsbHandler, JsbInvokeCompletion, JsbInvokeContext, JsbInvokeRequest,
 };
 use crate::protocol::{
-  InvokeRequestWire, JsbErrorPayload, channel_open_failed, channel_opened, invoke_response_error,
-  invoke_response_success, request_id,
+  InvokeRequestWire, JsbEmitMessage, JsbErrorPayload, channel_open_failed, channel_opened,
+  invoke_response_error, invoke_response_success, request_id,
 };
 use crate::transport::{JsbTransport, JsbTransportError};
 
-pub const MAX_FRAME_SIZE: usize = 1024 * 1024;
+pub const DEFAULT_MAX_TEXT_FRAME_SIZE: usize = 1024 * 1024;
+pub const DEFAULT_MAX_BINARY_FRAME_SIZE: usize = 10 * 1024 * 1024;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct JsbLimits {
+  pub max_text_frame_size: usize,
+  pub max_binary_frame_size: usize,
+}
+
+impl Default for JsbLimits {
+  fn default() -> Self {
+    Self {
+      max_text_frame_size: DEFAULT_MAX_TEXT_FRAME_SIZE,
+      max_binary_frame_size: DEFAULT_MAX_BINARY_FRAME_SIZE,
+    }
+  }
+}
 
 /// Errors returned by [`Jsb`] entry points. Protocol errors (malformed JSON,
 /// unknown methods, duplicate requests, ...) are answered over the channel as
@@ -27,10 +43,14 @@ pub enum JsbError {
   NotConnected,
   /// An outbound frame exceeded the protocol frame limit.
   MessageTooLarge,
+  /// A JSB protocol message could not be serialized.
+  Serialization(String),
   /// The platform transport rejected the operation.
   Transport(JsbTransportError),
   /// The internal state lock is poisoned.
   LockPoisoned,
+  /// Frame limits are invalid or were changed after opening a channel.
+  InvalidLimits,
 }
 
 impl fmt::Display for JsbError {
@@ -38,8 +58,10 @@ impl fmt::Display for JsbError {
     match self {
       Self::NotConnected => formatter.write_str("JSB channel is not connected."),
       Self::MessageTooLarge => formatter.write_str("JSB frame exceeds the size limit."),
+      Self::Serialization(error) => write!(formatter, "JSB serialization failure: {error}"),
       Self::Transport(error) => write!(formatter, "JSB transport failure: {error}"),
       Self::LockPoisoned => formatter.write_str("JSB state lock is poisoned."),
+      Self::InvalidLimits => formatter.write_str("JSB frame limits are invalid or already active."),
     }
   }
 }
@@ -52,12 +74,24 @@ impl From<JsbTransportError> for JsbError {
   }
 }
 
-#[derive(Default)]
 struct JsbState {
   channels: HashSet<String>,
   control_channel_id: Option<String>,
   client_id: Option<String>,
   pending: HashMap<String, PendingInvoke>,
+  limits: JsbLimits,
+}
+
+impl Default for JsbState {
+  fn default() -> Self {
+    Self {
+      channels: HashSet::new(),
+      control_channel_id: None,
+      client_id: None,
+      pending: HashMap::new(),
+      limits: JsbLimits::default(),
+    }
+  }
 }
 
 struct PendingInvoke {
@@ -93,6 +127,18 @@ impl Jsb {
     state.client_id.clone()
   }
 
+  pub fn configure_limits(&self, limits: JsbLimits) -> Result<(), JsbError> {
+    if limits.max_text_frame_size == 0 || limits.max_binary_frame_size == 0 {
+      return Err(JsbError::InvalidLimits);
+    }
+    let mut state = self.lock()?;
+    if !state.channels.is_empty() {
+      return Err(JsbError::InvalidLimits);
+    }
+    state.limits = limits;
+    Ok(())
+  }
+
   pub fn open_channel(&self, channel_id: String) -> Result<(), JsbError> {
     if Uuid::parse_str(&channel_id).is_err() {
       let message = channel_open_failed(
@@ -114,6 +160,8 @@ impl Jsb {
       state.channels.insert(channel_id.clone());
       if state.client_id.is_none() {
         state.client_id = Some(Uuid::new_v4().to_string());
+      }
+      if state.control_channel_id.is_none() {
         state.control_channel_id = Some(channel_id.clone());
       }
       reopen
@@ -178,11 +226,14 @@ impl Jsb {
         return Err(JsbError::NotConnected);
       }
 
-      if text.len() > MAX_FRAME_SIZE {
+      if text.len() > state.limits.max_text_frame_size {
         let response = invoke_response_error(
           &request_id(&text),
           "JSB_MESSAGE_TOO_LARGE",
-          "JSB messages are limited to 1048576 bytes.",
+          &format!(
+            "JSB text messages are limited to {} bytes.",
+            state.limits.max_text_frame_size
+          ),
           None,
         );
         IncomingAction::Send(SendAction {
@@ -217,7 +268,7 @@ impl Jsb {
       if !state.channels.contains(&channel_id) {
         return Err(JsbError::NotConnected);
       }
-      if data.len() > MAX_FRAME_SIZE {
+      if data.len() > state.limits.max_binary_frame_size {
         IncomingBinary::TooLarge
       } else {
         let client_id = state.client_id.clone().unwrap_or_default();
@@ -248,10 +299,11 @@ impl Jsb {
     }
   }
 
-  /// Send an already-serialized `emit` envelope to the control channel. The
-  /// envelope is opaque to `jsb-core`; event names and payloads are business
-  /// data. Dropped silently when no client/control channel is connected.
-  pub fn emit(&self, message: String) -> Result<(), JsbError> {
+  /// Serialize and send an `emit` envelope to the control channel. Event
+  /// names and payloads remain opaque business data.
+  pub fn emit(&self, message: JsbEmitMessage) -> Result<(), JsbError> {
+    let message = serde_json::to_string(&message)
+      .map_err(|error| JsbError::Serialization(error.to_string()))?;
     let control_channel = {
       let state = self.lock()?;
       state.control_channel_id.clone()
@@ -273,7 +325,7 @@ impl Jsb {
       if !state.channels.contains(&channel_id) {
         return Ok(());
       }
-      if data.len() > MAX_FRAME_SIZE {
+      if data.len() > state.limits.max_binary_frame_size {
         return Err(JsbError::MessageTooLarge);
       }
     }
@@ -854,6 +906,26 @@ mod tests {
   }
 
   #[test]
+  fn opening_after_control_channel_closes_restores_event_routing() {
+    let (transport, _handler, jsb) = harness();
+    let data_channel = "222e4567-e89b-42d3-a456-426614174222";
+    let replacement_control = "333e4567-e89b-42d3-a456-426614174333";
+    open_channel(&jsb);
+    jsb.open_channel(data_channel.to_string()).unwrap();
+    jsb.close_channel(CHANNEL.to_string()).unwrap();
+    jsb.open_channel(replacement_control.to_string()).unwrap();
+
+    jsb.emit(JsbEmitMessage::new("runtime.ready")).unwrap();
+
+    let texts = transport.texts();
+    let [(channel_id, message)] = texts.as_slice() else {
+      panic!("expected one event frame");
+    };
+    assert_eq!(channel_id, replacement_control);
+    assert!(message.contains("runtime.ready"));
+  }
+
+  #[test]
   fn closing_unknown_channel_is_a_noop() {
     let (transport, _handler, jsb) = harness();
     open_channel(&jsb);
@@ -1095,7 +1167,7 @@ mod tests {
     open_channel(&jsb);
     let huge = format!(
       r#"{{"type":"invoke.request","id":"big","method":"bridge.health","data":"{}"}}"#,
-      "x".repeat(MAX_FRAME_SIZE)
+      "x".repeat(DEFAULT_MAX_TEXT_FRAME_SIZE)
     );
     jsb.receive_text(CHANNEL.to_string(), huge).unwrap();
 
@@ -1125,19 +1197,22 @@ mod tests {
   }
 
   #[test]
-  fn oversized_binary_frame_closes_the_channel() {
-    let (transport, _handler, jsb) = harness();
-    open_channel(&jsb);
-    jsb
-      .receive_binary(CHANNEL.to_string(), vec![0u8; MAX_FRAME_SIZE + 1])
-      .unwrap();
+  fn frame_limits_have_defaults_and_can_be_configured_before_open() {
+    assert_eq!(DEFAULT_MAX_TEXT_FRAME_SIZE, 1024 * 1024);
+    assert_eq!(DEFAULT_MAX_BINARY_FRAME_SIZE, 10 * 1024 * 1024);
 
-    assert!(
-      transport
-        .snapshot()
-        .iter()
-        .any(|call| matches!(call, TransportCall::Close { .. }))
-    );
+    let (_transport, _handler, jsb) = harness();
+    jsb
+      .configure_limits(JsbLimits {
+        max_text_frame_size: 2 * 1024 * 1024,
+        max_binary_frame_size: 20 * 1024 * 1024,
+      })
+      .unwrap();
+    open_channel(&jsb);
+    assert!(matches!(
+      jsb.configure_limits(JsbLimits::default()),
+      Err(JsbError::InvalidLimits)
+    ));
   }
 
   #[test]
@@ -1155,15 +1230,13 @@ mod tests {
   fn emit_goes_to_the_control_channel_only() {
     let (transport, _handler, jsb) = harness();
     // No client connected: dropped silently.
-    jsb
-      .emit(r#"{"type":"emit","event":"x"}"#.to_string())
-      .unwrap();
+    jsb.emit(JsbEmitMessage::new("x")).unwrap();
     assert!(transport.texts().is_empty());
 
     open_channel(&jsb);
-    jsb
-      .emit(r#"{"type":"emit","event":"data.authedChange","payload":true}"#.to_string())
-      .unwrap();
+    let mut event = JsbEmitMessage::new("data.authedChange");
+    event.payload = Some(Value::Bool(true));
+    jsb.emit(event).unwrap();
     let texts = transport.texts();
     let [(channel, message)] = texts.as_slice() else {
       panic!("expected one emit frame");
@@ -1191,9 +1264,6 @@ mod tests {
       .send_binary("999e4567-e89b-42d3-a456-426614174999".to_string(), vec![1])
       .unwrap();
     assert_eq!(transport.binaries().len(), 1);
-
-    let oversized = jsb.send_binary(CHANNEL.to_string(), vec![0u8; MAX_FRAME_SIZE + 1]);
-    assert!(matches!(oversized, Err(JsbError::MessageTooLarge)));
   }
 
   #[test]

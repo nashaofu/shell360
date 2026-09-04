@@ -15,6 +15,7 @@ Status: P0 static baseline. Device captures remain outstanding as listed in `REA
    `{"type":"emit","event":"data.authedChange","payload":true}`. Optional routing fields are `targetId`, `clientId`, and `sequence`.
 6. A shell data channel carries raw `ArrayBuffer` bytes in both directions. iOS alone wraps bytes as Base64 in its version-1 WKScriptMessage envelope; the page-facing MessagePort still carries `ArrayBuffer`.
 7. Page calls `window.__JSB__.closeChannel(channelId)`. Android and HarmonyOS close their native port; iOS sends `{version:1,kind:"channel.close",channelId,payload:""}` to the WK handler.
+8. When Rust or a native transport closes an active channel, the adapter posts `{source:"jsb.channel",type:"channel.closed",channelId}` before releasing the port. The TypeScript channel then rejects pending work and releases its local resources.
 
 ## Open failure
 

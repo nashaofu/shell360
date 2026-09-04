@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, Weak};
 
 use shell360_runtime::{RuntimeError, RuntimeInvoker, Shell360Runtime as InnerRuntime};
 use thiserror::Error;
@@ -86,12 +86,6 @@ impl FfiError {
 }
 
 #[uniffi::export(callback_interface)]
-pub trait FfiEventSink: Send + Sync {
-  fn on_event(&self, event_json: String);
-  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>);
-}
-
-#[uniffi::export(callback_interface)]
 pub trait HostServices: Send + Sync {
   fn on_host_call(&self, call_id: String, primitive: String, params_json: String);
 }
@@ -99,27 +93,48 @@ pub trait HostServices: Send + Sync {
 /// Platform WebView channel transport. Implemented by each native host
 /// (Android WebMessagePort, iOS WKWebView, HarmonyOS message ports); the
 /// callbacks are invoked on Rust threads and MUST be hopped to the platform
-/// UI/WebView thread by the implementation. Callbacks are infallible because
-/// a platform port failure is recovered on the platform side (e.g. reporting
-/// `channelOpenFailed` or closing the channel).
+/// UI/WebView thread by the implementation. A rejected or unavailable
+/// platform operation is returned to Rust as an FFI error.
 #[uniffi::export(callback_interface)]
 pub trait JsbTransport: Send + Sync {
-  fn open_channel(&self, channel_id: String, control_message: String);
-  fn fail_channel(&self, channel_id: String, control_message: String);
-  fn send_text(&self, channel_id: String, message: String);
-  fn send_binary(&self, channel_id: String, data: Vec<u8>);
-  fn close_channel(&self, channel_id: String);
+  fn open_channel(&self, channel_id: String, control_message: String) -> Result<(), FfiError>;
+  fn fail_channel(&self, channel_id: String, control_message: String) -> Result<(), FfiError>;
+  fn send_text(&self, channel_id: String, message: String) -> Result<(), FfiError>;
+  fn send_binary(&self, channel_id: String, data: Vec<u8>) -> Result<(), FfiError>;
+  fn close_channel(&self, channel_id: String) -> Result<(), FfiError>;
 }
 
-struct EventSinkAdapter(Arc<dyn FfiEventSink>);
+struct EventSinkAdapter {
+  jsb: Mutex<Option<Weak<NativeJsb>>>,
+}
+
+impl EventSinkAdapter {
+  fn attach(&self, jsb: &Arc<NativeJsb>) {
+    if let Ok(mut current) = self.jsb.lock() {
+      *current = Some(Arc::downgrade(jsb));
+    }
+  }
+
+  fn current_jsb(&self) -> Option<Arc<NativeJsb>> {
+    self.jsb.lock().ok()?.as_ref()?.upgrade()
+  }
+}
 
 impl shell360_runtime::RuntimeEventSink for EventSinkAdapter {
   fn on_event(&self, event_json: String) {
-    self.0.on_event(event_json);
+    if let Some(jsb) = self.current_jsb()
+      && let Err(error) = jsb.emit(event_json)
+    {
+      log::error!("Could not emit runtime event through JSB: {error}");
+    }
   }
 
   fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
-    self.0.on_ssh_shell_data(client_id, ssh_shell_id, data);
+    if let Some(jsb) = self.current_jsb()
+      && let Err(error) = jsb.push_shell_binary(client_id, ssh_shell_id, data)
+    {
+      log::error!("Could not send SSH shell data through JSB: {error}");
+    }
   }
 }
 
@@ -131,10 +146,11 @@ impl shell360_runtime::RuntimeHostServices for HostServicesAdapter {
   }
 }
 
-/// Adapts the infallible platform callback to the fallible core transport
-/// trait. Platform port failures are handled inside the platform layer, so
-/// every call succeeds from the core's perspective.
 struct FfiJsbTransport(Arc<dyn JsbTransport>);
+
+fn transport_error(error: FfiError) -> jsb_core::JsbTransportError {
+  jsb_core::JsbTransportError::new(error.to_string())
+}
 
 impl jsb_core::JsbTransport for FfiJsbTransport {
   fn open_channel(
@@ -144,8 +160,8 @@ impl jsb_core::JsbTransport for FfiJsbTransport {
   ) -> Result<(), jsb_core::JsbTransportError> {
     self
       .0
-      .open_channel(channel_id.to_string(), control_message.to_string());
-    Ok(())
+      .open_channel(channel_id.to_string(), control_message.to_string())
+      .map_err(transport_error)
   }
 
   fn fail_channel(
@@ -155,25 +171,29 @@ impl jsb_core::JsbTransport for FfiJsbTransport {
   ) -> Result<(), jsb_core::JsbTransportError> {
     self
       .0
-      .fail_channel(channel_id.to_string(), control_message.to_string());
-    Ok(())
+      .fail_channel(channel_id.to_string(), control_message.to_string())
+      .map_err(transport_error)
   }
 
   fn send_text(&self, channel_id: &str, message: &str) -> Result<(), jsb_core::JsbTransportError> {
     self
       .0
-      .send_text(channel_id.to_string(), message.to_string());
-    Ok(())
+      .send_text(channel_id.to_string(), message.to_string())
+      .map_err(transport_error)
   }
 
   fn send_binary(&self, channel_id: &str, data: &[u8]) -> Result<(), jsb_core::JsbTransportError> {
-    self.0.send_binary(channel_id.to_string(), data.to_vec());
-    Ok(())
+    self
+      .0
+      .send_binary(channel_id.to_string(), data.to_vec())
+      .map_err(transport_error)
   }
 
   fn close_channel(&self, channel_id: &str) -> Result<(), jsb_core::JsbTransportError> {
-    self.0.close_channel(channel_id.to_string());
-    Ok(())
+    self
+      .0
+      .close_channel(channel_id.to_string())
+      .map_err(transport_error)
   }
 }
 
@@ -184,23 +204,18 @@ fn jsb_error(error: jsb_core::JsbError) -> FfiError {
 #[derive(uniffi::Object)]
 pub struct Shell360Runtime {
   inner: Arc<InnerRuntime>,
+  event_sink: Arc<EventSinkAdapter>,
 }
 
 #[uniffi::export]
 impl Shell360Runtime {
   #[uniffi::constructor]
-  pub fn new(
-    app_data_dir: String,
-    cache_dir: String,
-    event_sink: Box<dyn FfiEventSink>,
-  ) -> Result<Arc<Self>, FfiError> {
-    let event_sink = Arc::<dyn FfiEventSink>::from(event_sink);
-    let inner = InnerRuntime::new(
-      app_data_dir,
-      cache_dir,
-      Arc::new(EventSinkAdapter(event_sink)),
-    )?;
-    Ok(Arc::new(Self { inner }))
+  pub fn new(app_data_dir: String, cache_dir: String) -> Result<Arc<Self>, FfiError> {
+    let event_sink = Arc::new(EventSinkAdapter {
+      jsb: Mutex::new(None),
+    });
+    let inner = InnerRuntime::new(app_data_dir, cache_dir, event_sink.clone())?;
+    Ok(Arc::new(Self { inner, event_sink }))
   }
 
   pub fn shutdown(&self) {
@@ -238,11 +253,29 @@ impl NativeJsb {
         .iter()
         .map(|method| method.name),
     ));
-    Arc::new(Self { jsb, invoker })
+    let native = Arc::new(Self { jsb, invoker });
+    runtime.event_sink.attach(&native);
+    native
   }
 
   pub fn open_channel(&self, channel_id: String) -> Result<(), FfiError> {
     self.jsb.open_channel(channel_id).map_err(jsb_error)
+  }
+
+  /// Override this platform instance's frame limits before its first channel
+  /// is opened. Platforms that do not call this use the jsb-core defaults.
+  pub fn configure_limits(
+    &self,
+    max_text_frame_size: u64,
+    max_binary_frame_size: u64,
+  ) -> Result<(), FfiError> {
+    let limits = jsb_core::JsbLimits {
+      max_text_frame_size: usize::try_from(max_text_frame_size)
+        .map_err(|_| FfiError::Serialization("Text frame limit is out of range.".into()))?,
+      max_binary_frame_size: usize::try_from(max_binary_frame_size)
+        .map_err(|_| FfiError::Serialization("Binary frame limit is out of range.".into()))?,
+    };
+    self.jsb.configure_limits(limits).map_err(jsb_error)
   }
 
   pub fn close_channel(&self, channel_id: String) -> Result<(), FfiError> {
@@ -273,7 +306,9 @@ impl NativeJsb {
   }
 
   pub fn emit(&self, event_json: String) -> Result<(), FfiError> {
-    self.jsb.emit(event_json).map_err(jsb_error)
+    let message = serde_json::from_str::<jsb_core::JsbEmitMessage>(&event_json)
+      .map_err(|error| FfiError::Serialization(error.to_string()))?;
+    self.jsb.emit(message).map_err(jsb_error)
   }
 
   pub fn send_binary(&self, channel_id: String, bytes: Vec<u8>) -> Result<(), FfiError> {
@@ -312,7 +347,7 @@ mod tests {
   use std::sync::{Arc, Mutex};
   use std::time::Duration;
 
-  use super::{FfiEventSink, HostServices, JsbTransport, NativeJsb, Shell360Runtime};
+  use super::{FfiError, HostServices, JsbTransport, NativeJsb, Shell360Runtime};
 
   #[derive(Debug, PartialEq, Eq, Clone)]
   enum TransportCall {
@@ -344,7 +379,7 @@ mod tests {
   }
 
   impl JsbTransport for RecordingTransport {
-    fn open_channel(&self, channel_id: String, control_message: String) {
+    fn open_channel(&self, channel_id: String, control_message: String) -> Result<(), FfiError> {
       self
         .calls
         .lock()
@@ -353,9 +388,10 @@ mod tests {
           channel: channel_id,
           control: control_message,
         });
+      Ok(())
     }
 
-    fn fail_channel(&self, channel_id: String, control_message: String) {
+    fn fail_channel(&self, channel_id: String, control_message: String) -> Result<(), FfiError> {
       self
         .calls
         .lock()
@@ -364,9 +400,10 @@ mod tests {
           channel: channel_id,
           control: control_message,
         });
+      Ok(())
     }
 
-    fn send_text(&self, channel_id: String, message: String) {
+    fn send_text(&self, channel_id: String, message: String) -> Result<(), FfiError> {
       self
         .calls
         .lock()
@@ -375,9 +412,10 @@ mod tests {
           channel: channel_id,
           message,
         });
+      Ok(())
     }
 
-    fn send_binary(&self, channel_id: String, data: Vec<u8>) {
+    fn send_binary(&self, channel_id: String, data: Vec<u8>) -> Result<(), FfiError> {
       self
         .calls
         .lock()
@@ -386,9 +424,10 @@ mod tests {
           channel: channel_id,
           data,
         });
+      Ok(())
     }
 
-    fn close_channel(&self, channel_id: String) {
+    fn close_channel(&self, channel_id: String) -> Result<(), FfiError> {
       self
         .calls
         .lock()
@@ -396,20 +435,8 @@ mod tests {
         .push(TransportCall::Close {
           channel: channel_id,
         });
+      Ok(())
     }
-  }
-
-  #[derive(Debug, Default)]
-  struct TestEventSink {
-    events: Mutex<Vec<String>>,
-  }
-
-  impl FfiEventSink for TestEventSink {
-    fn on_event(&self, event_json: String) {
-      self.events.lock().expect("lock events").push(event_json);
-    }
-
-    fn on_ssh_shell_data(&self, _client_id: String, _ssh_shell_id: String, _data: Vec<u8>) {}
   }
 
   struct TestHostServices(Arc<Mutex<Vec<(String, String, String)>>>);
@@ -444,11 +471,11 @@ mod tests {
         .join("cache")
         .to_string_lossy()
         .into_owned(),
-      Box::new(TestEventSink::default()),
     )
     .expect("create runtime");
     let transport = RecordingTransport::default();
     let host_calls = Arc::new(Mutex::new(Vec::new()));
+    let runtime_for_events = Arc::clone(&runtime);
     let jsb = NativeJsb::new(
       runtime,
       Box::new(transport.clone()),
@@ -497,6 +524,18 @@ mod tests {
         .iter()
         .any(|(_, message)| message.contains(r#""id":"2""#) && message.contains("copied"))
     );
+
+    shell360_runtime::RuntimeEventSink::on_event(
+      runtime_for_events.event_sink.as_ref(),
+      r#"{"type":"emit","event":"runtime.ready","payload":{"ready":true}}"#.into(),
+    );
+    wait_until(|| {
+      transport
+        .texts()
+        .iter()
+        .any(|(_, message)| message.contains("runtime.ready"))
+    });
+    assert!(jsb.emit("not json".into()).is_err());
 
     assert_eq!(jsb.registered_methods().len(), 70);
     jsb.close_channel(channel_id).expect("close channel");

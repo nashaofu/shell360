@@ -7,6 +7,8 @@ pub use handler::{
   JsbChannelContext, JsbHandler, JsbHandlerError, JsbInvokeCompletion, JsbInvokeContext,
   JsbInvokeRequest,
 };
-pub use jsb::{Jsb, JsbError, MAX_FRAME_SIZE};
-pub use protocol::JsbErrorPayload;
+pub use jsb::{
+  DEFAULT_MAX_BINARY_FRAME_SIZE, DEFAULT_MAX_TEXT_FRAME_SIZE, Jsb, JsbError, JsbLimits,
+};
+pub use protocol::{JsbEmitMessage, JsbErrorPayload};
 pub use transport::{JsbTransport, JsbTransportError};

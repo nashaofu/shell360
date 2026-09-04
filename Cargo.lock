@@ -6440,6 +6440,8 @@ name = "shell360-ffi"
 version = "0.1.0"
 dependencies = [
  "jsb-core",
+ "log",
+ "serde_json",
  "shell360-runtime",
  "tempfile",
  "thiserror 2.0.20",

@@ -71,7 +71,7 @@ HarmonyOS 实现应尽量对齐 Android 已有行为：
 
 - Debug 加载本地开发服务器，Release 只加载应用内 Web 资源。
 - Web 页面只通过 `bridge/native` 调用宿主。
-- Bridge 使用显式方法白名单、1 MiB 控制消息上限和结构化错误。
+- Bridge 使用显式方法白名单、默认 1 MiB 控制消息上限、默认 10 MiB 二进制单帧上限和结构化错误；帧上限可按平台配置。
 - WebView/UI 线程不执行阻塞 Rust 调用。
 - Rust 事件由宿主安全切回页面线程后推送。
 - 外部导航使用 scheme 白名单；不受信页面不能继续持有原生能力。
@@ -241,7 +241,7 @@ pnpm --filter mobile run build
 
 - `id`、`clientId` 和 `method` 必须为非空字符串，无参数请求使用 `params: null`。
 - ArkTS 只路由完整方法名白名单，不使用反射或动态 native symbol 调用。
-- 单条请求、响应和事件的 UTF-8 编码大小上限为 1 MiB。
+- 单条请求、响应和事件的 UTF-8 编码大小默认上限为 1 MiB；二进制 Channel 单帧默认上限为 10 MiB，平台可在首个 Channel 打开前覆盖。
 - `clientId` 隔离不同页面 generation 拥有的 Rust 资源。
 - 未知方法返回 `BRIDGE_UNSUPPORTED`；非法 JSON 或参数返回 `BRIDGE_INVALID_REQUEST`。
 - Web 层继续管理默认超时和领域长超时；ArkTS 保存 pending 状态以拒绝重复 ID、忽略迟响应

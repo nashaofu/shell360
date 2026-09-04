@@ -28,7 +28,7 @@ class AndroidJsbInterface {
     @JavascriptInterface
     fun closeChannel(channelId: String) {
         mainHandler.post {
-            bridge?.closeChannel(channelId)
+            bridge?.closeChannelFromWebView(channelId)
         }
     }
 }

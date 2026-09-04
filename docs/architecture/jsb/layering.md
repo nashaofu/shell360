@@ -34,7 +34,7 @@
 ┌──────────────────────────────▼─────────────────────────────────┐
 │  shell360-ffi / shell360_ohrs   FFI 边界（仅绑定，无业务）     │
 │  NativeJsb 包装 jsb-core · JsbTransport callback interface     │
-│  HostServices callback · FfiEventSink · 无输出列表            │
+│  HostServices callback · Transport callback · 无输出列表      │
 └───────────────┬──────────────────────────────┬─────────────────┘
                 │                              │
 ┌───────────────▼─────────────────┐  ┌─────────▼───────────────────┐
@@ -84,7 +84,7 @@
 
 ### 2.3 各端对接现状
 
-- `shell360-ffi`：**仅绑定层** ✅ —— `NativeJsb` 包装 `jsb-core::Jsb`（构造时注入 `FfiJsbTransport` 适配器 + `RuntimeInvoker` + `shell360_runtime::method_specs()` 方法名）；UniFFI 暴露 `JsbTransport`/`HostServices`/`FfiEventSink` 三个 callback interface；所有 `NativeJsb` 入口返回 `Result<(), FfiError>`，不再有输出类型转换。业务运行时 `Shell360Runtime` 在 `shell360-runtime`，此处只保留 `#[uniffi::Object]` 薄包装（构造 + `shutdown()`）。
+- `shell360-ffi`：**仅绑定层** ✅ —— `NativeJsb` 包装 `jsb-core::Jsb`（构造时注入 `FfiJsbTransport` 适配器 + `RuntimeInvoker` + `shell360_runtime::method_specs()` 方法名）；UniFFI 暴露 `JsbTransport`/`HostServices` callback interface；runtime 事件和 SSH 二进制在 Rust 内部直达 `NativeJsb`，所有入口返回 `Result<(), FfiError>`，不再有输出类型转换。业务运行时 `Shell360Runtime` 在 `shell360-runtime`，此处只保留 `#[uniffi::Object]` 薄包装（构造 + `shutdown()`）。
 - `shell360_ohrs`：`jsb_*` NAPI 入口（`jsbOpenChannel`/`jsbReceiveText`/…）全部返回 `Result<()>`；Rust 端 `OhrsJsbTransport` 实现 `shell360_ffi::JsbTransport`，经 `JsbTransportEvent` ThreadsafeFunction 驱动 ArkTS；旧的 `jsb_engine_*`、输出 JSON 数组和直连 `invoke`/`release_client`/`send_ssh_shell_data` 导出均已删除。
 - Android（Kotlin）、iOS（Swift）与 HarmonyOS（ArkTS）：**迁移完成** ✅ —— 三端只做两件事：实现 `JsbTransport`（WebView 端口操作，UI 线程）与 `HostServices`（系统原语）；不再解释任何 Rust 输出列表，不再手写逐方法 handler。
 
@@ -142,7 +142,7 @@ pub trait JsbHandler: Send + Sync {
 ### 3.2 crate 拆分（业务与 FFI 分离）✅ 已落地
 
 - 新增 **`shell360-runtime`**：从 `shell360-ffi` 抽出 `Shell360Runtime`（`DataService`/`SshService`/`keygen` 调度）+ 方法表 + 宿主路由表 + `RuntimeInvoker`（`impl JsbHandler` + HostCall continuation 表）。这是唯一的业务实现。
-- **`shell360-ffi`** 只保留 UniFFI 绑定：`NativeJsb`（包装 `jsb-core::Jsb`，构造注入 `FfiJsbTransport` + `RuntimeInvoker`）+ `JsbTransport`/`HostServices`/`FfiEventSink` callback interface + 类型转换。无业务分发。
+- **`shell360-ffi`** 只保留 UniFFI 绑定：`NativeJsb`（包装 `jsb-core::Jsb`，构造注入 `FfiJsbTransport` + `RuntimeInvoker`）+ `JsbTransport`/`HostServices` callback interface + 类型转换。无业务分发。
 - **`shell360_ohrs`** 只保留 NAPI 绑定：`jsb_*` 入口（包装 `NativeJsb`）+ `OhrsJsbTransport`（Rust 内实现 `JsbTransport`，经 `JsbTransportEvent` ThreadsafeFunction 驱动 ArkTS）+ HostServices/事件回调，依赖 `jsb-core` + `shell360-runtime`。
 
 依赖方向变为单向：`shell360-runtime → {jsb-core, shell360-store, shell360-ssh, shell360-keygen}`；`shell360-ffi / shell360_ohrs → {jsb-core, shell360-runtime}`。

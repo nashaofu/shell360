@@ -99,24 +99,10 @@ struct WebViewContainer: UIViewRepresentable {
                 }
             }
 
-            rustBridge.setEventListener(
-                owner: self,
-                onEvent: { [weak self] event in
-                    Task { @MainActor [weak self] in
-                        try? self?.jsb?.emit(eventJson: event)
-                    }
-                },
-                onSshShellData: { [weak self] clientId, sshShellId, data in
-                    Task { @MainActor [weak self] in
-                        try? self?.jsb?.pushShellBinary(clientId: clientId, shellId: sshShellId, bytes: data)
-                    }
-                }
-            )
         }
 
         func detach() {
             hostServices?.detachCompletion()
-            rustBridge.clearEventListener(owner: self)
             try? jsb?.shutdown()
             jsb = nil
             transport?.detach()
@@ -306,6 +292,11 @@ final class IosJsbTransport: JsbTransport, @unchecked Sendable {
     }
 
     private func receiveClose(channelId: String) {
+        postControl(JavaScriptBridge.jsonObjectLiteral([
+            "source": "jsb.channel",
+            "type": "channel.closed",
+            "channelId": channelId
+        ]))
         let envelope = JavaScriptBridge.jsonObjectLiteral([
             "version": 1,
             "kind": "close",

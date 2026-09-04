@@ -150,7 +150,7 @@ shell360-ffi
 - `id`、`clientId` 和 `method` 必须是非空字符串。
 - 无参数请求使用 `null`，不省略 `params`。
 - Swift 仅路由白名单中的完整方法名，禁止动态 selector 或反射调用。
-- 控制消息限制为 1 MiB；大文件不得整体通过 JS Bridge 传输。
+- 默认控制消息限制为 1 MiB，二进制 Channel 单帧限制为 10 MiB；可在首个 Channel 打开前按平台覆盖，大文件仍应优先使用文件传输接口。
 - SSH 终端二进制数据继续使用 Base64，与 Android 保持一致。
 - 未知方法返回 `BRIDGE_UNSUPPORTED`。
 - Swift 不向 Web 返回调用栈、密码、私钥或不必要的本地绝对路径。

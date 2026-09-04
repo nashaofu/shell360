@@ -103,7 +103,7 @@ Platform presence: Android has every union item except `ssh.shell.send` and `cor
 | missing method | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` |
 | handler failure | `JSB_NATIVE_ERROR` or structured native code | `JSB_NATIVE_ERROR` or `BridgeCallbackError` | normalized runtime error or `JSB_NATIVE_ERROR` |
 | invalid channel ID | `JSB_CHANNEL_INVALID_ID` | empty ID silently ignored; otherwise unchecked | `JSB_CHANNEL_OPEN_FAILED` |
-| request too large | `JSB_MESSAGE_TOO_LARGE`, 1 MiB | no limit | no limit |
+| request too large | `JSB_MESSAGE_TOO_LARGE`, defaults to 1 MiB text / 10 MiB binary; platform-configurable | no limit | no limit |
 | picker/system failures | structured `BRIDGE_*` | structured `BRIDGE_*` for route validation | several raw `Error` messages |
 
 P1 defines the canonical engine codes and messages; P0 deliberately preserves these differences.

@@ -6,6 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import com.nashaofu.shell360.ffi.HostServices
 import java.io.File
 import org.json.JSONObject
@@ -19,6 +21,8 @@ class PlatformHostServices(
     private val resetApplication: () -> Unit,
     private val setSystemBarsAppearance: (Boolean) -> Unit,
 ) : HostServices {
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     @Volatile
     private var completion: ((String, String) -> Unit)? = null
 
@@ -41,7 +45,9 @@ class PlatformHostServices(
                 error.message ?: "Android HostServices call failed.",
             )
         }
-        completion?.invoke(callId, result)
+        mainHandler.post {
+            completion?.invoke(callId, result)
+        }
     }
 
     private fun execute(primitive: String, params: JSONObject): Any? {

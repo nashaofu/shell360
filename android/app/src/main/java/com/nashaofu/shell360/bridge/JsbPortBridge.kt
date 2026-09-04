@@ -35,29 +35,19 @@ class JsbPortBridge(
     private val callbackHandler = Handler(callbackThread.looper)
     private val channels = mutableMapOf<String, WebMessagePortCompat>()
     private val disposed = AtomicBoolean()
-    private val listenerOwner = Any()
     private val jsb: NativeJsb = rustBridge.createJsb(this, hostServices)
 
     init {
         hostServices.attachCompletion { callId, resultJson ->
             runRust { jsb.completeHostCall(callId, resultJson) }
         }
-        rustBridge.setEventListener(
-            listenerOwner,
-            { event ->
-                runRust { jsb.emit(event) }
-            },
-            { clientId, shellId, data ->
-                runRust { jsb.pushShellBinary(clientId, shellId, data) }
-            },
-        )
     }
 
     fun openChannel(channelId: String) {
         runRust { jsb.openChannel(channelId) }
     }
 
-    fun closeChannel(channelId: String) {
+    fun closeChannelFromWebView(channelId: String) {
         runRust { jsb.closeChannel(channelId) }
     }
 
@@ -80,7 +70,6 @@ class JsbPortBridge(
             return
         }
         hostServices.detachCompletion()
-        rustBridge.clearEventListener(listenerOwner)
         runRust { jsb.shutdown() }
         channels.values.forEach(::closePort)
         channels.clear()
@@ -124,6 +113,7 @@ class JsbPortBridge(
 
     override fun closeChannel(channelId: String) {
         webView.post {
+            postControl(channelClosedMessage(channelId))
             closePort(channelId)
         }
     }
@@ -164,19 +154,15 @@ class JsbPortBridge(
                         message: WebMessageCompat?,
                     ) {
                         val type = message?.type
-                        val text = message?.data
-                        val bytes = message?.arrayBuffer
                         webView.post {
                             if (disposed.get() || channels[channelId] !== nativePort) {
                                 return@post
                             }
                             when (type) {
                                 WebMessageCompat.TYPE_STRING ->
-                                    runRust { jsb.receiveText(channelId, text.orEmpty()) }
+                                    runRust { jsb.receiveText(channelId, message.data.orEmpty()) }
                                 WebMessageCompat.TYPE_ARRAY_BUFFER ->
-                                    if (bytes != null) {
-                                        runRust { jsb.receiveBinary(channelId, bytes) }
-                                    }
+                                    runRust { jsb.receiveBinary(channelId, message.arrayBuffer) }
                                 else -> runRust { jsb.receiveText(channelId, "") }
                             }
                         }
@@ -245,6 +231,10 @@ class JsbPortBridge(
         runCatching(port::close).onFailure { error ->
             Log.w(TAG, "Could not close JSB message port", error)
         }
+    }
+
+    private fun channelClosedMessage(channelId: String): String {
+        return """{"source":"jsb.channel","type":"channel.closed","channelId":"$channelId"}"""
     }
 
     private companion object {

@@ -11,6 +11,12 @@ interface HostCallEnvelope {
   paramsJson: string;
 }
 
+interface HostFailure {
+  code: string;
+  message: string;
+  details?: Object;
+}
+
 class HostServiceError extends Error {
   code: string;
   details: Object | undefined;
@@ -231,9 +237,9 @@ function toPlainPath(value: string): string {
   return value;
 }
 
-function toHostFailure(error: Object): Record<string, Object> {
+function toHostFailure(error: Object): HostFailure {
   if (error instanceof HostServiceError) {
-    const failure: Record<string, Object> = {
+    const failure: HostFailure = {
       code: error.code,
       message: error.message,
     };

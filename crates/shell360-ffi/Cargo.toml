@@ -12,7 +12,9 @@ path = "src/bin/uniffi_bindgen.rs"
 
 [dependencies]
 jsb-core = { path = "../jsb-core" }
+log.workspace = true
 shell360-runtime = { path = "../shell360-runtime" }
+serde_json.workspace = true
 thiserror.workspace = true
 uniffi = { version = "0.32.0", features = ["cli"] }
 

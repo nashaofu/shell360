@@ -6,21 +6,7 @@ use napi_ohos::{
   bindgen_prelude::{AsyncTask, Function, Unknown},
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
-use shell360_ffi::{
-  FfiError, FfiEventSink, HostServices, JsbTransport, NativeJsb, Shell360Runtime,
-};
-
-type EventCallback =
-  ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
-type BinaryCallback = ThreadsafeFunction<
-  SshShellDataEvent,
-  Unknown<'static>,
-  Vec<SshShellDataEvent>,
-  Status,
-  false,
-  false,
-  0,
->;
+use shell360_ffi::{FfiError, HostServices, JsbTransport, NativeJsb, Shell360Runtime};
 type HostCallCallback =
   ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
 type TransportCallback = ThreadsafeFunction<
@@ -32,13 +18,6 @@ type TransportCallback = ThreadsafeFunction<
   false,
   0,
 >;
-
-#[napi(object)]
-pub struct SshShellDataEvent {
-  pub client_id: String,
-  pub ssh_shell_id: String,
-  pub data: Vec<u8>,
-}
 
 /// One WebView channel operation requested by the Rust JSB core. `op` is one of
 /// `openChannel`, `failChannel`, `sendText`, `sendBinary`, `closeChannel`; the
@@ -53,7 +32,6 @@ pub struct JsbTransportEvent {
 }
 
 static RUNTIME: LazyLock<Mutex<Option<Arc<Shell360Runtime>>>> = LazyLock::new(|| Mutex::new(None));
-static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mutex::new(None));
 static JSB: LazyLock<Mutex<Option<Arc<NativeJsb>>>> = LazyLock::new(|| Mutex::new(None));
 static HOST_CALL_CALLBACK: LazyLock<Mutex<Option<HostCallCallback>>> =
   LazyLock::new(|| Mutex::new(None));
@@ -83,103 +61,76 @@ impl HostServices for OhrsHostServices {
 struct OhrsJsbTransport;
 
 impl OhrsJsbTransport {
-  fn emit(event: JsbTransportEvent) {
-    let Ok(callback) = TRANSPORT_CALLBACK.lock() else {
-      return;
-    };
-    if let Some(callback) = callback.as_ref() {
-      let _ = callback.call(event, ThreadsafeFunctionCallMode::Blocking);
+  fn emit(event: JsbTransportEvent) -> std::result::Result<(), FfiError> {
+    let callback = TRANSPORT_CALLBACK
+      .lock()
+      .map_err(|_| FfiError::Internal("JSB transport callback lock is poisoned.".into()))?;
+    let callback = callback
+      .as_ref()
+      .ok_or_else(|| FfiError::Internal("JSB transport callback is not attached.".into()))?;
+    let status = callback.call(event, ThreadsafeFunctionCallMode::Blocking);
+    if status == Status::Ok {
+      Ok(())
+    } else {
+      Err(FfiError::Internal(format!(
+        "JSB transport callback failed with status {status:?}."
+      )))
     }
   }
 }
 
 impl JsbTransport for OhrsJsbTransport {
-  fn open_channel(&self, channel_id: String, control_message: String) {
+  fn open_channel(
+    &self,
+    channel_id: String,
+    control_message: String,
+  ) -> std::result::Result<(), FfiError> {
     Self::emit(JsbTransportEvent {
       op: "openChannel".to_string(),
       channel_id,
       text: Some(control_message),
       data: None,
-    });
+    })
   }
 
-  fn fail_channel(&self, channel_id: String, control_message: String) {
+  fn fail_channel(
+    &self,
+    channel_id: String,
+    control_message: String,
+  ) -> std::result::Result<(), FfiError> {
     Self::emit(JsbTransportEvent {
       op: "failChannel".to_string(),
       channel_id,
       text: Some(control_message),
       data: None,
-    });
+    })
   }
 
-  fn send_text(&self, channel_id: String, message: String) {
+  fn send_text(&self, channel_id: String, message: String) -> std::result::Result<(), FfiError> {
     Self::emit(JsbTransportEvent {
       op: "sendText".to_string(),
       channel_id,
       text: Some(message),
       data: None,
-    });
+    })
   }
 
-  fn send_binary(&self, channel_id: String, data: Vec<u8>) {
+  fn send_binary(&self, channel_id: String, data: Vec<u8>) -> std::result::Result<(), FfiError> {
     Self::emit(JsbTransportEvent {
       op: "sendBinary".to_string(),
       channel_id,
       text: None,
       data: Some(data),
-    });
+    })
   }
 
-  fn close_channel(&self, channel_id: String) {
+  fn close_channel(&self, channel_id: String) -> std::result::Result<(), FfiError> {
     Self::emit(JsbTransportEvent {
       op: "closeChannel".to_string(),
       channel_id,
       text: None,
       data: None,
-    });
-  }
-}
-
-struct EventSink {
-  callback: Mutex<Option<EventCallback>>,
-  binary_callback: Mutex<Option<BinaryCallback>>,
-}
-
-impl FfiEventSink for EventSink {
-  fn on_event(&self, event_json: String) {
-    let Ok(callback) = self.callback.lock() else {
-      return;
-    };
-    if let Some(callback) = callback.as_ref() {
-      let _ = callback.call(event_json, ThreadsafeFunctionCallMode::Blocking);
-    }
-  }
-
-  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
-    if let Ok(callback) = self.binary_callback.lock()
-      && let Some(callback) = callback.as_ref()
-    {
-      let _ = callback.call(
-        SshShellDataEvent {
-          client_id,
-          ssh_shell_id,
-          data,
-        },
-        ThreadsafeFunctionCallMode::Blocking,
-      );
-    }
-  }
-}
-
-struct SharedEventSink(Arc<EventSink>);
-
-impl FfiEventSink for SharedEventSink {
-  fn on_event(&self, event_json: String) {
-    self.0.on_event(event_json);
-  }
-
-  fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
-    self.0.on_ssh_shell_data(client_id, ssh_shell_id, data);
+    })
   }
 }
 
@@ -225,6 +176,16 @@ pub fn initialize_jsb() -> Result<()> {
     .lock()
     .map_err(|_| Error::from_reason("JSB lock is poisoned."))? = Some(jsb);
   Ok(())
+}
+
+#[napi]
+pub fn configure_jsb_limits(max_text_frame_size: u32, max_binary_frame_size: u32) -> Result<()> {
+  jsb()?
+    .configure_limits(
+      u64::from(max_text_frame_size),
+      u64::from(max_binary_frame_size),
+    )
+    .map_err(native_error)
 }
 
 #[napi]
@@ -330,21 +291,13 @@ impl Task for InitializeRuntimeTask {
     if guard.is_some() {
       return Ok(());
     }
-    let event_sink = Arc::new(EventSink {
-      callback: Mutex::new(None),
-      binary_callback: Mutex::new(None),
-    });
     *guard = Some(
       Shell360Runtime::new(
         std::mem::take(&mut self.app_data_dir),
         std::mem::take(&mut self.cache_dir),
-        Box::new(SharedEventSink(Arc::clone(&event_sink))),
       )
       .map_err(native_error)?,
     );
-    *EVENT_SINK
-      .lock()
-      .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = Some(event_sink);
     Ok(())
   }
 
@@ -365,53 +318,6 @@ pub fn initialize_runtime(
 }
 
 #[napi]
-pub fn attach_event_callback(
-  #[napi(ts_arg_type = "(event: string) => void")] on_event: Function<
-    'static,
-    Unknown<'static>,
-    Unknown<'static>,
-  >,
-) -> Result<()> {
-  let callback = on_event
-    .build_threadsafe_function::<String>()
-    .build_callback(|context| Ok(vec![context.value]))?;
-  let _ = runtime()?;
-  let event_sink = EVENT_SINK
-    .lock()
-    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))?
-    .clone()
-    .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))?;
-  *event_sink
-    .callback
-    .lock()
-    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = Some(callback);
-  Ok(())
-}
-
-#[napi]
-pub fn attach_ssh_shell_data_callback(
-  #[napi(ts_arg_type = "(event: SshShellDataEvent) => void")] callback: Function<
-    'static,
-    Unknown<'static>,
-    Unknown<'static>,
-  >,
-) -> Result<()> {
-  let callback = callback
-    .build_threadsafe_function::<SshShellDataEvent>()
-    .build_callback(|context| Ok(vec![context.value]))?;
-  let event_sink = EVENT_SINK
-    .lock()
-    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))?
-    .clone()
-    .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))?;
-  *event_sink
-    .binary_callback
-    .lock()
-    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = Some(callback);
-  Ok(())
-}
-
-#[napi]
 pub fn shutdown() -> Result<()> {
   let runtime = RUNTIME
     .lock()
@@ -420,9 +326,6 @@ pub fn shutdown() -> Result<()> {
   if let Some(runtime) = runtime {
     runtime.shutdown();
   }
-  *EVENT_SINK
-    .lock()
-    .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = None;
   let jsb = JSB
     .lock()
     .map_err(|_| Error::from_reason("JSB lock is poisoned."))?

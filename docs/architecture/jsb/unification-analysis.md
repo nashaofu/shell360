@@ -18,7 +18,7 @@
 - ✅（已修复，2026-09-02）`jsb-core` 的**业务泄漏已消除**：`methods.rs::METHOD_SPECS`（69 个业务方法名）与业务事件名、`engine.rs` 按方法名写死的特例（`ssh.sftp.uploadFile`/`downloadFile`/`ssh.shell.open`/`data.resetCrypto`）已外移到业务后端 `shell360-runtime`；方法表由构造注入。
 - ✅（已修复，2026-09-03）**业务策略已全部移出引擎**：`jsb-core` 不再导出 `MethodSpec`/`ScopedFileKind`/`BinaryBindSpec`，不再持有 SSH binding 或 scoped-file staging；`InvokeFlow::Delegate` 的 primitive/continuation 对引擎不透明。
 - 三端进度已对齐：**Android / iOS / HarmonyOS 三端宿主均已迁移完成**（Android `JsbPortBridge` + `PlatformHostServices`；iOS `WebViewContainer` + `IosHostServices`；HarmonyOS `MessagePortBridge` + `HarmonyHostServices`），全部驱动 `jsb-core` 引擎。
-- 统一范围只应是“基础框架”：方法路由、invoke 校验、pending 请求、响应/错误信封、事件、逻辑通道绑定、1 MiB 帧上限、UUID 校验、首/末通道 client 生命周期。这些已全部收敛到 `JsbEngine`。
+- 统一范围只应是“基础框架”：方法路由、invoke 校验、pending 请求、响应/错误信封、事件、逻辑通道绑定、可配置帧上限、UUID 校验、首/末通道 client 生命周期。这些已全部收敛到 `JsbEngine`。
 - 明确不统一的三块，本质上是“平台适配层”，必须保留各自实现：
   1. **业务方法**（`keygen.*` / `data.*` / `ssh.*`）——由 `MethodInvoker` 在 Rust 侧单一实现（`shell360-runtime::RuntimeInvoker` → `Shell360Runtime`），已是统一的，不在此次改动。
   2. **系统原语**（`HostServices`：剪贴板、文件选择、打开 URL、系统栏、关窗、scoped 文件、生物识别等）——各平台各写一份原语实现，但**编排、校验、错误模型归 Rust**。
@@ -65,7 +65,7 @@
 
 - 方法路由：`JsbEngine` 校验注入的方法名，再由 `MethodInvoker` 决定 Rust 完成或委托宿主；业务元数据由 `shell360-runtime` 维护。
 - invoke 校验：`type/id/method` 非空、`invoke.request` 类型、未注册方法（`JSB_UNSUPPORTED`）、重复 pending（`JSB_DUPLICATE_REQUEST`）。
-- 帧上限：文本/二进制统一 1 MiB（`MAX_FRAME_SIZE`，`JSB_MESSAGE_TOO_LARGE`）。
+- 帧上限默认文本 1 MiB、二进制 10 MiB，可在各平台打开首个 Channel 前通过实例配置覆盖；超限使用 `JSB_MESSAGE_TOO_LARGE`。
 - 通道与 client 生命周期：UUID 校验、首通道建 client、末通道 `release_client`、`channel.open.failed` 信封。
 - 响应/错误信封：`reply_success`/`reply_error` 统一输出 `{type,id,data|error{code,message,details}}`；错误码由各平台漂移收敛为引擎规范码（见 `method-error-matrix.md`）。
 - 事件路由：`emit` 只发控制通道；shell 二进制 `(clientId, shellId)→channelId` 绑定由引擎维护（`bind_shell`）。
