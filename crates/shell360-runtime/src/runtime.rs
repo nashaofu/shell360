@@ -1641,4 +1641,53 @@ mod tests {
       None
     );
   }
+
+  #[test]
+  fn with_app_version_injects_host_app_version() {
+    let directory = tempfile::tempdir().expect("create temp directory");
+    let runtime = Shell360Runtime::with_app_version(
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
+      Arc::new(TestEventSink::default()),
+      "1.4.2".to_string(),
+    )
+    .expect("create runtime with explicit app version");
+    let response = runtime
+      .invoke(
+        "app.getVersion".to_string(),
+        "client".to_string(),
+        "null".to_string(),
+      )
+      .expect("get app version");
+    let version: String = serde_json::from_str(&response).expect("parse version");
+    assert_eq!(
+      version, "1.4.2",
+      "with_app_version must surface the host-injected version, not the Rust crate version"
+    );
+  }
+
+  #[test]
+  fn shutdown_is_idempotent_and_drop_does_not_panic() {
+    let (_directory, runtime) = temp_runtime();
+
+    // Hold a sibling Arc so the first shutdown attempt cannot win the
+    // `Arc::try_unwrap` race — this exercises the early-return path that
+    // only flips `shutdown_started` and logs.
+    let peer = Arc::clone(&runtime);
+    Arc::clone(&peer).shutdown();
+
+    // Second call on the same Arc must short-circuit through the AtomicBool
+    // guard without panicking or attempting a second teardown.
+    peer.shutdown();
+
+    // Dropping the last Arc without a successful `try_unwrap` invokes the
+    // `TokioRuntimeGuard::drop` fallback. This must complete without panic;
+    // any future regression that double-shuts down or holds a strong ref
+    // across teardown will surface here as a hang or panic.
+    drop(runtime);
+  }
 }
