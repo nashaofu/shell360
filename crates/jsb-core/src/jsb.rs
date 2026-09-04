@@ -1,106 +1,40 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt;
-use std::sync::atomic::{AtomicBool, Ordering};
+//! Framework JSB instance. Owns channel/client/pending lifecycle and drives
+//! the injected handler and transport without any Shell360 business logic.
+//!
+//! Internal types (`JsbState`, `PendingInvoke`, `InvokeCompletion`, the action
+//! types, and `JsbLimits`/`JsbError`) live in their own sibling modules:
+//!
+//! - [`crate::state`]     — engine state guarded by a single mutex
+//! - [`crate::completion`] — one-shot completion handle returned to handlers
+//! - [`crate::actions`]    — internal action and cleanup types
+//! - [`crate::error`]      — transport/state errors raised from public methods
+//! - [`crate::limits`]     — frame size limits
+//!
+//! The `Jsb` impl itself only orchestrates locking, validation, and dispatch;
+//! every detail is delegated to the modules above.
+
+use std::collections::HashSet;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use serde_json::Value;
 use uuid::Uuid;
 
+use crate::actions::{
+  ChannelCleanup, IncomingAction, IncomingBinary, InvokeAction, SendAction,
+};
+use crate::completion::InvokeCompletion;
+use crate::error::JsbError;
 use crate::handler::{
-  JsbChannelContext, JsbHandler, JsbInvokeCompletion, JsbInvokeContext, JsbInvokeRequest,
+  JsbChannelContext, JsbHandler, JsbInvokeContext, JsbInvokeRequest,
 };
+use crate::limits::JsbLimits;
 use crate::protocol::{
-  InvokeRequestWire, JsbEmitMessage, JsbErrorPayload, channel_open_failed, channel_opened,
-  invoke_response_error, invoke_response_success, request_id,
+  InvokeRequestWire, JsbEmitMessage, channel_open_failed, channel_opened,
+  invoke_response_error, request_id,
 };
-use crate::transport::{JsbTransport, JsbTransportError};
+use crate::state::{JsbState, PendingInvoke};
+use crate::transport::JsbTransport;
 
-pub const DEFAULT_MAX_TEXT_FRAME_SIZE: usize = 1024 * 1024;
-pub const DEFAULT_MAX_BINARY_FRAME_SIZE: usize = 10 * 1024 * 1024;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct JsbLimits {
-  pub max_text_frame_size: usize,
-  pub max_binary_frame_size: usize,
-}
-
-impl Default for JsbLimits {
-  fn default() -> Self {
-    Self {
-      max_text_frame_size: DEFAULT_MAX_TEXT_FRAME_SIZE,
-      max_binary_frame_size: DEFAULT_MAX_BINARY_FRAME_SIZE,
-    }
-  }
-}
-
-/// Errors returned by [`Jsb`] entry points. Protocol errors (malformed JSON,
-/// unknown methods, duplicate requests, ...) are answered over the channel as
-/// `invoke.response` error frames; `JsbError` only covers transport/state
-/// failures that cannot be delivered as a frame.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum JsbError {
-  /// No such channel is currently registered with the JSB instance.
-  NotConnected,
-  /// An outbound frame exceeded the protocol frame limit.
-  MessageTooLarge,
-  /// A JSB protocol message could not be serialized.
-  Serialization(String),
-  /// The platform transport rejected the operation.
-  Transport(JsbTransportError),
-  /// The internal state lock is poisoned.
-  LockPoisoned,
-  /// Frame limits are invalid or were changed after opening a channel.
-  InvalidLimits,
-}
-
-impl fmt::Display for JsbError {
-  fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::NotConnected => formatter.write_str("JSB channel is not connected."),
-      Self::MessageTooLarge => formatter.write_str("JSB frame exceeds the size limit."),
-      Self::Serialization(error) => write!(formatter, "JSB serialization failure: {error}"),
-      Self::Transport(error) => write!(formatter, "JSB transport failure: {error}"),
-      Self::LockPoisoned => formatter.write_str("JSB state lock is poisoned."),
-      Self::InvalidLimits => formatter.write_str("JSB frame limits are invalid or already active."),
-    }
-  }
-}
-
-impl std::error::Error for JsbError {}
-
-impl From<JsbTransportError> for JsbError {
-  fn from(error: JsbTransportError) -> Self {
-    Self::Transport(error)
-  }
-}
-
-struct JsbState {
-  channels: HashSet<String>,
-  control_channel_id: Option<String>,
-  client_id: Option<String>,
-  pending: HashMap<String, PendingInvoke>,
-  limits: JsbLimits,
-}
-
-impl Default for JsbState {
-  fn default() -> Self {
-    Self {
-      channels: HashSet::new(),
-      control_channel_id: None,
-      client_id: None,
-      pending: HashMap::new(),
-      limits: JsbLimits::default(),
-    }
-  }
-}
-
-struct PendingInvoke {
-  channel_id: String,
-  completion: Arc<InvokeCompletion>,
-}
-
-/// Framework JSB instance. Owns channel/client/pending lifecycle and drives
-/// the injected handler and transport without any Shell360 business logic.
 pub struct Jsb {
   state: Arc<Mutex<JsbState>>,
   transport: Arc<dyn JsbTransport>,
@@ -533,104 +467,17 @@ impl Jsb {
   }
 }
 
-struct InvokeAction {
-  context: JsbInvokeContext,
-  request: JsbInvokeRequest,
-  completion: Arc<dyn JsbInvokeCompletion>,
-}
-
-struct SendAction {
-  channel_id: String,
-  text: String,
-}
-
-enum IncomingAction {
-  Invoke(InvokeAction),
-  Send(SendAction),
-}
-
-enum IncomingBinary {
-  Deliver(JsbChannelContext),
-  TooLarge,
-}
-
-/// Deferred teardown work for a channel. Executed after the state lock is
-/// released so handler and transport calls never happen under the lock.
-struct ChannelCleanup {
-  close_context: Option<JsbChannelContext>,
-  released_client: Option<String>,
-}
-
-struct InvokeCompletion {
-  state: Arc<Mutex<JsbState>>,
-  transport: Arc<dyn JsbTransport>,
-  client_id: String,
-  channel_id: String,
-  request_id: String,
-  finished: AtomicBool,
-}
-
-impl InvokeCompletion {
-  fn cancel(&self) {
-    self.finished.store(true, Ordering::Release);
-  }
-
-  fn finish(&self, response: String) {
-    if self.finished.swap(true, Ordering::AcqRel) {
-      return;
-    }
-    let can_send = {
-      let Ok(mut state) = self.state.lock() else {
-        return;
-      };
-      let Some(pending) = state.pending.get(&self.request_id) else {
-        return;
-      };
-      let alive = pending.channel_id == self.channel_id
-        && state.client_id.as_deref() == Some(self.client_id.as_str())
-        && state.channels.contains(&self.channel_id);
-      if !alive {
-        return;
-      }
-      state.pending.remove(&self.request_id);
-      true
-    };
-    if can_send && let Err(error) = self.transport.send_text(&self.channel_id, &response) {
-      log::error!(
-        "JSB transport could not deliver invoke response {} on channel {}: {error}",
-        self.request_id,
-        self.channel_id
-      );
-    }
-  }
-}
-
-impl JsbInvokeCompletion for InvokeCompletion {
-  fn resolve(&self, data_json: String) {
-    let response = match serde_json::from_str::<Value>(&data_json) {
-      Ok(data) => invoke_response_success(&self.request_id, data),
-      Err(error) => invoke_response_error(
-        &self.request_id,
-        "JSB_INVALID_RESPONSE",
-        "Rust method returned invalid JSON.",
-        Some(serde_json::json!({ "reason": error.to_string() })),
-      ),
-    };
-    self.finish(response);
-  }
-
-  fn reject(&self, error: JsbErrorPayload) {
-    let response =
-      invoke_response_error(&self.request_id, &error.code, &error.message, error.details);
-    self.finish(response);
-  }
-}
 
 #[cfg(test)]
 mod tests {
   use super::*;
   use crate::JsbHandlerError;
-  use std::sync::atomic::AtomicBool;
+  use crate::JsbInvokeCompletion;
+  use crate::JsbErrorPayload;
+  use crate::JsbTransportError;
+  use crate::{DEFAULT_MAX_BINARY_FRAME_SIZE, DEFAULT_MAX_TEXT_FRAME_SIZE};
+  use serde_json::Value;
+  use std::sync::atomic::{AtomicBool, Ordering};
 
   const CHANNEL: &str = "123e4567-e89b-42d3-a456-426614174000";
 
