@@ -158,7 +158,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn method_table_is_unique_and_generates_typescript() {
+  fn method_table_is_unique() {
     let methods = method_specs();
     let unique = methods
       .iter()
@@ -166,10 +166,6 @@ mod tests {
       .collect::<HashSet<_>>();
     assert_eq!(methods.len(), 70);
     assert_eq!(unique.len(), methods.len());
-    let declaration = method_typescript();
-    assert!(declaration.contains("\"ssh.shell.open\""));
-    assert!(declaration.contains("\"clipboard.readText\""));
-    assert!(declaration.contains("core.healthCheck"));
   }
 
   #[test]

@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { JSBError, toJSBError } from "./error";
 import { JSBChannel } from "./jsb_channel";
 import { parseIncomingMessage, serializeInvokeRequest } from "./protocol";
+import type { JsbMethod } from "./generated/jsb-methods";
 import type {
   JSBEmitMessage,
   JSBEventListener,
@@ -28,7 +29,7 @@ class JSB {
   }
 
   invoke<TRequest = void, TResponse = void>(
-    method: string,
+    method: JsbMethod,
     data?: TRequest,
   ): Promise<TResponse> {
     if (method.length === 0) {

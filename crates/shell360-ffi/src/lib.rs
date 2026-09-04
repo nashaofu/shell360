@@ -219,7 +219,10 @@ impl Shell360Runtime {
   }
 
   pub fn shutdown(&self) {
-    self.inner.shutdown();
+    // `Shell360Runtime::shutdown` takes `self: Arc<Self>` by value, so the
+    // FFI layer must clone our owned `Arc` first; otherwise we would move
+    // out of `&self`, leaving the field uninitialized for the next call.
+    std::sync::Arc::clone(&self.inner).shutdown();
   }
 }
 
