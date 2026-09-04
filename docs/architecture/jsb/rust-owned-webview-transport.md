@@ -1,12 +1,12 @@
 # Rust JSB 直连 WebView 通道技术方案
 
-> 状态：提案（待评审）  
+> 状态：已落地（Rust + Android + iOS 代码 + HarmonyOS 代码已完成；Android 构建、iOS/Xcode 与 HarmonyOS 真机验证未在当前环境执行）  
 > 适用范围：Android、iOS、HarmonyOS 原生 WebView 宿主  
 > 目标：由 Rust `jsb-core` 直接管理 JSB 协议与通道收发，同时保持 `jsb-core` 为零业务逻辑的通用框架。
 
 ## 1. 背景
 
-当前移动端 JSB 已将协议状态和业务调度收敛到 Rust，但 Rust 与 WebView 之间仍采用“计算输出、平台执行”的两段式模型：
+迁移前的移动端 JSB 已将协议状态和业务调度收敛到 Rust，但 Rust 与 WebView 之间采用“计算输出、平台执行”的两段式模型（该模型已随本方案删除）：
 
 ```text
 WebView MessagePort
@@ -67,12 +67,12 @@ Rust 与 TypeScript 使用相同的核心概念：
 | TypeScript `jsb` | Rust `jsb-core` | 含义 |
 | --- | --- | --- |
 | `JSB` | `Jsb` | JSB 实例 |
-| `JSBChannel` | `JsbChannel`（内部状态） | 文本或二进制通道 |
-| `JSBInvokeRequest` | `JsbInvokeRequest` | `invoke.request` 消息 |
-| `JSBInvokeResponse` | `JsbInvokeResponse` | `invoke.response` 消息 |
-| `JSBEmitMessage` | `JsbEmitMessage` | 主动事件消息 |
-| `JSBErrorPayload` | `JsbErrorPayload` | 协议错误结构 |
-| `invoke()` | `invoke()` | JSB 方法调用语义 |
+| `JSBChannel` | Channel 状态（`jsb.rs` 内部结构，不公开） | 文本或二进制通道 |
+| `JSBInvokeRequest` | `JsbInvokeRequest`（`id`/`method`/`params_json`） | `invoke.request` 消息 |
+| `JSBInvokeResponse` | 无公开类型；`jsb.rs` 内部序列化响应/错误帧 | `invoke.response` 消息 |
+| `JSBEmitMessage` | 无公开类型；`emit(message_json)` 只寻址 control channel | 主动事件消息 |
+| `JSBErrorPayload` | `JsbErrorPayload`（`code`/`message`/`details`） | 协议错误结构 |
+| `invoke()` | `JsbHandler::invoke(..)` + `JsbInvokeCompletion` | JSB 方法调用语义 |
 | `openChannel()` | `open_channel()` | 打开 Channel |
 | `closeChannel()` | `close_channel()` | 关闭 Channel |
 
@@ -196,9 +196,22 @@ pub struct JsbChannelContext {
   pub client_id: String,
   pub channel_id: String,
 }
+
+pub struct JsbInvokeRequest {
+  pub id: String,
+  pub method: String,
+  pub params_json: String, // 已序列化的请求 data，缺省为 "null"
+}
+
+pub struct JsbHandlerError {
+  pub code: String,
+  pub message: String,
+}
 ```
 
-上下文中不得增加 `ssh_shell_id`、`ssh_sftp_id` 等业务字段。
+上下文中不得增加 `ssh_shell_id`、`ssh_sftp_id` 等业务字段。`receive_binary`
+的错误只用于通道拆除诊断：二进制帧没有 request id 可以回复，业务错误由
+`shell360-runtime` 通过关闭 SSH/通道等业务手段处理。
 
 ### 4.3 异步完成接口
 
@@ -240,6 +253,8 @@ impl Jsb {
     methods: impl IntoIterator<Item = impl Into<String>>,
   ) -> Self;
 
+  pub fn client_id(&self) -> Option<String>;
+
   pub fn open_channel(&self, channel_id: String) -> Result<(), JsbError>;
 
   pub fn close_channel(&self, channel_id: String) -> Result<(), JsbError>;
@@ -262,27 +277,30 @@ impl Jsb {
     data: Vec<u8>,
   ) -> Result<(), JsbError>;
 
-  pub fn emit(&self, message: JsbEmitMessage) -> Result<(), JsbError>;
+  /// `message` 是已序列化的 `emit` 信封 JSON；core 只校验并寻址 control
+  /// Channel，不构造业务事件。
+  pub fn emit(&self, message: String) -> Result<(), JsbError>;
 
   pub fn send_binary(
     &self,
     channel_id: String,
     data: Vec<u8>,
   ) -> Result<(), JsbError>;
+
+  /// 取消全部 pending invoke，通知 handler 释放 client，并要求 transport
+  /// 关闭所有 Channel。锁外完成全部回调。
+  pub fn shutdown(&self) -> Result<(), JsbError>;
 }
 ```
 
-内部解析文本消息后，`invoke.request` 进入私有或 crate 内可见的 `invoke` 流程：
+`JsbError` 只覆盖无法作为帧投递的传输/状态失败（`NotConnected`、
+`MessageTooLarge`、`Transport(JsbTransportError)`、`LockPoisoned`）；协议错误
+（非法 JSON、未注册方法、重复 request id 等）一律作为 `invoke.response` 错误帧
+通过 transport 发回页面，不作为入口错误返回。
 
-```rust
-fn invoke(
-  &self,
-  channel_id: &str,
-  request: JsbInvokeRequest,
-) -> Result<(), JsbError>;
-```
-
-这样协议语义与 TypeScript `JSB.invoke()` 对齐，但平台无需绕过消息解析直接调用它。
+文本帧在锁内解析并分类，随后在锁外调用 handler/transport，必要时再次短暂持锁
+提交结果；completion 内部用 `AtomicBool` 保证 `resolve`/`reject`/`cancel` 只有
+一个生效。
 
 ## 5. 消息流
 
@@ -308,8 +326,8 @@ TS JSB.invoke("app.getVersion")
 
 ```text
 shell360-runtime event sink
-  -> Jsb::emit(JsbEmitMessage)
-  -> 定位 control channel
+  -> NativeJsb.emit(event_json) / Jsb::emit(message)
+  -> 校验并定位 control channel
   -> JsbTransport::send_text
   -> TS JSB.on/once listener
 ```
@@ -323,8 +341,8 @@ shell360-runtime event sink
 ```text
 JSBChannel<ArrayBuffer>.postMessage
   -> 平台 MessagePort callback
-  -> Jsb::receive_binary(clientId, channelId, bytes)
-  -> JsbHandler::receive_binary
+  -> Jsb::receive_binary(channelId, bytes)
+  -> JsbHandler::receive_binary(JsbChannelContext { client_id, channel_id }, data)
   -> shell360-runtime 根据自己的业务绑定处理
 ```
 
@@ -401,36 +419,78 @@ OHRS 不再把 Rust 输出序列化成 JSON 数组，删除 `serialize_engine_ou
 
 ## 7. FFI 设计与线程约束
 
-### 7.1 UniFFI
+### 7.1 UniFFI（`shell360-ffi`，Kotlin/Swift）
 
-UniFFI 暴露：
-
-```text
-NativeJsb
-JsbTransport callback interface
-receiveText / receiveBinary
-openChannel / closeChannel / channelOpenFailed
-emit / sendBinary
-```
-
-所有入口返回 `Result<(), FfiError>`，不返回输出集合。
-
-### 7.2 OHRS / N-API
-
-OHRS 暴露同等语义：
+最终生成的绑定表面：
 
 ```text
-initializeJsb
-jsbOpenChannel
-jsbCloseChannel
-jsbChannelOpenFailed
-jsbReceiveText
-jsbReceiveBinary
-jsbEmit
-jsbSendBinary
+interface FfiEventSink {            // 业务事件 sink（运行时构造时注入）
+  onEvent(eventJson: String)
+  onSshShellData(clientId, sshShellId, data: ByteArray)
+}
+
+interface HostServices {           // 平台能力异步边界
+  onHostCall(callId, primitive, paramsJson)
+}
+
+interface JsbTransport {           // Rust -> WebView，infallible
+  openChannel(channelId, controlMessage)
+  failChannel(channelId, controlMessage)
+  sendText(channelId, message)
+  sendBinary(channelId, data: ByteArray)
+  closeChannel(channelId)
+}
+
+object Shell360Runtime {
+  constructor(appDataDir, cacheDir, eventSink)
+  shutdown()
+}
+
+object NativeJsb {
+  constructor(runtime, transport, hostServices)
+  openChannel / closeChannel / channelOpenFailed
+  receiveText / receiveBinary
+  emit / sendBinary / pushShellBinary
+  completeHostCall(callId, resultJson)   // infallible
+  shutdown() / registeredMethods(): List<String>
+}
 ```
 
-初始化时注册 transport callback，由 Rust 主动通知 ArkTS 执行 WebView 操作。
+`JsbTransport` callback 在 UniFFI 边界声明为 infallible：平台端口失败由平台
+自行恢复（回写 `channelOpenFailed` 或关闭 Channel），FFI 内部的
+`FfiJsbTransport` 适配器始终返回 `Ok`。除 `completeHostCall` 外，
+`NativeJsb` 所有入口返回 `Result<Unit, FfiError>`，不返回输出集合。
+旧的直连入口（`invoke`/`invokeKeygen`/`invokeData`/`invokeSsh`/
+`releaseClient`/`sendSshShellData`/`healthCheck` 等）已从绑定中删除。
+
+### 7.2 OHRS / N-API（`shell360_ohrs`，ArkTS）
+
+最终导出：
+
+```text
+initializeRuntime(appDataDir, cacheDir) / shutdown()
+attachEventCallback / attachSshShellDataCallback
+attachHostCallCallback / attachJsbTransportCallback
+initializeJsb()
+
+interface JsbTransportEvent {       // #[napi(object)]
+  op: "openChannel" | "failChannel" | "sendText" | "sendBinary" | "closeChannel"
+  channelId: string
+  text?: string
+  data?: number[]                   // 二进制保持二进制，不经 JSON/Base64
+}
+
+jsbOpenChannel / jsbCloseChannel / jsbChannelOpenFailed
+jsbReceiveText / jsbReceiveBinary
+jsbCompleteHostCall
+jsbEmit / jsbSendBinary / jsbPushShellBinary
+```
+
+`attachJsbTransportCallback` 注册 ThreadsafeFunction；Rust 端
+`OhrsJsbTransport` 实现 `shell360_ffi::JsbTransport`，把每个操作包成
+`JsbTransportEvent` 经 ThreadsafeFunction 投递，ArkTS 在 JS 线程串行执行
+WebView 操作。旧的 `invoke`/`release_client`/`send_ssh_shell_data`/
+`health_check` 直连导出已删除。
 
 ### 7.3 禁止锁内跨 FFI 回调
 
@@ -488,12 +548,11 @@ JSB_CHANNEL_OPEN_FAILED
 
 ```text
 crates/jsb-core/src/
-├── lib.rs
-├── jsb.rs          # Jsb 状态与公开入口
-├── channel.rs      # 通用 Channel 状态
-├── protocol.rs     # invoke/emit 消息类型与序列化
-├── handler.rs      # JsbHandler 与 completion
-└── transport.rs    # JsbTransport
+├── lib.rs          # 公开导出（无业务名、无 cfg(platform)、无 uniffi/napi 依赖）
+├── jsb.rs          # Jsb 状态、公开入口与短锁调度
+├── protocol.rs     # invoke/emit/channel 信封序列化与 JsbErrorPayload
+├── handler.rs      # JsbHandler、JsbInvokeCompletion 与通用上下文
+└── transport.rs    # JsbTransport 与 JsbTransportError
 ```
 
 `jsb-core` 的 Cargo 依赖保持通用，不依赖：
@@ -516,9 +575,9 @@ jsb-core         -> 通用 serde/uuid 等基础依赖
 
 ## 10. 命名调整
 
-删除所有 JSB 领域中的 `Engine` 和输出列表命名：
+删除所有 JSB 领域中的 `Engine` 和输出列表命名（已全部落地）：
 
-| 当前 | 目标 |
+| 迁移前 | 迁移后 |
 | --- | --- |
 | `JsbEngine` | `Jsb` |
 | `NativeJsbEngine` | `NativeJsb` |
@@ -532,7 +591,7 @@ jsb-core         -> 通用 serde/uuid 等基础依赖
 | `createJsbEngine` | `createJsb` |
 | 局部变量 `engine` | `jsb` |
 
-不得为了替换名称而新增同义的 `JsbOutput`、`JsbOperation` 或 `JsbCommand`。目标模型没有需要平台解释的返回列表。
+不得为了替换名称而新增同义的 `JsbOutput`、`JsbOperation` 或 `JsbCommand`。目标模型没有需要平台解释的返回列表。依赖库中无关的 `base64::Engine`（SSH shell 发送路径）不在改名范围内。
 
 ## 11. 分阶段迁移
 
@@ -581,6 +640,14 @@ Android 先作为单平台试点；本阶段不同时改 iOS/HarmonyOS 的宿主
 5. 更新现有 ADR、layering 和 unification 文档。
 
 阶段 E 不得早于三端迁移完成，避免维护两套不完整路径。
+
+### 落地状态
+
+- 阶段 A（`jsb-core` 直连接口与纯 Rust 测试）：已完成。28 个单元测试 + golden 协议测试全部通过。
+- 阶段 B（Android）：代码已完成，`JsbPortBridge` 实现 `JsbTransport`，`executeOutputs`/`NativeEngineOutput` 已删除；已通过宿主 bindgen 生成 Kotlin 绑定并核对 `NativeJsb`/`JsbTransport` API（绑定由 Gradle 任务在构建时重新生成，禁止手改）。Gradle 构建与 instrumented 测试因当前环境无 Android SDK 未执行。
+- 阶段 C（iOS）：代码已完成，`IosJsbTransport` 在 `DispatchQueue.main` 上投递，Base64 仅存在于 WKScriptMessage 二进制适配器；Swift 输出解释已删除。Swift 绑定在 macOS 上由 `scripts/ios/commands/build-native.ts` 重新生成，Xcode 编译与真机验证因当前环境为 Windows 未执行。
+- 阶段 D（HarmonyOS）：代码已完成，`OhrsJsbTransport`（Rust）+ `JsbTransportEvent` ThreadsafeFunction + `MessagePortBridge.ets` callback 驱动，输出 JSON 数组已删除。`cargo check -p shell360_ohrs` 通过；hvigor/ohpm 构建与真机验证因当前环境限制未执行。
+- 阶段 E（清理）：已完成。`EngineOutput`/`NativeEngineOutput`/kind、旧 `invoke`/`release_client`/`send_ssh_shell_data` 直连导出均已删除；`complete_host_call` 不再存在于 `jsb-core`（仅作为 `shell360-runtime` 的 RuntimeInvoker 与 FFI `NativeJsb` 平台入口存在）；全仓搜索确认 JSB 领域无 `JsbEngine`/`EngineOutput`/`NativeEngineOutput`/`jsb_engine_*`/`executeOutputs` 残留。
 
 ## 12. 兼容性要求
 

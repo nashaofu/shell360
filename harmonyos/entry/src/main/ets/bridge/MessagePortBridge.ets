@@ -2,24 +2,25 @@ import { webview } from '@kit.ArkWeb';
 import {
   attachEventCallback,
   attachHostCallCallback,
+  attachJsbTransportCallback,
   attachSshShellDataCallback,
-  initializeJsbEngine,
-  jsbEngineBinaryFrame,
-  jsbEngineChannelClose,
-  jsbEngineChannelOpen,
-  jsbEngineChannelOpenFailed,
-  jsbEngineControlFrame,
-  jsbEngineEmit,
-  jsbEnginePushShellBinary,
+  initializeJsb,
+  jsbChannelOpenFailed,
+  jsbCloseChannel,
+  jsbEmit,
+  jsbOpenChannel,
+  jsbPushShellBinary,
+  jsbReceiveBinary,
+  jsbReceiveText,
 } from 'shell360_ohrs';
 import { HarmonyNativeRuntime } from '../runtime/NativeRuntime';
 import { HarmonyHostServices } from './HarmonyHostServices';
 
-interface EngineOutput {
-  kind: string;
-  channelId?: string;
+interface JsbTransportEvent {
+  op: string;
+  channelId: string;
   text?: string;
-  bytes?: number[];
+  data?: number[];
 }
 
 interface SshShellDataEvent {
@@ -37,24 +38,31 @@ export class MessagePortBridge {
   constructor(controller: webview.WebviewController, hostServices: HarmonyHostServices) {
     this.controller = controller;
     this.hostServices = hostServices;
-    this.ready = this.setupEngine();
+    this.ready = this.setupJsb();
   }
 
-  private async setupEngine(): Promise<void> {
+  private async setupJsb(): Promise<void> {
     await HarmonyNativeRuntime.initializeGlobal();
-    initializeJsbEngine();
+    initializeJsb();
     attachHostCallCallback((call: string) => {
       this.hostServices.handleHostCall(call);
     });
+    attachJsbTransportCallback((event: JsbTransportEvent) => {
+      const normalized = normalizeTransportEvent(event as Object);
+      if (normalized === undefined) {
+        return;
+      }
+      this.handleTransportEvent(normalized);
+    });
     attachEventCallback((event: string) => {
-      this.executeOutputs(jsbEngineEmit(normalizeNativeEvent(event as Object)));
+      this.runNative(() => jsbEmit(normalizeNativeEvent(event as Object)));
     });
     attachSshShellDataCallback((event: SshShellDataEvent) => {
       const normalized = normalizeSshShellDataEvent(event as Object);
       if (normalized === undefined) {
         return;
       }
-      this.executeOutputs(jsbEnginePushShellBinary(normalized.clientId, normalized.sshShellId, normalized.data));
+      this.runNative(() => jsbPushShellBinary(normalized.clientId, normalized.sshShellId, normalized.data));
     });
   }
 
@@ -64,25 +72,25 @@ export class MessagePortBridge {
 
   openChannel(channelId: string): void {
     void this.ready.then(() => {
-      this.executeOutputs(jsbEngineChannelOpen(channelId));
+      this.runNative(() => jsbOpenChannel(channelId));
     }).catch((error: Object) => {
-      console.error(`[Shell360] JSB engine is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
+      console.error(`[Shell360] JSB is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
     });
   }
 
   closeChannel(channelId: string): void {
     void this.ready.then(() => {
-      this.executeOutputs(jsbEngineChannelClose(channelId));
+      this.runNative(() => jsbCloseChannel(channelId));
     }).catch((error: Object) => {
-      console.error(`[Shell360] JSB engine is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
+      console.error(`[Shell360] JSB is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
     });
   }
 
   emitBackPress(): void {
     void this.ready.then(() => {
-      this.executeOutputs(jsbEngineEmit('{"type":"emit","event":"app.back","targetId":null,"payload":{}}'));
+      this.runNative(() => jsbEmit('{"type":"emit","event":"app.back","targetId":null,"payload":{}}'));
     }).catch((error: Object) => {
-      console.error(`[Shell360] JSB engine is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
+      console.error(`[Shell360] JSB is unavailable: ${error instanceof Error ? error.message : `${error}`}`);
     });
   }
 
@@ -91,44 +99,42 @@ export class MessagePortBridge {
     const channelIds = Array.from(this.channels.keys());
     channelIds.forEach((channelId) => {
       try {
-        this.executeOutputs(jsbEngineChannelClose(channelId));
+        jsbCloseChannel(channelId);
       } catch (_) {
         this.closePort(channelId);
       }
     });
   }
 
-  private executeOutputs(outputsJson: string): void {
-    let outputs: EngineOutput[];
-    try {
-      outputs = JSON.parse(outputsJson) as EngineOutput[];
-    } catch (_) {
-      return;
-    }
-    outputs.forEach((output: EngineOutput) => {
-      this.executeOutput(output);
-    });
-  }
-
-  private executeOutput(output: EngineOutput): void {
-    switch (output.kind) {
-      case 'replyText':
-        this.writeText(output.channelId ?? '', output.text ?? '');
-        break;
-      case 'pushBinary':
-        this.writeBinary(output.channelId ?? '', output.bytes ?? []);
-        break;
+  // Rust -> WebView. Transport events arrive on the JS thread through the
+  // threadsafe function queue, so per-channel frame order stays stable.
+  private handleTransportEvent(event: JsbTransportEvent): void {
+    switch (event.op) {
       case 'openChannel':
-        this.openPort(output.channelId ?? '', output.text ?? '');
+        this.openPort(event.channelId, event.text ?? '');
         break;
       case 'failChannel':
-        this.postControl(output.text ?? '');
+        this.postControl(event.text ?? '');
         break;
-      case 'closePort':
-        this.closePort(output.channelId ?? '');
+      case 'sendText':
+        this.writeText(event.channelId, event.text ?? '');
+        break;
+      case 'sendBinary':
+        this.writeBinary(event.channelId, event.data ?? []);
+        break;
+      case 'closeChannel':
+        this.closePort(event.channelId);
         break;
       default:
         break;
+    }
+  }
+
+  private runNative(action: () => void): void {
+    try {
+      action();
+    } catch (error) {
+      console.error(`[Shell360] JSB native call failed: ${error instanceof Error ? error.message : `${error}`}`);
     }
   }
 
@@ -155,13 +161,14 @@ export class MessagePortBridge {
     try {
       nativePort.onMessageEvent((message) => {
         if (message instanceof ArrayBuffer) {
-          this.executeOutputs(jsbEngineBinaryFrame(channelId, Array.from(new Uint8Array(message))));
+          const bytes = Array.from(new Uint8Array(message));
+          this.runNative(() => jsbReceiveBinary(channelId, bytes));
           return;
         }
         if (typeof message !== 'string') {
           return;
         }
-        this.executeOutputs(jsbEngineControlFrame(channelId, message));
+        this.runNative(() => jsbReceiveText(channelId, message));
       });
     } catch (error) {
       this.closePort(channelId);
@@ -189,7 +196,7 @@ export class MessagePortBridge {
     try {
       port.postMessageEvent(text);
     } catch (_) {
-      this.executeOutputs(jsbEngineChannelClose(channelId));
+      this.runNative(() => jsbCloseChannel(channelId));
     }
   }
 
@@ -201,7 +208,7 @@ export class MessagePortBridge {
     try {
       port.postMessageEvent(new Uint8Array(bytes).buffer);
     } catch (_) {
-      this.executeOutputs(jsbEngineChannelClose(channelId));
+      this.runNative(() => jsbCloseChannel(channelId));
     }
   }
 
@@ -212,7 +219,7 @@ export class MessagePortBridge {
   }
 
   private reportOpenFailure(channelId: string, reason: string): void {
-    this.executeOutputs(jsbEngineChannelOpenFailed(channelId, reason));
+    this.runNative(() => jsbChannelOpenFailed(channelId, reason));
   }
 
   private closePort(channelId: string): void {
@@ -235,6 +242,23 @@ function normalizeNativeEvent(event: Object): string {
     return event[0] as string;
   }
   return JSON.stringify(event);
+}
+
+function normalizeTransportEvent(event: Object): JsbTransportEvent | undefined {
+  const value = event instanceof Array && event.length > 0 ? event[0] as Object : event;
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, Object>;
+  if (typeof record.op !== 'string' || typeof record.channelId !== 'string') {
+    return undefined;
+  }
+  return {
+    op: record.op,
+    channelId: record.channelId,
+    text: typeof record.text === 'string' ? record.text : undefined,
+    data: record.data instanceof Array ? record.data as number[] : undefined,
+  };
 }
 
 function normalizeSshShellDataEvent(event: Object): SshShellDataEvent | undefined {

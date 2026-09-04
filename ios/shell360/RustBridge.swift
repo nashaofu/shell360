@@ -29,9 +29,9 @@ final class RustBridge: @unchecked Sendable {
         )
     }
 
-    func createJsbEngine(hostServices: HostServices) -> NativeJsbEngine? {
+    func createJsb(transport: JsbTransport, hostServices: HostServices) -> NativeJsb? {
         guard let runtime else { return nil }
-        return NativeJsbEngine(runtime: runtime, hostServices: hostServices)
+        return NativeJsb(runtime: runtime, transport: transport, hostServices: hostServices)
     }
 
     func setEventListener(
@@ -50,10 +50,6 @@ final class RustBridge: @unchecked Sendable {
         if eventListener?.owner === owner {
             eventListener = nil
         }
-    }
-
-    func healthCheck() -> String {
-        runtime?.healthCheck() ?? "unavailable"
     }
 
     func shutdown() {

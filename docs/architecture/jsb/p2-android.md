@@ -1,5 +1,7 @@
 # P2 Android host migration
 
+> **已过时（superseded）**：本文记录的三端驱动 `NativeJsbEngine` / `jsb_engine_*` 并解释输出列表的模型已被删除。当前 Android 实现以 `rust-owned-webview-transport.md` 为准：`JsbPortBridge` 实现 UniFFI `JsbTransport` callback，Rust 通过 transport 直接写回 Channel，不再有 `executeOutputs`。本文仅作为迁移历史保留。
+
 ## Change list
 
 - Replaced the Android dispatcher, route table, and channel manager with `JsbPortBridge`.

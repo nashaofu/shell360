@@ -3495,6 +3495,7 @@ dependencies = [
 name = "jsb-core"
 version = "0.1.0"
 dependencies = [
+ "log",
  "serde",
  "serde_json",
  "uuid",
@@ -6460,6 +6461,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
  "jsb-core",
+ "log",
  "serde",
  "serde_json",
  "shell360-keygen",
@@ -6511,6 +6513,7 @@ dependencies = [
 name = "shell360_ohrs"
 version = "0.1.0"
 dependencies = [
+ "log",
  "napi-build-ohos",
  "napi-derive-ohos",
  "napi-ohos",

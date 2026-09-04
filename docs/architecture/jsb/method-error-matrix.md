@@ -1,5 +1,7 @@
 # Current JSB method and error matrix
 
+> **P0 baseline snapshot**：本表记录 P0 时期三端的方法注册与错误码漂移，属于冻结基线。当前实现中，方法表唯一来源是 `shell360-runtime::methods::method_specs()`（70 个 spec，测试断言数量），错误码由 `jsb-core`（通用框架码）与 `shell360-runtime`（业务/宿主码）统一产生，三端 transport 不再解析方法名、不做 `ssh.shell.open` 绑定（该绑定在 `shell360-runtime` 内）。最终架构见 `rust-owned-webview-transport.md` 与 `layering.md`。
+
 ## Method table
 
 The hosts share 67 registrations across the main families: `bridge.health`; `app.getVersion`, `app.setSystemBarsAppearance`; `machineUid.getMachineUid`; `clipboard.readText`, `clipboard.writeText`; `core.openUrl`; `dialog.open`, `dialog.save`; `fs.readTextFile`, `fs.writeTextFile`; `window.close`; `keygen.generate`; 24 `data.*` methods; seven `ssh.session.*` methods; three common `ssh.shell.*` methods; 14 `ssh.sftp.*` methods; and six `ssh.portForwarding.*` methods. HarmonyOS and iOS additionally register `ssh.shell.send`; iOS alone additionally registers `core.healthCheck`.

@@ -1,6 +1,8 @@
 # ADR-0001: JsbEngine contract and method-table design
 
-Status: Accepted for P1 implementation.
+> **Superseded**：本 ADR 记录的 `JsbEngine` + `Vec<EngineOutput>` + 输出解释契约已被删除并由 `rust-owned-webview-transport.md` 取代。当前实现中 `jsb-core::Jsb` 通过注入的 `JsbTransport` 直接收发 WebView Channel，入口只返回 `Result<(), JsbError>`；具体方法由 `shell360-runtime` 通过 `JsbHandler` 实现。本文仅作为决策历史保留。
+
+Status: Superseded by `rust-owned-webview-transport.md` (was: Accepted for P1 implementation).
 
 ## Decision
 

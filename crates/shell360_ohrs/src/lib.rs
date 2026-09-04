@@ -7,8 +7,7 @@ use napi_ohos::{
   threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use shell360_ffi::{
-  FfiError, FfiEventSink, HostServices, NativeEngineOutput, NativeEngineOutputKind,
-  NativeJsbEngine, Shell360Runtime,
+  FfiError, FfiEventSink, HostServices, JsbTransport, NativeJsb, Shell360Runtime,
 };
 
 type EventCallback =
@@ -24,6 +23,15 @@ type BinaryCallback = ThreadsafeFunction<
 >;
 type HostCallCallback =
   ThreadsafeFunction<String, Unknown<'static>, Vec<String>, Status, false, false, 0>;
+type TransportCallback = ThreadsafeFunction<
+  JsbTransportEvent,
+  Unknown<'static>,
+  Vec<JsbTransportEvent>,
+  Status,
+  false,
+  false,
+  0,
+>;
 
 #[napi(object)]
 pub struct SshShellDataEvent {
@@ -32,11 +40,24 @@ pub struct SshShellDataEvent {
   pub data: Vec<u8>,
 }
 
+/// One WebView channel operation requested by the Rust JSB core. `op` is one of
+/// `openChannel`, `failChannel`, `sendText`, `sendBinary`, `closeChannel`; the
+/// ArkTS message-port adapter performs it on the UI thread. Binary frames stay
+/// binary in `data` and never pass through JSON or Base64.
+#[napi(object)]
+pub struct JsbTransportEvent {
+  pub op: String,
+  pub channel_id: String,
+  pub text: Option<String>,
+  pub data: Option<Vec<u8>>,
+}
+
 static RUNTIME: LazyLock<Mutex<Option<Arc<Shell360Runtime>>>> = LazyLock::new(|| Mutex::new(None));
 static EVENT_SINK: LazyLock<Mutex<Option<Arc<EventSink>>>> = LazyLock::new(|| Mutex::new(None));
-static JSB_ENGINE: LazyLock<Mutex<Option<Arc<NativeJsbEngine>>>> =
-  LazyLock::new(|| Mutex::new(None));
+static JSB: LazyLock<Mutex<Option<Arc<NativeJsb>>>> = LazyLock::new(|| Mutex::new(None));
 static HOST_CALL_CALLBACK: LazyLock<Mutex<Option<HostCallCallback>>> =
+  LazyLock::new(|| Mutex::new(None));
+static TRANSPORT_CALLBACK: LazyLock<Mutex<Option<TransportCallback>>> =
   LazyLock::new(|| Mutex::new(None));
 
 struct OhrsHostServices;
@@ -55,6 +76,67 @@ impl HostServices for OhrsHostServices {
       .to_string();
       let _ = callback.call(message, ThreadsafeFunctionCallMode::Blocking);
     }
+  }
+}
+
+/// Forwards Rust JSB transport operations to the ArkTS WebView adapter.
+struct OhrsJsbTransport;
+
+impl OhrsJsbTransport {
+  fn emit(event: JsbTransportEvent) {
+    let Ok(callback) = TRANSPORT_CALLBACK.lock() else {
+      return;
+    };
+    if let Some(callback) = callback.as_ref() {
+      let _ = callback.call(event, ThreadsafeFunctionCallMode::Blocking);
+    }
+  }
+}
+
+impl JsbTransport for OhrsJsbTransport {
+  fn open_channel(&self, channel_id: String, control_message: String) {
+    Self::emit(JsbTransportEvent {
+      op: "openChannel".to_string(),
+      channel_id,
+      text: Some(control_message),
+      data: None,
+    });
+  }
+
+  fn fail_channel(&self, channel_id: String, control_message: String) {
+    Self::emit(JsbTransportEvent {
+      op: "failChannel".to_string(),
+      channel_id,
+      text: Some(control_message),
+      data: None,
+    });
+  }
+
+  fn send_text(&self, channel_id: String, message: String) {
+    Self::emit(JsbTransportEvent {
+      op: "sendText".to_string(),
+      channel_id,
+      text: Some(message),
+      data: None,
+    });
+  }
+
+  fn send_binary(&self, channel_id: String, data: Vec<u8>) {
+    Self::emit(JsbTransportEvent {
+      op: "sendBinary".to_string(),
+      channel_id,
+      text: None,
+      data: Some(data),
+    });
+  }
+
+  fn close_channel(&self, channel_id: String) {
+    Self::emit(JsbTransportEvent {
+      op: "closeChannel".to_string(),
+      channel_id,
+      text: None,
+      data: None,
+    });
   }
 }
 
@@ -124,42 +206,24 @@ fn runtime() -> Result<Arc<Shell360Runtime>> {
     .ok_or_else(|| Error::from_reason("Native runtime is not initialized."))
 }
 
-fn jsb_engine() -> Result<Arc<NativeJsbEngine>> {
-  JSB_ENGINE
+fn jsb() -> Result<Arc<NativeJsb>> {
+  JSB
     .lock()
-    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))?
+    .map_err(|_| Error::from_reason("JSB lock is poisoned."))?
     .clone()
-    .ok_or_else(|| Error::from_reason("JSB engine is not initialized."))
-}
-
-fn serialize_engine_outputs(outputs: Vec<NativeEngineOutput>) -> Result<String> {
-  let outputs = outputs
-    .into_iter()
-    .map(|output| {
-      let kind = match output.kind {
-        NativeEngineOutputKind::ReplyText => "replyText",
-        NativeEngineOutputKind::PushBinary => "pushBinary",
-        NativeEngineOutputKind::OpenChannel => "openChannel",
-        NativeEngineOutputKind::FailChannel => "failChannel",
-        NativeEngineOutputKind::ClosePort => "closePort",
-      };
-      serde_json::json!({
-        "kind": kind,
-        "channelId": output.channel_id,
-        "text": output.text,
-        "bytes": output.bytes,
-      })
-    })
-    .collect::<Vec<_>>();
-  serde_json::to_string(&outputs).map_err(|error| Error::from_reason(error.to_string()))
+    .ok_or_else(|| Error::from_reason("JSB is not initialized."))
 }
 
 #[napi]
-pub fn initialize_jsb_engine() -> Result<()> {
-  let engine = NativeJsbEngine::new(runtime()?, Box::new(OhrsHostServices));
-  *JSB_ENGINE
+pub fn initialize_jsb() -> Result<()> {
+  let jsb = NativeJsb::new(
+    runtime()?,
+    Box::new(OhrsJsbTransport),
+    Box::new(OhrsHostServices),
+  );
+  *JSB
     .lock()
-    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))? = Some(engine);
+    .map_err(|_| Error::from_reason("JSB lock is poisoned."))? = Some(jsb);
   Ok(())
 }
 
@@ -181,80 +245,72 @@ pub fn attach_host_call_callback(
 }
 
 #[napi]
-pub fn jsb_engine_channel_open(channel_id: String) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .on_channel_open(channel_id)
-      .map_err(native_error)?,
-  )
+pub fn attach_jsb_transport_callback(
+  #[napi(ts_arg_type = "(event: JsbTransportEvent) => void")] callback: Function<
+    'static,
+    Unknown<'static>,
+    Unknown<'static>,
+  >,
+) -> Result<()> {
+  let callback = callback
+    .build_threadsafe_function::<JsbTransportEvent>()
+    .build_callback(|context| Ok(vec![context.value]))?;
+  *TRANSPORT_CALLBACK
+    .lock()
+    .map_err(|_| Error::from_reason("JSB transport callback lock is poisoned."))? = Some(callback);
+  Ok(())
 }
 
 #[napi]
-pub fn jsb_engine_channel_close(channel_id: String) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .on_channel_close(channel_id)
-      .map_err(native_error)?,
-  )
+pub fn jsb_open_channel(channel_id: String) -> Result<()> {
+  jsb()?.open_channel(channel_id).map_err(native_error)
 }
 
 #[napi]
-pub fn jsb_engine_channel_open_failed(channel_id: String, reason: String) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .on_channel_open_failed(channel_id, reason)
-      .map_err(native_error)?,
-  )
+pub fn jsb_close_channel(channel_id: String) -> Result<()> {
+  jsb()?.close_channel(channel_id).map_err(native_error)
 }
 
 #[napi]
-pub fn jsb_engine_control_frame(channel_id: String, text: String) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .on_control_frame(channel_id, text)
-      .map_err(native_error)?,
-  )
+pub fn jsb_channel_open_failed(channel_id: String, reason: String) -> Result<()> {
+  jsb()?
+    .channel_open_failed(channel_id, reason)
+    .map_err(native_error)
 }
 
 #[napi]
-pub fn jsb_engine_binary_frame(channel_id: String, bytes: Vec<u8>) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .on_binary_frame(channel_id, bytes)
-      .map_err(native_error)?,
-  )
+pub fn jsb_receive_text(channel_id: String, text: String) -> Result<()> {
+  jsb()?.receive_text(channel_id, text).map_err(native_error)
 }
 
 #[napi]
-pub fn jsb_engine_complete_host_call(call_id: String, result_json: String) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .complete_host_call(call_id, result_json)
-      .map_err(native_error)?,
-  )
+pub fn jsb_receive_binary(channel_id: String, bytes: Vec<u8>) -> Result<()> {
+  jsb()?
+    .receive_binary(channel_id, bytes)
+    .map_err(native_error)
 }
 
 #[napi]
-pub fn jsb_engine_emit(event_json: String) -> Result<String> {
-  serialize_engine_outputs(jsb_engine()?.emit(event_json).map_err(native_error)?)
+pub fn jsb_complete_host_call(call_id: String, result_json: String) -> Result<()> {
+  jsb()?.complete_host_call(call_id, result_json);
+  Ok(())
 }
 
 #[napi]
-pub fn jsb_engine_push_shell_binary(
-  client_id: String,
-  shell_id: String,
-  bytes: Vec<u8>,
-) -> Result<String> {
-  serialize_engine_outputs(
-    jsb_engine()?
-      .push_shell_binary(client_id, shell_id, bytes)
-      .map_err(native_error)?,
-  )
+pub fn jsb_emit(event_json: String) -> Result<()> {
+  jsb()?.emit(event_json).map_err(native_error)
 }
 
 #[napi]
-pub fn health_check() -> String {
-  "ok".to_string()
+pub fn jsb_send_binary(channel_id: String, bytes: Vec<u8>) -> Result<()> {
+  jsb()?.send_binary(channel_id, bytes).map_err(native_error)
+}
+
+#[napi]
+pub fn jsb_push_shell_binary(client_id: String, shell_id: String, bytes: Vec<u8>) -> Result<()> {
+  jsb()?
+    .push_shell_binary(client_id, shell_id, bytes)
+    .map_err(native_error)
 }
 
 pub struct InitializeRuntimeTask {
@@ -332,65 +388,6 @@ pub fn attach_event_callback(
   Ok(())
 }
 
-pub struct InvokeTask {
-  method: String,
-  client_id: String,
-  params_json: String,
-}
-
-#[napi]
-impl Task for InvokeTask {
-  type Output = String;
-  type JsValue = String;
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    runtime()?
-      .invoke(
-        std::mem::take(&mut self.method),
-        std::mem::take(&mut self.client_id),
-        std::mem::take(&mut self.params_json),
-      )
-      .map_err(native_error)
-  }
-
-  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-pub fn invoke(method: String, client_id: String, params_json: String) -> AsyncTask<InvokeTask> {
-  AsyncTask::new(InvokeTask {
-    method,
-    client_id,
-    params_json,
-  })
-}
-
-pub struct ReleaseClientTask {
-  client_id: String,
-}
-
-#[napi]
-impl Task for ReleaseClientTask {
-  type Output = ();
-  type JsValue = ();
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    runtime()?.release_client(std::mem::take(&mut self.client_id));
-    Ok(())
-  }
-
-  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-pub fn release_client(client_id: String) -> AsyncTask<ReleaseClientTask> {
-  AsyncTask::new(ReleaseClientTask { client_id })
-}
-
 #[napi]
 pub fn attach_ssh_shell_data_callback(
   #[napi(ts_arg_type = "(event: SshShellDataEvent) => void")] callback: Function<
@@ -414,45 +411,6 @@ pub fn attach_ssh_shell_data_callback(
   Ok(())
 }
 
-pub struct SendSshShellDataTask {
-  client_id: String,
-  ssh_shell_id: String,
-  data: Vec<u8>,
-}
-
-#[napi]
-impl Task for SendSshShellDataTask {
-  type Output = ();
-  type JsValue = ();
-
-  fn compute(&mut self) -> Result<Self::Output> {
-    runtime()?
-      .ssh_shell_send_binary(
-        std::mem::take(&mut self.client_id),
-        std::mem::take(&mut self.ssh_shell_id),
-        std::mem::take(&mut self.data),
-      )
-      .map_err(native_error)
-  }
-
-  fn resolve(&mut self, _: Env, output: Self::Output) -> Result<Self::JsValue> {
-    Ok(output)
-  }
-}
-
-#[napi]
-pub fn send_ssh_shell_data(
-  client_id: String,
-  ssh_shell_id: String,
-  data: Vec<u8>,
-) -> AsyncTask<SendSshShellDataTask> {
-  AsyncTask::new(SendSshShellDataTask {
-    client_id,
-    ssh_shell_id,
-    data,
-  })
-}
-
 #[napi]
 pub fn shutdown() -> Result<()> {
   let runtime = RUNTIME
@@ -465,11 +423,22 @@ pub fn shutdown() -> Result<()> {
   *EVENT_SINK
     .lock()
     .map_err(|_| Error::from_reason("Native event sink lock is poisoned."))? = None;
-  *JSB_ENGINE
+  let jsb = JSB
     .lock()
-    .map_err(|_| Error::from_reason("JSB engine lock is poisoned."))? = None;
+    .map_err(|_| Error::from_reason("JSB lock is poisoned."))?
+    .take();
+  if let Some(jsb) = jsb {
+    // Best-effort graceful close while the transport callback is still attached;
+    // a tearing-down ArkTS runtime simply rejects the queued calls.
+    if let Err(error) = jsb.shutdown() {
+      log::warn!("JSB shutdown reported an error: {error:?}");
+    }
+  }
   *HOST_CALL_CALLBACK
     .lock()
     .map_err(|_| Error::from_reason("HostCall callback lock is poisoned."))? = None;
+  *TRANSPORT_CALLBACK
+    .lock()
+    .map_err(|_| Error::from_reason("JSB transport callback lock is poisoned."))? = None;
   Ok(())
 }

@@ -45,7 +45,8 @@ struct WebViewContainer: UIViewRepresentable {
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, UIDocumentPickerDelegate {
         private let rustBridge: RustBridge
         private weak var webView: WKWebView?
-        private var engine: NativeJsbEngine?
+        private var jsb: NativeJsb?
+        private var transport: IosJsbTransport?
         private var hostServices: IosHostServices?
         private var openChannels: Set<String> = []
         private var pickerContinuation: CheckedContinuation<Any?, Error>?
@@ -58,6 +59,9 @@ struct WebViewContainer: UIViewRepresentable {
         func attach(to webView: WKWebView) {
             self.webView = webView
             let rustBridge = self.rustBridge
+
+            let transport = IosJsbTransport(webView: webView)
+            self.transport = transport
 
             let hostServices = IosHostServices(
                 closeWindow: { [weak webView] in
@@ -84,15 +88,14 @@ struct WebViewContainer: UIViewRepresentable {
             )
             self.hostServices = hostServices
 
-            guard let engine = rustBridge.createJsbEngine(hostServices: hostServices) else {
+            guard let jsb = rustBridge.createJsb(transport: transport, hostServices: hostServices) else {
                 return
             }
-            self.engine = engine
+            self.jsb = jsb
 
             hostServices.attachCompletion { [weak self] callId, resultJson in
                 Task { @MainActor [weak self] in
-                    guard let self, let engine = self.engine else { return }
-                    self.executeOutputs((try? engine.completeHostCall(callId: callId, resultJson: resultJson)) ?? [])
+                    self?.jsb?.completeHostCall(callId: callId, resultJson: resultJson)
                 }
             }
 
@@ -100,14 +103,12 @@ struct WebViewContainer: UIViewRepresentable {
                 owner: self,
                 onEvent: { [weak self] event in
                     Task { @MainActor [weak self] in
-                        guard let self, let engine = self.engine else { return }
-                        self.executeOutputs((try? engine.emit(eventJson: event)) ?? [])
+                        try? self?.jsb?.emit(eventJson: event)
                     }
                 },
                 onSshShellData: { [weak self] clientId, sshShellId, data in
                     Task { @MainActor [weak self] in
-                        guard let self, let engine = self.engine else { return }
-                        self.executeOutputs((try? engine.pushShellBinary(clientId: clientId, shellId: sshShellId, bytes: data)) ?? [])
+                        try? self?.jsb?.pushShellBinary(clientId: clientId, shellId: sshShellId, bytes: data)
                     }
                 }
             )
@@ -116,7 +117,10 @@ struct WebViewContainer: UIViewRepresentable {
         func detach() {
             hostServices?.detachCompletion()
             rustBridge.clearEventListener(owner: self)
-            engine = nil
+            try? jsb?.shutdown()
+            jsb = nil
+            transport?.detach()
+            transport = nil
             hostServices = nil
             webView = nil
         }
@@ -127,23 +131,22 @@ struct WebViewContainer: UIViewRepresentable {
                   body["version"] as? Int == 1,
                   let kind = body["kind"] as? String,
                   let channelId = body["channelId"] as? String,
-                  let payload = body["payload"] as? String,
-                  let engine = self.engine else {
+                  let payload = body["payload"] as? String else {
                 return
             }
 
             switch kind {
             case "channel.open":
                 openChannels.insert(channelId)
-                executeOutputs((try? engine.onChannelOpen(channelId: channelId)) ?? [])
+                try? jsb?.openChannel(channelId: channelId)
             case "channel.close":
                 openChannels.remove(channelId)
-                executeOutputs((try? engine.onChannelClose(channelId: channelId)) ?? [])
+                try? jsb?.closeChannel(channelId: channelId)
             case "text":
-                executeOutputs((try? engine.onControlFrame(channelId: channelId, text: payload)) ?? [])
+                try? jsb?.receiveText(channelId: channelId, text: payload)
             case "binary":
                 guard let data = Data(base64Encoded: payload) else { return }
-                executeOutputs((try? engine.onBinaryFrame(channelId: channelId, bytes: data)) ?? [])
+                try? jsb?.receiveBinary(channelId: channelId, bytes: data)
             default:
                 break
             }
@@ -197,9 +200,8 @@ struct WebViewContainer: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
-            guard let engine = self.engine else { return }
             for channelId in openChannels {
-                executeOutputs((try? engine.onChannelClose(channelId: channelId)) ?? [])
+                try? jsb?.closeChannel(channelId: channelId)
             }
             openChannels.removeAll()
         }
@@ -233,64 +235,88 @@ struct WebViewContainer: UIViewRepresentable {
             #endif
         }
 
-        private func executeOutputs(_ outputs: [NativeEngineOutput]) {
-            for output in outputs {
-                executeOutput(output)
-            }
-        }
+    }
+}
 
-        private func executeOutput(_ output: NativeEngineOutput) {
-            switch output.kind {
-            case .replyText:
-                guard let channelId = output.channelId, let text = output.text else { return }
-                receiveText(channelId: channelId, text: text)
-            case .pushBinary:
-                guard let channelId = output.channelId, let bytes = output.bytes else { return }
-                receiveBinary(channelId: channelId, bytes: bytes)
-            case .openChannel:
-                break
-            case .failChannel:
-                guard let text = output.text else { return }
-                postControl(text)
-            case .closePort:
-                guard let channelId = output.channelId else { return }
-                receiveClose(channelId: channelId)
-            }
-        }
+/// WKWebView transport adapter for the Rust JSB core. The callbacks are
+/// invoked on Rust worker threads and every one hops to the main queue before
+/// touching WebKit, which keeps per-channel frame ordering stable. The
+/// document-start JS adapter creates its own MessageChannel and posts
+/// `channel.opened` with port2 itself, so `openChannel` is a no-op. Base64 for
+/// binary frames is confined to this WKScriptMessage transport adapter.
+final class IosJsbTransport: JsbTransport, @unchecked Sendable {
+    private weak var webView: WKWebView?
 
-        private func receiveText(channelId: String, text: String) {
-            let envelope = JavaScriptBridge.jsonObjectLiteral([
-                "version": 1,
-                "kind": "text",
-                "channelId": channelId,
-                "payload": text
-            ])
-            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
-        }
+    init(webView: WKWebView) {
+        self.webView = webView
+    }
 
-        private func receiveBinary(channelId: String, bytes: Data) {
-            let envelope = JavaScriptBridge.jsonObjectLiteral([
-                "version": 1,
-                "kind": "binary",
-                "channelId": channelId,
-                "payload": bytes.base64EncodedString()
-            ])
-            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+    func detach() {
+        DispatchQueue.main.async { [weak self] in
+            self?.webView = nil
         }
+    }
 
-        private func receiveClose(channelId: String) {
-            let envelope = JavaScriptBridge.jsonObjectLiteral([
-                "version": 1,
-                "kind": "close",
-                "channelId": channelId,
-                "payload": ""
-            ])
-            webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
-        }
+    func openChannel(channelId: String, controlMessage: String) {
+        // No-op: the JS adapter owns MessageChannel creation on iOS.
+    }
 
-        private func postControl(_ text: String) {
-            let escaped = JavaScriptBridge.jsonStringLiteral(text)
-            webView?.evaluateJavaScript("window.postMessage(\(escaped), window.location.origin);")
+    func failChannel(channelId: String, controlMessage: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.postControl(controlMessage)
         }
+    }
+
+    func sendText(channelId: String, message: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.receiveText(channelId: channelId, text: message)
+        }
+    }
+
+    func sendBinary(channelId: String, data: Data) {
+        DispatchQueue.main.async { [weak self] in
+            self?.receiveBinary(channelId: channelId, bytes: data)
+        }
+    }
+
+    func closeChannel(channelId: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.receiveClose(channelId: channelId)
+        }
+    }
+
+    private func receiveText(channelId: String, text: String) {
+        let envelope = JavaScriptBridge.jsonObjectLiteral([
+            "version": 1,
+            "kind": "text",
+            "channelId": channelId,
+            "payload": text
+        ])
+        webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+    }
+
+    private func receiveBinary(channelId: String, bytes: Data) {
+        let envelope = JavaScriptBridge.jsonObjectLiteral([
+            "version": 1,
+            "kind": "binary",
+            "channelId": channelId,
+            "payload": bytes.base64EncodedString()
+        ])
+        webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+    }
+
+    private func receiveClose(channelId: String) {
+        let envelope = JavaScriptBridge.jsonObjectLiteral([
+            "version": 1,
+            "kind": "close",
+            "channelId": channelId,
+            "payload": ""
+        ])
+        webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+    }
+
+    private func postControl(_ text: String) {
+        let escaped = JavaScriptBridge.jsonStringLiteral(text)
+        webView?.evaluateJavaScript("window.postMessage(\(escaped), window.location.origin);")
     }
 }

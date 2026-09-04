@@ -1,44 +1,77 @@
-use jsb_core::{EngineOutput, InvokeFlow, InvokeOutcome, JsbEngine, MethodInvoker};
+use std::sync::{Arc, Mutex};
+
+use jsb_core::{
+  Jsb, JsbChannelContext, JsbHandler, JsbHandlerError, JsbInvokeCompletion, JsbInvokeContext,
+  JsbInvokeRequest, JsbTransport, JsbTransportError,
+};
 use serde_json::Value;
 
-struct HealthInvoker;
+#[derive(Default)]
+struct RecordingTransport {
+  opens: Mutex<Vec<(String, String)>>,
+  texts: Mutex<Vec<(String, String)>>,
+}
 
-impl MethodInvoker for HealthInvoker {
-  fn invoke(
-    &self,
-    method: &str,
-    _client_id: &str,
-    _params_json: &str,
-  ) -> Result<InvokeFlow, jsb_core::InvokerError> {
-    assert_eq!(method, "bridge.health");
-    Ok(InvokeFlow::Complete(InvokeOutcome {
-      result_json: r#"{"status":"ok"}"#.into(),
-      host_actions: Vec::new(),
-    }))
-  }
-
-  fn send_binary(
-    &self,
-    _client_id: &str,
-    _channel_id: &str,
-    _bytes: &[u8],
-  ) -> Result<(), jsb_core::InvokerError> {
+impl JsbTransport for RecordingTransport {
+  fn open_channel(&self, channel_id: &str, control_message: &str) -> Result<(), JsbTransportError> {
+    self
+      .opens
+      .lock()
+      .unwrap()
+      .push((channel_id.to_string(), control_message.to_string()));
     Ok(())
   }
 
-  fn close_channel(&self, _client_id: &str, _channel_id: &str) {}
-
-  fn resume_host_call(
+  fn fail_channel(
     &self,
-    _continuation: &str,
-    _data_json: &str,
-  ) -> Result<InvokeFlow, jsb_core::InvokerError> {
-    unreachable!()
+    _channel_id: &str,
+    _control_message: &str,
+  ) -> Result<(), JsbTransportError> {
+    Ok(())
   }
 
-  fn cancel_host_call(&self, _continuation: &str) {}
+  fn send_text(&self, channel_id: &str, message: &str) -> Result<(), JsbTransportError> {
+    self
+      .texts
+      .lock()
+      .unwrap()
+      .push((channel_id.to_string(), message.to_string()));
+    Ok(())
+  }
 
-  fn release_client(&self, _client_id: &str) {}
+  fn send_binary(&self, _channel_id: &str, _data: &[u8]) -> Result<(), JsbTransportError> {
+    Ok(())
+  }
+
+  fn close_channel(&self, _channel_id: &str) -> Result<(), JsbTransportError> {
+    Ok(())
+  }
+}
+
+struct HealthHandler;
+
+impl JsbHandler for HealthHandler {
+  fn invoke(
+    &self,
+    _context: JsbInvokeContext,
+    request: JsbInvokeRequest,
+    completion: Arc<dyn JsbInvokeCompletion>,
+  ) {
+    assert_eq!(request.method, "bridge.health");
+    completion.resolve(r#"{"status":"ok"}"#.to_string());
+  }
+
+  fn receive_binary(
+    &self,
+    _context: JsbChannelContext,
+    _data: Vec<u8>,
+  ) -> Result<(), JsbHandlerError> {
+    Ok(())
+  }
+
+  fn close_channel(&self, _context: JsbChannelContext) {}
+
+  fn release_client(&self, _client_id: String) {}
 }
 
 fn fixture() -> Value {
@@ -48,16 +81,31 @@ fn fixture() -> Value {
 #[test]
 fn current_invoke_request_and_response_match_the_golden_contract() {
   let fixture = fixture();
-  let mut engine = JsbEngine::new(HealthInvoker, ["bridge.health"]);
+  let transport = Arc::new(RecordingTransport::default());
+  let jsb = Jsb::new(
+    Arc::clone(&transport) as Arc<dyn JsbTransport>,
+    Arc::new(HealthHandler) as Arc<dyn JsbHandler>,
+    ["bridge.health"],
+  );
   let channel_id = fixture["channelId"].as_str().unwrap();
-  assert!(matches!(
-    engine.on_channel_open(channel_id).as_slice(),
-    [EngineOutput::OpenChannel { .. }]
-  ));
+  jsb.open_channel(channel_id.to_string()).unwrap();
 
-  let outputs = engine.on_control_frame(channel_id, fixture["frames"]["request"].as_str().unwrap());
-  let [EngineOutput::ReplyText { text, .. }] = outputs.as_slice() else {
-    panic!("expected a reply frame");
+  assert_eq!(transport.opens.lock().unwrap().len(), 1);
+  assert_eq!(
+    transport.opens.lock().unwrap()[0].1,
+    fixture["frames"]["opened"].as_str().unwrap()
+  );
+
+  jsb
+    .receive_text(
+      channel_id.to_string(),
+      fixture["frames"]["request"].as_str().unwrap().to_string(),
+    )
+    .unwrap();
+
+  let texts = transport.texts.lock().unwrap();
+  let [(_, text)] = texts.as_slice() else {
+    panic!("expected exactly one reply frame");
   };
   assert_eq!(
     text.as_str(),

@@ -8,6 +8,10 @@ use std::{
 };
 
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
+use jsb_core::{
+  JsbChannelContext, JsbErrorPayload, JsbHandler, JsbHandlerError, JsbInvokeCompletion,
+  JsbInvokeContext, JsbInvokeRequest,
+};
 use serde::Deserialize;
 use shell360_keygen::Algorithm;
 use shell360_ssh::{
@@ -85,6 +89,16 @@ impl RuntimeError {
 pub trait RuntimeEventSink: Send + Sync {
   fn on_event(&self, event_json: String);
   fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>);
+}
+
+/// Platform capability executor used by the runtime JSB handler. Each call is
+/// identified by an opaque `call_id`; the platform reports the result later
+/// through [`RuntimeInvoker::complete_host_call`]. This is the runtime-side
+/// counterpart of the FFI/N-API HostServices callback and never enters
+/// `jsb-core`: host calls, continuations and staging files are business
+/// concerns owned by this crate.
+pub trait RuntimeHostServices: Send + Sync {
+  fn host_call(&self, call_id: String, primitive: String, params_json: String);
 }
 
 struct DataEventSinkAdapter {
@@ -302,50 +316,85 @@ struct SshPortForwardingIdRequest {
 pub struct Shell360Runtime {
   app_data_dir: PathBuf,
   cache_dir: PathBuf,
-  event_sink: Arc<dyn RuntimeEventSink>,
   runtime: tokio::runtime::Runtime,
   data_service: DataService,
   ssh_service: SshService,
   machine_uid: std::sync::Mutex<Option<String>>,
 }
 
+/// Business `JsbHandler` for Shell360. Owns the method routing table's runtime
+/// side, SSH shell channel bindings, host-call coordination and transfer
+/// staging. All JSB-generic protocol state stays in `jsb-core`; this type only
+/// implements business behaviour through the completion and host-services
+/// boundaries.
 #[derive(Clone)]
 pub struct RuntimeInvoker {
   runtime: Arc<Shell360Runtime>,
+  host_services: Arc<dyn RuntimeHostServices>,
   shell_channels: Arc<Mutex<HashMap<(String, String), String>>>,
-  transfers: Arc<Mutex<HashMap<String, PendingTransfer>>>,
+  host_calls: Arc<Mutex<HashMap<String, HostCall>>>,
 }
 
-enum PendingTransfer {
+struct HostCall {
+  client_id: String,
+  channel_id: String,
+  completion: Arc<dyn JsbInvokeCompletion>,
+  kind: HostCallKind,
+}
+
+enum HostCallKind {
+  /// Plain host primitive; the platform result is the method result.
+  Primitive,
+  /// Upload: the platform staged the picked file; the Rust SFTP upload runs
+  /// after the platform reports success.
   Upload {
     method: String,
-    client_id: String,
     params_json: String,
     staging_path: String,
   },
+  /// Download: the Rust SFTP download already finished into the staging file;
+  /// the platform copies it to the user-chosen destination.
   Download {
     result_json: String,
     staging_path: String,
   },
 }
 
-impl PendingTransfer {
-  fn staging_path(&self) -> &str {
+impl HostCallKind {
+  fn staging_path(&self) -> Option<&str> {
     match self {
-      Self::Upload { staging_path, .. } | Self::Download { staging_path, .. } => staging_path,
+      Self::Primitive => None,
+      Self::Upload { staging_path, .. } | Self::Download { staging_path, .. } => Some(staging_path),
     }
   }
 }
 
+/// Platform host-call result wire shape, identical for Android/iOS/HarmonyOS.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum HostCallResult {
+  Error { error: JsbErrorPayload },
+  Success { data: serde_json::Value },
+}
+
+enum HostCallOutcome {
+  Success(serde_json::Value),
+  Error(JsbErrorPayload),
+}
+
 impl RuntimeInvoker {
-  pub fn new(runtime: Arc<Shell360Runtime>) -> Self {
+  pub fn new(runtime: Arc<Shell360Runtime>, host_services: Arc<dyn RuntimeHostServices>) -> Self {
     Self {
       runtime,
+      host_services,
       shell_channels: Arc::new(Mutex::new(HashMap::new())),
-      transfers: Arc::new(Mutex::new(HashMap::new())),
+      host_calls: Arc::new(Mutex::new(HashMap::new())),
     }
   }
 
+  /// Look up the JSB data channel bound to `(client_id, ssh_shell_id)` by a
+  /// previous `ssh.shell.open` invoke. Used to route SSH shell output events
+  /// back to the WebView binary channel.
   pub fn shell_channel(&self, client_id: &str, shell_id: &str) -> Option<String> {
     self
       .shell_channels
@@ -353,6 +402,80 @@ impl RuntimeInvoker {
       .expect("lock shell channels")
       .get(&(client_id.to_string(), shell_id.to_string()))
       .cloned()
+  }
+
+  /// Deliver a platform host-call result. Called by the FFI/N-API layer when
+  /// the platform finishes a primitive. Upload continuations still run the
+  /// blocking Rust SFTP call, so that resume is offloaded to a worker thread;
+  /// every other path settles the completion inline.
+  pub fn complete_host_call(&self, call_id: &str, result_json: &str) {
+    let Some(call) = self
+      .host_calls
+      .lock()
+      .expect("lock host calls")
+      .remove(call_id)
+    else {
+      return;
+    };
+    let outcome = match serde_json::from_str::<HostCallResult>(result_json) {
+      Ok(HostCallResult::Success { data }) => HostCallOutcome::Success(data),
+      Ok(HostCallResult::Error { error }) => HostCallOutcome::Error(error),
+      Err(error) => HostCallOutcome::Error(
+        JsbErrorPayload::new(
+          "JSB_INVALID_RESPONSE",
+          "HostServices returned an invalid result.",
+        )
+        .with_details(Some(serde_json::json!({ "reason": error.to_string() }))),
+      ),
+    };
+    let HostCall {
+      client_id,
+      completion,
+      kind,
+      ..
+    } = call;
+    match (kind, outcome) {
+      (
+        HostCallKind::Upload {
+          method,
+          params_json,
+          staging_path,
+        },
+        HostCallOutcome::Success(_),
+      ) => {
+        let this = self.clone();
+        std::thread::spawn(move || {
+          let result = this.runtime.invoke(method.clone(), client_id, params_json);
+          let _ = std::fs::remove_file(&staging_path);
+          match result {
+            Ok(result_json) => {
+              let action = this.runtime.post_invoke_host_call(&method, &result_json);
+              completion.resolve(result_json);
+              if let Some((primitive, params)) = action {
+                this.dispatch_host_call(primitive, params);
+              }
+            }
+            Err(error) => completion.reject(runtime_error_payload(&error)),
+          }
+        });
+      }
+      (kind, HostCallOutcome::Success(data)) => {
+        if let Some(staging_path) = kind.staging_path() {
+          let _ = std::fs::remove_file(staging_path);
+        }
+        match kind {
+          HostCallKind::Download { result_json, .. } => completion.resolve(result_json),
+          HostCallKind::Primitive => completion.resolve(data.to_string()),
+          HostCallKind::Upload { .. } => unreachable!("upload success is handled above"),
+        }
+      }
+      (kind, HostCallOutcome::Error(error)) => {
+        if let Some(staging_path) = kind.staging_path() {
+          let _ = std::fs::remove_file(staging_path);
+        }
+        completion.reject(error);
+      }
+    }
   }
 
   fn bind_shell_channel(&self, client_id: &str, params_json: &str) {
@@ -378,257 +501,309 @@ impl RuntimeInvoker {
       );
   }
 
-  fn staging_path(&self, continuation: &str) -> Result<String, jsb_core::InvokerError> {
+  fn staging_path(&self, call_id: &str) -> Result<String, JsbErrorPayload> {
     let directory = std::path::Path::new(&self.runtime.cache_dir()).join("transfers");
-    std::fs::create_dir_all(&directory).map_err(|error| jsb_core::InvokerError {
-      code: "BRIDGE_IO_ERROR".into(),
-      message: error.to_string(),
-      details_json: None,
+    std::fs::create_dir_all(&directory).map_err(|error| {
+      JsbErrorPayload::new(
+        "BRIDGE_IO_ERROR",
+        format!("Failed to prepare transfer directory: {error}"),
+      )
     })?;
-    Ok(directory.join(continuation).to_string_lossy().into_owned())
+    Ok(directory.join(call_id).to_string_lossy().into_owned())
   }
 
-  fn cleanup_transfer(transfer: &PendingTransfer) {
-    let _ = std::fs::remove_file(transfer.staging_path());
+  fn dispatch_host_call(&self, primitive: String, params_json: String) {
+    self
+      .host_services
+      .host_call(Uuid::new_v4().to_string(), primitive, params_json);
+  }
+
+  fn register_host_call(
+    &self,
+    call_id: String,
+    context: &JsbInvokeContext,
+    completion: Arc<dyn JsbInvokeCompletion>,
+    kind: HostCallKind,
+  ) {
+    self.host_calls.lock().expect("lock host calls").insert(
+      call_id,
+      HostCall {
+        client_id: context.client_id.clone(),
+        channel_id: context.channel_id.clone(),
+        completion,
+        kind,
+      },
+    );
   }
 
   fn begin_upload(
     &self,
+    context: &JsbInvokeContext,
     method: &str,
-    client_id: &str,
     params_json: &str,
-  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
-    let mut data: serde_json::Value =
-      serde_json::from_str(params_json).map_err(invoker_json_error)?;
-    let source = data
-      .get("localFilename")
-      .and_then(serde_json::Value::as_str)
-      .ok_or_else(|| invoker_request_error("localFilename must be a string."))?
-      .to_string();
-    let continuation = Uuid::new_v4().to_string();
-    let staging_path = self.staging_path(&continuation)?;
-    if let Some(object) = data.as_object_mut() {
-      object.insert("localFilename".into(), staging_path.clone().into());
-    }
-    self.transfers.lock().expect("lock transfers").insert(
-      continuation.clone(),
-      PendingTransfer::Upload {
+    completion: Arc<dyn JsbInvokeCompletion>,
+  ) {
+    let prepared = (|| {
+      let mut data: serde_json::Value = serde_json::from_str(params_json)
+        .map_err(|error| JsbErrorPayload::new("BRIDGE_INVALID_REQUEST", error.to_string()))?;
+      let source = data
+        .get("localFilename")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| {
+          JsbErrorPayload::new("BRIDGE_INVALID_REQUEST", "localFilename must be a string.")
+        })?
+        .to_string();
+      let call_id = Uuid::new_v4().to_string();
+      let staging_path = self.staging_path(&call_id)?;
+      if let Some(object) = data.as_object_mut() {
+        object.insert("localFilename".into(), staging_path.clone().into());
+      }
+      Ok((call_id, source, staging_path, data.to_string()))
+    })();
+    let (call_id, source, staging_path, rewritten_params) = match prepared {
+      Ok(value) => value,
+      Err(error) => {
+        completion.reject(error);
+        return;
+      }
+    };
+    self.register_host_call(
+      call_id.clone(),
+      context,
+      completion,
+      HostCallKind::Upload {
         method: method.to_string(),
-        client_id: client_id.to_string(),
-        params_json: data.to_string(),
+        params_json: rewritten_params,
         staging_path: staging_path.clone(),
       },
     );
-    Ok(jsb_core::InvokeFlow::Delegate {
-      primitive: "readScopedFile".into(),
-      params_json: serde_json::json!({ "source": source, "targetPath": staging_path }).to_string(),
-      continuation: Some(continuation),
-    })
+    self.host_services.host_call(
+      call_id,
+      "readScopedFile".into(),
+      serde_json::json!({ "source": source, "targetPath": staging_path }).to_string(),
+    );
   }
 
   fn begin_download(
     &self,
+    context: &JsbInvokeContext,
     method: &str,
-    client_id: &str,
     params_json: &str,
-  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
-    let mut data: serde_json::Value =
-      serde_json::from_str(params_json).map_err(invoker_json_error)?;
-    let target = data
-      .get("localFilename")
-      .and_then(serde_json::Value::as_str)
-      .ok_or_else(|| invoker_request_error("localFilename must be a string."))?
-      .to_string();
-    let continuation = Uuid::new_v4().to_string();
-    let staging_path = self.staging_path(&continuation)?;
-    if let Some(object) = data.as_object_mut() {
-      object.insert("localFilename".into(), staging_path.clone().into());
+    completion: Arc<dyn JsbInvokeCompletion>,
+  ) {
+    let prepared = (|| {
+      let mut data: serde_json::Value = serde_json::from_str(params_json)
+        .map_err(|error| JsbErrorPayload::new("BRIDGE_INVALID_REQUEST", error.to_string()))?;
+      let target = data
+        .get("localFilename")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| {
+          JsbErrorPayload::new("BRIDGE_INVALID_REQUEST", "localFilename must be a string.")
+        })?
+        .to_string();
+      let call_id = Uuid::new_v4().to_string();
+      let staging_path = self.staging_path(&call_id)?;
+      if let Some(object) = data.as_object_mut() {
+        object.insert("localFilename".into(), staging_path.clone().into());
+      }
+      Ok((call_id, target, staging_path, data.to_string()))
+    })();
+    let (call_id, target, staging_path, rewritten_params) = match prepared {
+      Ok(value) => value,
+      Err(error) => {
+        completion.reject(error);
+        return;
+      }
+    };
+    match self.runtime.invoke(
+      method.to_string(),
+      context.client_id.clone(),
+      rewritten_params,
+    ) {
+      Ok(result_json) => {
+        self.register_host_call(
+          call_id.clone(),
+          context,
+          completion,
+          HostCallKind::Download {
+            result_json,
+            staging_path: staging_path.clone(),
+          },
+        );
+        self.host_services.host_call(
+          call_id,
+          "writeScopedFile".into(),
+          serde_json::json!({ "sourcePath": staging_path, "target": target }).to_string(),
+        );
+      }
+      Err(error) => {
+        let _ = std::fs::remove_file(&staging_path);
+        completion.reject(runtime_error_payload(&error));
+      }
     }
-    let result_json =
-      match self
-        .runtime
-        .invoke(method.to_string(), client_id.to_string(), data.to_string())
-      {
-        Ok(result_json) => result_json,
-        Err(error) => {
-          let _ = std::fs::remove_file(&staging_path);
-          return Err(runtime_invoker_error(error));
+  }
+
+  /// Remove and clean up pending host calls matching `predicate`. The
+  /// associated JSB completions are already cancelled by `jsb-core` when a
+  /// channel closes or the client is released, so only staging files need
+  /// cleanup here.
+  fn cancel_host_calls(&self, predicate: impl Fn(&HostCall) -> bool) {
+    let mut staging_paths = Vec::new();
+    self
+      .host_calls
+      .lock()
+      .expect("lock host calls")
+      .retain(|_, call| {
+        if predicate(call) {
+          if let Some(path) = call.kind.staging_path() {
+            staging_paths.push(path.to_string());
+          }
+          false
+        } else {
+          true
         }
-      };
-    self.transfers.lock().expect("lock transfers").insert(
-      continuation.clone(),
-      PendingTransfer::Download {
-        result_json,
-        staging_path: staging_path.clone(),
-      },
-    );
-    Ok(jsb_core::InvokeFlow::Delegate {
-      primitive: "writeScopedFile".into(),
-      params_json: serde_json::json!({ "sourcePath": staging_path, "target": target }).to_string(),
-      continuation: Some(continuation),
-    })
+      });
+    for path in staging_paths {
+      let _ = std::fs::remove_file(path);
+    }
+  }
+
+  fn run_invoke(
+    &self,
+    context: JsbInvokeContext,
+    request: JsbInvokeRequest,
+    completion: Arc<dyn JsbInvokeCompletion>,
+  ) {
+    let JsbInvokeRequest {
+      method,
+      params_json,
+      ..
+    } = request;
+    match method.as_str() {
+      "ssh.sftp.uploadFile" => {
+        self.begin_upload(&context, &method, &params_json, completion);
+        return;
+      }
+      "ssh.sftp.downloadFile" => {
+        self.begin_download(&context, &method, &params_json, completion);
+        return;
+      }
+      _ => {}
+    }
+    if let Some(primitive) = crate::methods::host_primitive(&method) {
+      if primitive == "openExternal"
+        && let Err(error) = validate_external_url(&params_json)
+      {
+        completion.reject(error);
+        return;
+      }
+      let call_id = Uuid::new_v4().to_string();
+      self.register_host_call(
+        call_id.clone(),
+        &context,
+        Arc::clone(&completion),
+        HostCallKind::Primitive,
+      );
+      self
+        .host_services
+        .host_call(call_id, primitive.to_string(), params_json);
+      return;
+    }
+    match self.runtime.invoke(
+      method.clone(),
+      context.client_id.clone(),
+      params_json.clone(),
+    ) {
+      Ok(result_json) => {
+        if method == "ssh.shell.open" {
+          self.bind_shell_channel(&context.client_id, &params_json);
+        }
+        let action = self.runtime.post_invoke_host_call(&method, &result_json);
+        completion.resolve(result_json);
+        if let Some((primitive, params)) = action {
+          self.dispatch_host_call(primitive, params);
+        }
+      }
+      Err(error) => completion.reject(runtime_error_payload(&error)),
+    }
   }
 }
 
-impl jsb_core::MethodInvoker for RuntimeInvoker {
+impl JsbHandler for RuntimeInvoker {
   fn invoke(
     &self,
-    method: &str,
-    client_id: &str,
-    params_json: &str,
-  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
-    match method {
-      "ssh.sftp.uploadFile" => return self.begin_upload(method, client_id, params_json),
-      "ssh.sftp.downloadFile" => return self.begin_download(method, client_id, params_json),
-      _ => {}
-    }
-    if let Some(primitive) = crate::methods::host_primitive(method) {
-      if primitive == "openExternal" {
-        validate_external_url(params_json)?;
-      }
-      return Ok(jsb_core::InvokeFlow::Delegate {
-        primitive: primitive.to_string(),
-        params_json: params_json.to_string(),
-        continuation: None,
-      });
-    }
-    let result_json = self
-      .runtime
-      .invoke(
-        method.to_string(),
-        client_id.to_string(),
-        params_json.to_string(),
-      )
-      .map_err(|error| jsb_core::InvokerError {
-        code: error.code().to_string(),
-        message: error.reason().to_string(),
-        details_json: error.details_json().map(str::to_string),
-      })?;
-    if method == "ssh.shell.open" {
-      self.bind_shell_channel(client_id, params_json);
-    }
-    let host_actions = self.runtime.host_actions_for(method, &result_json);
-    Ok(jsb_core::InvokeFlow::Complete(jsb_core::InvokeOutcome {
-      result_json,
-      host_actions,
-    }))
+    context: JsbInvokeContext,
+    request: JsbInvokeRequest,
+    completion: Arc<dyn JsbInvokeCompletion>,
+  ) {
+    // Business invokes block on the Tokio runtime; run them off the platform
+    // JSB entry thread so WebView message delivery never stalls. Completion
+    // handles are one-shot and safe to call from any thread.
+    let this = self.clone();
+    std::thread::spawn(move || {
+      this.run_invoke(context, request, completion);
+    });
   }
 
-  fn send_binary(
+  fn receive_binary(
     &self,
-    client_id: &str,
-    channel_id: &str,
-    bytes: &[u8],
-  ) -> Result<(), jsb_core::InvokerError> {
-    let shell_id = self
-      .shell_channels
-      .lock()
-      .expect("lock shell channels")
-      .iter()
-      .find_map(|((bound_client_id, shell_id), bound_channel_id)| {
-        (bound_client_id == client_id && bound_channel_id == channel_id).then(|| shell_id.clone())
-      })
-      .ok_or_else(|| jsb_core::InvokerError {
-        code: "JSB_CHANNEL_NOT_BOUND".into(),
-        message: "JSB binary channel is not bound to an SSH shell.".into(),
-        details_json: None,
-      })?;
+    context: JsbChannelContext,
+    data: Vec<u8>,
+  ) -> Result<(), JsbHandlerError> {
+    let shell_id = {
+      let shell_channels = self.shell_channels.lock().expect("lock shell channels");
+      shell_channels
+        .iter()
+        .find_map(|((bound_client_id, shell_id), bound_channel_id)| {
+          (bound_client_id == &context.client_id && bound_channel_id == &context.channel_id)
+            .then(|| shell_id.clone())
+        })
+    };
+    let Some(shell_id) = shell_id else {
+      return Err(JsbHandlerError::new(
+        "JSB_CHANNEL_NOT_BOUND",
+        "JSB binary channel is not bound to an SSH shell.",
+      ));
+    };
     self
       .runtime
-      .ssh_shell_send_binary(client_id.to_string(), shell_id.to_string(), bytes.to_vec())
-      .map_err(|error| jsb_core::InvokerError {
-        code: error.code().to_string(),
-        message: error.reason().to_string(),
-        details_json: error.details_json().map(str::to_string),
-      })
+      .ssh_shell_send_binary(context.client_id, shell_id, data)
+      .map_err(|error| JsbHandlerError::new(error.code(), error.reason()))
   }
 
-  fn close_channel(&self, client_id: &str, channel_id: &str) {
+  fn close_channel(&self, context: JsbChannelContext) {
     self
       .shell_channels
       .lock()
       .expect("lock shell channels")
       .retain(|(bound_client_id, _), bound_channel_id| {
-        bound_client_id != client_id || bound_channel_id != channel_id
+        bound_client_id != &context.client_id || bound_channel_id != &context.channel_id
       });
+    self.cancel_host_calls(|call| {
+      call.client_id == context.client_id && call.channel_id == context.channel_id
+    });
   }
 
-  fn resume_host_call(
-    &self,
-    continuation: &str,
-    _data_json: &str,
-  ) -> Result<jsb_core::InvokeFlow, jsb_core::InvokerError> {
-    let transfer = self
-      .transfers
-      .lock()
-      .expect("lock transfers")
-      .remove(continuation)
-      .ok_or_else(|| invoker_request_error("Unknown host-call continuation."))?;
-    let result = match &transfer {
-      PendingTransfer::Upload {
-        method,
-        client_id,
-        params_json,
-        ..
-      } => self.invoke(method, client_id, params_json),
-      PendingTransfer::Download { result_json, .. } => {
-        Ok(jsb_core::InvokeFlow::Complete(jsb_core::InvokeOutcome {
-          result_json: result_json.clone(),
-          host_actions: Vec::new(),
-        }))
-      }
-    };
-    Self::cleanup_transfer(&transfer);
-    result
-  }
-
-  fn cancel_host_call(&self, continuation: &str) {
-    if let Some(transfer) = self
-      .transfers
-      .lock()
-      .expect("lock transfers")
-      .remove(continuation)
-    {
-      Self::cleanup_transfer(&transfer);
-    }
-  }
-
-  fn release_client(&self, client_id: &str) {
+  fn release_client(&self, client_id: String) {
     self
       .shell_channels
       .lock()
       .expect("lock shell channels")
-      .retain(|(bound_client_id, _), _| bound_client_id != client_id);
-    self.runtime.release_client(client_id.to_string());
+      .retain(|(bound_client_id, _), _| bound_client_id != &client_id);
+    self.cancel_host_calls(|call| call.client_id == client_id);
+    self.runtime.release_client(client_id);
   }
 }
 
-fn invoker_request_error(message: &str) -> jsb_core::InvokerError {
-  jsb_core::InvokerError {
-    code: "BRIDGE_INVALID_REQUEST".into(),
-    message: message.into(),
-    details_json: None,
-  }
+fn runtime_error_payload(error: &RuntimeError) -> JsbErrorPayload {
+  let details = error
+    .details_json()
+    .and_then(|json| serde_json::from_str::<serde_json::Value>(json).ok());
+  JsbErrorPayload::new(error.code(), error.reason()).with_details(details)
 }
 
-fn invoker_json_error(error: serde_json::Error) -> jsb_core::InvokerError {
-  invoker_request_error(&error.to_string())
-}
-
-fn runtime_invoker_error(error: RuntimeError) -> jsb_core::InvokerError {
-  jsb_core::InvokerError {
-    code: error.code().to_string(),
-    message: error.reason().to_string(),
-    details_json: error.details_json().map(str::to_string),
-  }
-}
-
-fn validate_external_url(params_json: &str) -> Result<(), jsb_core::InvokerError> {
-  let invalid_request = |message: &str| jsb_core::InvokerError {
-    code: "BRIDGE_INVALID_REQUEST".into(),
-    message: message.into(),
-    details_json: None,
-  };
+fn validate_external_url(params_json: &str) -> Result<(), JsbErrorPayload> {
+  let invalid_request = |message: &str| JsbErrorPayload::new("BRIDGE_INVALID_REQUEST", message);
   let data: serde_json::Value = serde_json::from_str(params_json).unwrap_or_default();
   let url = data
     .get("url")
@@ -706,7 +881,6 @@ impl Shell360Runtime {
     Ok(Arc::new(Self {
       app_data_dir,
       cache_dir,
-      event_sink,
       runtime,
       data_service,
       ssh_service,
@@ -797,33 +971,18 @@ impl Shell360Runtime {
 
   pub fn shutdown(&self) {}
 
-  pub fn app_data_dir(&self) -> String {
-    self.app_data_dir.to_string_lossy().into_owned()
-  }
-
   pub fn cache_dir(&self) -> String {
     self.cache_dir.to_string_lossy().into_owned()
   }
 
-  pub fn emit_health_event(&self, client_id: String) {
-    let event = serde_json::json!({
-      "type": "emit",
-      "clientId": client_id,
-      "event": "bridge.health",
-      "targetId": null,
-      "sequence": 0,
-      "payload": {
-        "status": "ok",
-      },
-    });
-    self.event_sink.on_event(event.to_string());
-  }
-
-  pub(crate) fn host_actions_for(
+  /// Host primitive to fire after an invoke reply has been delivered. The
+  /// reply is always sent first so the page never observes the host action
+  /// (e.g. an application restart) before its invoke response.
+  pub(crate) fn post_invoke_host_call(
     &self,
     method: &str,
     result_json: &str,
-  ) -> Vec<jsb_core::HostAction> {
+  ) -> Option<(String, String)> {
     if method == "data.resetCrypto"
       && let Ok(value) = serde_json::from_str::<serde_json::Value>(result_json)
       && value
@@ -831,12 +990,9 @@ impl Shell360Runtime {
         .and_then(serde_json::Value::as_bool)
         .unwrap_or(false)
     {
-      return vec![jsb_core::HostAction {
-        primitive: "resetApplication".into(),
-        params_json: "null".into(),
-      }];
+      return Some(("resetApplication".into(), "null".into()));
     }
-    Vec::new()
+    None
   }
 }
 
@@ -1397,12 +1553,192 @@ fn required<T>(value: Option<T>, name: &str) -> Result<T, RuntimeError> {
 #[cfg(test)]
 mod tests {
   use std::sync::{Arc, Mutex};
+  use std::time::Duration;
 
-  use jsb_core::MethodInvoker;
+  use jsb_core::{Jsb, JsbTransport, JsbTransportError};
   use ssh_key::PrivateKey;
   use uuid::Uuid;
 
   use super::*;
+
+  const CHANNEL: &str = "123e4567-e89b-42d3-a456-426614174000";
+
+  #[derive(Debug, PartialEq, Eq, Clone)]
+  enum TransportCall {
+    Open { channel: String },
+    Text { channel: String, message: String },
+    Binary { channel: String, data: Vec<u8> },
+    Close { channel: String },
+  }
+
+  #[derive(Default)]
+  struct FakeTransport {
+    calls: Mutex<Vec<TransportCall>>,
+  }
+
+  impl FakeTransport {
+    fn texts(&self) -> Vec<(String, String)> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .iter()
+        .filter_map(|call| match call {
+          TransportCall::Text { channel, message } => Some((channel.clone(), message.clone())),
+          _ => None,
+        })
+        .collect()
+    }
+  }
+
+  impl JsbTransport for FakeTransport {
+    fn open_channel(
+      &self,
+      channel_id: &str,
+      _control_message: &str,
+    ) -> Result<(), JsbTransportError> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Open {
+          channel: channel_id.to_string(),
+        });
+      Ok(())
+    }
+
+    fn fail_channel(
+      &self,
+      _channel_id: &str,
+      _control_message: &str,
+    ) -> Result<(), JsbTransportError> {
+      Ok(())
+    }
+
+    fn send_text(&self, channel_id: &str, message: &str) -> Result<(), JsbTransportError> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Text {
+          channel: channel_id.to_string(),
+          message: message.to_string(),
+        });
+      Ok(())
+    }
+
+    fn send_binary(&self, channel_id: &str, data: &[u8]) -> Result<(), JsbTransportError> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Binary {
+          channel: channel_id.to_string(),
+          data: data.to_vec(),
+        });
+      Ok(())
+    }
+
+    fn close_channel(&self, channel_id: &str) -> Result<(), JsbTransportError> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Close {
+          channel: channel_id.to_string(),
+        });
+      Ok(())
+    }
+  }
+
+  #[derive(Default)]
+  struct FakeHostServices {
+    calls: Mutex<Vec<(String, String, String)>>,
+  }
+
+  impl RuntimeHostServices for FakeHostServices {
+    fn host_call(&self, call_id: String, primitive: String, params_json: String) {
+      self
+        .calls
+        .lock()
+        .expect("lock host calls")
+        .push((call_id, primitive, params_json));
+    }
+  }
+
+  struct JsbHarness {
+    jsb: Arc<Jsb>,
+    transport: Arc<FakeTransport>,
+    host_services: Arc<FakeHostServices>,
+    invoker: RuntimeInvoker,
+  }
+
+  fn jsb_harness() -> (tempfile::TempDir, JsbHarness) {
+    let directory = tempfile::tempdir().expect("create temp directory");
+    let runtime = Shell360Runtime::new(
+      directory.path().join("data").to_string_lossy().into_owned(),
+      directory
+        .path()
+        .join("cache")
+        .to_string_lossy()
+        .into_owned(),
+      Arc::new(TestEventSink::default()),
+    )
+    .expect("create runtime");
+    let transport = Arc::new(FakeTransport::default());
+    let host_services = Arc::new(FakeHostServices::default());
+    let invoker = RuntimeInvoker::new(
+      runtime,
+      Arc::clone(&host_services) as Arc<dyn RuntimeHostServices>,
+    );
+    let jsb = Arc::new(Jsb::new(
+      Arc::clone(&transport) as Arc<dyn JsbTransport>,
+      // RuntimeInvoker is the business handler; it is cloned into the Arc.
+      Arc::new(invoker.clone()) as Arc<dyn jsb_core::JsbHandler>,
+      method_specs().iter().map(|spec| spec.name),
+    ));
+    jsb.open_channel(CHANNEL.to_string()).expect("open channel");
+    (
+      directory,
+      JsbHarness {
+        jsb,
+        transport,
+        host_services,
+        invoker,
+      },
+    )
+  }
+
+  fn wait_until<F: Fn() -> bool>(condition: F) {
+    for _ in 0..100 {
+      if condition() {
+        return;
+      }
+      std::thread::sleep(Duration::from_millis(20));
+    }
+    panic!("condition was not met before the timeout");
+  }
+
+  fn request_frame(id: &str, method: &str, data: serde_json::Value) -> String {
+    serde_json::json!({ "type": "invoke.request", "id": id, "method": method, "data": data })
+      .to_string()
+  }
+
+  fn host_call(services: &FakeHostServices) -> (String, String, String) {
+    let calls = services.calls.lock().expect("lock host calls");
+    assert_eq!(calls.len(), 1, "expected exactly one host call: {calls:?}");
+    calls[0].clone()
+  }
+
+  fn reply_error_code(message: &str) -> String {
+    serde_json::from_str::<serde_json::Value>(message)
+      .expect("parse reply")
+      .get("error")
+      .and_then(|error| error.get("code"))
+      .and_then(serde_json::Value::as_str)
+      .unwrap_or_default()
+      .to_string()
+  }
 
   #[derive(Debug, Default)]
   struct TestEventSink {
@@ -1546,95 +1882,229 @@ mod tests {
 
   #[test]
   fn invoker_delegates_host_methods_with_their_primitives() {
-    let (_directory, runtime) = temp_runtime();
-    let invoker = RuntimeInvoker::new(runtime);
-    let params = r#"{"text":"hello"}"#;
-    let flow = invoker
-      .invoke("clipboard.writeText", "client", params)
-      .expect("delegate clipboard write");
-    match flow {
-      jsb_core::InvokeFlow::Delegate {
-        primitive,
-        params_json,
-        ..
-      } => {
-        assert_eq!(primitive, "writeClipboard");
-        assert_eq!(params_json, params);
-      }
-      other => panic!("expected delegation, got {other:?}"),
-    }
+    let (_directory, harness) = jsb_harness();
+    let params = serde_json::json!({ "text": "hello" }).to_string();
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame(
+          "request-1",
+          "clipboard.writeText",
+          serde_json::json!({"text":"hello"}),
+        ),
+      )
+      .expect("receive invoke");
+
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (call_id, primitive, params_json) = host_call(&harness.host_services);
+    assert_eq!(primitive, "writeClipboard");
+    assert_eq!(params_json, params);
+
+    harness
+      .invoker
+      .complete_host_call(&call_id, r#"{"data":null}"#);
+
+    wait_until(|| !harness.transport.texts().is_empty());
+    let texts = harness.transport.texts();
+    let [(channel, message)] = texts.as_slice() else {
+      panic!("expected one reply frame");
+    };
+    assert_eq!(channel, CHANNEL);
+    let reply: serde_json::Value = serde_json::from_str(message).expect("parse reply");
+    assert_eq!(reply["type"], "invoke.response");
+    assert_eq!(reply["id"], "request-1");
+    assert!(reply["error"].is_null());
   }
 
   #[test]
   fn invoker_validates_open_url_before_delegating() {
-    let (_directory, runtime) = temp_runtime();
-    let invoker = RuntimeInvoker::new(runtime);
-
+    let (_directory, harness) = jsb_harness();
     for url in ["javascript:alert(1)", "file:///etc/hosts", "not-a-url"] {
-      let error = invoker
-        .invoke(
-          "core.openUrl",
-          "client",
-          &serde_json::json!({ "url": url }).to_string(),
+      harness
+        .jsb
+        .receive_text(
+          CHANNEL.to_string(),
+          request_frame(
+            &format!("bad-{url}"),
+            "core.openUrl",
+            serde_json::json!({ "url": url }),
+          ),
         )
-        .expect_err("disallowed scheme must fail");
-      assert_eq!(error.code, "BRIDGE_INVALID_REQUEST");
+        .expect("receive invoke");
     }
-    let flow = invoker
-      .invoke(
-        "core.openUrl",
-        "client",
-        &serde_json::json!({ "url": "https://example.com" }).to_string(),
+    wait_until(|| harness.transport.texts().len() == 3);
+    for (_, message) in harness.transport.texts() {
+      assert_eq!(reply_error_code(&message), "BRIDGE_INVALID_REQUEST");
+    }
+    assert!(harness.host_services.calls.lock().unwrap().is_empty());
+
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame(
+          "good-1",
+          "core.openUrl",
+          serde_json::json!({ "url": "https://example.com" }),
+        ),
       )
-      .expect("https url delegates");
-    assert!(matches!(
-      flow,
-      jsb_core::InvokeFlow::Delegate { ref primitive, .. } if primitive == "openExternal"
-    ));
+      .expect("receive invoke");
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (_, primitive, params_json) = host_call(&harness.host_services);
+    assert_eq!(primitive, "openExternal");
+    assert!(params_json.contains("https://example.com"));
+  }
+
+  #[test]
+  fn host_call_error_rejects_the_invoke() {
+    let (_directory, harness) = jsb_harness();
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame("request-1", "clipboard.readText", serde_json::Value::Null),
+      )
+      .expect("receive invoke");
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (call_id, primitive, _) = host_call(&harness.host_services);
+    assert_eq!(primitive, "readClipboard");
+
+    harness.invoker.complete_host_call(
+      &call_id,
+      r#"{"error":{"code":"HOST_FAILURE","message":"denied"}}"#,
+    );
+
+    wait_until(|| !harness.transport.texts().is_empty());
+    let texts = harness.transport.texts();
+    let [(_, message)] = texts.as_slice() else {
+      panic!("expected one reply frame");
+    };
+    assert_eq!(reply_error_code(message), "HOST_FAILURE");
+  }
+
+  #[test]
+  fn malformed_host_call_result_is_an_invalid_response() {
+    let (_directory, harness) = jsb_harness();
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame("request-1", "clipboard.readText", serde_json::Value::Null),
+      )
+      .expect("receive invoke");
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (call_id, _, _) = host_call(&harness.host_services);
+
+    harness.invoker.complete_host_call(&call_id, "{broken");
+
+    wait_until(|| !harness.transport.texts().is_empty());
+    let texts = harness.transport.texts();
+    let [(_, message)] = texts.as_slice() else {
+      panic!("expected one reply frame");
+    };
+    assert_eq!(reply_error_code(message), "JSB_INVALID_RESPONSE");
   }
 
   #[test]
   fn upload_continuation_owns_and_cleans_its_staging_file() {
-    let (_directory, runtime) = temp_runtime();
-    let invoker = RuntimeInvoker::new(runtime);
-    let flow = invoker
-      .invoke(
-        "ssh.sftp.uploadFile",
-        "client",
-        r#"{"localFilename":"content://document/source","remoteFilename":"/target"}"#,
+    let (_directory, harness) = jsb_harness();
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame(
+          "request-1",
+          "ssh.sftp.uploadFile",
+          serde_json::json!({
+            "localFilename": "content://document/source",
+            "remoteFilename": "/target",
+          }),
+        ),
       )
-      .expect("prepare upload");
-    let jsb_core::InvokeFlow::Delegate {
-      primitive,
-      params_json,
-      continuation: Some(continuation),
-    } = flow
-    else {
-      panic!("expected upload host continuation")
-    };
+      .expect("receive invoke");
+
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (call_id, primitive, params_json) = host_call(&harness.host_services);
     assert_eq!(primitive, "readScopedFile");
     let params: serde_json::Value = serde_json::from_str(&params_json).expect("parse params");
-    let staging_path = params["targetPath"].as_str().expect("staging path");
-    std::fs::write(staging_path, b"temporary").expect("write staging file");
-    assert!(std::path::Path::new(staging_path).exists());
+    assert_eq!(params["source"], "content://document/source");
+    let staging_path = params["targetPath"]
+      .as_str()
+      .expect("staging path")
+      .to_string();
+    assert!(staging_path.contains("transfers"));
+    std::fs::write(&staging_path, b"temporary").expect("write staging file");
+    assert!(std::path::Path::new(&staging_path).exists());
 
-    invoker.cancel_host_call(&continuation);
-
-    assert!(!std::path::Path::new(staging_path).exists());
-    assert!(invoker.transfers.lock().expect("lock transfers").is_empty());
+    // A failed host result removes the staging file and rejects the invoke.
+    harness.invoker.complete_host_call(
+      &call_id,
+      r#"{"error":{"code":"HOST_CANCELLED","message":"user cancelled"}}"#,
+    );
+    wait_until(|| !std::path::Path::new(&staging_path).exists());
+    assert!(!std::path::Path::new(&staging_path).exists());
+    wait_until(|| !harness.transport.texts().is_empty());
+    assert_eq!(
+      reply_error_code(&harness.transport.texts()[0].1),
+      "HOST_CANCELLED"
+    );
   }
 
   #[test]
-  fn host_actions_declare_reset_application_with_null_params() {
+  fn closing_a_channel_cancels_its_host_calls_and_staging_files() {
+    let (_directory, harness) = jsb_harness();
+    harness
+      .jsb
+      .receive_text(
+        CHANNEL.to_string(),
+        request_frame(
+          "request-1",
+          "ssh.sftp.uploadFile",
+          serde_json::json!({
+            "localFilename": "content://document/source",
+            "remoteFilename": "/target",
+          }),
+        ),
+      )
+      .expect("receive invoke");
+
+    wait_until(|| harness.host_services.calls.lock().unwrap().len() == 1);
+    let (_, _, params_json) = host_call(&harness.host_services);
+    let staging_path = serde_json::from_str::<serde_json::Value>(&params_json)
+      .expect("parse params")["targetPath"]
+      .as_str()
+      .expect("staging path")
+      .to_string();
+    std::fs::write(&staging_path, b"temporary").expect("write staging file");
+
+    harness
+      .jsb
+      .close_channel(CHANNEL.to_string())
+      .expect("close channel");
+
+    wait_until(|| !std::path::Path::new(&staging_path).exists());
+    assert!(!std::path::Path::new(&staging_path).exists());
+    // Completing the cancelled call afterwards is a safe no-op.
+    harness
+      .invoker
+      .complete_host_call("missing-call-id", r#"{"data":null}"#);
+  }
+
+  #[test]
+  fn post_invoke_host_call_declares_reset_application_with_null_params() {
     let (_directory, runtime) = temp_runtime();
-    let actions = runtime.host_actions_for("data.resetCrypto", r#"{"restartRequired":true}"#);
-    assert_eq!(actions.len(), 1);
-    assert_eq!(actions[0].primitive, "resetApplication");
-    assert_eq!(actions[0].params_json, "null");
-    assert!(
-      runtime
-        .host_actions_for("data.resetCrypto", r#"{"restartRequired":false}"#)
-        .is_empty()
+    assert_eq!(
+      runtime.post_invoke_host_call("data.resetCrypto", r#"{"restartRequired":true}"#),
+      Some(("resetApplication".to_string(), "null".to_string()))
+    );
+    assert_eq!(
+      runtime.post_invoke_host_call("data.resetCrypto", r#"{"restartRequired":false}"#),
+      None
+    );
+    assert_eq!(
+      runtime.post_invoke_host_call("data.getHosts", r#"{"restartRequired":true}"#),
+      None
     );
   }
 }

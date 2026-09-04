@@ -96,6 +96,21 @@ pub trait HostServices: Send + Sync {
   fn on_host_call(&self, call_id: String, primitive: String, params_json: String);
 }
 
+/// Platform WebView channel transport. Implemented by each native host
+/// (Android WebMessagePort, iOS WKWebView, HarmonyOS message ports); the
+/// callbacks are invoked on Rust threads and MUST be hopped to the platform
+/// UI/WebView thread by the implementation. Callbacks are infallible because
+/// a platform port failure is recovered on the platform side (e.g. reporting
+/// `channelOpenFailed` or closing the channel).
+#[uniffi::export(callback_interface)]
+pub trait JsbTransport: Send + Sync {
+  fn open_channel(&self, channel_id: String, control_message: String);
+  fn fail_channel(&self, channel_id: String, control_message: String);
+  fn send_text(&self, channel_id: String, message: String);
+  fn send_binary(&self, channel_id: String, data: Vec<u8>);
+  fn close_channel(&self, channel_id: String);
+}
+
 struct EventSinkAdapter(Arc<dyn FfiEventSink>);
 
 impl shell360_runtime::RuntimeEventSink for EventSinkAdapter {
@@ -106,6 +121,64 @@ impl shell360_runtime::RuntimeEventSink for EventSinkAdapter {
   fn on_ssh_shell_data(&self, client_id: String, ssh_shell_id: String, data: Vec<u8>) {
     self.0.on_ssh_shell_data(client_id, ssh_shell_id, data);
   }
+}
+
+struct HostServicesAdapter(Arc<dyn HostServices>);
+
+impl shell360_runtime::RuntimeHostServices for HostServicesAdapter {
+  fn host_call(&self, call_id: String, primitive: String, params_json: String) {
+    self.0.on_host_call(call_id, primitive, params_json);
+  }
+}
+
+/// Adapts the infallible platform callback to the fallible core transport
+/// trait. Platform port failures are handled inside the platform layer, so
+/// every call succeeds from the core's perspective.
+struct FfiJsbTransport(Arc<dyn JsbTransport>);
+
+impl jsb_core::JsbTransport for FfiJsbTransport {
+  fn open_channel(
+    &self,
+    channel_id: &str,
+    control_message: &str,
+  ) -> Result<(), jsb_core::JsbTransportError> {
+    self
+      .0
+      .open_channel(channel_id.to_string(), control_message.to_string());
+    Ok(())
+  }
+
+  fn fail_channel(
+    &self,
+    channel_id: &str,
+    control_message: &str,
+  ) -> Result<(), jsb_core::JsbTransportError> {
+    self
+      .0
+      .fail_channel(channel_id.to_string(), control_message.to_string());
+    Ok(())
+  }
+
+  fn send_text(&self, channel_id: &str, message: &str) -> Result<(), jsb_core::JsbTransportError> {
+    self
+      .0
+      .send_text(channel_id.to_string(), message.to_string());
+    Ok(())
+  }
+
+  fn send_binary(&self, channel_id: &str, data: &[u8]) -> Result<(), jsb_core::JsbTransportError> {
+    self.0.send_binary(channel_id.to_string(), data.to_vec());
+    Ok(())
+  }
+
+  fn close_channel(&self, channel_id: &str) -> Result<(), jsb_core::JsbTransportError> {
+    self.0.close_channel(channel_id.to_string());
+    Ok(())
+  }
+}
+
+fn jsb_error(error: jsb_core::JsbError) -> FfiError {
+  FfiError::Internal(error.to_string())
 }
 
 #[derive(uniffi::Object)]
@@ -130,173 +203,100 @@ impl Shell360Runtime {
     Ok(Arc::new(Self { inner }))
   }
 
-  pub fn invoke(
-    &self,
-    method: String,
-    client_id: String,
-    params_json: String,
-  ) -> Result<String, FfiError> {
-    self
-      .inner
-      .invoke(method, client_id, params_json)
-      .map_err(Into::into)
-  }
-
-  pub fn health_check(&self) -> String {
-    self.inner.health_check()
-  }
-
-  pub fn invoke_keygen(&self, params_json: String) -> Result<String, FfiError> {
-    self.inner.invoke_keygen(params_json).map_err(Into::into)
-  }
-
-  pub fn invoke_data(&self, method: String, params_json: String) -> Result<String, FfiError> {
-    self
-      .inner
-      .invoke_data(method, params_json)
-      .map_err(Into::into)
-  }
-
-  pub fn invoke_ssh(
-    &self,
-    method: String,
-    client_id: String,
-    params_json: String,
-  ) -> Result<String, FfiError> {
-    self
-      .inner
-      .invoke_ssh(method, client_id, params_json)
-      .map_err(Into::into)
-  }
-
-  pub fn ssh_shell_send_binary(
-    &self,
-    client_id: String,
-    ssh_shell_id: String,
-    data: Vec<u8>,
-  ) -> Result<(), FfiError> {
-    self
-      .inner
-      .ssh_shell_send_binary(client_id, ssh_shell_id, data)
-      .map_err(Into::into)
-  }
-
-  pub fn release_client(&self, client_id: String) {
-    self.inner.release_client(client_id);
-  }
-
   pub fn shutdown(&self) {
     self.inner.shutdown();
   }
-
-  pub fn app_data_dir(&self) -> String {
-    self.inner.app_data_dir()
-  }
-
-  pub fn cache_dir(&self) -> String {
-    self.inner.cache_dir()
-  }
-
-  pub fn emit_health_event(&self, client_id: String) {
-    self.inner.emit_health_event(client_id);
-  }
 }
 
-#[derive(Clone, uniffi::Enum)]
-pub enum NativeEngineOutputKind {
-  ReplyText,
-  PushBinary,
-  OpenChannel,
-  FailChannel,
-  ClosePort,
-}
-
-#[derive(Clone, uniffi::Record)]
-pub struct NativeEngineOutput {
-  pub kind: NativeEngineOutputKind,
-  pub channel_id: Option<String>,
-  pub text: Option<String>,
-  pub bytes: Option<Vec<u8>>,
-}
-
+/// Native JSB instance bound to a platform WebView transport. All entries
+/// are terminal: Rust writes responses, events and binary frames straight to
+/// the WebView through `transport`, so methods return `Result<(), FfiError>`
+/// instead of platform-interpreted output lists.
 #[derive(uniffi::Object)]
-pub struct NativeJsbEngine {
-  core: std::sync::Mutex<jsb_core::JsbEngine<RuntimeInvoker>>,
+pub struct NativeJsb {
+  jsb: Arc<jsb_core::Jsb>,
   invoker: RuntimeInvoker,
-  host_services: Arc<dyn HostServices>,
 }
 
 #[uniffi::export]
-impl NativeJsbEngine {
+impl NativeJsb {
   #[uniffi::constructor]
-  pub fn new(runtime: Arc<Shell360Runtime>, host_services: Box<dyn HostServices>) -> Arc<Self> {
-    let invoker = RuntimeInvoker::new(Arc::clone(&runtime.inner));
-    Arc::new(Self {
-      core: std::sync::Mutex::new(jsb_core::JsbEngine::new(
-        invoker.clone(),
-        shell360_runtime::method_specs()
-          .iter()
-          .map(|method| method.name),
-      )),
-      invoker,
-      host_services: Arc::from(host_services),
-    })
+  pub fn new(
+    runtime: Arc<Shell360Runtime>,
+    transport: Box<dyn JsbTransport>,
+    host_services: Box<dyn HostServices>,
+  ) -> Arc<Self> {
+    let host_services = Arc::new(HostServicesAdapter(Arc::<dyn HostServices>::from(
+      host_services,
+    )));
+    let invoker = RuntimeInvoker::new(Arc::clone(&runtime.inner), host_services);
+    let transport = Arc::new(FfiJsbTransport(Arc::<dyn JsbTransport>::from(transport)));
+    let jsb = Arc::new(jsb_core::Jsb::new(
+      transport as Arc<dyn jsb_core::JsbTransport>,
+      Arc::new(invoker.clone()) as Arc<dyn jsb_core::JsbHandler>,
+      shell360_runtime::method_specs()
+        .iter()
+        .map(|method| method.name),
+    ));
+    Arc::new(Self { jsb, invoker })
   }
 
-  pub fn on_channel_open(&self, channel_id: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.on_channel_open(&channel_id))
+  pub fn open_channel(&self, channel_id: String) -> Result<(), FfiError> {
+    self.jsb.open_channel(channel_id).map_err(jsb_error)
   }
 
-  pub fn on_channel_close(&self, channel_id: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.on_channel_close(&channel_id))
+  pub fn close_channel(&self, channel_id: String) -> Result<(), FfiError> {
+    self.jsb.close_channel(channel_id).map_err(jsb_error)
   }
 
-  pub fn on_channel_open_failed(
-    &self,
-    channel_id: String,
-    reason: String,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.on_channel_open_failed(&channel_id, &reason))
+  pub fn channel_open_failed(&self, channel_id: String, reason: String) -> Result<(), FfiError> {
+    self
+      .jsb
+      .channel_open_failed(channel_id, reason)
+      .map_err(jsb_error)
   }
 
-  pub fn on_control_frame(
-    &self,
-    channel_id: String,
-    text: String,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.on_control_frame(&channel_id, &text))
+  pub fn receive_text(&self, channel_id: String, text: String) -> Result<(), FfiError> {
+    self.jsb.receive_text(channel_id, text).map_err(jsb_error)
   }
 
-  pub fn on_binary_frame(
-    &self,
-    channel_id: String,
-    bytes: Vec<u8>,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.on_binary_frame(&channel_id, &bytes))
+  pub fn receive_binary(&self, channel_id: String, bytes: Vec<u8>) -> Result<(), FfiError> {
+    self
+      .jsb
+      .receive_binary(channel_id, bytes)
+      .map_err(jsb_error)
   }
 
-  pub fn complete_host_call(
-    &self,
-    call_id: String,
-    result_json: String,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.complete_host_call(&call_id, &result_json))
+  /// Deliver a platform host-call result for a previous `on_host_call`.
+  pub fn complete_host_call(&self, call_id: String, result_json: String) {
+    self.invoker.complete_host_call(&call_id, &result_json);
   }
 
-  pub fn emit(&self, event_json: String) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    self.with_engine(|engine| engine.emit(event_json))
+  pub fn emit(&self, event_json: String) -> Result<(), FfiError> {
+    self.jsb.emit(event_json).map_err(jsb_error)
   }
 
+  pub fn send_binary(&self, channel_id: String, bytes: Vec<u8>) -> Result<(), FfiError> {
+    self.jsb.send_binary(channel_id, bytes).map_err(jsb_error)
+  }
+
+  /// Route SSH shell output to the binary data channel previously bound by
+  /// `ssh.shell.open`. Unknown bindings are dropped silently (the shell may
+  /// have outlived its channel).
   pub fn push_shell_binary(
     &self,
     client_id: String,
     shell_id: String,
     bytes: Vec<u8>,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
+  ) -> Result<(), FfiError> {
     let Some(channel_id) = self.invoker.shell_channel(&client_id, &shell_id) else {
-      return Ok(Vec::new());
+      return Ok(());
     };
-    self.with_engine(|engine| engine.push_binary(&channel_id, bytes))
+    self.jsb.send_binary(channel_id, bytes).map_err(jsb_error)
+  }
+
+  pub fn shutdown(&self) -> Result<(), FfiError> {
+    self.jsb.shutdown().map_err(jsb_error)
   }
 
   pub fn registered_methods(&self) -> Vec<String> {
@@ -307,97 +307,97 @@ impl NativeJsbEngine {
   }
 }
 
-impl NativeJsbEngine {
-  fn with_engine(
-    &self,
-    operation: impl FnOnce(&mut jsb_core::JsbEngine<RuntimeInvoker>) -> Vec<jsb_core::EngineOutput>,
-  ) -> Result<Vec<NativeEngineOutput>, FfiError> {
-    let mut engine = self
-      .core
-      .lock()
-      .map_err(|_| FfiError::Internal("JSB engine lock is poisoned.".into()))?;
-    let outputs = operation(&mut engine);
-    drop(engine);
-    Ok(
-      outputs
-        .into_iter()
-        .filter_map(|output| self.convert_output(output))
-        .collect(),
-    )
-  }
-
-  fn convert_output(&self, output: jsb_core::EngineOutput) -> Option<NativeEngineOutput> {
-    use jsb_core::EngineOutput;
-    match output {
-      EngineOutput::ReplyText { channel_id, text } => Some(native_output(
-        NativeEngineOutputKind::ReplyText,
-        Some(channel_id),
-        Some(text),
-        None,
-      )),
-      EngineOutput::PushBinary { channel_id, bytes } => Some(native_output(
-        NativeEngineOutputKind::PushBinary,
-        Some(channel_id),
-        None,
-        Some(bytes),
-      )),
-      EngineOutput::OpenChannel {
-        channel_id,
-        control_text,
-      } => Some(native_output(
-        NativeEngineOutputKind::OpenChannel,
-        Some(channel_id),
-        Some(control_text),
-        None,
-      )),
-      EngineOutput::FailChannel {
-        channel_id,
-        control_text,
-      } => Some(native_output(
-        NativeEngineOutputKind::FailChannel,
-        Some(channel_id),
-        Some(control_text),
-        None,
-      )),
-      EngineOutput::ClosePort { channel_id } => Some(native_output(
-        NativeEngineOutputKind::ClosePort,
-        Some(channel_id),
-        None,
-        None,
-      )),
-      EngineOutput::HostCall(call) => {
-        self.host_services.on_host_call(
-          call.call_id.clone(),
-          call.primitive.clone(),
-          call.params_json.clone(),
-        );
-        None
-      }
-    }
-  }
-}
-
-fn native_output(
-  kind: NativeEngineOutputKind,
-  channel_id: Option<String>,
-  text: Option<String>,
-  bytes: Option<Vec<u8>>,
-) -> NativeEngineOutput {
-  NativeEngineOutput {
-    kind,
-    channel_id,
-    text,
-    bytes,
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use std::sync::{Arc, Mutex};
+  use std::time::Duration;
 
-  use super::{
-    FfiEventSink, HostServices, NativeEngineOutputKind, NativeJsbEngine, Shell360Runtime,
-  };
+  use super::{FfiEventSink, HostServices, JsbTransport, NativeJsb, Shell360Runtime};
+
+  #[derive(Debug, PartialEq, Eq, Clone)]
+  enum TransportCall {
+    Open { channel: String, control: String },
+    Fail { channel: String, control: String },
+    Text { channel: String, message: String },
+    Binary { channel: String, data: Vec<u8> },
+    Close { channel: String },
+  }
+
+  #[derive(Clone, Default)]
+  struct RecordingTransport {
+    calls: Arc<Mutex<Vec<TransportCall>>>,
+  }
+
+  impl RecordingTransport {
+    fn texts(&self) -> Vec<(String, String)> {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .iter()
+        .filter_map(|call| match call {
+          TransportCall::Text { channel, message } => Some((channel.clone(), message.clone())),
+          _ => None,
+        })
+        .collect()
+    }
+  }
+
+  impl JsbTransport for RecordingTransport {
+    fn open_channel(&self, channel_id: String, control_message: String) {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Open {
+          channel: channel_id,
+          control: control_message,
+        });
+    }
+
+    fn fail_channel(&self, channel_id: String, control_message: String) {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Fail {
+          channel: channel_id,
+          control: control_message,
+        });
+    }
+
+    fn send_text(&self, channel_id: String, message: String) {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Text {
+          channel: channel_id,
+          message,
+        });
+    }
+
+    fn send_binary(&self, channel_id: String, data: Vec<u8>) {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Binary {
+          channel: channel_id,
+          data,
+        });
+    }
+
+    fn close_channel(&self, channel_id: String) {
+      self
+        .calls
+        .lock()
+        .expect("lock calls")
+        .push(TransportCall::Close {
+          channel: channel_id,
+        });
+    }
+  }
 
   #[derive(Debug, Default)]
   struct TestEventSink {
@@ -424,8 +424,18 @@ mod tests {
     }
   }
 
+  fn wait_until<F: Fn() -> bool>(condition: F) {
+    for _ in 0..100 {
+      if condition() {
+        return;
+      }
+      std::thread::sleep(Duration::from_millis(20));
+    }
+    panic!("condition was not met before the timeout");
+  }
+
   #[test]
-  fn engine_routes_runtime_methods_without_platform_registration() {
+  fn jsb_routes_replies_through_the_transport_and_host_calls_through_services() {
     let directory = tempfile::tempdir().expect("create temp directory");
     let runtime = Shell360Runtime::new(
       directory.path().join("data").to_string_lossy().into_owned(),
@@ -437,29 +447,58 @@ mod tests {
       Box::new(TestEventSink::default()),
     )
     .expect("create runtime");
+    let transport = RecordingTransport::default();
     let host_calls = Arc::new(Mutex::new(Vec::new()));
-    let engine = NativeJsbEngine::new(runtime, Box::new(TestHostServices(Arc::clone(&host_calls))));
+    let jsb = NativeJsb::new(
+      runtime,
+      Box::new(transport.clone()),
+      Box::new(TestHostServices(Arc::clone(&host_calls))),
+    );
     let channel_id = "123e4567-e89b-42d3-a456-426614174000".to_string();
-    assert!(matches!(
-      engine.on_channel_open(channel_id.clone()).unwrap()[0].kind,
-      NativeEngineOutputKind::OpenChannel
-    ));
-    let outputs = engine
-      .on_control_frame(
-        channel_id,
-        r#"{"type":"invoke.request","id":"1","method":"bridge.health"}"#.into(),
+    jsb.open_channel(channel_id.clone()).expect("open channel");
+    let opens = transport
+      .calls
+      .lock()
+      .unwrap()
+      .iter()
+      .filter(|call| matches!(call, TransportCall::Open { .. }))
+      .count();
+    assert_eq!(opens, 1);
+
+    jsb
+      .receive_text(
+        channel_id.clone(),
+        r#"{"type":"invoke.request","id":"1","method":"bridge.health","data":null}"#.into(),
       )
-      .unwrap();
-    assert!(matches!(outputs[0].kind, NativeEngineOutputKind::ReplyText));
-    assert!(outputs[0].text.as_deref().unwrap().contains("ok"));
-    let outputs = engine
-      .on_control_frame(
-        "123e4567-e89b-42d3-a456-426614174000".into(),
-        r#"{"type":"invoke.request","id":"2","method":"clipboard.readText"}"#.into(),
+      .expect("health frame");
+    wait_until(|| transport.texts().iter().any(|(_, m)| m.contains("ok")));
+    let (reply_channel, reply) = transport
+      .texts()
+      .into_iter()
+      .find(|(_, message)| message.contains("ok"))
+      .expect("health reply");
+    assert_eq!(reply_channel, channel_id);
+    assert!(reply.contains(r#""id":"1""#));
+
+    jsb
+      .receive_text(
+        channel_id.clone(),
+        r#"{"type":"invoke.request","id":"2","method":"clipboard.readText","data":null}"#.into(),
       )
-      .unwrap();
-    assert!(outputs.is_empty());
-    assert_eq!(host_calls.lock().unwrap()[0].1, "readClipboard");
-    assert_eq!(engine.registered_methods().len(), 69);
+      .expect("clipboard frame");
+    wait_until(|| host_calls.lock().unwrap().len() == 1);
+    let (call_id, primitive, _) = host_calls.lock().unwrap()[0].clone();
+    assert_eq!(primitive, "readClipboard");
+    jsb.complete_host_call(call_id, r#"{"data":"copied"}"#.into());
+    wait_until(|| transport.texts().iter().any(|(_, m)| m.contains("copied")));
+    assert!(
+      transport
+        .texts()
+        .iter()
+        .any(|(_, message)| message.contains(r#""id":"2""#) && message.contains("copied"))
+    );
+
+    assert_eq!(jsb.registered_methods().len(), 70);
+    jsb.close_channel(channel_id).expect("close channel");
   }
 }

@@ -1,5 +1,7 @@
 # P1 JsbEngine implementation
 
+> **已过时（superseded）**：本文记录的 `JsbEngine` + `Vec<EngineOutput>` + `InvokeFlow::Delegate` 模型已被删除。当前实现以 `rust-owned-webview-transport.md` 为准：`jsb-core::Jsb` 通过注入的 `JsbTransport` 直接收发 WebView Channel，具体方法由 `shell360-runtime` 的 `JsbHandler` 实现。本文仅作为迁移历史保留。
+
 ## Implemented
 
 - `jsb-core::JsbEngine` owns UUID/channel state, the first/last channel client lifecycle, the 1 MiB text and binary frame limit, invoke validation, the 69-method union table, pending HostCalls, unified response envelopes, control-channel events, and `(clientId, sshShellId) -> dataChannelId` binary routing.

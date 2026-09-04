@@ -1,5 +1,7 @@
 # 移动端 JSB 功能统一：现状梳理与边界分析
 
+> **已过时（superseded）**：本文描述的 `JsbEngine` / `MethodInvoker` / `InvokeFlow` 统一模型已被 `rust-owned-webview-transport.md` 取代。当前状态：`jsb-core::Jsb` 是纯 JSB 框架，通过注入的 `JsbTransport` 直接收发 WebView Channel，通过 `JsbHandler` 把具体方法委托给 `shell360-runtime`；输出列表（`EngineOutput`）模式已全部删除。本文仅作为分析过程历史保留，现状以 `layering.md` 与 `rust-owned-webview-transport.md` 为准。
+
 > 目标：将三端移动宿主（Android / iOS / HarmonyOS）的 **JSB 基础框架（jsb core）** 在 Rust 侧完全统一；
 > 前端暴露的 `bridge/*` API 保持不变；后端统一由 Rust 实现；`ssh.*`、`data.*` 等具体业务调用不在本次统一范围。
 

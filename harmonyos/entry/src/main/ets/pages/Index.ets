@@ -17,7 +17,7 @@ struct Index {
 
   aboutToAppear(): void {
     void this.bridge.initialize().catch((error: Error) => {
-      console.error(`[Shell360] Failed to initialize JSB engine: ${error.message}`);
+      console.error(`[Shell360] Failed to initialize JSB: ${error.message}`);
     });
     console.info(`[Shell360] WebView loading ${JSON.stringify(WEBVIEW_URL)}`);
   }

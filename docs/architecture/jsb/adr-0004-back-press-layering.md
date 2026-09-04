@@ -22,7 +22,7 @@ Back-press is now a first-class `bridge` capability, modeled as a one-way emit
 event plus an explicit invoke action:
 
 - Native hosts emit `{"type":"emit","event":"app.back","payload":{}}`
-  through the existing JSB `emit` channel (`engine.emit`), exactly like other
+  through the existing JSB `emit` channel (`Jsb::emit`), exactly like other
   runtime events.
 - The frontend consumes it through `bridge/app.onBackPress(callback)`, which
   the native backend implements via `transport.on("app.back", ...)`.

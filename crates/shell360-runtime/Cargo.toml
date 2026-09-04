@@ -9,6 +9,7 @@ crate-type = ["rlib"]
 [dependencies]
 base64.workspace = true
 jsb-core = { path = "../jsb-core" }
+log.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 shell360-store = { path = "../shell360-store" }

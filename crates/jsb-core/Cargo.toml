@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+log.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 uuid = { version = "1.18.1", features = ["v4"] }
-

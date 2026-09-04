@@ -2,7 +2,7 @@ import { abilityAccessCtrl, common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
 import picker from '@ohos.file.picker';
-import { jsbEngineCompleteHostCall } from 'shell360_ohrs';
+import { jsbCompleteHostCall } from 'shell360_ohrs';
 import { HarmonyNativeRuntime } from '../runtime/NativeRuntime';
 
 interface HostCallEnvelope {
@@ -32,11 +32,21 @@ export class HarmonyHostServices {
     }
     this.execute(envelope.primitive, JSON.parse(envelope.paramsJson) as Record<string, Object>)
       .then((data: Object | null) => {
-        jsbEngineCompleteHostCall(envelope.callId, JSON.stringify({ data: data ?? null }));
+        this.completeHostCall(envelope.callId, JSON.stringify({ data: data ?? null }));
       })
       .catch((error: Object) => {
-        jsbEngineCompleteHostCall(envelope.callId, JSON.stringify({ error: toHostFailure(error) }));
+        this.completeHostCall(envelope.callId, JSON.stringify({ error: toHostFailure(error) }));
       });
+  }
+
+  private completeHostCall(callId: string, resultJson: string): void {
+    try {
+      jsbCompleteHostCall(callId, resultJson);
+    } catch (error) {
+      console.error(
+        `[Shell360] JSB host call completion failed: ${error instanceof Error ? error.message : `${error}`}`,
+      );
+    }
   }
 
   private async execute(primitive: string, params: Record<string, Object>): Promise<Object | null> {
