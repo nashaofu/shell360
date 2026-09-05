@@ -1,4 +1,4 @@
-export class JSBError extends Error {
+﻿export class JSBError extends Error {
   constructor(
     readonly code: string,
     message: string,

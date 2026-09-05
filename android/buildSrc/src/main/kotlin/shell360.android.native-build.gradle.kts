@@ -85,17 +85,17 @@ val buildMobile = tasks.register<Exec>("buildMobile") {
     workingDir(workspaceRoot)
     inputs.dir(workspaceRoot.resolve("mobile/src"))
     inputs.dir(workspaceRoot.resolve("mobile/public"))
-    inputs.dir(workspaceRoot.resolve("bridge/src"))
-    inputs.dir(workspaceRoot.resolve("shared/src"))
+    inputs.dir(workspaceRoot.resolve("packages/bridge/src"))
+    inputs.dir(workspaceRoot.resolve("packages/shared/src"))
     inputs.files(
         workspaceRoot.resolve("mobile/index.html"),
         workspaceRoot.resolve("mobile/package.json"),
         workspaceRoot.resolve("mobile/rsbuild.config.ts"),
         workspaceRoot.resolve("mobile/tsconfig.json"),
-        workspaceRoot.resolve("bridge/package.json"),
-        workspaceRoot.resolve("bridge/tsconfig.json"),
-        workspaceRoot.resolve("shared/package.json"),
-        workspaceRoot.resolve("shared/tsconfig.json"),
+        workspaceRoot.resolve("packages/bridge/package.json"),
+        workspaceRoot.resolve("packages/bridge/tsconfig.json"),
+        workspaceRoot.resolve("packages/shared/package.json"),
+        workspaceRoot.resolve("packages/shared/tsconfig.json"),
         workspaceRoot.resolve("pnpm-lock.yaml"),
         workspaceRoot.resolve("pnpm-workspace.yaml"),
     )

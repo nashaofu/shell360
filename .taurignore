@@ -1,10 +1,10 @@
 /desktop
 /mobile
 /scripts
-/shared
+/packages/shared
 /target
 /src-tauri/gen
-/tauri-plugin-data
+/crates/tauri-plugin-data
 /tauri-plugin-mobile
-/tauri-plugin-pty
-/tauri-plugin-ssh
+/crates/tauri-plugin-pty
+/crates/tauri-plugin-ssh

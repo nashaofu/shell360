@@ -52,7 +52,7 @@ importers:
         specifier: ^18.1.0
         version: 18.1.0
 
-  bridge:
+  packages/bridge:
     dependencies:
       '@skipperndt/plugin-machine-uid':
         specifier: ^0.1.3
@@ -80,16 +80,16 @@ importers:
         version: 2.10.1
       jsb:
         specifier: workspace:*
-        version: link:../jsb
+        version: link:../packages/jsb
       tauri-plugin-data:
         specifier: workspace:*
-        version: link:../tauri-plugin-data
+        version: link:../crates/tauri-plugin-data
       tauri-plugin-pty:
         specifier: workspace:*
-        version: link:../tauri-plugin-pty
+        version: link:../crates/tauri-plugin-pty
       tauri-plugin-ssh:
         specifier: workspace:*
-        version: link:../tauri-plugin-ssh
+        version: link:../crates/tauri-plugin-ssh
       uuid:
         specifier: ^11.1.0
         version: 11.1.1
@@ -111,7 +111,7 @@ importers:
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       bridge:
         specifier: workspace:*
-        version: link:../bridge
+        version: link:../packages/bridge
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -144,7 +144,7 @@ importers:
         version: 7.18.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       shared:
         specifier: workspace:*
-        version: link:../shared
+        version: link:../packages/shared
     devDependencies:
       '@rsbuild/core':
         specifier: ^2.0.15
@@ -174,7 +174,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  jsb:
+  packages/jsb:
     dependencies:
       eventemitter3:
         specifier: ^5.0.4
@@ -200,7 +200,7 @@ importers:
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       bridge:
         specifier: workspace:*
-        version: link:../bridge
+        version: link:../packages/bridge
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -230,7 +230,7 @@ importers:
         version: 7.18.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       shared:
         specifier: workspace:*
-        version: link:../shared
+        version: link:../packages/shared
     devDependencies:
       '@rsbuild/core':
         specifier: ^2.0.15
@@ -260,7 +260,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  shared:
+  packages/shared:
     dependencies:
       '@radix-ui/themes':
         specifier: ^3.3.0
@@ -285,7 +285,7 @@ importers:
         version: 3.9.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       bridge:
         specifier: workspace:*
-        version: link:../bridge
+        version: link:../packages/bridge
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -342,7 +342,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  tauri-plugin-data:
+  crates/tauri-plugin-data:
     dependencies:
       '@tauri-apps/api':
         specifier: ^2.11.1
@@ -355,7 +355,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  tauri-plugin-pty:
+  crates/tauri-plugin-pty:
     dependencies:
       '@tauri-apps/api':
         specifier: ^2.11.1
@@ -374,7 +374,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  tauri-plugin-ssh:
+  crates/tauri-plugin-ssh:
     dependencies:
       '@tauri-apps/api':
         specifier: ^2.11.1

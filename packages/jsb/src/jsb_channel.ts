@@ -1,4 +1,4 @@
-import EventEmitter from "eventemitter3";
+﻿import EventEmitter from "eventemitter3";
 import { v4 as uuid } from "uuid";
 import {
   cancelNativeChannelRequest,

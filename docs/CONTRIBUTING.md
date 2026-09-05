@@ -218,8 +218,8 @@ openssl base64 -A -in <p12 file path> -out <p12 file base64 encoded file path>
 
 The project includes three custom Tauri plugins:
 
-- **tauri-plugin-ssh**: SSH connection functionality
-- **tauri-plugin-data**: Data management functionality
+- **crates/tauri-plugin-ssh**: SSH connection functionality
+- **crates/tauri-plugin-data**: Data management functionality
 
 To develop plugins, modify the code in the corresponding directories and update dependencies as needed.
 

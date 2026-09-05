@@ -1,4 +1,4 @@
-export interface JSBInvokeRequest<TRequest = unknown> {
+﻿export interface JSBInvokeRequest<TRequest = unknown> {
   readonly type: "invoke.request";
   readonly id: string;
   readonly method: string;

@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "lib": ["DOM", "ES2022"],
     "module": "ESNext",
@@ -22,8 +22,8 @@
   "include": ["src"],
   "references": [
     { "path": "../jsb" },
-    { "path": "../tauri-plugin-data" },
-    { "path": "../tauri-plugin-pty" },
-    { "path": "../tauri-plugin-ssh" }
+    { "path": "../../crates/tauri-plugin-data" },
+    { "path": "../../crates/tauri-plugin-pty" },
+    { "path": "../../crates/tauri-plugin-ssh" }
   ]
 }

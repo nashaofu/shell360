@@ -1,4 +1,4 @@
-import { JSBError, toJSBError } from "./error";
+﻿import { JSBError, toJSBError } from "./error";
 import { isRecord } from "./protocol";
 import type { JSBErrorPayload } from "./types";
 

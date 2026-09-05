@@ -7,19 +7,17 @@ A cross-platform SSH and SFTP client built with Tauri, React, and TypeScript. Su
 ```
 shell360/
 ├── android/              # Native Android WebView host (Compose + Gradle)
-├── bridge/               # Backend-neutral frontend API + Tauri adapter
-├── crates/               # Platform-neutral Rust libraries + UniFFI boundary
+├── crates/               # Rust libraries, UniFFI boundary, and Tauri plugins
 ├── desktop/              # Tauri desktop app (React + Rsbuild)
 ├── mobile/               # Mobile app (React + Rsbuild)
-├── shared/               # Shared components, hooks, atoms, utils (rslib → ESM)
+├── packages/             # Shared JS packages (bridge, jsb, shared; rslib → ESM)
 ├── src-tauri/            # Tauri Rust backend (lib.rs, command.rs, error.rs)
-├── tauri-plugin-pty/     # Local PTY shell plugin (Rust src/ + TS ts/)
-├── tauri-plugin-ssh/     # SSH plugin (Rust src/ + TS ts/)
-├── tauri-plugin-data/    # Encrypted storage + database plugin
 └── resources/            # Static assets
 ```
 
-This is a **pnpm workspace** monorepo. Packages: `bridge`, `desktop`, `mobile`, `shared`, `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-pty`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
+The Tauri plugin packages live in `crates/tauri-plugin-ssh`, `crates/tauri-plugin-data`, and `crates/tauri-plugin-pty`; each contains Rust `src/` and TypeScript `ts/` code.
+
+This is a **pnpm workspace** monorepo. Packages: `bridge`, `jsb`, and `shared` under `packages/`; `desktop` and `mobile` at the root; and `tauri-plugin-ssh`, `tauri-plugin-data`, `tauri-plugin-pty` under `crates/`. `pnpm` is enforced (`preinstall` runs `only-allow pnpm`).
 
 ## Commands
 
@@ -69,7 +67,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 
 - After making changes, determine which parts of the codebase were modified:
   - **Frontend (TypeScript/React/CSS)**: run `pnpm run tsc` and `pnpm run check:fix`. Resolve all newly introduced TypeScript and Biome issues.
-  - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`, `tauri-plugin-ssh/`, `tauri-plugin-data/`, `tauri-plugin-pty/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
+  - **Rust code** (any `*.rs` under `crates/`, `src-tauri/`): run `cargo fmt` and `cargo clippy --all-targets -- -D warnings` in the affected crate's directory. Resolve all formatting and clippy issues.
   - **Native Android code**: run `pnpm run android:dev` or `pnpm run android:build`. The cross-platform Node.js runner selects `gradlew`/`gradlew.bat`; `ANDROID_HOME` must point to an existing SDK directory containing the NDK version configured by `shell360NativeBuild`.
 - If both frontend and Rust code were modified, run all four checks.
 - At the end of each task, check whether related AI guidance or project documentation should be updated, including this `AGENTS.md`.
@@ -92,7 +90,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 
 - Frontend business code imports backend APIs and models from capability subpaths. Tauri APIs mirror their package/module suffixes, such as `bridge/fs`, `bridge/dialog`, `bridge/window`, `bridge/store`, and `bridge/updater`. Project domains use `bridge/data`, `bridge/ssh`, and `bridge/pty`; custom Rust commands use `bridge/core`.
 - `desktop/src/index.tsx` installs the Tauri backend. `mobile/src/index.tsx` selects `bridge/native` when hosted by the native Android WebView and otherwise installs `bridge/tauri`.
-- Backend-neutral contracts and facade classes live in `bridge/src/`; Tauri-specific calls live only in `bridge/src/tauri.ts` and the low-level `tauri-plugin-*` packages.
+- Backend-neutral contracts and facade classes live in `packages/bridge/src/`; Tauri-specific calls live only in `packages/bridge/src/tauri.ts` and the low-level `tauri-plugin-*` packages.
 - A different backend can implement `BridgeBackend` and be installed with `setBridgeBackend()` without changing `shared`, `desktop`, or `mobile` business code.
 - Backend exposes async functions marked `#[tauri::command]`.
 - Plugin TS wrappers (in each plugin's `ts/` folder) wrap `invoke` from `@tauri-apps/api/core` using namespaced command IDs like `plugin:ssh|shell_open`, `plugin:ssh|sftp_read_dir`. App code calls these wrappers, **not** `invoke` directly.
@@ -112,7 +110,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 
 ### Components
 
-- Shared components go in `shared/src/components/`
+- Shared components go in `packages/shared/src/components/`
 - Desktop-specific components go in `desktop/src/components/`
 - Folder-per-component: `index.tsx` + colocated `index.module.less`
 - Use Radix Themes components where possible
@@ -120,7 +118,7 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 ### State Management
 
 - Global state via Jotai atoms; file-per-domain named `*.atom.ts`
-  - Shared: `shared/src/atoms/` (e.g. `session.atom.ts`, `portForwardings.atom.ts`, `appearance.atom.ts`)
+  - Shared: `packages/shared/src/atoms/` (e.g. `session.atom.ts`, `portForwardings.atom.ts`, `appearance.atom.ts`)
   - Desktop: `desktop/src/atoms/` (e.g. `auth.atom.ts`, `crypto.atom.ts`, `modals.atom.ts`)
 - Pattern: `atom(...)` plus exported custom hooks, often combined with ahooks (`useMemoizedFn`, `useLatest`)
 - Local state via React hooks; form state via react-hook-form
@@ -134,8 +132,8 @@ Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared p
 
 ### Icons
 
-- All icons live in `shared/src/components/Icon/svgs/`
-- Re-exported from `shared/src/components/Icon/index.ts` as `<Name>Icon` (svgr `ReactComponent`)
+- All icons live in `packages/shared/src/components/Icon/svgs/`
+- Re-exported from `packages/shared/src/components/Icon/index.ts` as `<Name>Icon` (svgr `ReactComponent`)
 - SVG attrs required: `width="1em" height="1em" fill="currentColor" viewBox="..." xmlns="http://www.w3.org/2000/svg"`
 - No duplicate attributes
 

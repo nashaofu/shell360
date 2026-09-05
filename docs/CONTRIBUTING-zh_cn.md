@@ -213,8 +213,8 @@ openssl base64 -A -in <p12 文件路径> -out <p12 文件 base64 编码后的文
 
 项目包含三个自定义 Tauri 插件：
 
-- **tauri-plugin-ssh**: SSH 连接功能
-- **tauri-plugin-data**: 数据管理功能
+- **crates/tauri-plugin-ssh**: SSH 连接功能
+- **crates/tauri-plugin-data**: 数据管理功能
 
 要开发插件，请修改相应目录下的代码，并在需要时更新其依赖关系。
 

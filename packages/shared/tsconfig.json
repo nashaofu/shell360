@@ -1,20 +1,24 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
+    "lib": ["DOM", "ES2022"],
     "module": "ESNext",
-    "noEmit": false,
+    "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
-    "allowImportingTsExtensions": true,
+    "noEmit": false,
     "composite": true,
     "declaration": true,
     "declarationDir": "dist",
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["ts"]
+  "include": ["src"],
+  "references": [{ "path": "../bridge" }]
 }

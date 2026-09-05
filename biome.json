@@ -9,7 +9,7 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
-      "!shared/src/components/VirtualKeyboard/xterm/*",
+      "!packages/shared/src/components/VirtualKeyboard/xterm/*",
       "!**/permissions",
       "!src-tauri/gen/apple/Assets.xcassets"
     ]

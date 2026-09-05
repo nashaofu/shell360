@@ -23,8 +23,8 @@ tauri-plugin-fs.workspace = true
 tauri-plugin-log.workspace = true
 tauri-plugin-machine-uid.workspace = true
 tauri-plugin-clipboard-manager.workspace = true
-tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
-tauri-plugin-data = { path = "../tauri-plugin-data" }
+tauri-plugin-ssh = { path = "../crates/tauri-plugin-ssh" }
+tauri-plugin-data = { path = "../crates/tauri-plugin-data" }
 shell360-keygen = { path = "../crates/shell360-keygen" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
@@ -36,4 +36,4 @@ webbrowser = "1.2.1"
 tauri-plugin-updater = { version = "2.10.1", default-features = false, features = [
   "native-tls-vendored",
 ] }
-tauri-plugin-pty = { path = "../tauri-plugin-pty" }
+tauri-plugin-pty = { path = "../crates/tauri-plugin-pty" }
