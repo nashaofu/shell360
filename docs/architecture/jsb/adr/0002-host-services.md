@@ -1,6 +1,6 @@
 # ADR-0002: HostServices primitive boundary
 
-Status: Accepted for P1/P3 implementation.
+Status: Accepted.
 
 ## Decision
 

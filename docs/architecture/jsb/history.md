@@ -1,15 +1,40 @@
 # JSB 统一化历史记录
 
 > 本文件归档已过时的设计与分析，仅作决策 / 迁移历史保留。当前架构以
-> `rust-owned-webview-transport.md`（详细设计）与 `layering.md`（分层总览）为准。
+> `architecture.md`（架构设计）与 `protocol.md`（协议规范）为准。
 >
 > 下文所有条目记录的 `JsbEngine` + `Vec<EngineOutput>` + 输出列表解释模型已被删除。
 > 当前实现中 `jsb-core::Jsb` 通过注入的 `JsbTransport` 直接收发 WebView Channel，入口
 > 只返回 `Result<(), JsbError>`；具体方法由 `shell360-runtime` 通过 `JsbHandler` 实现。
 
+## 迁移背景：为什么删除输出列表模型
+
+迁移前，Rust 与 WebView 之间采用“计算输出、平台执行”的两段式模型：
+
+```text
+WebView MessagePort
+  -> 平台层接收文本或二进制
+  -> NativeJsbEngine / jsb_engine_* 调用 jsb-core
+  -> Vec<EngineOutput>
+  -> Kotlin / Swift / ArkTS 遍历并解释 EngineOutput
+  -> 平台层写回 MessagePort
+```
+
+该模型的问题：
+
+1. `Engine` 是实现视角的抽象，与 TypeScript `jsb` 库的 `JSB`、`invoke`、`emit`、`JSBChannel`
+   术语不一致。
+2. `EngineOutput` 不是前端业务返回值，而是要求平台继续执行的中间指令，容易产生误解。
+3. 三个平台都需要维护输出类型转换、序列化和 `executeOutputs` 分支。
+4. Rust 只负责“算出下一步”，并未真正接管 JSB 通道的发送生命周期。
+5. HostCall 混在核心输出中，但在 FFI 层又被 callback 消费，核心输出与平台可见输出并不等价。
+
+因此删除输出列表模式：`jsb-core` 通过平台注入的通用传输接口直接收发 WebView 消息，通过注入的
+调用接口将具体方法交给 `shell360-runtime` 实现（即当前 `architecture.md` 所述架构）。
+
 ## 1. ADR-0001: JsbEngine contract and method-table design
 
-Status: Superseded by `rust-owned-webview-transport.md` (was: Accepted for P1 implementation).
+Status: Superseded by the current architecture (was: Accepted for P1 implementation).
 
 ### Decision
 
@@ -147,7 +172,7 @@ iOS 没有跨 WK 边界的 WebMessagePort，`JavaScriptBridge.swift` 注入的�
 - `fs` 尚未回迁：需先拆 app-local 与 scoped URI 两条路径。
 - P0 device capture 缺失：Rust golden replay 与编译通过不构成端到端证据。
 
-## 5. `jsb-core` 纯化落地记录（layering.md 历史章节）
+## 5. `jsb-core` 纯化落地记录
 
 ### 已修复：`jsb-core` 纯化
 
@@ -187,162 +212,63 @@ P1–P5 记录的是 `JsbEngine` + `MethodInvoker`/`InvokeFlow` 委托 + 平台�
 crate 拆分后依赖方向：`shell360-runtime → {jsb-core, shell360-store, shell360-ssh,
 shell360-keygen}`；`shell360-ffi / shell360_ohrs → {jsb-core, shell360-runtime}`。
 
-## 6. P0 基线快照
+## 6. P0 平台漂移快照
 
-### 6.1 当前 JSB 帧协议（P0 static baseline）
+> 本节记录 P0 时期三端尚未统一时的方法注册与错误码漂移。帧信封格式、帧序列与完整方法表的
+> **当前规范**见 `protocol.md`；下述漂移在统一迁移中大部分已由 `jsb-core` /
+> `shell360-runtime` 收敛。
 
-Device captures remain outstanding as listed in `README.md`.
+### 6.1 方法注册差异（P0）
 
-**Ordered happy-path sequence**：
+P0 时期三端注册并不完全一致：Android 缺 `ssh.shell.send` 与 `core.healthCheck`；HarmonyOS 缺
+`core.healthCheck`；iOS 注册全部。`ssh.shell.open` 曾在三端 transport 桥中额外解析以绑定
+`dataChannelId` 到 `(clientId, sshShellId)`（现由 `shell360-runtime` 持有）；iOS 还保留
+JSON/base64 的 `ssh.shell.send` invoke 路径。
 
-1. Page calls `window.__JSB__.openChannel(channelId)` with a UUID.
-2. Host transfers one web port and posts a window control string:
-   `{"source":"jsb.channel","type":"channel.opened","channelId":"..."}`.
-3. Page writes an invoke string to the port:
-   `{"type":"invoke.request","id":"...","method":"bridge.health","data":null}`.
-4. Host writes a response string to the same port:
-   `{"type":"invoke.response","id":"...","data":{"status":"ok"}}`.
-5. Host may write an event string:
-   `{"type":"emit","event":"data.authedChange","payload":true}`. Optional routing fields are `targetId`, `clientId`, and `sequence`.
-6. A shell data channel carries raw `ArrayBuffer` bytes in both directions. iOS alone wraps bytes as Base64 in its version-1 WKScriptMessage envelope; the page-facing MessagePort still carries `ArrayBuffer`.
-7. Page calls `window.__JSB__.closeChannel(channelId)`. Android and HarmonyOS close their native port; iOS sends `{version:1,kind:"channel.close",channelId,payload:""}` to the WK handler.
-8. When Rust or a native transport closes an active channel, the adapter posts `{source:"jsb.channel",type:"channel.closed",channelId}` before releasing the port. The TypeScript channel then rejects pending work and releases its local resources.
+方法族归属（P0）：
 
-**Open failure**：窗口控制串为
-`{"source":"jsb.channel","type":"channel.open.failed","channelId":"...","error":{"code":"JSB_CHANNEL_OPEN_FAILED","message":"..."}}`。
-Android can additionally report `JSB_CHANNEL_INVALID_ID`; HarmonyOS currently folds invalid IDs into `JSB_CHANNEL_OPEN_FAILED`; the iOS adapter silently returns for an empty ID.
-
-**Invoke error envelope**：All hosts intend to emit `{"type":"invoke.response","id":"...","error":{"code":"...","message":"...","details":...}}`. `details` is optional in host code; `jsb-core::reject` currently serializes absent details as `null`.
-
-**iOS adapter comparison**：The adapter and `jsb/` agree on `source`, `channelId`, `channel.opened`, `channel.open.failed`, and exactly one transferred port. Differences and risks:
-
-- Android/Harmony validate UUID syntax before opening; iOS validates only non-empty string.
-- iOS `openChannel` creates the page port itself and reports opened before native WK handling; the other hosts create/transfer native ports.
-- iOS open failure is limited to the page-side `window.postMessage` operation; later native rejection has no equivalent open-failed path.
-- iOS exposes private adapter helpers `receive` and `emit` in addition to the public open/close transport surface.
-- iOS binary Base64 and version/kind envelope are adapter-only and have no schema-level interoperability test yet.
-- The page parser accepts native messages with `source === null` and empty origin; the iOS adapter posts same-window/same-origin messages.
-
-### 6.2 当前方法与错误矩阵（P0 baseline snapshot）
-
-本表记录 P0 时期三端的方法注册与错误码漂移，属于冻结基线。当前实现中，方法表唯一来源是
-`shell360-runtime::methods::method_specs()`（70 个 spec，测试断言数量），错误码由
-`jsb-core`（通用框架码）与 `shell360-runtime`（业务/宿主码）统一产生，三端 transport
-不再解析方法名、不做 `ssh.shell.open` 绑定（该绑定在 `shell360-runtime` 内）。
-
-**Method table**：The hosts share 67 registrations across the main families: `bridge.health`;
-`app.getVersion`, `app.setSystemBarsAppearance`; `machineUid.getMachineUid`; `clipboard.readText`,
-`clipboard.writeText`; `core.openUrl`; `dialog.open`, `dialog.save`; `fs.readTextFile`,
-`fs.writeTextFile`; `window.close`; `keygen.generate`; 24 `data.*` methods; seven
-`ssh.session.*` methods; three common `ssh.shell.*` methods; 14 `ssh.sftp.*` methods; and six
-`ssh.portForwarding.*` methods. HarmonyOS and iOS additionally register `ssh.shell.send`; iOS
-alone additionally registers `core.healthCheck`.
-
-The complete union registration list is:
-
-```text
-bridge.health
-core.healthCheck
-app.getVersion
-app.setSystemBarsAppearance
-machineUid.getMachineUid
-clipboard.readText
-clipboard.writeText
-core.openUrl
-dialog.open
-dialog.save
-fs.readTextFile
-fs.writeTextFile
-window.close
-keygen.generate
-data.checkIsEnableCrypto
-data.checkIsInitCrypto
-data.checkIsAuthed
-data.initCryptoKey
-data.initCryptoPassword
-data.loadCryptoByPassword
-data.initCryptoBiometric
-data.loadCryptoByBiometric
-data.changeCryptoPassword
-data.changeCryptoEnable
-data.resetCrypto
-data.rotateCryptoKey
-data.getHosts
-data.addHost
-data.updateHost
-data.deleteHost
-data.getKeys
-data.addKey
-data.updateKey
-data.deleteKey
-data.getPortForwardings
-data.addPortForwarding
-data.updatePortForwarding
-data.deletePortForwarding
-ssh.session.connect
-ssh.session.authenticatePassword
-ssh.session.authenticatePublicKey
-ssh.session.authenticateCertificate
-ssh.session.authenticateKeyboardInteractive
-ssh.session.authenticateAgent
-ssh.session.disconnect
-ssh.shell.open
-ssh.shell.send
-ssh.shell.resize
-ssh.shell.close
-ssh.sftp.open
-ssh.sftp.close
-ssh.sftp.readDir
-ssh.sftp.createFile
-ssh.sftp.createDir
-ssh.sftp.removeFile
-ssh.sftp.removeDir
-ssh.sftp.rename
-ssh.sftp.exists
-ssh.sftp.canonicalize
-ssh.sftp.readTextFile
-ssh.sftp.writeTextFile
-ssh.sftp.uploadFile
-ssh.sftp.downloadFile
-ssh.portForwarding.openLocal
-ssh.portForwarding.closeLocal
-ssh.portForwarding.openRemote
-ssh.portForwarding.closeRemote
-ssh.portForwarding.openDynamic
-ssh.portForwarding.closeDynamic
-```
-
-Platform presence: Android has every union item except `ssh.shell.send` and `core.healthCheck`; HarmonyOS has every item except `core.healthCheck`; iOS has all 69 items.
-
-| Family | Android | iOS | HarmonyOS | Current owner |
+| Family | Android | iOS | HarmonyOS | 归属 |
 | --- | --- | --- | --- | --- |
 | `bridge.health` | local | local | Rust pass-through | drifted |
 | `core.healthCheck` | absent | local/Rust | absent | iOS-only redundant route |
-| `app.*` | Rust | Rust | Rust | Rust-owned (P3, `CARGO_PKG_VERSION`) |
-| `machineUid.*` | Rust | Rust | Rust | Rust-owned (P3, `app_data_dir/machine_uid` UUID v4) |
-| `clipboard.*`, `dialog.*`, `core.openUrl`, `window.close` | platform | platform | Rust-to-platform runtime | host capabilities |
-| `fs.*` | platform scoped logic | local file APIs | Rust-to-platform runtime | transitional Host primitive; app-local vs scoped split pending |
-| `keygen.*`, `data.*`, `ssh.*` | Rust pass-through | Rust pass-through | Rust pass-through | duplicated routing |
+| `app.*` | Rust | Rust | Rust | Rust-owned |
+| `machineUid.*` | Rust | Rust | Rust | Rust-owned |
+| `clipboard.*`/`dialog.*`/`core.openUrl`/`window.close` | platform | platform | Rust-to-platform | host capabilities |
+| `fs.*` | platform scoped | local file APIs | Rust-to-platform | transitional Host primitive |
+| `keygen.*`/`data.*`/`ssh.*` | Rust pass-through | Rust pass-through | Rust pass-through | duplicated routing |
 
-`ssh.shell.open` is additionally parsed in all three transport bridges to bind `dataChannelId` to `(clientId, sshShellId)`. iOS also retains the JSON/base64 `ssh.shell.send` invoke route while its normal data path is binary.
-
-**Error and limit drift**：
+### 6.2 错误码与帧上限漂移（P0）
 
 | Condition | Android | iOS | HarmonyOS |
 | --- | --- | --- | --- |
-| not connected | `JSB_INVALID_MESSAGE`; "JSB is not connected." | `JSB_NOT_CONNECTED`; same text | `JSB_INVALID_MESSAGE`; "JSB channel is not connected." |
-| malformed invoke | `JSB_INVALID_MESSAGE`; multiple reasons | `JSB_INVALID_MESSAGE`; generic | `JSB_INVALID_MESSAGE`; native `Error` text |
+| not connected | `JSB_INVALID_MESSAGE` | `JSB_NOT_CONNECTED` | `JSB_INVALID_MESSAGE` |
+| malformed invoke | `JSB_INVALID_MESSAGE`（多种原因） | `JSB_INVALID_MESSAGE`（generic） | `JSB_INVALID_MESSAGE`（native Error 文本） |
 | missing method | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` |
-| handler failure | `JSB_NATIVE_ERROR` or structured native code | `JSB_NATIVE_ERROR` or `BridgeCallbackError` | normalized runtime error or `JSB_NATIVE_ERROR` |
-| invalid channel ID | `JSB_CHANNEL_INVALID_ID` | empty ID silently ignored; otherwise unchecked | `JSB_CHANNEL_OPEN_FAILED` |
-| request too large | `JSB_MESSAGE_TOO_LARGE`, defaults to 1 MiB text / 10 MiB binary; platform-configurable | no limit | no limit |
-| picker/system failures | structured `BRIDGE_*` | structured `BRIDGE_*` for route validation | several raw `Error` messages |
+| handler failure | `JSB_NATIVE_ERROR` 或结构化 native code | `JSB_NATIVE_ERROR` 或 `BridgeCallbackError` | 归一 runtime error 或 `JSB_NATIVE_ERROR` |
+| invalid channel ID | `JSB_CHANNEL_INVALID_ID` | 空 ID 静默忽略，其余不校验 | `JSB_CHANNEL_OPEN_FAILED` |
+| request too large | `JSB_MESSAGE_TOO_LARGE`（1 MiB 文本 / 10 MiB 二进制，可配） | 无上限 | 无上限 |
+| picker/系统失败 | 结构化 `BRIDGE_*` | 结构化 `BRIDGE_*` | 多条原始 `Error` 消息 |
+
+统一后：方法表唯一来源 `shell360-runtime::methods::method_specs()`，错误码由 `jsb-core`
+（框架码）与 `shell360-runtime`（业务/宿主码）统一产生，帧上限默认 1 MiB 文本 / 10 MiB
+二进制（见 `protocol.md`）。
+
+### 6.3 iOS 适配器差异与风险（P0）
+
+iOS 适配器与 `jsb/` 在 `source`、`channelId`、`channel.opened`、`channel.open.failed` 与恰好一个
+被转交的 port 上一致。P0 时期的差异与风险：
+
+- Android/Harmony 在打开前校验 UUID 语法；iOS 只校验非空字符串。
+- iOS `openChannel` 自建页面 port 并在 WK 处理前上报 opened；其他宿主创建/转交原生 port。
+- iOS open 失败仅限页面侧 `window.postMessage` 操作；后续原生拒绝没有等价的 open-failed 路径。
+- iOS 在公开的 open/close 之外暴露私有适配助手 `receive` 与 `emit`。
+- iOS 二进制 Base64 与 version/kind 信封仅为适配器内部，尚无 schema 级互操作测试。
+- 页面解析器接受 `source === null` 且空 origin 的原生消息；iOS 适配器投递同窗/同源消息。
 
 ## 7. Rust 直连 WebView 通道方案实施规划
 
-本节是 `rust-owned-webview-transport.md` 的实施规划章节（§11–§18），记录了分阶段迁移、
-兼容性要求、测试验证、可观测性、风险与完成标准。各阶段均已落地，最终状态见
-`rust-owned-webview-transport.md` 的核心架构章节。
+本节记录直连 transport 方案的实施规划：分阶段迁移、兼容性要求、测试验证、可观测性、风险与
+完成标准。各阶段均已落地，当前架构见 `architecture.md`。
 
 ### 7.1 分阶段迁移
 
@@ -388,7 +314,7 @@ Android 先作为单平台试点；本阶段不同时改 iOS/HarmonyOS 的宿主
 2. 删除 `InvokeFlow::Delegate`、`HostAction`、`HostCallResult` 等已被 runtime completion 替代的核心机制；
 3. 删除 `complete_host_call` 的 JSB core API；
 4. 清理 `engine` 命名、旧 N-API 导出和生成绑定；
-5. 更新现有 ADR、layering 和 unification 文档。
+5. 更新现有 ADR 与架构文档。
 
 阶段 E 不得早于三端迁移完成，避免维护两套不完整路径。
 
@@ -515,3 +441,24 @@ errorCode
 5. 平台只保留 WebView MessagePort/WKScriptMessage/ArkWeb Port 的薄适配。
 6. 删除平台解释的输出列表，因此不再需要任何 `EngineOutput` 替代类型。
 7. 迁移按 Android、iOS、HarmonyOS 逐平台推进，协议和前端 API 保持不变。
+
+## 8. 命名迁移（Engine → Jsb）
+
+统一迁移中删除了 JSB 领域所有 `Engine` 与输出列表命名：
+
+| 迁移前 | 迁移后 |
+| --- | --- |
+| `JsbEngine` | `Jsb` |
+| `NativeJsbEngine` | `NativeJsb` |
+| `EngineErrorPayload` | `JsbErrorPayload` |
+| `EngineOutput` | 删除 |
+| `NativeEngineOutput` | 删除 |
+| `NativeEngineOutputKind` | 删除 |
+| `engine.rs` | `jsb.rs` |
+| `initialize_jsb_engine` | `initialize_jsb` |
+| `jsb_engine_*` | `jsb_*` |
+| `createJsbEngine` | `createJsb` |
+| 局部变量 `engine` | `jsb` |
+
+不为替换名称新增同义的 `JsbOutput`、`JsbOperation` 或 `JsbCommand`；目标模型没有需要平台解释的
+返回列表。依赖库中无关的 `base64::Engine`（SSH shell 发送路径）不在改名范围。

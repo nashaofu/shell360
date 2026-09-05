@@ -1,6 +1,6 @@
 # ADR-0003: TypeScript adaptation boundary
 
-Status: Accepted as the P4 scope gate.
+Status: Accepted.
 
 ## Decision
 

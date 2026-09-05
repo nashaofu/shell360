@@ -16,7 +16,7 @@ Android 宿主的统一说明见 `../android-native/README.md`；JSB 引擎 / �
 ## 实施状态
 
 > 下表保留各平台原实施计划最后一次记录的状态。三端 JSB 引擎/传输迁移已完成，以
-> `../architecture/jsb/layering.md` 与 `rust-owned-webview-transport.md` 为准。
+> `../architecture/jsb/architecture.md` 为准。
 
 ### iOS
 

@@ -1,31 +1,51 @@
-# JSB architecture baseline
+# 移动端 JSB 架构
 
-This directory freezes the P0 protocol baseline. The runtime model that freezes it is `jsb-core::Jsb` (renamed from the interim `JsbEngine`; see `rust-owned-webview-transport.md`).
+JSB（JavaScript Bridge）是 shell360 移动端（Android / iOS / HarmonyOS）原生 WebView 宿主与
+前端之间的通信桥。Rust `jsb-core` 统一管理协议与通道收发，业务实现集中在
+`shell360-runtime`，各端宿主只做传输适配（`JsbTransport`）与系统原语（`HostServices`）。
 
-- `rust-owned-webview-transport.md` is the current architecture: Rust owns JSB channel I/O through an injected `JsbTransport`, while all concrete methods stay in `shell360-runtime`.
-- `layering.md` summarizes the current layering (bridge / jsb / jsb-core / shell360-runtime) and the unified-vs-platform boundaries.
-- `adr-0002-host-services.md` fixes the host primitive boundary.
-- `adr-0003-typescript-adaptation.md` bounds TypeScript and business-layer changes.
-- `adr-0004-back-press-layering.md` routes native back-press through the bridge capability layer.
-- `history.md` archives superseded designs (P0 frame protocol, method/error matrix, `JsbEngine`/output-list model, migration phases, and implementation planning).
+## 分层总览
 
-The executable copy of the current frame fixture is
-`crates/jsb-core/tests/fixtures/current_protocol.json`. It is a static baseline reconstructed from source, not a device capture.
+```
+bridge (TS)            业务调用，基于 jsb 封装
+   │  jsb.invoke(method, data)
+jsb (TS)               JSB 协议/通道/事件纯框架
+   │  MessagePort / WKScriptMessage
+各端对接层              JsbTransport + HostServices（Kotlin / Swift / ArkTS）
+   │  FFI（UniFFI / NAPI）
+jsb-core (Rust)        JSB 引擎纯框架          shell360-runtime (Rust) 业务后端
+```
 
-## Device evidence status
+完整分层图与职责见 [`architecture.md`](./architecture.md)。
 
-| Platform | Complete device capture | Status |
+## 文档导航
+
+| 文档 | 内容 |
+| --- | --- |
+| [`architecture.md`](./architecture.md) | 架构设计：分层职责、核心接口（`Jsb`/`JsbTransport`/`JsbHandler`）、消息流、平台适配、FFI 与线程、crate 边界、统一边界 |
+| [`protocol.md`](./protocol.md) | 协议规范：帧信封、帧序列、错误码、方法表、帧大小限制 |
+| [`adr/`](./adr/README.md) | 架构决策记录（当前有效的设计决策） |
+| [`history.md`](./history.md) | 历史：被取代的设计、迁移落地记录、P0 平台漂移 |
+
+## 真机验证状态
+
+Rust 测试与协议黄金样例（`crates/jsb-core/tests/fixtures/current_protocol.json`）不构成端到端
+设备证据。真机字节链路捕获仍待补齐：
+
+| 平台 | 完整真机捕获 | 状态 |
 | --- | --- | --- |
-| Android | No | Not captured in P0 workspace session |
-| iOS | No | Requires macOS/Xcode and an iOS runtime |
-| HarmonyOS | No | Not captured in P0 workspace session |
+| Android | 否 | 未捕获 |
+| iOS | 否 | 需 macOS / Xcode 与 iOS 运行时 |
+| HarmonyOS | 否 | 未捕获 |
 
-A platform capture is accepted only when it includes timestamp, app build identity, OS/WebView version, channel ID, ordered raw text frames, binary byte dumps and the exact reproduction steps. Static tests and package builds are not substitutes.
+一次平台捕获被接受的条件：包含时间戳、App 构建标识、OS/WebView 版本、channel ID、有序原始文本
+帧、二进制字节转储与精确复现步骤。静态测试与构建成功不能替代。捕获应存于
+`captures/<platform>/<build-id>/`，含 `metadata.json`、有序 `frames.jsonl`，以及被 JSONL 记录
+引用 SHA-256 的二进制负载文件。
 
-## Environment probe: 2026-09-01 Asia/Shanghai
+### 环境探针（2026-09-01，Asia/Shanghai）
 
-- Android SDK and `adb` are installed, but `adb devices -l` returned no devices. The installed emulator tool reported no configured AVDs.
-- DevEco Studio and its SDK are installed, but `hdc list targets` returned `[Empty]`. No configured local HarmonyOS emulator was discovered.
-- The host is Windows and has no `xcrun`; an iOS runtime capture cannot be produced on this machine.
-
-P1 must not begin from this checkout until the three required captures are added, or the scope owner explicitly changes the P0 device-evidence gate. Captures should be stored under `captures/<platform>/<build-id>/` with a `metadata.json`, ordered `frames.jsonl`, and binary payload files whose SHA-256 values are referenced by the JSONL records.
+- Android SDK 与 `adb` 已安装，但 `adb devices -l` 无设备；模拟器工具无已配置 AVD。
+- DevEco Studio 与其 SDK 已安装，但 `hdc list targets` 返回 `[Empty]`；未发现已配置的本地
+  HarmonyOS 模拟器。
+- 宿主机为 Windows，无 `xcrun`，无法在本机产生 iOS 运行时捕获。
