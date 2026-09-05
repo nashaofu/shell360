@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "src-tauri",
   "crates/jsb-core",
   "crates/shell360-store",
   "crates/shell360-runtime",
@@ -7,7 +8,6 @@ members = [
   "crates/shell360_ohrs",
   "crates/shell360-keygen",
   "crates/shell360-ssh",
-  "src-tauri",
   "crates/tauri-plugin-ssh",
   "crates/tauri-plugin-data",
   "crates/tauri-plugin-pty",
