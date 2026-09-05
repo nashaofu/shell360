@@ -56,9 +56,11 @@ export default function Menus({ onClick, compact }: MenusProps) {
   );
 
   const onOpenSettings = useCallback(() => {
+    setActiveTerminalId(null);
+    setTerminalViewVisible(false);
     navigate("/settings");
     onClick?.();
-  }, [navigate, onClick]);
+  }, [navigate, onClick, setActiveTerminalId, setTerminalViewVisible]);
 
   return (
     <nav

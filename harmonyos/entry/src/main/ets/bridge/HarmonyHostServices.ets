@@ -71,7 +71,7 @@ export class HarmonyHostServices {
       case 'pickDocuments':
         return await this.pickDocuments(params);
       case 'saveDocument':
-        return await this.saveDocument();
+        return await this.saveDocument(params);
       case 'readTextFile':
         return await this.readTextFile(params);
       case 'writeTextFile':
@@ -160,9 +160,14 @@ export class HarmonyHostServices {
     return params.multiple === true ? uris : (uris[0] ?? null);
   }
 
-  private async saveDocument(): Promise<string | null> {
+  private async saveDocument(params: Record<string, Object>): Promise<string | null> {
     const documentPicker = new picker.DocumentViewPicker(this.requireContext());
-    const uris = await documentPicker.save();
+    const options = new picker.DocumentSaveOptions();
+    const defaultPath = params.defaultPath as string | undefined;
+    if (defaultPath !== undefined && defaultPath.length > 0) {
+      options.newFileNames = [defaultPath];
+    }
+    const uris = await documentPicker.save(options);
     return uris[0] ?? null;
   }
 
@@ -199,16 +204,41 @@ export class HarmonyHostServices {
   }
 
   private async readScopedFile(params: Record<string, Object>): Promise<void> {
+    const source = params.source as string;
+    const targetPath = params.targetPath as string;
     try {
-      await fileIo.copyFile(toPlainPath(params.source as string), params.targetPath as string);
+      if (isFileUri(source)) {
+        const file = fileIo.openSync(source, fileIo.OpenMode.READ_ONLY);
+        try {
+          fileIo.copyFileSync(file.fd, targetPath);
+        } finally {
+          fileIo.closeSync(file.fd);
+        }
+      } else {
+        fileIo.copyFileSync(source, targetPath);
+      }
     } catch (_) {
       throw new HostServiceError('BRIDGE_IO_ERROR', 'The selected upload file could not be read.');
     }
   }
 
   private async writeScopedFile(params: Record<string, Object>): Promise<void> {
+    const sourcePath = params.sourcePath as string;
+    const target = params.target as string;
     try {
-      await fileIo.copyFile(params.sourcePath as string, toPlainPath(params.target as string));
+      if (isFileUri(target)) {
+        const file = fileIo.openSync(
+          target,
+          fileIo.OpenMode.WRITE_ONLY | fileIo.OpenMode.CREATE | fileIo.OpenMode.TRUNC,
+        );
+        try {
+          fileIo.copyFileSync(sourcePath, file.fd);
+        } finally {
+          fileIo.closeSync(file.fd);
+        }
+      } else {
+        fileIo.copyFileSync(sourcePath, target);
+      }
     } catch (_) {
       throw new HostServiceError('BRIDGE_IO_ERROR', 'The selected download destination could not be written.');
     }
@@ -230,11 +260,8 @@ export class HarmonyHostServices {
   }
 }
 
-function toPlainPath(value: string): string {
-  if (value.startsWith('file://')) {
-    return decodeURIComponent(value.slice('file://'.length));
-  }
-  return value;
+function isFileUri(value: string): boolean {
+  return value.startsWith('file://');
 }
 
 function toHostFailure(error: Object): HostFailure {
