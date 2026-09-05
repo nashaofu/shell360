@@ -101,13 +101,15 @@ function handleControlMessage(event: MessageEvent<unknown>): void {
   }
 
   if (message.type === "channel.closed") {
-    activeChannels.get(message.channelId)?.fail(
-      new JSBError(
-        message.error?.code ?? "JSB_CHANNEL_CLOSED",
-        message.error?.message ?? "The native JSB channel was closed.",
-        message.error?.details,
-      ),
-    );
+    activeChannels
+      .get(message.channelId)
+      ?.fail(
+        new JSBError(
+          message.error?.code ?? "JSB_CHANNEL_CLOSED",
+          message.error?.message ?? "The native JSB channel was closed.",
+          message.error?.details,
+        ),
+      );
     return;
   }
 

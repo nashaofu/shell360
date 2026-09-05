@@ -1,6 +1,6 @@
+import { backToBackground, onBackPress } from "bridge/app";
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useBlocker, useLocation, useNavigate } from "react-router-dom";
-import { backToBackground, onBackPress } from "bridge/app";
 import { useHosts, useKeys, usePortForwardings } from "shared";
 import Workspace from "@/components/Workspace";
 import Sidebar from "@/routes/Root/Sidebar";

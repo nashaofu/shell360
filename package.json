@@ -26,21 +26,21 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.0",
-    "@dotenvx/dotenvx": "^2.19.1",
-    "@inquirer/select": "^5.2.1",
-    "@tauri-apps/cli": "^2.11.3",
+    "@biomejs/biome": "^2.5.12",
+    "@dotenvx/dotenvx": "^2.23.0",
+    "@inquirer/select": "^5.2.4",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/yargs": "^17.0.35",
-    "execa": "^10.0.0",
+    "execa": "^10.0.1",
     "exit-hook": "^5.1.0",
     "fkill": "^10.0.3",
     "glob": "^13.0.6",
-    "got": "^15.0.5",
+    "got": "^16.0.0",
     "typescript": "^7.0.2",
     "wait-on": "^9.1.0",
     "yargs": "^18.1.0"
   },
   "dependencies": {
-    "uuid": "^11.1.0"
+    "uuid": "^14.0.2"
   }
 }

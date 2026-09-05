@@ -9,5 +9,8 @@
     }
   },
   "include": ["src"],
-  "references": [{ "path": "../packages/bridge" }, { "path": "../packages/shared" }]
+  "references": [
+    { "path": "../packages/bridge" },
+    { "path": "../packages/shared" }
+  ]
 }

@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "jsb",
   "version": "0.1.0",
   "type": "module",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "eventemitter3": "^5.0.4",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "rimraf": "^6.1.3",

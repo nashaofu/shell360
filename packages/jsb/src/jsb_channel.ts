@@ -74,7 +74,10 @@ export class JSBChannel<
     this.state = "closed";
     if (!this.port) {
       this.rejectOpen(
-        new JSBError("JSB_CHANNEL_CLOSED", "JSB channel was closed before opening."),
+        new JSBError(
+          "JSB_CHANNEL_CLOSED",
+          "JSB channel was closed before opening.",
+        ),
       );
     }
     this.releaseResources();

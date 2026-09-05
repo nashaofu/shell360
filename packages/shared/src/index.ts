@@ -41,33 +41,31 @@
 //! - Anything that imports from `desktop/` or `mobile/` (a one-way
 //!   dependency from `shared` would invert the layering).
 
+// re-exports
+export { v4 as uuidV4 } from "uuid";
 // atoms — cross-app business state.
 export * from "./atoms/appearance.atom";
 export * from "./atoms/portForwardings.atom";
 export * from "./atoms/session.atom";
 export * from "./atoms/transfer.atom";
-
 // components — SSH/SFTP business forms.
 export * from "./components/EditHostForm";
 export * from "./components/EditKeyForm";
 export * from "./components/GenerateKeyForm";
 export * from "./components/HostTagsSelect";
-export * from "./components/PortForwardingForm";
-export * from "./components/PortForwardingLoading";
-export * from "./components/SSHLoading";
-export * from "./components/TextFieldPassword";
-export * from "./components/TransferProgress";
-
 // components — framework UI primitives (no SSH/SFTP semantics).
 export * from "./components/Icon";
 export * from "./components/Loading";
 export * from "./components/Message";
 export * from "./components/Modal";
-
+export * from "./components/PortForwardingForm";
+export * from "./components/PortForwardingLoading";
+export * from "./components/SSHLoading";
+export * from "./components/TextFieldPassword";
+export * from "./components/TransferProgress";
 // components — terminal primitives (xterm.js adapters).
 export * from "./components/VirtualKeyboard";
 export * from "./components/XTerminal";
-
 // hooks — cross-app business data access.
 export * from "./hooks/useHosts";
 export * from "./hooks/useImportAppData";
@@ -78,27 +76,22 @@ export * from "./hooks/useSftp";
 export * from "./hooks/useSftpConnection";
 export * from "./hooks/useSftpFileEditor";
 export * from "./hooks/useShell";
-export * from "./hooks/useTerminal";
 
 // hooks — generic utilities consumed by the business hooks above.
 export * from "./hooks/useSWR";
-
+export * from "./hooks/useTerminal";
 // utils — business adapters.
 export * from "./utils/display";
+// utils — runtime helpers.
+export * from "./utils/env";
 export * from "./utils/form";
 export * from "./utils/host";
 export * from "./utils/knownHosts";
 export * from "./utils/osc";
 export * from "./utils/portForwarding";
 export * from "./utils/sftp";
-export * from "./utils/ssh";
-export * from "./utils/terminal";
-
-// utils — runtime helpers.
-export * from "./utils/env";
 export * from "./utils/sleep";
+export * from "./utils/ssh";
 export * from "./utils/style";
+export * from "./utils/terminal";
 export * from "./utils/umami";
-
-// re-exports
-export { v4 as uuidV4 } from "uuid";
