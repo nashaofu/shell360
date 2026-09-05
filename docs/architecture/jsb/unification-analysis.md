@@ -126,7 +126,7 @@
 1. **P2 收尾** ✅ 已完成：`jsb-core`/`shell360-ffi`/`shell360_ohrs` 的旧 `Registry/Connection` 导出已删除。
 2. **P3（部分完成）**：`app.getVersion`（`env!("CARGO_PKG_VERSION")`）与 `machineUid.getMachineUid`（`app_data_dir/machine_uid` 持久化 UUID v4）已回迁 Rust；app-local `fs` 因「app-local 路径 与 scoped URI（content://）读写共用 `fs.readTextFile/writeTextFile` 方法名」而暂缓——需先在业务层拆成 app-local（Rust）与 scoped（Host 原语）两条路径。`core.healthCheck` 与 JSON `ssh.shell.send` 的取舍仍待 iOS 二进制路径验证。
    - **已知占位（已接受，非阻塞）**：`app.getVersion` 目前返回 Rust crate 版本 `0.1.0` 而非真实 App 版本。App 版本本是平台 build 配置值，正确做法是把版本作为构造参数注入 `Shell360Runtime::new`（三端从各自 build config 传入）；此改动涉及 UniFFI/NAPI 构造签名变更与各平台重新生成绑定，已决定暂以 `CARGO_PKG_VERSION` 占位，后续再处理。
-3. **P4**：把 `method_typescript()` 生成的 `JsbMethod` 声明接入 `jsb/`（决定是“构建期生成”还是“入库产物”），并评估是否只覆盖 native 能力路径而不动 Tauri 能力路径。
+3. **P4**：把 `method_typescript()` 生成的 `JsbMethod` 声明作为入库产物接入 `bridge/native`，只约束 Shell360 native 能力路径，不把业务方法耦合进通用 `jsb`。
 4. **验证策略**：以 `crates/jsb-core/tests/fixtures/current_protocol.json` 的 golden replay 保证引擎协议不变；补齐 P0 缺失的三端 device capture（`README.md` 已明确 gate）；每端迁移沿用 `p2-android.md` 的“结构扫描确认无旧 dispatcher/route/shell 绑定残留 + 编译通过 + 设备冒烟”清单。
 
 ---

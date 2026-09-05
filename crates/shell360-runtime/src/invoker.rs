@@ -18,6 +18,9 @@ use crate::{
   runtime::Shell360Runtime,
 };
 
+type ShellKey = (String, String);
+type ShellLocks = HashMap<ShellKey, Arc<AsyncMutex<()>>>;
+
 /// Business `JsbHandler` for Shell360. Owns the method routing table's runtime
 /// side, SSH shell channel bindings, host-call coordination and transfer
 /// staging. All JSB-generic protocol state stays in `jsb-core`; this type only
@@ -28,13 +31,13 @@ pub struct RuntimeInvoker {
   runtime: Arc<Shell360Runtime>,
   handle: tokio::runtime::Handle,
   host_services: Arc<dyn RuntimeHostServices>,
-  shell_channels: Arc<Mutex<HashMap<(String, String), String>>>,
+  shell_channels: Arc<Mutex<HashMap<ShellKey, String>>>,
   /// Per-shell serialisation locks. Every SSH shell-input task takes the
   /// lock for `(client_id, shell_id)` before touching the SFTP/SSH service,
   /// so binary frames sent by the WebView keep their on-the-wire order
   /// even when the JSB platform handler dispatches them concurrently onto
   /// the Tokio worker pool. Different shells run in parallel.
-  shell_locks: Arc<Mutex<HashMap<(String, String), Arc<AsyncMutex<()>>>>>,
+  shell_locks: Arc<Mutex<ShellLocks>>,
   host_calls: Arc<Mutex<HashMap<String, HostCall>>>,
 }
 
@@ -126,7 +129,7 @@ impl RuntimeInvoker {
         HostCallOutcome::Success(_),
       ) => {
         let this = self.clone();
-        let _ = self.handle.spawn(async move {
+        std::mem::drop(self.handle.spawn(async move {
           let result = this
             .runtime
             .invoke_async(method.clone(), client_id, params_json)
@@ -142,7 +145,7 @@ impl RuntimeInvoker {
             }
             Err(error) => completion.reject(runtime_error_payload(&error)),
           }
-        });
+        }));
       }
       (kind, HostCallOutcome::Success(data)) => {
         if let Some(staging_path) = kind.staging_path() {
@@ -347,11 +350,15 @@ impl RuntimeInvoker {
     } = request;
     match method.as_str() {
       "ssh.sftp.uploadFile" => {
-        self.begin_upload(&context, &method, &params_json, completion).await;
+        self
+          .begin_upload(&context, &method, &params_json, completion)
+          .await;
         return;
       }
       "ssh.sftp.downloadFile" => {
-        self.begin_download(&context, &method, &params_json, completion).await;
+        self
+          .begin_download(&context, &method, &params_json, completion)
+          .await;
         return;
       }
       _ => {}
@@ -411,15 +418,12 @@ impl RuntimeInvoker {
     let Ok(params) = serde_json::from_str::<serde_json::Value>(params_json) else {
       return None;
     };
-    let Some(channel_id) = params
+    let channel_id = params
       .get("dataChannelId")
-      .and_then(serde_json::Value::as_str)
-    else {
-      return None;
-    };
-    let Some(shell_id) = params.get("sshShellId").and_then(serde_json::Value::as_str) else {
-      return None;
-    };
+      .and_then(serde_json::Value::as_str)?;
+    let shell_id = params
+      .get("sshShellId")
+      .and_then(serde_json::Value::as_str)?;
     let key = (client_id.to_string(), shell_id.to_string());
     let previous = self
       .shell_channels
@@ -454,9 +458,9 @@ impl JsbHandler for RuntimeInvoker {
     // the dispatch layer already reach the completion handle; everything
     // else becomes a protocol-level reject.
     let this = self.clone();
-    let _ = self.handle.spawn(async move {
+    std::mem::drop(self.handle.spawn(async move {
       let _ = this.run_invoke(context, request, completion).await;
-    });
+    }));
   }
 
   fn receive_binary(
@@ -485,7 +489,7 @@ impl JsbHandler for RuntimeInvoker {
     // them onto multiple Tokio workers.
     let lock = self.shell_lock_for(&client_id, &shell_id);
     let this = self.clone();
-    let _ = self.handle.spawn(async move {
+    std::mem::drop(self.handle.spawn(async move {
       let _guard = lock.lock().await;
       if let Err(error) = this
         .runtime
@@ -498,7 +502,7 @@ impl JsbHandler for RuntimeInvoker {
           error.reason()
         );
       }
-    });
+    }));
     Ok(())
   }
 
@@ -533,9 +537,9 @@ impl JsbHandler for RuntimeInvoker {
       .retain(|(bound_client_id, _), _| bound_client_id != &client_id);
     self.cancel_host_calls(|call| call.client_id == client_id);
     let this = self.clone();
-    let _ = self.handle.spawn(async move {
+    std::mem::drop(self.handle.spawn(async move {
       this.runtime.release_client_async(&client_id).await;
-    });
+    }));
   }
 }
 

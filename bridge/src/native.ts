@@ -9,6 +9,7 @@ import type {
   SSHShellImplementation,
 } from "./backend";
 import { setBridgeBackend } from "./backend";
+import type { JsbMethod } from "./jsb-methods";
 import type { SSHSessionOpts, SSHSftpOpts, SSHShellOpts } from "./ssh";
 import type { Store } from "./store";
 
@@ -24,7 +25,7 @@ export class NativeBridgeError extends Error {
 }
 
 type NativeJsb = {
-  invoke<T>(method: string, params?: unknown): Promise<T>;
+  invoke<T>(method: JsbMethod, params?: unknown): Promise<T>;
   on(
     event: string,
     targetId: string | undefined,
@@ -33,7 +34,7 @@ type NativeJsb = {
 };
 
 const nativeJsb: NativeJsb = {
-  invoke: async <T>(method: string, params?: unknown) => {
+  invoke: async <T>(method: JsbMethod, params?: unknown) => {
     try {
       return await jsb.invoke<unknown, T>(method, params);
     } catch (error) {
@@ -269,7 +270,7 @@ function createPortForwarding(
   session: SSHSessionImplementation,
 ): SSHPortForwardingImplementation {
   const sshPortForwardingId = uuidv4();
-  const invoke = (method: string, opts?: object) =>
+  const invoke = (method: JsbMethod, opts?: object) =>
     transport.invoke<string>(method, {
       sshSessionId: session.sshSessionId,
       sshPortForwardingId,

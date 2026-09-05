@@ -33,9 +33,7 @@ impl HostCallKind {
   pub(crate) fn staging_path(&self) -> Option<&str> {
     match self {
       Self::Primitive => None,
-      Self::Upload { staging_path, .. } | Self::Download { staging_path, .. } => {
-        Some(staging_path)
-      }
+      Self::Upload { staging_path, .. } | Self::Download { staging_path, .. } => Some(staging_path),
     }
   }
 }

@@ -18,5 +18,5 @@
 - app-local `fs` remains a transitional Host primitive: `fs.readTextFile`/`writeTextFile` carry both app-local (known_hosts) and scoped URI (import/export/add-key) semantics, so moving the method to Rust requires first splitting those two paths at the business layer.
 - Scoped SFTP upload/download is orchestrated by the engine around `readScopedFile`/`writeScopedFile`. The host only moves bytes between a user-authorized URI and an engine-managed staging path.
 - `core.healthCheck` and JSON `ssh.shell.send` remain in the union table until P3 validates the iOS binary path and chooses removal or cross-platform alignment.
-- Generated TypeScript text is deterministic and tested through `method_typescript`; wiring the generated declaration into `jsb/` belongs to P4.
+- Generated TypeScript text is deterministic and tested through `method_typescript`; the checked-in declaration is consumed by `bridge/native`, while generic `jsb` continues to accept opaque method strings.
 - P0 device captures remain missing. Rust replay and host builds are not presented as device evidence.

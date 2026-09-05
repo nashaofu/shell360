@@ -14,7 +14,9 @@ use shell360_keygen::Algorithm;
 use shell360_ssh::{
   AuthenticationData, CheckServerKey, ShellOpenOptions, ShellSize, SshOptions, SshService,
 };
-use shell360_store::{DataOptions, DataService, Host, HostBase, Key, KeyBase, PortForwarding, PortForwardingBase};
+use shell360_store::{
+  DataOptions, DataService, Host, HostBase, Key, KeyBase, PortForwarding, PortForwardingBase,
+};
 use uuid::Uuid;
 
 use crate::{
@@ -206,63 +208,44 @@ struct SshPortForwardingIdRequest {
 }
 
 /// Wrapper around the owned Tokio [`Runtime`] that lets `Shell360Runtime`
-/// opt into three shutdown paths:
+/// opt into two shutdown paths:
 ///
 /// 1. Explicit [`Shell360Runtime::shutdown`] — graceful with a 5s deadline.
 /// 2. The last remaining `Arc<Shell360Runtime>` drops without an explicit
 ///    shutdown — abrupt, via [`Drop`] for this guard (`shutdown_timeout(ZERO)`).
 ///
-/// Without this wrapper, `Shell360Runtime` cannot own the runtime directly
-/// because the runtime field would then need to be moved out of a type that
-/// also implements `Drop`. The wrapper hides the
-/// [`ManuallyDrop`](std::mem::ManuallyDrop) and `unsafe` projection inside
-/// one struct, leaving the rest of `Shell360Runtime` to call
-/// `block_on`/`handle` through safe accessor methods.
 pub(crate) struct TokioRuntimeGuard {
-  inner: std::mem::ManuallyDrop<tokio::runtime::Runtime>,
+  inner: std::sync::Mutex<Option<tokio::runtime::Runtime>>,
+  handle: tokio::runtime::Handle,
 }
 
 impl TokioRuntimeGuard {
   fn new(runtime: tokio::runtime::Runtime) -> Self {
+    let handle = runtime.handle().clone();
     Self {
-      inner: std::mem::ManuallyDrop::new(runtime),
+      inner: std::sync::Mutex::new(Some(runtime)),
+      handle,
     }
   }
 
   pub(crate) fn handle(&self) -> tokio::runtime::Handle {
-    // SAFETY: `ManuallyDrop<T>` is `repr(transparent)` over `T`, so the
-    // memory layout of `&self.inner` is identical to `&tokio::runtime::Runtime`.
-    unsafe { &*self.as_runtime_ptr() }
-      .handle()
-      .clone()
+    self.handle.clone()
   }
 
   pub(crate) fn block_on<F: std::future::Future>(&self, future: F) -> F::Output {
-    // SAFETY: see `handle`.
-    unsafe { &*self.as_runtime_ptr() }.block_on(future)
+    self.handle.block_on(future)
   }
 
-  /// Take ownership of the inner runtime. Caller must ensure only one of
-  /// (this method, [`Drop`]) actually moves the runtime.
-  pub(crate) fn take(&mut self) -> tokio::runtime::Runtime {
-    // SAFETY: `ManuallyDrop::take` is the documented way to move out.
-    unsafe { std::mem::ManuallyDrop::take(&mut self.inner) }
-  }
-
-  /// Non-null, well-aligned pointer to the underlying `tokio::runtime::Runtime`.
-  /// `ManuallyDrop<T>` is `repr(transparent)` and `inner` is its only field.
-  fn as_runtime_ptr(&self) -> *const tokio::runtime::Runtime {
-    &self.inner as *const std::mem::ManuallyDrop<tokio::runtime::Runtime>
-      as *const tokio::runtime::Runtime
+  fn shutdown(&self, timeout: Duration) {
+    if let Some(runtime) = self.inner.lock().expect("lock Tokio runtime").take() {
+      runtime.shutdown_timeout(timeout);
+    }
   }
 }
 
 impl Drop for TokioRuntimeGuard {
   fn drop(&mut self) {
-    let runtime = self.take();
-    // Best-effort drain. Deadlines cannot be honored here because this
-    // typically runs during process teardown when we have no time budget.
-    runtime.shutdown_timeout(std::time::Duration::ZERO);
+    self.shutdown(Duration::ZERO);
   }
 }
 
@@ -335,7 +318,9 @@ impl Shell360Runtime {
     client_id: String,
     params_json: String,
   ) -> Result<String, RuntimeError> {
-    self.runtime.block_on(self.invoke_async(method, client_id, params_json))
+    self
+      .runtime
+      .block_on(self.invoke_async(method, client_id, params_json))
   }
 
   /// Async dispatch entry point. Used by [`RuntimeInvoker`](crate::RuntimeInvoker)
@@ -360,9 +345,7 @@ impl Shell360Runtime {
       "machineUid.getMachineUid" => serde_json::to_string(&self.machine_uid()?)
         .map_err(|value| RuntimeError::Internal(value.to_string())),
       "keygen.generate" => self.invoke_keygen(params_json),
-      method if method.starts_with("data.") => {
-        self.invoke_data_async(&method, &params_json).await
-      }
+      method if method.starts_with("data.") => self.invoke_data_async(method, &params_json).await,
       method if method.starts_with("ssh.") => {
         self.invoke_ssh_async(method, client_id, &params_json).await
       }
@@ -471,36 +454,14 @@ impl Shell360Runtime {
 
   /// Gracefully drain the Tokio runtime. Subsequent calls are no-ops.
   ///
-  /// Takes `self: Arc<Self>` because `Runtime::shutdown_timeout` consumes
-  /// the runtime; the caller must release any other clones so this method
-  /// can take ownership of the only remaining handle. The FFI/N-API shells
-  /// already drop their `Arc<Shell360Runtime>` handle in their own shutdown
-  /// sequence before invoking this method. A 5-second deadline lets
+  /// A 5-second deadline lets
   /// in-flight invokes, SSH transfers, upload resumes and shell-input
-  /// tasks finish; tasks that miss it are dropped by Tokio. When the
-  /// runtime is still shared (call fails the `try_unwrap`) the final drain
-  /// is deferred to the regular `Drop` of the last remaining handle.
-  pub fn shutdown(self: std::sync::Arc<Self>) {
+  /// tasks finish; tasks that miss it are dropped by Tokio.
+  pub fn shutdown(&self) {
     if self.shutdown_started.swap(true, Ordering::AcqRel) {
       return;
     }
-    match std::sync::Arc::try_unwrap(self) {
-      Ok(mut owned) => {
-        // Move the runtime out through the guard so we can pass it to
-        // `shutdown_timeout` (which consumes its receiver). After this,
-        // `owned.runtime` is `ManuallyDrop`'s "dangling" representation and
-        // must not be dropped again.
-        let runtime = owned.runtime.take();
-        // Suppress `TokioRuntimeGuard::drop` (which would try to `take` the
-        // already-moved runtime) and the rest of `Shell360Runtime::drop`.
-        std::mem::forget(owned);
-        runtime.shutdown_timeout(Duration::from_secs(5));
-      }
-      Err(_still_shared) => log::warn!(
-        "Shell360Runtime::shutdown called while the runtime is still shared; \
-         final teardown will happen when the last Arc<Shell360Runtime> is dropped."
-      ),
-    }
+    self.runtime.shutdown(Duration::from_secs(5));
   }
 
   /// Host primitive to fire after an invoke reply has been delivered. The
@@ -1085,9 +1046,9 @@ fn required<T>(value: Option<T>, name: &str) -> Result<T, RuntimeError> {
 }
 #[cfg(test)]
 mod tests {
+  use crate::{RuntimeHostServices, RuntimeInvoker, method_specs};
   use std::sync::{Arc, Mutex};
   use std::time::Duration;
-  use crate::{method_specs, RuntimeHostServices, RuntimeInvoker};
 
   use jsb_core::{Jsb, JsbTransport, JsbTransportError};
   use ssh_key::PrivateKey;
@@ -1674,20 +1635,24 @@ mod tests {
   fn shutdown_is_idempotent_and_drop_does_not_panic() {
     let (_directory, runtime) = temp_runtime();
 
-    // Hold a sibling Arc so the first shutdown attempt cannot win the
-    // `Arc::try_unwrap` race — this exercises the early-return path that
-    // only flips `shutdown_started` and logs.
+    // A sibling Arc must not prevent explicit shutdown from taking and
+    // draining the owned Tokio runtime.
     let peer = Arc::clone(&runtime);
-    Arc::clone(&peer).shutdown();
+    peer.shutdown();
+    assert!(
+      runtime
+        .runtime
+        .inner
+        .lock()
+        .expect("lock Tokio runtime")
+        .is_none(),
+      "explicit shutdown must consume the owned Tokio runtime even while the Shell360 runtime is shared"
+    );
 
-    // Second call on the same Arc must short-circuit through the AtomicBool
-    // guard without panicking or attempting a second teardown.
+    // Repeated calls must not attempt to take the runtime again.
     peer.shutdown();
 
-    // Dropping the last Arc without a successful `try_unwrap` invokes the
-    // `TokioRuntimeGuard::drop` fallback. This must complete without panic;
-    // any future regression that double-shuts down or holds a strong ref
-    // across teardown will surface here as a hang or panic.
+    // Drop remains a no-op after explicit shutdown.
     drop(runtime);
   }
 }
