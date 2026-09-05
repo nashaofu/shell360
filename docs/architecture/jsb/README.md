@@ -2,13 +2,12 @@
 
 This directory freezes the P0 protocol baseline. The runtime model that freezes it is `jsb-core::Jsb` (renamed from the interim `JsbEngine`; see `rust-owned-webview-transport.md`).
 
-- `current-protocol.md` records the repository-derived frame sequence and the evidence status.
-- `method-error-matrix.md` records the current method families and platform drift.
-- `adr-0001-jsb-engine-contract.md` recorded the interim engine/output-list contract and is superseded by `rust-owned-webview-transport.md`.
+- `rust-owned-webview-transport.md` is the current architecture: Rust owns JSB channel I/O through an injected `JsbTransport`, while all concrete methods stay in `shell360-runtime`.
+- `layering.md` summarizes the current layering (bridge / jsb / jsb-core / shell360-runtime) and the unified-vs-platform boundaries.
 - `adr-0002-host-services.md` fixes the host primitive boundary.
 - `adr-0003-typescript-adaptation.md` bounds TypeScript and business-layer changes.
-- `p1-engine.md` records the interim P1 compatibility surface and is superseded by `rust-owned-webview-transport.md`.
-- `rust-owned-webview-transport.md` is the current architecture: Rust owns JSB channel I/O through an injected `JsbTransport`, while all concrete methods stay in `shell360-runtime`.
+- `adr-0004-back-press-layering.md` routes native back-press through the bridge capability layer.
+- `history.md` archives superseded designs (P0 frame protocol, method/error matrix, `JsbEngine`/output-list model, migration phases, and implementation planning).
 
 The executable copy of the current frame fixture is
 `crates/jsb-core/tests/fixtures/current_protocol.json`. It is a static baseline reconstructed from source, not a device capture.
