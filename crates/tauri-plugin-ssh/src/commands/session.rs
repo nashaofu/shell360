@@ -359,23 +359,19 @@ async fn glob_agent_sockets() -> Vec<std::path::PathBuf> {
 }
 
 #[cfg(windows)]
-async fn connect_ssh_agent() -> Result<
-  AgentClient<Box<dyn russh::keys::agent::client::AgentStream + Send + Unpin>>,
-  AuthenticationError,
-> {
-  // Try: Windows OpenSSH Agent (named pipe) > PuTTY Pageant
+async fn connect_ssh_agents()
+-> Vec<AgentClient<Box<dyn russh::keys::agent::client::AgentStream + Send + Unpin>>> {
+  let mut agents = Vec::new();
+
+  // Keep both providers available. Authentication decides which one owns the key.
   if let Ok(agent) = AgentClient::connect_named_pipe(r"\\.\pipe\openssh-ssh-agent").await {
-    let mut agent = agent.dynamic();
-    if let Ok(identities) = agent.request_identities().await
-      && !identities.is_empty()
-    {
-      return Ok(agent);
-    }
+    agents.push(agent.dynamic());
   }
-  let agent = AgentClient::connect_pageant()
-    .await
-    .map_err(|_| AuthenticationError::AgentConnectFailed)?;
-  Ok(agent.dynamic())
+  if let Ok(agent) = AgentClient::connect_pageant().await {
+    agents.push(agent.dynamic());
+  }
+
+  agents
 }
 
 #[cfg(not(any(unix, windows)))]
@@ -386,15 +382,12 @@ async fn connect_ssh_agent() -> Result<
   Err(AuthenticationError::AgentConnectFailed)
 }
 
-async fn authenticate_with_agent<R: Runtime>(
+async fn authenticate_with_agent_client<R: Runtime>(
   session: &mut Handle<SSHClient<R>>,
   ssh_session_id: SSHSessionId,
   username: &str,
+  agent: &mut AgentClient<Box<dyn russh::keys::agent::client::AgentStream + Send + Unpin>>,
 ) -> Result<NextStep, AuthenticationError> {
-  log::info!("authenticate session {:?} by ssh agent", ssh_session_id);
-
-  let mut agent = connect_ssh_agent().await?;
-
   let identities = agent
     .request_identities()
     .await
@@ -419,7 +412,7 @@ async fn authenticate_with_agent<R: Runtime>(
     let public_key = identity.public_key().into_owned();
 
     let auth_res = match session
-      .authenticate_publickey_with(username, public_key, hash_alg, &mut agent)
+      .authenticate_publickey_with(username, public_key, hash_alg, agent)
       .await
     {
       Ok(auth_res) => auth_res,
@@ -461,6 +454,50 @@ async fn authenticate_with_agent<R: Runtime>(
     remaining_methods,
     partial_success,
   ))
+}
+
+#[cfg(not(windows))]
+async fn authenticate_with_agent<R: Runtime>(
+  session: &mut Handle<SSHClient<R>>,
+  ssh_session_id: SSHSessionId,
+  username: &str,
+) -> Result<NextStep, AuthenticationError> {
+  log::info!("authenticate session {:?} by ssh agent", ssh_session_id);
+
+  let mut agent = connect_ssh_agent().await?;
+  authenticate_with_agent_client(session, ssh_session_id, username, &mut agent).await
+}
+
+#[cfg(windows)]
+async fn authenticate_with_agent<R: Runtime>(
+  session: &mut Handle<SSHClient<R>>,
+  ssh_session_id: SSHSessionId,
+  username: &str,
+) -> Result<NextStep, AuthenticationError> {
+  log::info!("authenticate session {:?} by ssh agent", ssh_session_id);
+
+  let mut agents = connect_ssh_agents().await;
+  if agents.is_empty() {
+    return Err(AuthenticationError::AgentConnectFailed);
+  }
+
+  let mut last_error = None;
+  let mut saw_no_identities = false;
+  for agent in &mut agents {
+    match authenticate_with_agent_client(session, ssh_session_id, username, agent).await {
+      Ok(next) => return Ok(next),
+      Err(AuthenticationError::AgentNoIdentities) => saw_no_identities = true,
+      Err(err) => last_error = Some(err),
+    }
+  }
+
+  if let Some(err) = last_error {
+    return Err(err);
+  }
+  if saw_no_identities {
+    return Err(AuthenticationError::AgentNoIdentities);
+  }
+  Err(AuthenticationError::AgentConnectFailed)
 }
 
 #[derive(Debug, Deserialize)]
