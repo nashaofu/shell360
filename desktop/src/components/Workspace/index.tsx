@@ -101,7 +101,7 @@ export default function Workspace() {
       }
 
       disposables.push(
-        api.onDidActivePanelChange((panel) => {
+        api.onDidActivePanelChange(({ panel }) => {
           if (panel) setActiveTerminalId(panel.id);
         }),
       );

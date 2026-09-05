@@ -97,7 +97,7 @@ pub async fn session_connect<R: Runtime>(
       log::info!(
         "session connect {:?} to {}:{} with jump host session {:?}",
         ssh_session_id,
-        &hostname,
+        hostname,
         port,
         jump_host_ssh_session_id
       );
@@ -129,10 +129,10 @@ pub async fn session_connect<R: Runtime>(
       log::info!(
         "session connect {:?} to {}:{} with direct tcpip",
         ssh_session_id,
-        &hostname,
+        hostname,
         port
       );
-      let addr = format!("{}:{}", &hostname, port);
+      let addr = format!("{}:{}", hostname, port);
       client::connect(config, &addr, ssh_client)
         .await
         .map_err(|err| match err {
@@ -365,7 +365,12 @@ async fn connect_ssh_agent() -> Result<
 > {
   // Try: Windows OpenSSH Agent (named pipe) > PuTTY Pageant
   if let Ok(agent) = AgentClient::connect_named_pipe(r"\\.\pipe\openssh-ssh-agent").await {
-    return Ok(agent.dynamic());
+    let mut agent = agent.dynamic();
+    if let Ok(identities) = agent.request_identities().await
+      && !identities.is_empty()
+    {
+      return Ok(agent);
+    }
   }
   let agent = AgentClient::connect_pageant()
     .await

@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use serde_json::{Value, json};
 
 use crate::handler::JsbInvokeCompletion;
-use crate::protocol::{invoke_response_error, invoke_response_success, JsbErrorPayload};
+use crate::protocol::{JsbErrorPayload, invoke_response_error, invoke_response_success};
 use crate::state::JsbState;
 use crate::transport::JsbTransport;
 

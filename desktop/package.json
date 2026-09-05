@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "rsbuild dev",
-    "build": "npm run tsc && rsbuild build",
+    "build": "pnpm run tsc && rsbuild build",
     "tsc": "tsc -b"
   },
   "dependencies": {

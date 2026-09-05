@@ -19,18 +19,14 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use uuid::Uuid;
 
-use crate::actions::{
-  ChannelCleanup, IncomingAction, IncomingBinary, InvokeAction, SendAction,
-};
+use crate::actions::{ChannelCleanup, IncomingAction, IncomingBinary, InvokeAction, SendAction};
 use crate::completion::InvokeCompletion;
 use crate::error::JsbError;
-use crate::handler::{
-  JsbChannelContext, JsbHandler, JsbInvokeContext, JsbInvokeRequest,
-};
+use crate::handler::{JsbChannelContext, JsbHandler, JsbInvokeContext, JsbInvokeRequest};
 use crate::limits::JsbLimits;
 use crate::protocol::{
-  InvokeRequestWire, JsbEmitMessage, channel_open_failed, channel_opened,
-  invoke_response_error, request_id,
+  InvokeRequestWire, JsbEmitMessage, channel_open_failed, channel_opened, invoke_response_error,
+  request_id,
 };
 use crate::state::{JsbState, PendingInvoke};
 use crate::transport::JsbTransport;
@@ -467,13 +463,12 @@ impl Jsb {
   }
 }
 
-
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::JsbErrorPayload;
   use crate::JsbHandlerError;
   use crate::JsbInvokeCompletion;
-  use crate::JsbErrorPayload;
   use crate::JsbTransportError;
   use crate::{DEFAULT_MAX_BINARY_FRAME_SIZE, DEFAULT_MAX_TEXT_FRAME_SIZE};
   use serde_json::Value;

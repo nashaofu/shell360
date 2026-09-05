@@ -2,7 +2,7 @@ use std::future::Future;
 
 use async_trait::async_trait;
 use russh::{
-  Channel, ChannelId,
+  Channel, ChannelId, ChannelOpenFailure,
   client::{self, ChannelOpenHandle},
   keys::{
     HashAlg, PublicKey,
@@ -155,7 +155,7 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
     connected_port: u32,
     _originator_address: &str,
     _originator_port: u32,
-    _reply: ChannelOpenHandle,
+    reply: ChannelOpenHandle,
     _session: &mut client::Session,
   ) -> impl Future<Output = Result<(), Self::Error>> + Send {
     async move {
@@ -185,6 +185,7 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
       };
 
       if let Some(addr) = addr {
+        reply.accept().await;
         let mut stream = TcpStream::connect(addr).await?;
         async_runtime::spawn(async move {
           io::copy_bidirectional(&mut channel.into_stream(), &mut stream).await?;
@@ -194,6 +195,9 @@ impl<R: Runtime> client::Handler for SSHClient<R> {
 
         Ok(())
       } else {
+        reply
+          .reject(ChannelOpenFailure::AdministrativelyProhibited)
+          .await;
         Err(SSHError::Error(format!(
           "Remote port forwarding not found: {}:{}",
           connected_address, connected_port

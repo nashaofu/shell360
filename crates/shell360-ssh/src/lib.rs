@@ -51,7 +51,6 @@ const SHELL_QUEUE_CAPACITY: usize = 64;
 
 pub type SshResult<T> = Result<T, SshError>;
 
-
 #[derive(Clone)]
 pub struct SshOptions {
   pub known_hosts_path: PathBuf,
