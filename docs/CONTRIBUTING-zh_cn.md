@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构建，支持在 Windows、macOS 和 Android 上运行。项目采用 monorepo 结构，包含以下主要部分：
+Shell360 是一个跨平台的 SSH 和 SFTP 客户端，使用 Tauri 框架构建，支持 Windows、macOS、Linux、Android、iOS 和 HarmonyOS。项目采用 monorepo 结构，包含以下主要部分：
 
 - **desktop**: 桌面端应用代码
 - **mobile**: 移动端应用代码
@@ -117,7 +117,7 @@ pnpm install
 
 ## 开发测试
 
-完成项目设置后，运行下面的命令，即可在本地启动项目：
+完成项目设置后，请根据[文档中心](./README.md)选择对应的平台说明。命令索引如下：
 
 ```bash
 # 桌面端
@@ -126,13 +126,16 @@ pnpm tauri dev
 # Android
 pnpm run android:dev
 
+# HarmonyOS
+pnpm run harmonyos:dev
+
 # iOS
-pnpm tauri ios dev
+pnpm run ios:dev
 ```
 
 ## 构建指南
 
-本地构建测试可以使用如下命令：
+本地构建测试请参阅[各平台说明](./README.md)：
 
 ```bash
 # 桌面端
@@ -141,8 +144,11 @@ pnpm tauri build
 # Android
 pnpm run android:build
 
+# HarmonyOS
+pnpm run harmonyos:build
+
 # iOS
-pnpm tauri ios build
+pnpm run ios:build
 ```
 
 如需要构建出可发行版本的应用，需要根据[MacOS 签名配置](https://tauri.app/distribute/sign/macos/)、[iOS 签名配置](https://tauri.app/distribute/sign/ios/)、[Android 签名配置](https://tauri.app/distribute/sign/android/)以及[应用更新配置](https://tauri.app/plugin/updater/)完成相关配置，然后在项目根目录下添加如下`.env`文件，并把相关配置填写到文件中：

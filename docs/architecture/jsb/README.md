@@ -27,6 +27,8 @@ jsb-core (Rust)        JSB 引擎纯框架          shell360-runtime (Rust) 业�
 | [`adr/`](./adr/README.md) | 架构决策记录（当前有效的设计决策） |
 | [`history.md`](./history.md) | 历史：被取代的设计、迁移落地记录、P0 平台漂移 |
 
+平台宿主的当前说明见 [`../../platforms/`](../../platforms/)；旧的 iOS/HarmonyOS 联合实施草案已归档到 [`../../mobile-native/README.md`](../../mobile-native/README.md)，不作为当前接口依据。
+
 ## 真机验证状态
 
 Rust 测试与协议黄金样例（`crates/jsb-core/tests/fixtures/current_protocol.json`）不构成端到端

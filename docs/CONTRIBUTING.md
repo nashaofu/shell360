@@ -4,7 +4,7 @@ Thank you for considering contributing to the Shell360 project! This guide will 
 
 ## Project Overview
 
-Shell360 is a cross-platform SSH and SFTP client built with the Tauri framework, supporting Windows, macOS, and Android. The project uses a monorepo structure with the following main components:
+Shell360 is a cross-platform SSH and SFTP client built with the Tauri framework, supporting Windows, macOS, Linux, Android, iOS, and HarmonyOS. The project uses a monorepo structure with the following main components:
 
 - **desktop**: Desktop application code
 - **mobile**: Mobile application code
@@ -121,7 +121,7 @@ pnpm install
 
 ## Development Testing
 
-After setting up the project, run the following commands to start the project locally:
+After setting up the project, choose the relevant platform guide from the [documentation center](./README.md). The command index is:
 
 ```bash
 # Desktop
@@ -130,13 +130,16 @@ pnpm tauri dev
 # Android
 pnpm run android:dev
 
+# HarmonyOS
+pnpm run harmonyos:dev
+
 # iOS
-pnpm tauri ios dev
+pnpm run ios:dev
 ```
 
 ## Build Guide
 
-For local build testing, use the following commands:
+For local build testing, see the [platform guides](./README.md):
 
 ```bash
 # Desktop
@@ -145,8 +148,11 @@ pnpm tauri build
 # Android
 pnpm run android:build
 
+# HarmonyOS
+pnpm run harmonyos:build
+
 # iOS
-pnpm tauri ios build
+pnpm run ios:build
 ```
 
 To build distributable application versions, you need to complete the relevant configurations according to [MacOS Signing Configuration](https://tauri.app/distribute/sign/macos/), [iOS Signing Configuration](https://tauri.app/distribute/sign/ios/), [Android Signing Configuration](https://tauri.app/distribute/sign/android/), and [Application Update Configuration](https://tauri.app/plugin/updater/). Then add the following `.env` file in the project root directory and fill in the relevant configurations:
