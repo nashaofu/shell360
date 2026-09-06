@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
+import path from "node:path";
+import { moveArtifacts } from "../../utils/artifacts.ts";
+import { ANDROID_BUILD_DIR, ANDROID_DIR } from "../constants.ts";
 import { gradlew } from "../gradle.ts";
 
 export async function build({
@@ -23,4 +26,17 @@ export async function build({
       SIGNING_KEY_PASSWORD: process.env.ANDROID_KEY_PASSWORD,
     },
   });
+
+  await moveArtifacts(
+    path.join(
+      ANDROID_DIR,
+      "app",
+      "build",
+      "outputs",
+      "{apk,bundle}",
+      variant.toLowerCase(),
+      "*.{apk,aab}",
+    ),
+    ANDROID_BUILD_DIR,
+  );
 }

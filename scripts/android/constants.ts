@@ -5,6 +5,7 @@ export const WORKSPACE_DIR = url.fileURLToPath(
   new URL("../../", import.meta.url),
 );
 export const ANDROID_DIR = path.join(WORKSPACE_DIR, "android");
+export const ANDROID_BUILD_DIR = path.join(WORKSPACE_DIR, "build");
 export const IS_WINDOWS = process.platform === "win32";
 export const ANDROID_HOME = process.env.ANDROID_HOME ?? "";
 

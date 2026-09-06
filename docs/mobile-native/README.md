@@ -318,7 +318,8 @@ pnpm dotenvx pnpm run ios:build
 - iOS 构建、资源同步和 UniFFI 生成全部由 Node.js 执行；Xcode 共享 Scheme 的 Build Pre-action 生成
   WebAssets，Target Build Phase 生成 UniFFI binding 和当前平台静态库。
 - `ios:dev` 从 Xcode Build Settings 读取实际 `.app` 产物路径；`ios:build` 用 `app-store-connect`
-  导出 `ios/build/shell360.ipa`，任一签名变量为空时立即失败。
+  导出并移动 IPA 到 `build/`，任一签名变量为空时立即失败。Android 和 HarmonyOS
+  的 `android:build`、`harmonyos:build` 将 APK/AAB、HAP 直接移动到根目录 `build/`。
 - 签名使用独立临时 Keychain 与最小文件权限，结束后恢复 Keychain 搜索列表、删除临时描述文件。
 - 使用 input/output file list 避免每次编译重建全部 Rust；归档 dSYM 与崩溃分析产物；CI 缓存
   pnpm/Cargo，不缓存签名密钥。

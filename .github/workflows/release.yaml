@@ -221,37 +221,10 @@ jobs:
         run: ${{ matrix.build }}
 
       - name: Upload Artifact
-        if: ${{ matrix.name != 'android' && matrix.name != 'ios' && matrix.name != 'harmonyos' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: build/
-          if-no-files-found: error
-
-      - name: Upload Android artifacts
-        if: ${{ matrix.name == 'android' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: android
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
-
-      - name: Upload iOS artifacts
-        if: ${{ matrix.name == 'ios' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios
-          path: ios/build/*.ipa
-          if-no-files-found: error
-
-      - name: Upload HarmonyOS artifacts
-        if: ${{ matrix.name == 'harmonyos' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: harmonyos
-          path: harmonyos/entry/build/**/*.hap
           if-no-files-found: error
 
   release:

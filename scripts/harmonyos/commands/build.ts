@@ -1,3 +1,6 @@
+import path from "node:path";
+import { moveArtifacts } from "../../utils/artifacts.ts";
+import { HARMONYOS_BUILD_DIR, HARMONYOS_DIR } from "../constants.ts";
 import { hvigorw } from "../hvigor.ts";
 import { ohpm } from "../ohpm.ts";
 
@@ -22,5 +25,18 @@ export async function build(): Promise<void> {
       "devServerPort=0",
     ],
     { stdio: "inherit" },
+  );
+
+  await moveArtifacts(
+    path.join(
+      HARMONYOS_DIR,
+      "entry",
+      "build",
+      "default",
+      "outputs",
+      "default",
+      "*.hap",
+    ),
+    HARMONYOS_BUILD_DIR,
   );
 }

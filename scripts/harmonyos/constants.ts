@@ -5,6 +5,7 @@ export const WORKSPACE_DIR = url.fileURLToPath(
   new URL("../../", import.meta.url),
 );
 export const HARMONYOS_DIR = path.join(WORKSPACE_DIR, "harmonyos");
+export const HARMONYOS_BUILD_DIR = path.join(WORKSPACE_DIR, "build");
 
 export const DEVECO_HOME = process.env.DEVECO_HOME ?? "";
 export const DEVECO_SDK_HOME = process.env.DEVECO_SDK_HOME ?? "";
