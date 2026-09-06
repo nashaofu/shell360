@@ -13,9 +13,12 @@ final class RustBridge: @unchecked Sendable {
         try? fileManager.createDirectory(at: appData, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: cache, withIntermediateDirectories: true)
 
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+
         runtime = try? Shell360Runtime(
             appDataDir: appData.path,
-            cacheDir: cache.path
+            cacheDir: cache.path,
+            appVersion: version
         )
     }
 

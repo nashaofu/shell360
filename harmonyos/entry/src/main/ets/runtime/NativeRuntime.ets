@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
+import BuildProfile from 'BuildProfile';
 import { initializeRuntime, shutdown } from 'shell360_ohrs';
 
 export class HarmonyNativeRuntime {
@@ -31,7 +32,7 @@ export class HarmonyNativeRuntime {
     if (context === undefined) {
       return Promise.reject(new Error('HarmonyOS ability context is unavailable.'));
     }
-    const initialization = initializeRuntime(context.filesDir, context.cacheDir)
+    const initialization = initializeRuntime(context.filesDir, context.cacheDir, BuildProfile.VERSION_NAME)
       .catch((error: Object) => {
         HarmonyNativeRuntime.initialization = undefined;
         throw error instanceof Error ? error : new Error(`${error}`);

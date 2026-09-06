@@ -58,8 +58,10 @@ class NativeBridgeInstrumentedTest {
     @Test
     fun appVersionResolvesFromRustRuntime() {
         val response = JSONObject(createHarness().dispatch(request("app.getVersion")))
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val expected = context.packageManager.getPackageInfo(context.packageName, 0).versionName
 
-        assertEquals("0.1.0", response.getString("data"))
+        assertEquals(expected ?: "", response.getString("data"))
     }
 
     @Test

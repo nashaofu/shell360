@@ -210,11 +210,16 @@ pub struct Shell360Runtime {
 #[uniffi::export]
 impl Shell360Runtime {
   #[uniffi::constructor]
-  pub fn new(app_data_dir: String, cache_dir: String) -> Result<Arc<Self>, FfiError> {
+  pub fn new(
+    app_data_dir: String,
+    cache_dir: String,
+    app_version: String,
+  ) -> Result<Arc<Self>, FfiError> {
     let event_sink = Arc::new(EventSinkAdapter {
       jsb: Mutex::new(None),
     });
-    let inner = InnerRuntime::new(app_data_dir, cache_dir, event_sink.clone())?;
+    let inner =
+      InnerRuntime::with_app_version(app_data_dir, cache_dir, event_sink.clone(), app_version)?;
     Ok(Arc::new(Self { inner, event_sink }))
   }
 
@@ -471,6 +476,7 @@ mod tests {
         .join("cache")
         .to_string_lossy()
         .into_owned(),
+      "9.9.9".to_string(),
     )
     .expect("create runtime");
     let transport = RecordingTransport::default();

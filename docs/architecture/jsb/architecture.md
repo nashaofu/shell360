@@ -368,7 +368,7 @@ object NativeJsb {
 ### 6.2 OHRS / N-API（`shell360_ohrs`，ArkTS）
 
 ```text
-initializeRuntime(appDataDir, cacheDir) / shutdown()
+initializeRuntime(appDataDir, cacheDir, appVersion) / shutdown()
 attachHostCallCallback / attachJsbTransportCallback
 initializeJsb()
 

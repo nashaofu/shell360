@@ -277,6 +277,7 @@ pub fn jsb_push_shell_binary(client_id: String, shell_id: String, bytes: Vec<u8>
 pub struct InitializeRuntimeTask {
   app_data_dir: String,
   cache_dir: String,
+  app_version: String,
 }
 
 #[napi]
@@ -295,6 +296,7 @@ impl Task for InitializeRuntimeTask {
       Shell360Runtime::new(
         std::mem::take(&mut self.app_data_dir),
         std::mem::take(&mut self.cache_dir),
+        std::mem::take(&mut self.app_version),
       )
       .map_err(native_error)?,
     );
@@ -310,10 +312,12 @@ impl Task for InitializeRuntimeTask {
 pub fn initialize_runtime(
   app_data_dir: String,
   cache_dir: String,
+  app_version: String,
 ) -> AsyncTask<InitializeRuntimeTask> {
   AsyncTask::new(InitializeRuntimeTask {
     app_data_dir,
     cache_dir,
+    app_version,
   })
 }
 

@@ -10,6 +10,7 @@ class RustBridge(context: Context) {
     private val runtime = Shell360Runtime(
         appDataDir = context.filesDir.resolve("shell360").absolutePath,
         cacheDir = context.cacheDir.resolve("shell360").absolutePath,
+        appVersion = context.appVersionName(),
     )
 
     fun createJsb(transport: JsbTransport, hostServices: HostServices): NativeJsb {
@@ -20,6 +21,11 @@ class RustBridge(context: Context) {
         runtime.shutdown()
     }
 }
+
+private fun Context.appVersionName(): String =
+    runCatching {
+        packageManager.getPackageInfo(packageName, 0).versionName
+    }.getOrNull() ?: ""
 
 class NativeBridgeException(
     val code: String,

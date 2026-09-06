@@ -195,7 +195,7 @@ shell360-ffi
 | `keygen.*` | 转发 Rust |
 | `data.*` | 转发 Rust |
 | `ssh.*` | 转发 Rust，文件中转除外 |
-| `app.*` | `getVersion` 由 Rust 实现（`CARGO_PKG_VERSION`）；`setSystemBarsAppearance` 由 Swift 实现 |
+| `app.*` | `getVersion` 由 Rust 实现，版本由宿主构造参数注入；`setSystemBarsAppearance` 由 Swift 实现 |
 | `machineUid.*` | Rust 实现（`app_data_dir/machine_uid` 持久化 UUID v4） |
 | `core.openUrl` | Swift 实现，scheme 白名单 |
 | `dialog.*` | Swift 实现 |
