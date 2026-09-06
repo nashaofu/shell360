@@ -89,9 +89,9 @@ jobs:
             host: macos-26
             build: pnpm run ios:build
 
-          # - name: android
-          #   host: ubuntu-22.04
-          #   build: bash ./scripts/android.sh
+          - name: android
+            host: ubuntu-22.04
+            build: pnpm run android:build
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
@@ -139,6 +139,16 @@ jobs:
         if: ${{ matrix.name == 'android' }}
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK components
+        if: ${{ matrix.name == 'android' }}
+        run: |
+          sdkmanager "platforms;android-37" "build-tools;37.0.1" "ndk;30.0.15729638"
+          yes | sdkmanager --licenses >/dev/null
+
+      - name: Install Android Rust targets
+        if: ${{ matrix.name == 'android' }}
+        run: rustup target add aarch64-linux-android x86_64-linux-android
+
       - name: Install Frontend Dependencies
         run: pnpm install
 
@@ -166,10 +176,29 @@ jobs:
         run: ${{ matrix.build }}
 
       - name: Upload Artifact
+        if: ${{ matrix.name != 'android' && matrix.name != 'ios' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: build/
+          if-no-files-found: error
+
+      - name: Upload Android artifacts
+        if: ${{ matrix.name == 'android' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: |
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: Upload iOS artifacts
+        if: ${{ matrix.name == 'ios' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: ios/build/*.ipa
           if-no-files-found: error
 
   release:
