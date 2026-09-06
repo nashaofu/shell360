@@ -3,8 +3,11 @@ import { moveArtifacts } from "../../utils/artifacts.ts";
 import { HARMONYOS_BUILD_DIR, HARMONYOS_DIR } from "../constants.ts";
 import { hvigorw } from "../hvigor.ts";
 import { ohpm } from "../ohpm.ts";
+import { prepareSigning } from "../signing.ts";
 
 export async function build(): Promise<void> {
+  await using cleanup = new AsyncDisposableStack();
+  await prepareSigning(cleanup);
   await ohpm(["install"], {
     stdio: "inherit",
   });
