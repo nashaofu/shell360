@@ -39,9 +39,9 @@ export async function prepareSigning(
   cleanup: AsyncDisposableStack,
 ): Promise<void> {
   const environment: SigningEnvironment = {
-    p12: process.env.HARMONYOS_SIGNING_P12_B64 ?? "",
-    cer: process.env.HARMONYOS_SIGNING_CER_B64 ?? "",
-    p7b: process.env.HARMONYOS_SIGNING_P7B_B64 ?? "",
+    p12: process.env.HARMONYOS_SIGNING_P12 ?? "",
+    cer: process.env.HARMONYOS_SIGNING_CER ?? "",
+    p7b: process.env.HARMONYOS_SIGNING_P7B ?? "",
     storePassword: process.env.HARMONYOS_SIGNING_STORE_PASSWORD ?? "",
     keyPassword: process.env.HARMONYOS_SIGNING_KEY_PASSWORD ?? "",
   };
