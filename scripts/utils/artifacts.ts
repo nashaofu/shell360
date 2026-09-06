@@ -6,7 +6,11 @@ export async function moveArtifacts(
   pattern: string,
   destinationDirectory: string,
 ): Promise<void> {
-  const artifacts = await glob(pattern, { absolute: true, nodir: true });
+  const artifacts = await glob(pattern, {
+    absolute: true,
+    nodir: true,
+    windowsPathsNoEscape: true,
+  });
   if (artifacts.length === 0) {
     throw new Error(`No build artifacts found: ${pattern}`);
   }
