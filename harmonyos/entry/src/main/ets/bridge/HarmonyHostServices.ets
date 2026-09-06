@@ -1,4 +1,5 @@
 import { abilityAccessCtrl, common } from '@kit.AbilityKit';
+import { util } from '@kit.ArkTS';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
 import picker from '@ohos.file.picker';
@@ -174,9 +175,24 @@ export class HarmonyHostServices {
   private async readTextFile(params: Record<string, Object>): Promise<string> {
     try {
       const path = this.resolveFilePath(params.path as string, params.baseDir as string | undefined);
+      if (isFileUri(path)) {
+        return this.readTextFileByUri(path);
+      }
       return await fileIo.readText(path);
     } catch (_) {
       throw new HostServiceError('BRIDGE_IO_ERROR', 'HarmonyOS file read failed.');
+    }
+  }
+
+  private readTextFileByUri(uri: string): string {
+    const file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY);
+    try {
+      const size = fileIo.statSync(file.fd).size;
+      const buffer = new ArrayBuffer(size);
+      fileIo.readSync(file.fd, buffer);
+      return util.TextDecoder.create('utf-8').decodeToString(new Uint8Array(buffer));
+    } finally {
+      fileIo.closeSync(file.fd);
     }
   }
 
