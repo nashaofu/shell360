@@ -1,4 +1,4 @@
-import { abilityAccessCtrl, common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
@@ -61,8 +61,6 @@ export class HarmonyHostServices {
       case 'setSystemBarsAppearance':
         await this.setSystemBarsAppearance(params);
         return null;
-      case 'readClipboard':
-        return await this.readClipboard();
       case 'writeClipboard':
         await this.writeClipboard(params);
         return null;
@@ -111,26 +109,6 @@ export class HarmonyHostServices {
       });
     } catch (_) {
       throw new HostServiceError('BRIDGE_UNAVAILABLE', 'HarmonyOS system bar appearance update failed.');
-    }
-  }
-
-  private async readClipboard(): Promise<string> {
-    try {
-      const context = this.requireContext();
-      const permissionResult = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
-        context,
-        ['ohos.permission.READ_PASTEBOARD'],
-      );
-      if (permissionResult.authResults[0] !== abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-        throw new HostServiceError('BRIDGE_REJECTED', 'HarmonyOS clipboard read permission was denied.');
-      }
-      const data = await pasteboard.getSystemPasteboard().getData();
-      return data.getPrimaryText();
-    } catch (error) {
-      if (error instanceof HostServiceError) {
-        throw error;
-      }
-      throw new HostServiceError('JSB_NATIVE_ERROR', 'HarmonyOS clipboard read failed.');
     }
   }
 
