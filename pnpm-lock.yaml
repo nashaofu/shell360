@@ -42,6 +42,9 @@ importers:
       got:
         specifier: ^16.0.0
         version: 16.0.0
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

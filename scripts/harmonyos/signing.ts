@@ -1,10 +1,20 @@
+import {
+  createCipheriv,
+  pbkdf2Sync,
+  randomBytes,
+  randomUUID,
+} from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import JSON5 from "json5";
 import { HARMONYOS_DIR } from "./constants.ts";
 
 const BUILD_PROFILE_PATH = path.join(HARMONYOS_DIR, "build-profile.json5");
 const HARMONYOS_KEY_ALIAS = "upload";
+const SIGNING_COMPONENT = Buffer.from([
+  49, 243, 9, 115, 214, 175, 91, 184, 211, 190, 177, 88, 101, 131, 192, 119,
+]);
 
 type SigningEnvironment = {
   p12: string;
@@ -15,9 +25,9 @@ type SigningEnvironment = {
 };
 
 const SIGNING_ENVIRONMENT_VARIABLES = [
-  ["p12", "HARMONYOS_SIGNING_P12_B64"],
-  ["cer", "HARMONYOS_SIGNING_CER_B64"],
-  ["p7b", "HARMONYOS_SIGNING_P7B_B64"],
+  ["p12", "HARMONYOS_SIGNING_P12"],
+  ["cer", "HARMONYOS_SIGNING_CER"],
+  ["p7b", "HARMONYOS_SIGNING_P7B"],
   ["storePassword", "HARMONYOS_SIGNING_STORE_PASSWORD"],
   ["keyPassword", "HARMONYOS_SIGNING_KEY_PASSWORD"],
 ] as const satisfies ReadonlyArray<readonly [keyof SigningEnvironment, string]>;
@@ -72,32 +82,100 @@ export async function prepareSigning(
     writeBase64File(cerPath, environment.cer),
     writeBase64File(p7bPath, environment.p7b),
   ]);
+  const encryptionKey = await createSigningMaterial(signingDirectory);
 
   const original = await fs.readFile(BUILD_PROFILE_PATH, "utf8");
   const material = {
     storeFile: p12Path,
     certpath: cerPath,
     profile: p7bPath,
-    storePassword: environment.storePassword,
+    storePassword: encryptPassword(encryptionKey, environment.storePassword),
     keyAlias: HARMONYOS_KEY_ALIAS,
-    keyPassword: environment.keyPassword,
+    keyPassword: encryptPassword(encryptionKey, environment.keyPassword),
     signAlg: "SHA256withECDSA",
   };
-  const configured = original.replace(
-    "signingConfigs: [],",
-    `signingConfigs: [{
-      name: "default",
-      material: ${JSON.stringify(material, null, 2)},
-    }],`,
-  );
-  if (configured === original) {
-    throw new Error(
-      `Could not inject HarmonyOS signing configuration into ${BUILD_PROFILE_PATH}`,
-    );
+  const profile = JSON5.parse(original) as {
+    app?: { signingConfigs?: unknown[] };
+  };
+  if (!profile.app) {
+    throw new Error(`Missing app configuration in ${BUILD_PROFILE_PATH}`);
   }
+  profile.app.signingConfigs = [
+    {
+      name: "default",
+      type: "HarmonyOS",
+      material,
+    },
+  ];
+  const configured = `${JSON5.stringify(profile, null, 2)}\n`;
 
   await fs.writeFile(BUILD_PROFILE_PATH, configured, "utf8");
   deferBestEffort(cleanup, () => fs.writeFile(BUILD_PROFILE_PATH, original));
+}
+
+async function createSigningMaterial(
+  signingDirectory: string,
+): Promise<Buffer> {
+  const materialDirectory = path.join(signingDirectory, "material");
+  const fdDirectory = path.join(materialDirectory, "fd");
+  const acDirectory = path.join(materialDirectory, "ac");
+  const ceDirectory = path.join(materialDirectory, "ce");
+  const components = [randomBytes(16), randomBytes(16), randomBytes(16)];
+  const salt = randomBytes(16);
+
+  await Promise.all([
+    ...components.map(async (component, index) => {
+      const directory = path.join(fdDirectory, String(index));
+      await fs.mkdir(directory, { recursive: true });
+      await fs.writeFile(path.join(directory, randomUUID()), component, {
+        mode: 0o600,
+      });
+    }),
+    fs.mkdir(acDirectory, { recursive: true }),
+    fs.mkdir(ceDirectory, { recursive: true }),
+  ]);
+  await fs.writeFile(path.join(acDirectory, randomUUID()), salt, {
+    mode: 0o600,
+  });
+
+  const rootComponent = components
+    .concat(SIGNING_COMPONENT)
+    .reduce((result, component) =>
+      result.map((value, index) => value ^ component[index]),
+    );
+  const rootKey = pbkdf2Sync(
+    rootComponent.toString(),
+    salt,
+    10_000,
+    16,
+    "sha256",
+  );
+  const encryptionKey = randomBytes(16);
+  await fs.writeFile(
+    path.join(ceDirectory, randomUUID()),
+    encrypt(rootKey, encryptionKey),
+    { mode: 0o600 },
+  );
+  return encryptionKey;
+}
+
+function encryptPassword(key: Buffer, password: string): string {
+  return encrypt(key, Buffer.from(password)).toString("hex");
+}
+
+function encrypt(key: Buffer, value: Buffer): Buffer {
+  const initializationVector = randomBytes(12);
+  const cipher = createCipheriv("aes-128-gcm", key, initializationVector);
+  const encrypted = Buffer.concat([cipher.update(value), cipher.final()]);
+  const authenticationTag = cipher.getAuthTag();
+  const length = Buffer.allocUnsafe(4);
+  length.writeUInt32BE(encrypted.length + authenticationTag.length);
+  return Buffer.concat([
+    length,
+    initializationVector,
+    encrypted,
+    authenticationTag,
+  ]);
 }
 
 async function writeBase64File(filePath: string, value: string): Promise<void> {

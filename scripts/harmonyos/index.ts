@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import yargs from "yargs";
 import { getIpv4Address } from "../utils/network.ts";
-import { build, type DevOptions, dev } from "./commands/index.ts";
+import {
+  type BuildOptions,
+  build,
+  type DevOptions,
+  dev,
+} from "./commands/index.ts";
 import { DEVECO_HOME, DEVECO_SDK_HOME, HDC, HVIGORW } from "./constants.ts";
 
 if (!DEVECO_HOME) {
@@ -55,7 +60,18 @@ await yargs()
     },
     handler: dev,
   })
-  .command("build", "Build release web and native inputs", {}, build)
+  .command<BuildOptions>({
+    command: "build",
+    describe: "Build a signed release APP or HAP package",
+    builder: {
+      target: {
+        choices: ["app", "hap"] as const,
+        default: "app" as const,
+        describe: "Package type to build (APP by default)",
+      },
+    },
+    handler: build,
+  })
   .demandCommand(1)
   .strict()
   .showHelpOnFail(false)
