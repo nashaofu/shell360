@@ -1,3 +1,4 @@
+import { clsx } from "clsx";
 import { useCallback, useEffect, useMemo } from "react";
 
 import { useTerminalsAtomValue, WorkspaceIcon } from "shared";
@@ -13,92 +14,82 @@ import styles from "./index.module.less";
 import logo from "./logo.svg";
 import Menus from "./Menus";
 
+const TABLET_MEDIA_QUERY = "(min-width: 840px)";
+
+function useMobileSidebarOverlay(isOpen: boolean, close: () => void) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    overlay.add(close);
+    return () => overlay.delete(close);
+  }, [close, isOpen]);
+}
+
 export default function Sidebar() {
-  const globalStateAtomWithApi = useGlobalStateAtomWithApi();
+  const { isOpenSidebar, closeSidebar } = useGlobalStateAtomWithApi();
   const terminals = useTerminalsAtomValue();
   const [activeTerminalId, setActiveTerminalId] = useTerminalActiveId();
   const setTerminalViewVisible = useSetTerminalViewVisible();
-  const isTablet = useMediaQuery("(min-width: 840px)");
-  const compact = globalStateAtomWithApi.compactSidebar;
+  const isTablet = useMediaQuery(TABLET_MEDIA_QUERY);
+  const isCompact = isTablet && !isOpenSidebar;
 
-  const workspaceItem = useMemo(() => {
-    const active =
+  const workspaceTerminal = useMemo(
+    () =>
       (activeTerminalId ? terminals.get(activeTerminalId) : undefined) ??
-      terminals.values().next().value;
-    return active;
-  }, [activeTerminalId, terminals]);
+      terminals.values().next().value,
+    [activeTerminalId, terminals],
+  );
 
   const activeCount = useMemo(
     () =>
       [...terminals.values()].filter((item) => item.status !== "failed").length,
     [terminals],
   );
-  const hasConnecting = useMemo(
-    () => [...terminals.values()].some((item) => item.status === "pending"),
-    [terminals],
-  );
-
-  const goWorkspace = useCallback(() => {
-    const terminal = workspaceItem;
-    if (terminal) {
-      setActiveTerminalId(terminal.uuid);
-    } else {
-      setActiveTerminalId(null);
-    }
+  const openWorkspace = useCallback(() => {
+    setActiveTerminalId(workspaceTerminal?.uuid ?? null);
     setTerminalViewVisible(true);
-    globalStateAtomWithApi.closeSidebar();
+    if (!isTablet) {
+      closeSidebar();
+    }
   }, [
-    globalStateAtomWithApi,
-    workspaceItem,
+    closeSidebar,
+    isTablet,
     setActiveTerminalId,
     setTerminalViewVisible,
+    workspaceTerminal,
   ]);
 
-  useEffect(() => {
-    if (!isTablet && globalStateAtomWithApi.isOpenSidebar) {
-      overlay.add(globalStateAtomWithApi.closeSidebar);
-    } else {
-      overlay.delete(globalStateAtomWithApi.closeSidebar);
-    }
+  useMobileSidebarOverlay(!isTablet && isOpenSidebar, closeSidebar);
 
-    return () => {
-      overlay.delete(globalStateAtomWithApi.closeSidebar);
-    };
-  }, [
-    globalStateAtomWithApi.isOpenSidebar,
-    globalStateAtomWithApi.closeSidebar,
-    isTablet,
-  ]);
-
-  const isWorkspaceHighlight = !!activeTerminalId || terminals.size === 0;
+  const isWorkspaceActive = Boolean(activeTerminalId) || terminals.size === 0;
 
   const panel = (
     <div
-      className={`${styles.panel}${isTablet ? ` ${styles.inline}` : ""}${
-        compact ? ` ${styles.compact}` : ""
-      }`}
+      className={clsx(styles.panel, {
+        [styles.tablet]: isTablet,
+        [styles.compact]: isCompact,
+      })}
     >
       <div className={styles.header}>
         <div className={styles.logoWrap}>
-          <img className={styles.logo} src={logo} alt="logo" />
-          {!compact && <span className={styles.logoText}>Shell360</span>}
+          <img className={styles.logo} src={logo} alt="" />
+          <span className={styles.logoText}>Shell360</span>
         </div>
       </div>
 
       <div className={styles.groupLabel}>Workspace</div>
       <button
         type="button"
-        className={`${styles.workspaceBtn}${
-          isWorkspaceHighlight ? ` ${styles.workspaceBtnActive}` : ""
-        }`}
-        onClick={goWorkspace}
+        className={clsx(styles.workspaceBtn, {
+          [styles.workspaceBtnActive]: isWorkspaceActive,
+        })}
+        onClick={openWorkspace}
+        aria-pressed={isWorkspaceActive}
         aria-label="Workspace"
+        title="Workspace"
       >
-        <WorkspaceIcon className={styles.workspaceIcon} />
-        {!compact && <span className={styles.workspaceText}>Workspace</span>}
-        {hasConnecting && (
-          <span className={styles.statusDot} aria-hidden="true" />
-        )}
+        <WorkspaceIcon className={styles.workspaceIcon} aria-hidden="true" />
+        <span className={styles.workspaceText}>Workspace</span>
         {activeCount > 0 && (
           <span className={styles.countBadge}>{activeCount}</span>
         )}
@@ -106,22 +97,22 @@ export default function Sidebar() {
 
       <div className={styles.divider} />
 
-      <Menus compact={compact} onClick={globalStateAtomWithApi.closeSidebar} />
+      <Menus
+        compact={isCompact}
+        onNavigate={isTablet ? undefined : closeSidebar}
+      />
     </div>
   );
 
   if (isTablet) {
-    return <div className={styles.inlineWrap}>{panel}</div>;
+    return <div className={styles.tabletWrap}>{panel}</div>;
   }
 
-  if (!globalStateAtomWithApi.isOpenSidebar) return null;
+  if (!isOpenSidebar) return null;
 
   return (
     <ThemedPortal>
-      <div
-        className={styles.overlay}
-        onClick={globalStateAtomWithApi.closeSidebar}
-      />
+      <div className={styles.overlay} onClick={closeSidebar} />
       {panel}
     </ThemedPortal>
   );

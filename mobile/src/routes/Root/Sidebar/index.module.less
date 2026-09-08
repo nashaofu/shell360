@@ -34,17 +34,18 @@
 }
 
 /* Persistent tablet sidebar: rendered in normal flow inside AppLayout. */
-.inlineWrap {
+.tabletWrap {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.inline {
+.tablet {
   position: static;
   z-index: auto;
   box-shadow: none;
   animation: none;
+  height: 100%;
   width: 200px;
   max-width: 200px;
 }
@@ -52,9 +53,14 @@
 .compact {
   width: 56px;
   max-width: 56px;
+  overflow: visible;
 
   .header {
     justify-content: center;
+    height: 56px;
+    min-height: 56px;
+    align-items: center;
+    padding: 0;
     padding-left: 0;
     padding-right: 0;
   }
@@ -63,28 +69,43 @@
     justify-content: center;
   }
 
+  .logoText,
+  .workspaceText {
+    display: none;
+  }
+
   .groupLabel {
-    text-align: center;
-    padding-left: 0;
-    padding-right: 0;
+    display: none;
   }
 
   .workspaceBtn {
     justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-top: 10px;
+    margin-bottom: 2px;
     margin-left: 8px;
     margin-right: 8px;
     padding-left: 0;
     padding-right: 0;
+    overflow: visible;
+    border-radius: 14px;
   }
 
   .countBadge {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: -5px;
+    right: -5px;
+    z-index: 1;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
     font-size: 10px;
+  }
+
+  .divider {
+    margin-top: 4px;
+    margin-bottom: 4px;
   }
 }
 
@@ -185,14 +206,6 @@
   white-space: nowrap;
 }
 
-.statusDot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--mobile-accent);
-}
-
 .countBadge {
   flex-shrink: 0;
   min-width: 20px;
@@ -202,8 +215,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: var(--mobile-bg-subtle);
-  color: var(--mobile-text-secondary);
+  background: var(--mobile-accent);
+  color: var(--mobile-bg-frame);
+  border: 2px solid var(--mobile-bg-frame);
   font-size: 11px;
   font-weight: 600;
 }
