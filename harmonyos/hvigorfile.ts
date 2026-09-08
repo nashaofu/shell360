@@ -36,6 +36,7 @@ hvigor.afterNodeEvaluate((node) => {
   const appJsonOpt = appContext.getAppJsonOpt();
   appJsonOpt.app.versionName = versionName;
   appJsonOpt.app.versionCode = versionCode;
+  appJsonOpt.app.buildVersion = versionName;
   appContext.setAppJsonOpt(appJsonOpt);
 });
 
