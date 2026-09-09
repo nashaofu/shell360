@@ -57,9 +57,9 @@ JSB 在页面与宿主之间使用两类 Channel：
 
 ### 1.5 二进制 Channel
 
-data Channel 双向承载原始 `ArrayBuffer`，不经 JSON/Base64。iOS 是唯一例外：其
-WKScriptMessage 适配器在传输层用 version-1 信封包裹并以 Base64 编码，但对页面的
-MessagePort 仍呈现 `ArrayBuffer`（见 §6）。
+data Channel 双向承载原始 `ArrayBuffer`，不经 JSON/Base64。Android/HarmonyOS 通过平台
+MessagePort 传输；iOS 页面内使用 MessagePort，跨 WebKit/Native 边界时通过
+`WKURLSchemeHandler` 的原始请求体和二进制响应传输（见 §6）。
 
 ## 2. 帧序列
 
@@ -206,12 +206,16 @@ ssh.portForwarding.closeDynamic
 ## 6. iOS 传输适配
 
 iOS 没有跨 WK 边界的 MessagePort，`JavaScriptBridge.swift` 注入的适配器在**页面内部**自建
-`MessageChannel`，Swift 只经 `WKScriptMessage` 中转：
+`MessageChannel`：
 
-- 文本信封与 Android/HarmonyOS 一致。
-- 二进制在 WKScriptMessage 层用 version-1 信封（`version`/`kind`/`channelId`/`payload`）包裹，
-  `payload` 为 Base64；对页面 MessagePort 仍呈现 `ArrayBuffer`。
-- Base64 与 version/kind 信封仅限 iOS 适配器内部，不进入 `jsb-core` 或公开 invoke JSON。
+- 文本控制消息继续通过 WKScriptMessage 传递；
+- JS → Native 二进制通过 `shell360-binary://channel/v1/{channelId}/send` 的 POST body 传递；
+- Native → JS 二进制先进入 iOS Channel FIFO，Native 通知页面后，页面通过
+  `shell360-binary://channel/v1/{channelId}/receive` GET 读取一个原始二进制帧；
+- 对页面 MessagePort 始终呈现 `ArrayBuffer`，跨 WebKit/Native 边界不使用 JSON 或 Base64；
+- `packages/jsb`、`jsb-core` 和 `shell360-runtime` 不感知该 iOS 传输差异。
+
+完整平台方案见 [iOS JSB 原生二进制传输方案](../../platforms/ios-jsb-binary-transport.md)。
 
 P0 时期 iOS 与 Android 的若干行为差异（如 UUID 校验、open 失败路径）已在统一迁移中对齐，历史
 漂移记录见 `history.md`。

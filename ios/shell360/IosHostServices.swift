@@ -8,6 +8,7 @@ struct NativeBridgeError: Error {
 }
 
 final class IosHostServices: HostServices, @unchecked Sendable {
+    private let appDataDirectory: URL
     private let closeWindow: @Sendable () -> Void
     private let resetApplication: @Sendable () -> Void
     private let setSystemBarsAppearance: @Sendable (Bool) -> Void
@@ -16,11 +17,13 @@ final class IosHostServices: HostServices, @unchecked Sendable {
     private var completion: ((String, String) -> Void)?
 
     init(
+        appDataDirectory: URL,
         closeWindow: @escaping @Sendable () -> Void,
         resetApplication: @escaping @Sendable () -> Void,
         setSystemBarsAppearance: @escaping @Sendable (Bool) -> Void,
         documentPicker: @escaping @Sendable (Bool, Any?) async throws -> Any?
     ) {
+        self.appDataDirectory = appDataDirectory
         self.closeWindow = closeWindow
         self.resetApplication = resetApplication
         self.setSystemBarsAppearance = setSystemBarsAppearance
@@ -72,9 +75,9 @@ final class IosHostServices: HostServices, @unchecked Sendable {
         case "saveDocument":
             return try await documentPicker(true, params)
         case "readTextFile":
-            return try Self.readTextFile(params)
+            return try readTextFile(params)
         case "writeTextFile":
-            try Self.writeTextFile(params)
+            try writeTextFile(params)
             return nil
         case "closeWindow":
             closeWindow()
@@ -100,30 +103,57 @@ final class IosHostServices: HostServices, @unchecked Sendable {
         }
     }
 
-    private static func readTextFile(_ params: [String: Any]) throws -> String {
+    private func readTextFile(_ params: [String: Any]) throws -> String {
         let path = try requireString(params, "path")
-        return try String(contentsOfFile: localPath(path), encoding: .utf8)
+        return try String(contentsOf: resolvePath(path, params: params), encoding: .utf8)
     }
 
-    private static func writeTextFile(_ params: [String: Any]) throws {
+    private func writeTextFile(_ params: [String: Any]) throws {
         let path = try requireString(params, "path")
         let contents = try requireString(params, "contents")
-        try contents.write(toFile: localPath(path), atomically: true, encoding: .utf8)
+        let url = resolvePath(path, params: params)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try contents.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    private func resolvePath(_ value: String, params: [String: Any]) -> URL {
+        let path = Self.localPath(value)
+        if path.hasPrefix("/") {
+            return URL(fileURLWithPath: path)
+        }
+        if params["baseDir"] as? String == "appLocalData" {
+            let candidate = appDataDirectory.appendingPathComponent(path).standardizedFileURL
+            let root = appDataDirectory.standardizedFileURL.path
+            if candidate.path == root || candidate.path.hasPrefix(root + "/") {
+                return candidate
+            }
+            return appDataDirectory.appendingPathComponent(".invalid-path")
+        }
+        return URL(fileURLWithPath: path)
     }
 
     private static func readScopedFile(_ params: [String: Any]) throws {
         let source = try fileUrl(try requireString(params, "source"), "source")
         let target = URL(fileURLWithPath: try requireString(params, "targetPath"))
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if FileManager.default.fileExists(atPath: target.path) {
+            try FileManager.default.removeItem(at: target)
+        }
         try FileManager.default.copyItem(at: source, to: target)
     }
 
     private static func writeScopedFile(_ params: [String: Any]) throws {
         let source = URL(fileURLWithPath: try requireString(params, "sourcePath"))
         let target = try fileUrl(try requireString(params, "target"), "target")
+        let temporary = target.deletingLastPathComponent()
+            .appendingPathComponent(".shell360-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        try FileManager.default.copyItem(at: source, to: temporary)
         if FileManager.default.fileExists(atPath: target.path) {
-            try FileManager.default.removeItem(at: target)
+            _ = try FileManager.default.replaceItemAt(target, withItemAt: temporary)
+        } else {
+            try FileManager.default.moveItem(at: temporary, to: target)
         }
-        try FileManager.default.copyItem(at: source, to: target)
     }
 
     private static func localPath(_ value: String) -> String {
@@ -163,10 +193,11 @@ final class IosHostServices: HostServices, @unchecked Sendable {
 
     private static func parseParams(_ json: String) throws -> [String: Any] {
         guard let data = json.data(using: .utf8),
-              let value = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) else {
-            return [:]
+              let value = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
+              let object = value as? [String: Any] else {
+            throw NativeBridgeError(code: "BRIDGE_INVALID_REQUEST", message: "params must be a JSON object.")
         }
-        return value as? [String: Any] ?? [:]
+        return object
     }
 
     private static func success(_ data: Any?) -> String {

@@ -1,6 +1,6 @@
 # iOS 平台说明
 
-iOS 使用 `ios/` 与 WKWebView 承载 `mobile/` 页面，通过 UniFFI 接入 Rust。JSB 控制消息保持文本，二进制 Channel 遵循 [当前架构](../architecture/jsb/architecture.md)。
+iOS 使用 `ios/` 与 WKWebView 承载 `mobile/` 页面，通过 UniFFI 接入 Rust。JSB 控制消息保持文本；二进制 Channel 通过 `WKURLSchemeHandler` 交换原始字节，具体设计见 [iOS JSB 原生二进制传输方案](./ios-jsb-binary-transport.md)。公共边界遵循 [当前架构](../architecture/jsb/architecture.md)。
 
 ```bash
 pnpm run ios:dev

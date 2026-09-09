@@ -43,13 +43,17 @@ enum WebContentLoader {
         guard let root = Bundle.main.url(forResource: "WebAssets", withExtension: nil) else {
             return false
         }
-        return url.isFileURL && url.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path)
+        guard url.isFileURL else { return false }
+        let rootPath = root.resolvingSymlinksInPath().standardizedFileURL.path
+        let filePath = url.resolvingSymlinksInPath().standardizedFileURL.path
+        return filePath == rootPath || filePath.hasPrefix(rootPath + "/")
     }
 
     #if DEBUG
     private static func configuredDevelopmentURL() -> URL? {
         if let value = Bundle.main.object(forInfoDictionaryKey: "SHELL360_WEBVIEW_URL") as? String,
-           let url = URL(string: value) {
+           let url = URL(string: value),
+           ["http", "https"].contains(url.scheme?.lowercased()) {
             return url
         }
         return developmentURL

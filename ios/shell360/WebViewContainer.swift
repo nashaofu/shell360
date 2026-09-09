@@ -21,6 +21,10 @@ struct WebViewContainer: UIViewRepresentable {
             forMainFrameOnly: true
         ))
         configuration.userContentController = controller
+        configuration.setURLSchemeHandler(
+            context.coordinator.binarySchemeHandler,
+            forURLScheme: IosBinarySchemeHandler.scheme
+        )
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -44,6 +48,8 @@ struct WebViewContainer: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, UIDocumentPickerDelegate {
         private let rustBridge: RustBridge
+        private let binaryStore = IosBinaryChannelStore()
+        lazy var binarySchemeHandler = IosBinarySchemeHandler(store: binaryStore)
         private weak var webView: WKWebView?
         private var jsb: NativeJsb?
         private var transport: IosJsbTransport?
@@ -60,10 +66,11 @@ struct WebViewContainer: UIViewRepresentable {
             self.webView = webView
             let rustBridge = self.rustBridge
 
-            let transport = IosJsbTransport(webView: webView)
+            let transport = IosJsbTransport(webView: webView, binaryStore: binaryStore)
             self.transport = transport
 
             let hostServices = IosHostServices(
+                appDataDirectory: rustBridge.appDataDirectory,
                 closeWindow: { [weak webView] in
                     DispatchQueue.main.async {
                         webView?.window?.rootViewController?.dismiss(animated: true)
@@ -89,9 +96,12 @@ struct WebViewContainer: UIViewRepresentable {
             self.hostServices = hostServices
 
             guard let jsb = rustBridge.createJsb(transport: transport, hostServices: hostServices) else {
+                let message = rustBridge.initializationError?.localizedDescription ?? "Unable to initialize the native runtime."
+                webView.loadHTMLString("<h1>Shell360 could not start</h1><p>\(Self.htmlEscape(message))</p>", baseURL: nil)
                 return
             }
             self.jsb = jsb
+            binarySchemeHandler.attach(jsb: jsb)
 
             hostServices.attachCompletion { [weak self] callId, resultJson in
                 Task { @MainActor [weak self] in
@@ -103,6 +113,8 @@ struct WebViewContainer: UIViewRepresentable {
 
         func detach() {
             hostServices?.detachCompletion()
+            binarySchemeHandler.detach()
+            binaryStore.closeAll()
             try? jsb?.shutdown()
             jsb = nil
             transport?.detach()
@@ -124,15 +136,14 @@ struct WebViewContainer: UIViewRepresentable {
             switch kind {
             case "channel.open":
                 openChannels.insert(channelId)
+                binaryStore.open(channelId)
                 try? jsb?.openChannel(channelId: channelId)
             case "channel.close":
                 openChannels.remove(channelId)
+                binaryStore.close(channelId)
                 try? jsb?.closeChannel(channelId: channelId)
             case "text":
                 try? jsb?.receiveText(channelId: channelId, text: payload)
-            case "binary":
-                guard let data = Data(base64Encoded: payload) else { return }
-                try? jsb?.receiveBinary(channelId: channelId, bytes: data)
             default:
                 break
             }
@@ -149,7 +160,9 @@ struct WebViewContainer: UIViewRepresentable {
                     let requestedName = (params as? [String: Any])?["defaultPath"] as? String
                     let filename = requestedName.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "shell360-export"
                     let sourceURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-                    FileManager.default.createFile(atPath: sourceURL.path, contents: Data())
+                    guard FileManager.default.createFile(atPath: sourceURL.path, contents: Data()) else {
+                        throw NativeBridgeError(code: "BRIDGE_FILE_ERROR", message: "Unable to create the export file.")
+                    }
                     pickerSourceURL = sourceURL
                     controller = UIDocumentPickerViewController(forExporting: [sourceURL], asCopy: true)
                     controller.modalPresentationStyle = .formSheet
@@ -160,8 +173,19 @@ struct WebViewContainer: UIViewRepresentable {
                     controller.allowsMultipleSelection = (params as? [String: Any])?["multiple"] as? Bool ?? false
                 }
                 controller.delegate = self
-                webView?.window?.rootViewController?.present(controller, animated: true)
+                guard let presenter = webView?.window?.rootViewController else {
+                    pickerContinuation = nil
+                    throw NativeBridgeError(code: "BRIDGE_UI_ERROR", message: "The document picker is unavailable.")
+                }
+                presenter.present(controller, animated: true)
             }
+        }
+
+        private static func htmlEscape(_ value: String) -> String {
+            value.replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+                .replacingOccurrences(of: ">", with: "&gt;")
+                .replacingOccurrences(of: "\"", with: "&quot;")
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
@@ -187,6 +211,7 @@ struct WebViewContainer: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
             for channelId in openChannels {
+                binaryStore.close(channelId)
                 try? jsb?.closeChannel(channelId: channelId)
             }
             openChannels.removeAll()
@@ -228,13 +253,16 @@ struct WebViewContainer: UIViewRepresentable {
 /// invoked on Rust worker threads and every one hops to the main queue before
 /// touching WebKit, which keeps per-channel frame ordering stable. The
 /// document-start JS adapter creates its own MessageChannel and posts
-/// `channel.opened` with port2 itself, so `openChannel` is a no-op. Base64 for
-/// binary frames is confined to this WKScriptMessage transport adapter.
+/// `channel.opened` with port2 itself, so `openChannel` is a no-op. Binary
+/// frames are queued for the custom URL scheme instead of crossing the string
+/// script-message bridge.
 final class IosJsbTransport: JsbTransport, @unchecked Sendable {
     private weak var webView: WKWebView?
+    private let binaryStore: IosBinaryChannelStore
 
-    init(webView: WKWebView) {
+    init(webView: WKWebView, binaryStore: IosBinaryChannelStore) {
         self.webView = webView
+        self.binaryStore = binaryStore
     }
 
     func detach() {
@@ -259,13 +287,20 @@ final class IosJsbTransport: JsbTransport, @unchecked Sendable {
         }
     }
 
-    func sendBinary(channelId: String, data: Data) {
-        DispatchQueue.main.async { [weak self] in
-            self?.receiveBinary(channelId: channelId, bytes: data)
+    func sendBinary(channelId: String, data: Data) throws {
+        do {
+            let shouldNotify = try binaryStore.enqueue(data, channelId: channelId)
+            guard shouldNotify else { return }
+            DispatchQueue.main.async { [weak self] in
+                self?.notifyBinary(channelId: channelId)
+            }
+        } catch {
+            throw FfiError.Internal("Could not queue iOS binary frame: \(error)")
         }
     }
 
     func closeChannel(channelId: String) {
+        binaryStore.close(channelId)
         DispatchQueue.main.async { [weak self] in
             self?.receiveClose(channelId: channelId)
         }
@@ -281,14 +316,9 @@ final class IosJsbTransport: JsbTransport, @unchecked Sendable {
         webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
     }
 
-    private func receiveBinary(channelId: String, bytes: Data) {
-        let envelope = JavaScriptBridge.jsonObjectLiteral([
-            "version": 1,
-            "kind": "binary",
-            "channelId": channelId,
-            "payload": bytes.base64EncodedString()
-        ])
-        webView?.evaluateJavaScript("window.__JSB__?.receive?.(\(envelope));")
+    private func notifyBinary(channelId: String) {
+        let escaped = JavaScriptBridge.jsonStringLiteral(channelId)
+        webView?.evaluateJavaScript("window.__JSB__?.notifyBinary?.(\(escaped));")
     }
 
     private func receiveClose(channelId: String) {

@@ -317,9 +317,10 @@ receiveBinary`；实现 Rust `JsbTransport` callback；在主线程调用 WebVie
 
 ### 5.2 iOS
 
-WKWebView 传输适配器负责：document-start JSB 注入；WKScriptMessage 收发；string/binary 信封
-适配；实现 `JsbTransport` callback；确保 WebKit 调用位于主线程。Base64 仅可存在于 iOS
-WKScriptMessage 二进制传输适配器内部，不进入 `jsb-core`、公开 invoke JSON 或其他平台。
+WKWebView 传输适配器负责：document-start JSB 注入；通过 WKScriptMessage 传递文本控制消息；
+通过 `WKURLSchemeHandler` 传递 data Channel 原始二进制；实现 `JsbTransport` callback；确保
+WebKit 调用位于主线程。iOS 二进制不进入公开 invoke JSON，也不修改 `jsb-core` 或前端 JSB
+接口。平台细节见 [iOS JSB 原生二进制传输方案](../../platforms/ios-jsb-binary-transport.md)。
 
 ### 5.3 HarmonyOS
 
@@ -447,6 +448,6 @@ jsb-core         -> 通用 serde/uuid 等基础依赖
 - **`HostServices` 系统原语实现**：各平台各一份（剪贴板/文件选择/打开 URL/系统栏/关窗/
   scoped 文件/生物识别），但参数校验、URL scheme、路径 canonicalize、staging、错误模型归
   Rust。
-- **传输适配器**：Android/HarmonyOS 用 WebMessagePort；iOS 用 WKScriptMessage（Base64 仅
-  iOS 适配器内部）。
+- **传输适配器**：Android/HarmonyOS 用 WebMessagePort；iOS 文本控制消息用 WKScriptMessage，
+  data Channel 原始二进制用 `WKURLSchemeHandler` 请求/响应。
 - **前端 `bridge/*` API 与 Tauri 桌面端**：不变。
