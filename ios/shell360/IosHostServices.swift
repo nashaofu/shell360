@@ -4,7 +4,7 @@ import UIKit
 struct NativeBridgeError: Error {
     let code: String
     let message: String
-    let details: Any?
+    let details: Any? = nil
 }
 
 final class IosHostServices: HostServices, @unchecked Sendable {
