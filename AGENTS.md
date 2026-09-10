@@ -56,6 +56,9 @@ pnpm run android:dev      # select device, start dev server, install and launch
 pnpm run android:build    # release APK
 
 # iOS (macOS + Xcode)
+# ios:dev accepts --device (simulator name or UDID) and --port (dev server port,
+# defaults to 1421). The dev server port is passed to the app via the
+# SHELL360_WEBVIEW_URL launch environment variable.
 pnpm run ios:dev           # select/boot simulator, start mobile dev server, build and launch
 pnpm run ios:build         # create a Release device archive; signs when iOS signing env vars are set
 pnpm run ios:build-native --platform iphonesimulator --configuration Debug --archs arm64

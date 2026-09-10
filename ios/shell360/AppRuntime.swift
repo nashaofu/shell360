@@ -1,9 +1,10 @@
+import Combine
 import Foundation
 import SwiftUI
 
 @MainActor
 final class AppRuntime: ObservableObject {
-    let rustBridge: RustBridge
+    @Published private(set) var rustBridge: RustBridge
 
     init() {
         rustBridge = RustBridge()

@@ -55,7 +55,7 @@ struct WebViewContainer: UIViewRepresentable {
         private var transport: IosJsbTransport?
         private var hostServices: IosHostServices?
         private var openChannels: Set<String> = []
-        private var pickerContinuation: CheckedContinuation<Any?, Error>?
+        private var pickerContinuation: CheckedContinuation<Any?, Never>?
         private var pickerSourceURL: URL?
 
         init(rustBridge: RustBridge) {
@@ -149,12 +149,14 @@ struct WebViewContainer: UIViewRepresentable {
             }
         }
 
-        func pickDocument(save: Bool, params: Any?) async throws -> Any? {
-            guard pickerContinuation == nil else {
-                throw NativeBridgeError(code: "BRIDGE_BUSY", message: "A document picker is already open.")
-            }
-            return try await withCheckedThrowingContinuation { continuation in
-                pickerContinuation = continuation
+        nonisolated func pickDocument(save: Bool, params: Any?) async throws -> Any? {
+            let picker: UIDocumentPickerViewController = try await MainActor.run { [weak self] in
+                guard let self else {
+                    throw NativeBridgeError(code: "BRIDGE_BUSY", message: "The document picker is no longer available.")
+                }
+                guard pickerContinuation == nil else {
+                    throw NativeBridgeError(code: "BRIDGE_BUSY", message: "A document picker is already open.")
+                }
                 let controller: UIDocumentPickerViewController
                 if save {
                     let requestedName = (params as? [String: Any])?["defaultPath"] as? String
@@ -173,11 +175,22 @@ struct WebViewContainer: UIViewRepresentable {
                     controller.allowsMultipleSelection = (params as? [String: Any])?["multiple"] as? Bool ?? false
                 }
                 controller.delegate = self
-                guard let presenter = webView?.window?.rootViewController else {
-                    pickerContinuation = nil
-                    throw NativeBridgeError(code: "BRIDGE_UI_ERROR", message: "The document picker is unavailable.")
+                return controller
+            }
+            return await withCheckedContinuation { continuation in
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    pickerContinuation = continuation
+                    guard let presenter = webView?.window?.rootViewController else {
+                        pickerContinuation = nil
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    presenter.present(picker, animated: true)
                 }
-                presenter.present(controller, animated: true)
             }
         }
 

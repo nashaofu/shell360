@@ -56,6 +56,11 @@ enum WebContentLoader {
            ["http", "https"].contains(url.scheme?.lowercased()) {
             return url
         }
+        if let value = ProcessInfo.processInfo.environment["SHELL360_WEBVIEW_URL"],
+           let url = URL(string: value),
+           ["http", "https"].contains(url.scheme?.lowercased()) {
+            return url
+        }
         return developmentURL
     }
     #endif

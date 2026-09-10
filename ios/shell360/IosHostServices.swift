@@ -104,13 +104,13 @@ final class IosHostServices: HostServices, @unchecked Sendable {
     }
 
     private func readTextFile(_ params: [String: Any]) throws -> String {
-        let path = try requireString(params, "path")
+        let path = try Self.requireString(params, "path")
         return try String(contentsOf: resolvePath(path, params: params), encoding: .utf8)
     }
 
     private func writeTextFile(_ params: [String: Any]) throws {
-        let path = try requireString(params, "path")
-        let contents = try requireString(params, "contents")
+        let path = try Self.requireString(params, "path")
+        let contents = try Self.requireString(params, "contents")
         let url = resolvePath(path, params: params)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try contents.write(to: url, atomically: true, encoding: .utf8)
