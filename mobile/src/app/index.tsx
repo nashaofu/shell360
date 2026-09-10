@@ -10,22 +10,9 @@ import styles from "./index.module.less";
 
 export default function App() {
   const appearance = useAppearanceValue();
-  const providerAppearance = appearance === "inherit" ? undefined : appearance;
 
   useEffect(() => {
-    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncSystemBars = () => {
-      void setSystemBarsAppearance(
-        appearance === "dark" ||
-          (appearance === "inherit" && colorScheme.matches),
-      );
-    };
-
-    syncSystemBars();
-    if (appearance !== "inherit") return;
-
-    colorScheme.addEventListener("change", syncSystemBars);
-    return () => colorScheme.removeEventListener("change", syncSystemBars);
+    void setSystemBarsAppearance(appearance === "dark");
   }, [appearance]);
 
   return (
@@ -39,8 +26,8 @@ export default function App() {
       radius="medium"
       scaling="100%"
     >
-      <ModalProvider appearance={providerAppearance}>
-        <MessageProvider appearance={providerAppearance}>
+      <ModalProvider appearance={appearance}>
+        <MessageProvider appearance={appearance}>
           <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
             <RouterProvider router={router} />
           </ErrorBoundary>

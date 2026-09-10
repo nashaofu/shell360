@@ -1,6 +1,6 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const APPEARANCE_VALUES = ["inherit", "light", "dark"] as const;
 
@@ -14,6 +14,7 @@ export const APP_RADIX_THEME = {
 } as const;
 
 export type Appearance = (typeof APPEARANCE_VALUES)[number];
+export type ResolvedAppearance = Exclude<Appearance, "inherit">;
 
 const appearanceAtom = atomWithStorage<Appearance>(
   "themeMode",
@@ -25,11 +26,26 @@ const appearanceAtom = atomWithStorage<Appearance>(
 );
 
 export function useAppearanceValue() {
-  const appearance = useAtomValue(appearanceAtom);
+  const storedAppearance = useAtomValue(appearanceAtom);
+  const [systemAppearance, setSystemAppearance] = useState<ResolvedAppearance>(() =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+  );
+
+  useEffect(() => {
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateSystemAppearance = () => {
+      setSystemAppearance(colorScheme.matches ? "dark" : "light");
+    };
+
+    updateSystemAppearance();
+    colorScheme.addEventListener("change", updateSystemAppearance);
+    return () => colorScheme.removeEventListener("change", updateSystemAppearance);
+  }, []);
 
   return useMemo(() => {
-    return APPEARANCE_VALUES.includes(appearance) ? appearance : "inherit";
-  }, [appearance]);
+    const appearance = APPEARANCE_VALUES.includes(storedAppearance) ? storedAppearance : "inherit";
+    return appearance === "inherit" ? systemAppearance : appearance;
+  }, [storedAppearance, systemAppearance]);
 }
 
 function useSetAppearanceValue() {
@@ -46,7 +62,7 @@ function useSetAppearanceValue() {
 }
 
 export function useAppearance() {
-  const appearanceValue = useAppearanceValue();
+  const appearanceValue = useAtomValue(appearanceAtom);
   const setAppearanceValue = useSetAppearanceValue();
 
   return [appearanceValue, setAppearanceValue] as const;

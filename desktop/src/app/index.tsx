@@ -18,8 +18,6 @@ export default function App() {
     return () => document.removeEventListener("contextmenu", handler);
   }, []);
 
-  const providerAppearance = appearance === "inherit" ? undefined : appearance;
-
   return (
     <Theme
       className={styles.app}
@@ -31,8 +29,8 @@ export default function App() {
       radius="medium"
       scaling="100%"
     >
-      <ModalProvider appearance={providerAppearance}>
-        <MessageProvider appearance={providerAppearance}>
+      <ModalProvider appearance={appearance}>
+        <MessageProvider appearance={appearance}>
           <RouterProvider router={router} />
           <UpdateDialog />
         </MessageProvider>

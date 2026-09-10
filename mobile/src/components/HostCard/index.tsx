@@ -1,5 +1,5 @@
 import type { Host } from "bridge/data";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
   getAvatarColor,
@@ -18,7 +18,6 @@ type HostCardProps = {
   host: Host;
   onOpenSsh: () => void;
   onOpenSftp: () => void;
-  onOpenDetails: () => void;
   actions?: ReactNode;
   sshPending?: boolean;
   sftpPending?: boolean;
@@ -30,7 +29,6 @@ export default function HostCard({
   host,
   onOpenSsh,
   onOpenSftp,
-  onOpenDetails,
   actions,
   sshPending,
   sftpPending,
@@ -62,23 +60,9 @@ export default function HostCard({
     </button>
   );
 
-  const onInfoKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onOpenDetails();
-    }
-  };
-
   return (
     <div className={styles.card}>
-      <div
-        role="button"
-        tabIndex={0}
-        className={styles.info}
-        onClick={onOpenDetails}
-        onKeyDown={onInfoKeyDown}
-        aria-label={`Open ${title}`}
-      >
+      <div className={styles.info}>
         <span
           className={styles.avatar}
           style={{

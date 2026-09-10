@@ -269,7 +269,6 @@ export default function Hosts() {
               host={item}
               onOpenSsh={() => onOpenConnection(item, "terminal")}
               onOpenSftp={() => onOpenConnection(item, "sftp")}
-              onOpenDetails={() => onEditHost(item)}
               actions={moreActions(item)}
               sshPending={states?.ssh.pending}
               sftpPending={states?.sftp.pending}
