@@ -75,25 +75,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows
-            host: windows-latest
-            build: powershell ./scripts/windows.ps1
+          # - name: windows
+          #   host: windows-latest
+          #   build: powershell ./scripts/windows.ps1
 
-          - name: macos
-            host: macos-26
-            build: zsh ./scripts/macos.sh
+          # - name: macos
+          #   host: macos-26
+          #   build: zsh ./scripts/macos.sh
 
-          - name: linux
-            host: ubuntu-22.04
-            build: bash ./scripts/linux.sh
+          # - name: linux
+          #   host: ubuntu-22.04
+          #   build: bash ./scripts/linux.sh
 
           - name: ios
             host: macos-26
             build: pnpm run ios:build
 
-          - name: android
-            host: ubuntu-22.04
-            build: pnpm run android:build
+          # - name: android
+          #   host: ubuntu-22.04
+          #   build: pnpm run android:build
 
           - name: harmonyos
             host: ubuntu-22.04
