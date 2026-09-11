@@ -10,12 +10,14 @@ import {
   SCHEME,
 } from "../constants.ts";
 import { prepareSigning } from "../signing.ts";
+import { readIosVersion } from "../version.ts";
 import { xcodebuild } from "../xcode.ts";
 
 const EXPORT_PATH = path.join(BUILD_DIR, "export");
 
 export async function build({ cache }: { cache: boolean }): Promise<void> {
   await using cleanup = new AsyncDisposableStack();
+  const version = await readIosVersion();
   const signing = await prepareSigning(cleanup);
   const args = [
     "-project",
@@ -36,7 +38,12 @@ export async function build({ cache }: { cache: boolean }): Promise<void> {
   if (!cache) {
     args.push("clean");
   }
-  args.push("archive", ...signing.buildSettings);
+  args.push(
+    "archive",
+    `MARKETING_VERSION=${version.marketingVersion}`,
+    `CURRENT_PROJECT_VERSION=${version.buildVersion}`,
+    ...signing.buildSettings,
+  );
 
   await fs.rm(ARCHIVE_PATH, { recursive: true, force: true });
   await xcodebuild(args);
