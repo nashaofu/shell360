@@ -95,8 +95,8 @@ export async function startEmulator(
 ): Promise<string> {
   console.log(`[harmonyos] Starting emulator: ${emulator.name}`);
   const process = runEmulator(["-start", emulator.name], {
-    cancelSignal,
     cleanup: false,
+    detached: true,
     stdio: "ignore",
   });
   let startupError: unknown;

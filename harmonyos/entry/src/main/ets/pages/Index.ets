@@ -109,6 +109,7 @@ struct Index {
   build() {
     Stack({ alignContent: Alignment.Center }) {
       Web({ src: WEBVIEW_URL, controller: this.controller })
+        .darkMode(WebDarkMode.Auto)
         .javaScriptAccess(true)
         .domStorageAccess(true)
         .fileAccess(false)
