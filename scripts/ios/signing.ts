@@ -123,7 +123,9 @@ export async function prepareSigning(
   const certificatePassword = environment.IOS_CERTIFICATE_PASSWORD;
   const mobileProvision = environment.IOS_MOBILE_PROVISION;
   await fs.mkdir(BUILD_DIR, { recursive: true });
-  const signingDirectory = await fs.mkdtemp(path.join(BUILD_DIR, ".signing-"));
+  const signingDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "shell360-ios-signing-"),
+  );
   await fs.chmod(signingDirectory, 0o700);
   deferBestEffort(cleanup, () =>
     fs.rm(signingDirectory, { recursive: true, force: true }),
@@ -244,9 +246,11 @@ export async function prepareSigning(
     "codesigning",
     keychainPath,
   ]);
-  const identity = identities.match(/\) ([0-9A-Fa-f]{40}) "/)?.[1];
+  const identity = identities.match(/\b[0-9A-Fa-f]{40}\b/)?.[0];
   if (!identity) {
-    throw new Error("IOS_CERTIFICATE does not contain a signing identity");
+    throw new Error(
+      `IOS_CERTIFICATE does not contain a valid codesigning identity:\n${identities.trim()}`,
+    );
   }
 
   const profilesDirectory = path.join(
