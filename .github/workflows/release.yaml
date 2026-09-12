@@ -24,19 +24,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -56,9 +56,11 @@ jobs:
         if: runner.os == 'Linux'
         run: bash ./scripts/install_linux_deps.sh
 
+      - name: Install Frontend Dependencies
+        run: pnpm install
+
       - name: Lint Web
         run: |-
-          pnpm install
           pnpm run check
           pnpm run tsc
 
@@ -80,42 +82,42 @@ jobs:
           #   build: powershell ./scripts/windows.ps1
 
           # - name: macos
-          #   host: macos-26
+          #   host: macos-latest
           #   build: zsh ./scripts/macos.sh
 
           # - name: linux
           #   host: ubuntu-22.04
           #   build: bash ./scripts/linux.sh
 
-          # - name: ios
-          #   host: macos-26
-          #   build: pnpm run ios:build
+          - name: ios
+            host: macos-latest
+            build: bash ./scripts/ios.sh
 
-          # - name: android
-          #   host: ubuntu-22.04
-          #   build: pnpm run android:build
-
-          - name: harmonyos
+          - name: android
             host: ubuntu-latest
-            build: pnpm run harmonyos:build
+            build: bash ./scripts/android.sh
+
+          # - name: harmonyos
+          #   host: ubuntu-latest
+          #   build: bash ./scripts/harmonyos.sh
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
     # if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -130,71 +132,18 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install Apple Rust targets
-        if: matrix.name == 'ios'
-        run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
-
       - name: Setup Java
-        if: ${{ matrix.name == 'android' }}
-        uses: actions/setup-java@v4
+        if: ${{ matrix.name == 'android' || matrix.name == 'harmonyos' }}
+        uses: actions/setup-java@v6
         with:
-          java-version: 21
-          distribution: "adopt"
+          java-version: 25
+          distribution: temurin
 
       - name: Setup Android SDK
         if: ${{ matrix.name == 'android' }}
-        uses: android-actions/setup-android@v3
-
-      - name: Setup HarmonyOS Java
-        if: ${{ matrix.name == 'harmonyos' }}
-        uses: actions/setup-java@v4
+        uses: android-actions/setup-android@v4
         with:
-          java-version: 17
-          distribution: "zulu"
-
-      - name: Install Android SDK components
-        if: ${{ matrix.name == 'android' }}
-        run: |
-          sdkmanager "platforms;android-37" "build-tools;37.0.1" "ndk;30.0.15729638"
-          yes | sdkmanager --licenses >/dev/null
-
-      - name: Install Android Rust targets
-        if: ${{ matrix.name == 'android' }}
-        run: rustup target add aarch64-linux-android x86_64-linux-android
-
-      - name: Install HarmonyOS command-line tools
-        if: ${{ matrix.name == 'harmonyos' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          tools_dir="$RUNNER_TEMP/harmonyos-command-line-tools"
-          archive="$RUNNER_TEMP/harmonyos-command-line-tools.zip"
-          mkdir -p "$tools_dir"
-
-          asset_url="$(curl --fail --silent --show-error \
-            https://api.github.com/repos/harmonyos-dev/hos-sdk/releases/latest \
-            | jq -r '.assets[] | select(.name | test("commandline-tools-linux-.*\\.zip$")) | .browser_download_url' \
-            | head -n 1)"
-          test -n "$asset_url"
-          curl --fail --location --show-error "$asset_url" --output "$archive"
-          unzip -q "$archive" -d "$tools_dir"
-
-          command_line_tools="$(dirname "$(find "$tools_dir" -type f -name sdkmgr -print -quit)" | sed 's#/sdkmanager/bin$##')"
-          chmod +x "$command_line_tools/sdkmanager/bin/sdkmgr"
-          JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Duser.country=CN" \
-            "$command_line_tools/sdkmanager/bin/sdkmgr" install \
-            toolchains:9 OpenHarmony/toolchains:9 --accept-license
-
-          hvigorw_path="$(find "$tools_dir" -type f \( -name hvigorw -o -name hvigorw.sh \) -print -quit)"
-          deveco_home="$(dirname "$(dirname "$(dirname "$(dirname "$hvigorw_path")")")")"
-          sdk_home="$(dirname "$(dirname "$(dirname "$(find "$tools_dir" -type d -path '*/default/openharmony/toolchains' -print -quit)")")")"
-          test -x "$deveco_home/tools/ohpm/bin/ohpm"
-          test -x "$deveco_home/tools/hvigor/bin/hvigorw"
-          test -x "$sdk_home/default/openharmony/toolchains/hdc"
-
-          echo "DEVECO_HOME=$deveco_home" >> "$GITHUB_ENV"
-          echo "DEVECO_SDK_HOME=$sdk_home" >> "$GITHUB_ENV"
+          accept-android-sdk-licenses: true
 
       - name: Install Frontend Dependencies
         run: pnpm install
@@ -229,7 +178,7 @@ jobs:
         run: ${{ matrix.build }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
           path: build/
@@ -242,15 +191,15 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
       - name: Download All Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release
           merge-multiple: true
@@ -263,7 +212,7 @@ jobs:
         run: node scripts/update.js
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
