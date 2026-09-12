@@ -6,9 +6,6 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib"]
 
-[profile.release]
-lto = true
-
 [build-dependencies]
 napi-build-ohos = { version = "1.2.0" }
 

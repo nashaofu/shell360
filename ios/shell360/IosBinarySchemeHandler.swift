@@ -50,7 +50,7 @@ final class IosBinarySchemeHandler: NSObject, WKURLSchemeHandler, @unchecked Sen
     }
 
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
-        withLock { stoppedTasks.insert(ObjectIdentifier(urlSchemeTask)) }
+        _ = withLock { stoppedTasks.insert(ObjectIdentifier(urlSchemeTask)) }
     }
 
     private func receive(_ request: URLRequest, channelId: String, task: WKURLSchemeTask) {
@@ -117,7 +117,7 @@ final class IosBinarySchemeHandler: NSObject, WKURLSchemeHandler, @unchecked Sen
             task.didReceive(data)
         }
         task.didFinish()
-        withLock { stoppedTasks.remove(ObjectIdentifier(task)) }
+        _ = withLock { stoppedTasks.remove(ObjectIdentifier(task)) }
     }
 
     private static func route(_ url: URL?) -> (channelId: String, action: String)? {

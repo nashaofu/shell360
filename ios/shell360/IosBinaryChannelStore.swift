@@ -31,7 +31,7 @@ final class IosBinaryChannelStore: @unchecked Sendable {
     }
 
     func close(_ channelId: String) {
-        withLock {
+        _ = withLock {
             channels.removeValue(forKey: channelId)
         }
     }

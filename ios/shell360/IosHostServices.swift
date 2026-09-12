@@ -12,7 +12,7 @@ final class IosHostServices: HostServices, @unchecked Sendable {
     private let closeWindow: @Sendable () -> Void
     private let resetApplication: @Sendable () -> Void
     private let setSystemBarsAppearance: @Sendable (Bool) -> Void
-    private let documentPicker: @Sendable (Bool, Any?) async throws -> Any?
+    private let documentPicker: (Bool, Any?) async throws -> Any?
     private let lock = NSLock()
     private var completion: ((String, String) -> Void)?
 
@@ -21,7 +21,7 @@ final class IosHostServices: HostServices, @unchecked Sendable {
         closeWindow: @escaping @Sendable () -> Void,
         resetApplication: @escaping @Sendable () -> Void,
         setSystemBarsAppearance: @escaping @Sendable (Bool) -> Void,
-        documentPicker: @escaping @Sendable (Bool, Any?) async throws -> Any?
+        documentPicker: @escaping (Bool, Any?) async throws -> Any?
     ) {
         self.appDataDirectory = appDataDirectory
         self.closeWindow = closeWindow

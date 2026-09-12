@@ -202,7 +202,8 @@ struct WebViewContainer: UIViewRepresentable {
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            let result: Any? = controller.documentPickerMode == .open
+            let isOpening = pickerSourceURL == nil
+            let result: Any? = isOpening
                 ? (controller.allowsMultipleSelection ? urls.map(\.absoluteString) : urls.first?.absoluteString)
                 : urls.first?.absoluteString
             pickerContinuation?.resume(returning: result)
