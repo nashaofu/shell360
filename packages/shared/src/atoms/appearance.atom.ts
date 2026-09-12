@@ -27,8 +27,11 @@ const appearanceAtom = atomWithStorage<Appearance>(
 
 export function useAppearanceValue() {
   const storedAppearance = useAtomValue(appearanceAtom);
-  const [systemAppearance, setSystemAppearance] = useState<ResolvedAppearance>(() =>
-    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+  const [systemAppearance, setSystemAppearance] = useState<ResolvedAppearance>(
+    () =>
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light",
   );
 
   useEffect(() => {
@@ -39,11 +42,14 @@ export function useAppearanceValue() {
 
     updateSystemAppearance();
     colorScheme.addEventListener("change", updateSystemAppearance);
-    return () => colorScheme.removeEventListener("change", updateSystemAppearance);
+    return () =>
+      colorScheme.removeEventListener("change", updateSystemAppearance);
   }, []);
 
   return useMemo(() => {
-    const appearance = APPEARANCE_VALUES.includes(storedAppearance) ? storedAppearance : "inherit";
+    const appearance = APPEARANCE_VALUES.includes(storedAppearance)
+      ? storedAppearance
+      : "inherit";
     return appearance === "inherit" ? systemAppearance : appearance;
   }, [storedAppearance, systemAppearance]);
 }
