@@ -220,6 +220,7 @@ jobs:
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          # harmonyos
           HARMONYOS_SIGNING_P12: ${{ secrets.HARMONYOS_SIGNING_P12 }}
           HARMONYOS_SIGNING_CER: ${{ secrets.HARMONYOS_SIGNING_CER }}
           HARMONYOS_SIGNING_P7B: ${{ secrets.HARMONYOS_SIGNING_P7B }}
