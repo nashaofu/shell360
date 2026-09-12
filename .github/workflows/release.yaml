@@ -141,9 +141,13 @@ jobs:
 
       - name: Setup Android SDK
         if: ${{ matrix.name == 'android' }}
-        uses: android-actions/setup-android@v4
+        uses: premex-ab/setup-android-cli@v1
         with:
-          accept-android-sdk-licenses: true
+          packages: |
+            platform-tools
+            platforms/android-37.1
+            build-tools/37.0.0
+            ndk/30.0.15729638
 
       - name: Install Frontend Dependencies
         run: pnpm install
