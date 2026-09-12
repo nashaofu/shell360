@@ -58,7 +58,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5B2DF19730271E83008F10A1 /* Build configuration list for PBXNativeTarget "shell360" */;
 			buildPhases = (
-				5B2DF1A030271E81008F10A1 /* Build iOS generated artifacts */,
 				5B2DF18830271E81008F10A1 /* Sources */,
 				5B2DF18930271E81008F10A1 /* Frameworks */,
 				5B2DF18A30271E81008F10A1 /* Resources */,
@@ -121,19 +120,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		5B2DF1A030271E81008F10A1 /* Build iOS generated artifacts */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			name = "Build iOS generated artifacts";
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\ncd \"$SRCROOT/..\"\npnpm run ios:build-native --platform \"$PLATFORM_NAME\" --configuration \"$CONFIGURATION\" --archs \"$ARCHS\"\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5B2DF18830271E81008F10A1 /* Sources */ = {

@@ -23,6 +23,22 @@
                </EnvironmentBuildable>
             </ActionContent>
          </ExecutionAction>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Build native artifacts"
+               scriptText = "set -e&#10;cd &quot;$SRCROOT/..&quot;&#10;case &quot;$SDKROOT&quot; in&#10;  *iPhoneSimulator*) PLATFORM=iphonesimulator ;;&#10;  *) PLATFORM=iphoneos ;;&#10;esac&#10;pnpm run ios:build-native --platform &quot;$PLATFORM&quot; --configuration &quot;$CONFIGURATION&quot; --archs &quot;${ARCHS:-arm64}&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "5B2DF18B30271E81008F10A1"
+                     BuildableName = "shell360.app"
+                     BlueprintName = "shell360"
+                     ReferencedContainer = "container:shell360.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
       </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
