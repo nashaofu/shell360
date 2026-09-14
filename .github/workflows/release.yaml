@@ -45,7 +45,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup Rust
-        uses: actions-use/setup-rust@stable
+        uses: actions-use/setup-rust@v1
         with:
           toolchain: stable
           components: rustfmt, clippy
@@ -126,7 +126,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup Rust
-        uses: actions-use/setup-rust@stable
+        uses: actions-use/setup-rust@v1
         with:
           toolchain: stable
 
