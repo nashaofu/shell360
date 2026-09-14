@@ -62,8 +62,7 @@ jobs:
           pnpm run check
           pnpm run tsc
 
-      - name: Lint Tauri
-        working-directory: ./src-tauri
+      - name: Lint Rust
         run: |-
           cargo fmt -- --check
           cargo clippy
