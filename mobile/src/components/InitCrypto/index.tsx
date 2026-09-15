@@ -1,10 +1,11 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
+import { changeCryptoEnable } from "bridge/data";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
-import { changeCryptoEnable } from "tauri-plugin-data";
-
+import { useUpdateCryptoIsEnable } from "@/atoms/crypto.atom";
 import useMessage from "@/hooks/useMessage";
+import styles from "./index.module.less";
 
 interface IniCryptoProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface IniCryptoProps {
 
 export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
   const message = useMessage();
+  const updateCryptoIsEnable = useUpdateCryptoIsEnable();
   const formApi = useForm({
     defaultValues: {
       password: "",
@@ -30,6 +32,7 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
           password,
           confirmPassword,
         });
+        await updateCryptoIsEnable();
       },
       {
         manual: true,
@@ -52,6 +55,7 @@ export default function IniCrypto({ open, onCancel, onOk }: IniCryptoProps) {
   return (
     <Dialog.Root open={open}>
       <Dialog.Content
+        className={styles.dialog}
         style={{
           paddingTop: "calc(var(--dialog-padding) + env(safe-area-inset-top))",
         }}

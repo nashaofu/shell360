@@ -1,49 +1,79 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--mobile-bg-page);
+}
+
+.safeTop {
+  flex-shrink: 0;
+  height: env(safe-area-inset-top);
+  background: var(--mobile-bg-frame);
+}
+
 .header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  min-height: 56px;
-  padding-top: env(safe-area-inset-top);
-  padding-left: 8px;
-  padding-right: 16px;
-  background: color-mix(in srgb, var(--color-panel-solid) 85%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  gap: 8px;
+  height: 52px;
+  padding: 0 8px;
+  background: var(--mobile-bg-frame);
+  gap: 0;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 1px solid var(--mobile-border-subtle);
 }
 
-.menuBtn {
-  width: 40px;
-  height: 40px;
+.navBtn {
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
   border-radius: 10px;
-  color: var(--gray-12);
+  color: var(--mobile-text-primary);
   cursor: pointer;
   flex-shrink: 0;
   font-size: 22px;
-  transition: background 0.15s ease;
+  transition: background 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
 
   &:active {
-    background: var(--gray-a4);
+    background: var(--mobile-bg-pressed);
   }
 }
 
-.title {
+.titleWrap {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4px;
+  gap: 2px;
+}
+
+.title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: -0.01em;
+  color: var(--mobile-text-primary);
+}
+
+.subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--mobile-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actions {
@@ -55,8 +85,24 @@
 
 .content {
   flex: 1;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 12px 16px;
-  min-height: 0;
+  padding: 14px 16px max(14px, env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 840px) {
+  .content {
+    max-width: 720px;
+    margin-inline: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 359px) {
+  .content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }

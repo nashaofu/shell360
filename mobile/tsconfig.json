@@ -10,9 +10,7 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../shared" },
-    { "path": "../tauri-plugin-ssh" },
-    { "path": "../tauri-plugin-data" },
-    { "path": "../tauri-plugin-mobile" }
+    { "path": "../packages/bridge" },
+    { "path": "../packages/shared" }
   ]
 }

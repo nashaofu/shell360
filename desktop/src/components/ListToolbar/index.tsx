@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 import { GridIcon, ListIcon, SearchIcon } from "shared";
 import type { ViewMode } from "@/hooks/useListView";
-import panel from "@/styles/panel.module.less";
+import styles from "./index.module.less";
 
 type ListToolbarProps = {
   title: string;
@@ -26,12 +26,12 @@ export default function ListToolbar({
   children,
 }: ListToolbarProps) {
   return (
-    <div className={panel.toolbar}>
-      <span className={panel.title}>{title}</span>
-      <label className={panel.search}>
-        <SearchIcon className={panel.searchIcon} />
+    <div className={styles.toolbar}>
+      <span className={styles.title}>{title}</span>
+      <label className={styles.search}>
+        <SearchIcon className={styles.searchIcon} />
         <input
-          className={panel.searchInput}
+          className={styles.searchInput}
           value={keyword}
           placeholder={searchPlaceholder}
           onChange={(event) => onKeywordChange(event.target.value)}
@@ -39,12 +39,12 @@ export default function ListToolbar({
       </label>
       {leading}
       {viewMode && onViewModeChange && (
-        <div className={panel.toggleGroup}>
+        <div className={styles.toggleGroup}>
           <button
             type="button"
             className={clsx(
-              panel.toggleButton,
-              viewMode === "grid" && panel.toggleButtonActive,
+              styles.toggleButton,
+              viewMode === "grid" && styles.toggleButtonActive,
             )}
             title="Grid view"
             onClick={() => onViewModeChange("grid")}
@@ -54,8 +54,8 @@ export default function ListToolbar({
           <button
             type="button"
             className={clsx(
-              panel.toggleButton,
-              viewMode === "list" && panel.toggleButtonActive,
+              styles.toggleButton,
+              viewMode === "list" && styles.toggleButtonActive,
             )}
             title="List view"
             onClick={() => onViewModeChange("list")}

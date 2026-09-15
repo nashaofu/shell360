@@ -65,6 +65,7 @@ export default function SSHTerminal({
       >
         <TerminalContextMenu terminal={terminal}>
           <XTerminal
+            className={styles.xterminal}
             fontFamily={item.host.terminalSettings?.fontFamily}
             fontSize={item.host.terminalSettings?.fontSize}
             theme={
@@ -83,12 +84,7 @@ export default function SSHTerminal({
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
           error={error}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            inset: 0,
-          }}
+          className={styles.loading}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}

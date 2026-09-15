@@ -1,5 +1,5 @@
-import { atom, useAtom } from "jotai";
-import { useMemo } from "react";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useCallback, useMemo } from "react";
 
 export type GlobalState = {
   isOpenSidebar: boolean;
@@ -14,24 +14,31 @@ export function useGlobalStateAtom() {
 }
 
 export function useGlobalStateAtomWithApi() {
-  const [state, setState] = useAtom(globalStateAtom);
+  const { isOpenSidebar } = useAtomValue(globalStateAtom);
+  const setState = useSetAtom(globalStateAtom);
+
+  const closeSidebar = useCallback(() => {
+    setState((state) => ({ ...state, isOpenSidebar: false }));
+  }, [setState]);
+
+  const openSidebar = useCallback(() => {
+    setState((state) => ({ ...state, isOpenSidebar: true }));
+  }, [setState]);
+
+  const toggleSidebar = useCallback(() => {
+    setState((state) => ({
+      ...state,
+      isOpenSidebar: !state.isOpenSidebar,
+    }));
+  }, [setState]);
 
   return useMemo(
     () => ({
-      isOpenSidebar: state.isOpenSidebar,
-      closeSidebar: () => {
-        setState({
-          ...state,
-          isOpenSidebar: false,
-        });
-      },
-      openSidebar: () => {
-        setState({
-          ...state,
-          isOpenSidebar: true,
-        });
-      },
+      isOpenSidebar,
+      closeSidebar,
+      openSidebar,
+      toggleSidebar,
     }),
-    [setState, state],
+    [closeSidebar, isOpenSidebar, openSidebar, toggleSidebar],
   );
 }

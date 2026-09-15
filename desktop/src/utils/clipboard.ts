@@ -1,4 +1,4 @@
-import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { readText, writeText } from "bridge/clipboard-manager";
 
 function select(el: HTMLElement) {
   if (

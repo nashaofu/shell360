@@ -1,0 +1,26 @@
+[package]
+name = "tauri-plugin-ssh"
+version = "0.0.0"
+authors = ["You"]
+description = "Tauri plugin for SSH"
+edition = "2024"
+exclude = ["/webview-dist", "/webview-src", "/node_modules"]
+links = "tauri-plugin-ssh"
+
+[dependencies]
+tauri = { workspace = true, features = [] }
+log.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+russh = { workspace = true, features = ["flate2", "ring", "rsa"] }
+uuid = { workspace = true, features = ["serde", "v4"] }
+async-trait.workspace = true
+tokio = { workspace = true, features = ["full"] }
+serde_json.workspace = true
+strum = { workspace = true, features = ["derive"] }
+russh-sftp.workspace = true
+rusocks.workspace = true
+tauri-plugin-fs.workspace = true
+
+[build-dependencies]
+tauri-plugin = { workspace = true, features = ["build"] }

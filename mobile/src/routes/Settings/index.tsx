@@ -1,12 +1,7 @@
-import { Button, Card, Flex, SegmentedControl, Text } from "@radix-ui/themes";
-import { getVersion } from "@tauri-apps/api/app";
-import {
-  type CSSProperties,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { SegmentedControl, Text } from "@radix-ui/themes";
+import { getVersion } from "bridge/app";
+import { hasCapability } from "bridge/capabilities";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
   ArrowRightIcon,
   FileDownloadIcon,
@@ -14,7 +9,6 @@ import {
   useAppearance,
   WarningCircleIcon,
 } from "shared";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import Page from "@/components/Page";
 import useExportData from "@/hooks/useExportData";
 import useImportData from "@/hooks/useImportData";
@@ -23,80 +17,69 @@ import useModal from "@/hooks/useModal";
 import openUrl from "@/utils/openUrl";
 
 import CryptoSettings from "./CryptoSettings";
+import styles from "./index.module.less";
 
-const sectionStyle: CSSProperties = {
-  maxWidth: 560,
-  margin: "16px auto",
-};
-
-const rowStyle: CSSProperties = {
-  minHeight: 56,
-  padding: "0 16px",
-};
-
-const rowBorderStyle: CSSProperties = {
-  borderBottom: "1px solid var(--gray-a5)",
-};
-
-type SettingsActionRowProps = {
+type SettingsRowProps = {
   label: string;
-  icon: ReactNode;
-  onClick: () => void;
-  bordered?: boolean;
+  icon?: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  rightText?: string;
+  children?: ReactNode;
 };
 
-function SettingsActionRow({
+function SettingsRow({
   label,
   icon,
   onClick,
-  bordered = true,
-}: SettingsActionRowProps) {
+  disabled,
+  rightText,
+  children,
+}: SettingsRowProps) {
   return (
-    <Flex
-      align="center"
-      justify="between"
-      style={bordered ? { ...rowStyle, ...rowBorderStyle } : rowStyle}
-    >
-      <Text size="2">{label}</Text>
-      <Button type="button" variant="ghost" color="gray" onClick={onClick}>
-        {icon}
-      </Button>
-    </Flex>
+    <div className={styles.row}>
+      <span className={styles.rowLabel}>
+        {label}
+        {disabled && (
+          <Text size="1" color="gray">
+            {" "}
+            (Unavailable)
+          </Text>
+        )}
+      </span>
+      {rightText && <span className={styles.rowValue}>{rightText}</span>}
+      {icon && (
+        <button
+          type="button"
+          className={styles.rowAction}
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+        >
+          {icon}
+        </button>
+      )}
+      {children}
+    </div>
   );
 }
 
-function IOSIAP() {
-  const [, setOpen] = useIsShowPaywallAtom();
-
-  return (
-    <Card size="2" style={sectionStyle}>
-      <SettingsActionRow
-        label="Subscription"
-        icon={<ArrowRightIcon />}
-        onClick={() => setOpen(true)}
-        bordered={false}
-      />
-    </Card>
-  );
+function SettingsGroup({ children }: { children: ReactNode }) {
+  return <div className={styles.group}>{children}</div>;
 }
 
 export default function Settings() {
+  const canUseFiles =
+    hasCapability("fileDialog") && hasCapability("fileSystem");
+  const canOpenUrl = hasCapability("openUrl");
   const [appearance, setAppearance] = useAppearance();
   const [version, setVersion] = useState<string>();
   const exportData = useExportData();
   const importData = useImportData();
   const modal = useModal();
   const message = useMessage();
-  const isSubscription = useIsSubscription();
-  const [, setOpen] = useIsShowPaywallAtom();
 
   const onExportData = useCallback(async () => {
-    // Export requires subscription.
-    if (!isSubscription) {
-      setOpen(true);
-      return;
-    }
-
     try {
       const path = await exportData();
       if (!path) {
@@ -115,28 +98,20 @@ export default function Settings() {
         ),
       });
     }
-  }, [exportData, isSubscription, message, setOpen]);
+  }, [exportData, message]);
 
   const onImportData = useCallback(async () => {
-    // Import requires subscription.
-    if (!isSubscription) {
-      setOpen(true);
+    const confirmed = await modal.confirm({
+      title: "Import configuration?",
+      icon: (
+        <WarningCircleIcon style={{ fontSize: 32, color: "var(--orange-9)" }} />
+      ),
+      content:
+        "Imported hosts, keys, and tunnels will be added to the existing configuration.",
+    });
+    if (!confirmed) {
       return;
     }
-
-    await new Promise<void>((resolve) => {
-      modal.confirm({
-        title: "Warning",
-        icon: (
-          <WarningCircleIcon
-            style={{ fontSize: 32, color: "var(--orange-9)" }}
-          />
-        ),
-        content:
-          "The import file will cover the same configuration, which may cause data loss, please do it carefully",
-        onOk: () => resolve(),
-      });
-    });
 
     try {
       const isSuccess = await importData();
@@ -156,7 +131,7 @@ export default function Settings() {
         ),
       });
     }
-  }, [isSubscription, setOpen, modal, importData, message]);
+  }, [modal, importData, message]);
 
   useEffect(() => {
     getVersion().then((ver) => {
@@ -166,74 +141,93 @@ export default function Settings() {
 
   return (
     <Page title="Settings">
-      <Card size="2" style={sectionStyle}>
-        <Flex
-          align="center"
-          justify="between"
-          style={{ ...rowStyle, ...rowBorderStyle }}
-        >
-          <Text size="2">Theme Mode</Text>
-          <SegmentedControl.Root
-            value={appearance}
-            onValueChange={(value) =>
-              setAppearance(value as "inherit" | "light" | "dark")
-            }
+      <div className={styles.section}>
+        <p className={styles.sectionHeader}>Appearance</p>
+        <SettingsGroup>
+          <div
+            className={styles.row}
+            style={{ paddingTop: 8, paddingBottom: 8 }}
           >
-            <SegmentedControl.Item value="inherit">Auto</SegmentedControl.Item>
-            <SegmentedControl.Item value="light">Light</SegmentedControl.Item>
-            <SegmentedControl.Item value="dark">Dark</SegmentedControl.Item>
-          </SegmentedControl.Root>
-        </Flex>
-        <SettingsActionRow
-          label="Export"
-          icon={<FileDownloadIcon />}
-          onClick={onExportData}
-        />
-        <SettingsActionRow
-          label="Import"
-          icon={<FileUploadIcon />}
-          onClick={onImportData}
-          bordered={false}
-        />
-      </Card>
+            <span className={styles.rowLabel}>Theme Mode</span>
+            <SegmentedControl.Root
+              value={appearance}
+              onValueChange={(value) =>
+                setAppearance(value as "inherit" | "light" | "dark")
+              }
+              size="1"
+            >
+              <SegmentedControl.Item value="inherit">
+                Auto
+              </SegmentedControl.Item>
+              <SegmentedControl.Item value="light">Light</SegmentedControl.Item>
+              <SegmentedControl.Item value="dark">Dark</SegmentedControl.Item>
+            </SegmentedControl.Root>
+          </div>
+        </SettingsGroup>
+      </div>
 
-      <Card size="2" style={sectionStyle}>
-        <CryptoSettings />
-      </Card>
+      <div className={styles.section}>
+        <p className={styles.sectionHeader}>Data</p>
+        <SettingsGroup>
+          <SettingsRow
+            label="Export"
+            icon={<FileDownloadIcon />}
+            onClick={() => void onExportData()}
+            disabled={!canUseFiles}
+          />
+          <SettingsRow
+            label="Import"
+            icon={<FileUploadIcon />}
+            onClick={() => void onImportData()}
+            disabled={!canUseFiles}
+          />
+        </SettingsGroup>
+      </div>
 
-      <Card size="2" style={sectionStyle}>
-        <SettingsActionRow
-          label="Privacy Policy"
-          icon={<ArrowRightIcon />}
-          onClick={() =>
-            openUrl(
-              "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
-            )
-          }
-        />
-        {import.meta.env.TAURI_ENV_PLATFORM === "ios" && (
-          <SettingsActionRow
-            label="Terms of Use"
+      <div className={styles.section}>
+        <p className={styles.sectionHeader}>Security</p>
+        <SettingsGroup>
+          <CryptoSettings />
+        </SettingsGroup>
+      </div>
+
+      <div className={styles.section}>
+        <p className={styles.sectionHeader}>About</p>
+        <SettingsGroup>
+          <SettingsRow
+            label="Privacy Policy"
             icon={<ArrowRightIcon />}
             onClick={() =>
-              openUrl("https://www.apple.com/legal/itunes/appstore/dev/stdeula")
+              openUrl(
+                "https://nashaofu.github.io/shell360/docs/Privacy-Policy.html",
+              )
             }
+            disabled={!canOpenUrl}
           />
-        )}
-        <SettingsActionRow
-          label="About"
-          icon={<ArrowRightIcon />}
-          onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
-        />
-        <Flex align="center" justify="between" style={rowStyle}>
-          <Text size="2">Version</Text>
-          <Text size="2" color="gray">
-            {version}
-          </Text>
-        </Flex>
-      </Card>
-
-      {import.meta.env.TAURI_ENV_PLATFORM === "ios" && <IOSIAP />}
+          {import.meta.env.ENV_PLATFORM === "ios" && (
+            <SettingsRow
+              label="Terms of Use"
+              icon={<ArrowRightIcon />}
+              onClick={() =>
+                openUrl(
+                  "https://www.apple.com/legal/itunes/appstore/dev/stdeula",
+                )
+              }
+              disabled={!canOpenUrl}
+            />
+          )}
+          <SettingsRow
+            label="About"
+            icon={<ArrowRightIcon />}
+            onClick={() => openUrl("https://nashaofu.github.io/shell360/")}
+            disabled={!canOpenUrl}
+          />
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Version</span>
+            <span className={styles.rowValue}>{version}</span>
+          </div>
+        </SettingsGroup>
+      </div>
     </Page>
   );
 }

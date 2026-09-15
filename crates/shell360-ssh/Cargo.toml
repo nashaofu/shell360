@@ -1,0 +1,26 @@
+[package]
+name = "shell360-ssh"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait.workspace = true
+log.workspace = true
+russh = { workspace = true, features = ["flate2", "ring", "rsa"] }
+russh-sftp.workspace = true
+rusocks.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = [
+  "fs",
+  "macros",
+  "net",
+  "rt",
+  "sync",
+  "time",
+] }
+
+[dev-dependencies]
+tempfile = "3.26.0"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

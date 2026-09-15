@@ -1,11 +1,11 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
+import { changeCryptoPassword } from "bridge/data";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Loading, TextFieldPassword } from "shared";
-import { changeCryptoPassword } from "tauri-plugin-data";
-
 import useMessage from "@/hooks/useMessage";
+import styles from "./index.module.less";
 
 interface ChangeCryptoPasswordProps {
   open: boolean;
@@ -58,6 +58,7 @@ export default function ChangeCryptoPassword({
   return (
     <Dialog.Root open={open}>
       <Dialog.Content
+        className={styles.dialog}
         style={{
           paddingTop: "calc(var(--dialog-padding) + env(safe-area-inset-top))",
         }}

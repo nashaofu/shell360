@@ -1,6 +1,5 @@
 import { Button } from "@radix-ui/themes";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { getCurrentWindow } from "bridge/window";
 import { get } from "lodash-es";
 import { useCallback } from "react";
 import styles from "./index.module.less";
@@ -14,13 +13,9 @@ export default function ErrorBoundaryFallback({
   error,
   resetErrorBoundary,
 }: AbnormalProps) {
-  const onReset = useCallback(async () => {
-    const answer = await ask(
+  const onReset = useCallback(() => {
+    const answer = window.confirm(
       "This operation will clear all app configurations, are you sure you want to continue?",
-      {
-        title: "Warning",
-        kind: "warning",
-      },
     );
 
     if (answer) {

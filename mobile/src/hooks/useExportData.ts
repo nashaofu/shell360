@@ -1,6 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { destroyDialogPath, save } from "bridge/dialog";
+import { writeTextFile } from "bridge/fs";
 import { useCallback } from "react";
 import { useHosts, useKeys, usePortForwardings } from "shared";
 
@@ -20,7 +19,7 @@ export default function useExportData() {
       defaultPath: "shell360.json",
     });
 
-    invoke("plugin:dialog|destroy_path", { path: path });
+    await destroyDialogPath(path);
 
     if (!path) {
       return false;

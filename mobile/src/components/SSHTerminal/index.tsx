@@ -1,6 +1,6 @@
-import { useSize } from "ahooks";
+import { clsx } from "clsx";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   KeyboardIcon,
   SSHLoading,
@@ -12,8 +12,7 @@ import {
 } from "shared";
 
 import openUrl from "@/utils/openUrl";
-
-import Sftp from "./Sftp";
+import styles from "./index.module.less";
 
 type SSHTerminalProps = {
   item: TerminalAtom;
@@ -44,10 +43,8 @@ export default function SSHTerminal({
     onTerminalResize,
   } = useTerminal({ item, onClose });
 
-  const footerRef = useRef<HTMLDivElement>(null);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
 
-  const size = useSize(footerRef);
   const terminalSettings = item.host.terminalSettings;
   const hasBlockingState = loading || Boolean(error);
   const showLoadingMask = !terminal || hasBlockingState;
@@ -76,21 +73,15 @@ export default function SSHTerminal({
   }, [showVirtualKeyboard, terminal]);
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", ...style }}>
+    <div className={styles.root} style={style}>
       <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: size?.height || 0,
-          left: 0,
-          overflow: "hidden",
-          pointerEvents: hasBlockingState ? "none" : "unset",
-          visibility: hasBlockingState ? "hidden" : "visible",
-        }}
+        className={clsx(styles.terminal, {
+          [styles.terminalHidden]: hasBlockingState,
+        })}
         data-paste="true"
       >
         <XTerminal
+          className={styles.xterminal}
           fontFamily={terminalSettings?.fontFamily}
           fontSize={terminalSettings?.fontSize}
           theme={TERMINAL_THEMES_MAP.get(terminalSettings?.theme)?.theme}
@@ -106,16 +97,7 @@ export default function SSHTerminal({
           host={currentJumpHostChainItem?.host || item.host}
           loading={currentJumpHostChainItem?.loading}
           error={error}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 10,
-          }}
+          className={styles.loading}
           onReConnect={onReConnect}
           onReAuth={onReAuth}
           onSubmitKeyboardInteractive={onSubmitKeyboardInteractive}
@@ -126,46 +108,16 @@ export default function SSHTerminal({
       )}
 
       {showFooter && (
-        <div
-          ref={footerRef}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            paddingBottom: "env(safe-area-inset-bottom)",
-            borderTop: "1px solid var(--gray-a6)",
-            backgroundColor: "var(--gray-3)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              padding: "2px 8px 1px",
-              gap: 4,
-              fontSize: "0.75rem",
-            }}
-          >
-            {session && <Sftp session={session} />}
-            <div
-              style={{
-                padding: "2px 8px",
-                lineHeight: 0,
-                borderRadius: "var(--radius-2)",
-                border: `1px solid ${showVirtualKeyboard ? "var(--accent-9)" : "var(--gray-a6)"}`,
-                backgroundColor: showVirtualKeyboard
-                  ? "var(--accent-a3)"
-                  : "var(--color-background)",
-                color: showVirtualKeyboard
-                  ? "var(--accent-9)"
-                  : "var(--gray-12)",
-                cursor: "pointer",
-              }}
+        <div className={styles.footer}>
+          <div className={styles.footerToolbar}>
+            <button
+              type="button"
+              className={styles.keyboardToggle}
+              data-active={showVirtualKeyboard}
               onClick={() => setShowVirtualKeyboard((prev) => !prev)}
             >
               <KeyboardIcon />
-            </div>
+            </button>
           </div>
 
           {showVirtualKeyboard && (

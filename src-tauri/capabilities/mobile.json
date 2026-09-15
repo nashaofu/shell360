@@ -39,7 +39,6 @@
     "dialog:allow-save",
     "dialog:allow-ask",
     "store:default",
-    "mobile:default",
     "data:default",
     "ssh:default"
   ]

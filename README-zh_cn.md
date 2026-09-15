@@ -112,7 +112,7 @@ Shell360 采用现代技术构建：
 
 ## 贡献指南
 
-我们欢迎社区贡献！请阅读我们的 [贡献指南](./docs/CONTRIBUTING-zh_cn.md) 了解如何开始。
+我们欢迎社区贡献！请阅读我们的 [贡献指南](./docs/CONTRIBUTING-zh_cn.md) 了解如何开始。平台和架构文档请参阅[文档中心](./docs/README.md)。
 
 ## 许可证
 

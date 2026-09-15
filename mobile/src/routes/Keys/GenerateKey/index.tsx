@@ -1,5 +1,6 @@
 import { Button } from "@radix-ui/themes";
-import { invoke } from "@tauri-apps/api/core";
+import { generateKey } from "bridge/core";
+import { addKey } from "bridge/data";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -8,9 +9,8 @@ import {
   Loading,
   useKeys,
 } from "shared";
-import { addKey } from "tauri-plugin-data";
 
-import PageDrawer from "@/components/PageDrawer";
+import PageDrawer, { PageDrawerActions } from "@/components/PageDrawer";
 
 type GenerateKeyProps = {
   open?: boolean;
@@ -40,10 +40,7 @@ export default function GenerateKey({
     async (values: GenerateKeyFormFields) => {
       setLoading(true);
       try {
-        const { privateKey, publicKey } = await invoke<{
-          privateKey: string;
-          publicKey: string;
-        }>("generate_key", {
+        const { privateKey, publicKey } = await generateKey({
           algorithm: {
             type: values.algorithm,
             bitSize: values.bitSize,
@@ -83,14 +80,8 @@ export default function GenerateKey({
       title="Generate key"
       onCancel={onCancel}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Loading loading={loading} sx={{ width: "48%" }}>
+        <PageDrawerActions>
+          <Loading loading={loading}>
             <Button
               style={{ width: "100%" }}
               variant="outline"
@@ -100,7 +91,7 @@ export default function GenerateKey({
             </Button>
           </Loading>
 
-          <Loading loading={loading} sx={{ width: "48%" }}>
+          <Loading loading={loading}>
             <Button
               style={{ width: "100%" }}
               onClick={formApi.handleSubmit(onGenerate)}
@@ -108,7 +99,7 @@ export default function GenerateKey({
               Generate
             </Button>
           </Loading>
-        </div>
+        </PageDrawerActions>
       }
     >
       <GenerateKeyForm formApi={formApi} />

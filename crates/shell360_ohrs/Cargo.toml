@@ -1,0 +1,20 @@
+[package]
+name = "shell360_ohrs"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[build-dependencies]
+napi-build-ohos = { version = "1.2.0" }
+
+[dependencies]
+napi-ohos = { version = "1.2.0", default-features = false, features = [
+  "napi8",
+  "async",
+] }
+napi-derive-ohos = { version = "1.2.0" }
+shell360-ffi = { path = "../shell360-ffi" }
+serde_json.workspace = true
+log.workspace = true

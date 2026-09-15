@@ -1,8 +1,8 @@
 import { Button, Heading, Spinner, Text } from "@radix-ui/themes";
 import { useRequest } from "ahooks";
+import { loadCryptoByPassword, resetCrypto } from "bridge/data";
 import { type KeyboardEvent, useCallback, useState } from "react";
 import { LockIcon, TextFieldPassword } from "shared";
-import { loadCryptoByPassword, resetCrypto } from "tauri-plugin-data";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
 import styles from "./index.module.less";
@@ -35,18 +35,9 @@ export default function Unlock() {
 
   const { run: onReset, loading: resetLoading } = useRequest(
     async () => {
-      const isContinue = await new Promise((resolve) => {
-        modal.confirm({
-          title: <span>Warning</span>,
-          content:
-            "All application data will be reset soon, whether to continue",
-          onOk: () => {
-            resolve(true);
-          },
-          onCancel: () => {
-            resolve(false);
-          },
-        });
+      const isContinue = await modal.confirm({
+        title: <span>Warning</span>,
+        content: "All application data will be reset soon, whether to continue",
       });
 
       if (!isContinue) {

@@ -23,27 +23,17 @@ tauri-plugin-fs.workspace = true
 tauri-plugin-log.workspace = true
 tauri-plugin-machine-uid.workspace = true
 tauri-plugin-clipboard-manager.workspace = true
-tauri-plugin-ssh = { path = "../tauri-plugin-ssh" }
-tauri-plugin-data = { path = "../tauri-plugin-data" }
+tauri-plugin-ssh = { path = "../crates/tauri-plugin-ssh" }
+tauri-plugin-data = { path = "../crates/tauri-plugin-data" }
+shell360-keygen = { path = "../crates/shell360-keygen" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 log.workspace = true
 thiserror.workspace = true
-ssh-key = { version = "0.6.7", features = [
-  "ed25519",
-  "rsa",
-  "encryption",
-  "p256",
-  "p384",
-  "p521",
-] }
 webbrowser = "1.2.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = { version = "2.10.1", default-features = false, features = [
   "native-tls-vendored",
 ] }
-tauri-plugin-pty = { path = "../tauri-plugin-pty" }
-
-[target.'cfg(any(target_os = "ios", target_os="android"))'.dependencies]
-tauri-plugin-mobile = { path = "../tauri-plugin-mobile" }
+tauri-plugin-pty = { path = "../crates/tauri-plugin-pty" }

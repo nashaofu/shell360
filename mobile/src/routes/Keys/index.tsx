@@ -1,28 +1,66 @@
-import { Button, DropdownMenu } from "@radix-ui/themes";
-import { get } from "lodash-es";
+import { Button, DropdownMenu, IconButton } from "@radix-ui/themes";
+import { addKey, deleteKey, type Key } from "bridge/data";
+import { get, omit } from "lodash-es";
 import { useCallback, useMemo, useState } from "react";
 import {
   AddIcon,
+  ArrowDownIcon,
+  ContentCopyIcon,
   DeleteIcon,
   EditIcon,
+  getAvatarColor,
+  getAvatarLabel,
   KeyIcon,
+  LockIcon,
   MoreIcon,
   useKeys,
 } from "shared";
-import { deleteKey, type Key } from "tauri-plugin-data";
-import { useIsShowPaywallAtom, useIsSubscription } from "@/atoms/iap.atom";
 import AddKey from "@/components/AddKey";
-import AutoRepeatGrid from "@/components/AutoRepeatGrid";
 import Empty from "@/components/Empty";
 import ItemCard from "@/components/ItemCard";
 import Page from "@/components/Page";
+import SearchToolbar from "@/components/SearchToolbar";
 import useMessage from "@/hooks/useMessage";
 import useModal from "@/hooks/useModal";
-
 import GenerateKey from "./GenerateKey";
+import styles from "./index.module.less";
+
+function getKeyTypeLabel(key: Key) {
+  const type = key.publicKey.trim().split(/\s+/)[0] || "";
+  switch (type) {
+    case "ssh-ed25519":
+    case "sk-ssh-ed25519@openssh.com":
+      return "Ed25519";
+    case "ssh-rsa":
+    case "ssh-rsa-cert-v01@openssh.com":
+      return "RSA";
+    case "ecdsa-sha2-nistp256":
+    case "ecdsa-sha2-nistp384":
+    case "ecdsa-sha2-nistp521":
+    case "sk-ecdsa-sha2-nistp256@openssh.com":
+      return "ECDSA";
+    default:
+      return (
+        type
+          .replace(/^ssh-/, "")
+          .replace(/^sk-/, "")
+          .replace(/-cert.*$/, "")
+          .toUpperCase() || "Key"
+      );
+  }
+}
+
+function getKeyPreview(publicKey: string) {
+  const [, value = publicKey] = publicKey.trim().split(/\s+/);
+  if (value.length <= 24) return value;
+  return `${value.slice(0, 12)}...${value.slice(-7)}`;
+}
+
+const TYPE_OPTIONS = ["Ed25519", "RSA", "ECDSA"];
 
 export default function Keys() {
   const [keyword, setKeyword] = useState("");
+  const [selectedType, setSelectedType] = useState<string>();
   const [isOpenAddKey, setIsOpenAddKey] = useState(false);
   const [isOpenGenerateKey, setIsOpenGenerateKey] = useState(false);
   const [editKey, setEditKey] = useState<Key>();
@@ -31,17 +69,22 @@ export default function Keys() {
   const message = useMessage();
   const { data: keys, refresh: refreshKeys } = useKeys();
 
-  const isSubscription = useIsSubscription();
-  const [, setOpen] = useIsShowPaywallAtom();
-
   const items = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
 
-    if (!kw) {
-      return keys;
-    }
-    return keys.filter((item) => item.name.toLowerCase().includes(kw));
-  }, [keys, keyword]);
+    return keys.filter((item) => {
+      if (selectedType && getKeyTypeLabel(item) !== selectedType) {
+        return false;
+      }
+      if (!kw) {
+        return true;
+      }
+      return (
+        item.name.toLowerCase().includes(kw) ||
+        item.publicKey.toLowerCase().includes(kw)
+      );
+    });
+  }, [keys, keyword, selectedType]);
 
   const onAddKeyClose = useCallback(() => {
     setIsOpenAddKey(false);
@@ -49,49 +92,12 @@ export default function Keys() {
   }, []);
 
   const onAddKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
-    if (!isSubscription && keys.length >= 1) {
-      setOpen(true);
-      return;
-    }
     setIsOpenAddKey(true);
-  }, [isSubscription, keys.length, setOpen]);
+  }, []);
 
   const onGenerateKeyButtonClick = useCallback(() => {
-    // 没订阅时，最多只能创�?个key
-    if (!isSubscription && keys.length >= 1) {
-      setOpen(true);
-      return;
-    }
     setIsOpenGenerateKey(true);
-  }, [isSubscription, keys.length, setOpen]);
-
-  const menus = useMemo(
-    () => [
-      {
-        label: "Generate key",
-        value: "Generate key",
-        onClick: () => onGenerateKeyButtonClick(),
-      },
-    ],
-    [onGenerateKeyButtonClick],
-  );
-
-  const headerRightMenus = useMemo(
-    () => [
-      {
-        label: "Add key",
-        value: "Add key",
-        onClick: () => onAddKeyButtonClick(),
-      },
-      {
-        label: "Generate key",
-        value: "Generate key",
-        onClick: () => onGenerateKeyButtonClick(),
-      },
-    ],
-    [onAddKeyButtonClick, onGenerateKeyButtonClick],
-  );
+  }, []);
 
   const onDeleteKey = useCallback(
     (key: Key) => {
@@ -118,146 +124,202 @@ export default function Keys() {
     [message, modal, refreshKeys],
   );
 
+  const onCopyKey = useCallback(
+    async (key: Key) => {
+      try {
+        const newKey = await addKey({
+          ...omit(key, ["id"]),
+          name: `${key.name} Copy`,
+        });
+        await refreshKeys();
+        setEditKey(newKey);
+        setIsOpenAddKey(true);
+      } catch (err) {
+        message.error({
+          message: get(err, "message") || "Copy failed",
+        });
+      }
+    },
+    [message, refreshKeys],
+  );
+
+  const moreActions = useCallback(
+    (key: Key) => (
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <IconButton
+            type="button"
+            size="3"
+            variant="ghost"
+            className={styles.moreAction}
+            aria-label={`More actions for ${key.name}`}
+          >
+            <MoreIcon />
+          </IconButton>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+          <DropdownMenu.Item
+            onSelect={() => {
+              setEditKey(key);
+              setIsOpenAddKey(true);
+            }}
+          >
+            <EditIcon style={{ marginRight: 8 }} />
+            Edit
+          </DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => onCopyKey(key)}>
+            <ContentCopyIcon style={{ marginRight: 8 }} />
+            Duplicate
+          </DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => onDeleteKey(key)}>
+            <DeleteIcon style={{ marginRight: 8 }} />
+            Delete
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    ),
+    [onCopyKey, onDeleteKey],
+  );
+
+  const typeFilterTrigger = (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger>
+        <Button
+          type="button"
+          size="2"
+          variant={selectedType ? "soft" : "surface"}
+          className={styles.filterTrigger}
+        >
+          <KeyIcon aria-hidden="true" />
+          {selectedType ?? "All types"}
+          <ArrowDownIcon aria-hidden="true" />
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
+        <DropdownMenu.Item onSelect={() => setSelectedType(undefined)}>
+          All types
+        </DropdownMenu.Item>
+        {TYPE_OPTIONS.map((type) => (
+          <DropdownMenu.Item key={type} onSelect={() => setSelectedType(type)}>
+            {type}
+          </DropdownMenu.Item>
+        ))}
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  );
+
   return (
     <Page
       title="Keys"
       headerRight={
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <button
+            <IconButton
               type="button"
-              style={{
-                marginLeft: 8,
-                background: "none",
-                border: "none",
-                color: "inherit",
-                cursor: "pointer",
-                padding: 4,
-              }}
+              size="3"
+              variant="ghost"
+              className={styles.headerAction}
+              aria-label="Generate or import key"
             >
-              <MoreIcon />
-            </button>
+              <AddIcon />
+            </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
-            {headerRightMenus.map((item) => (
-              <DropdownMenu.Item
-                key={item.value}
-                onSelect={() => item.onClick?.()}
-              >
-                {item.label}
-              </DropdownMenu.Item>
-            ))}
+            <DropdownMenu.Item onSelect={onGenerateKeyButtonClick}>
+              Generate key
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={onAddKeyButtonClick}>
+              Import key
+            </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       }
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 0",
-        }}
-      >
-        <div style={{ maxWidth: 600, flexGrow: 1 }}>
-          <input
-            className="rt-reset rt-TextFieldInput"
-            value={keyword}
-            style={{
-              width: "100%",
-              paddingLeft: 8,
-              paddingRight: 8,
-              height: 36,
-            }}
-            placeholder="Search..."
-            onChange={(event) => setKeyword(event.target.value)}
-          />
-        </div>
-        <div style={{ marginLeft: 16 }}>
-          <div style={{ display: "flex", gap: 1 }}>
-            <Button onClick={onAddKeyButtonClick}>
-              <AddIcon />
-              Add key
-            </Button>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
-                <Button variant="soft">
-                  <MoreIcon />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="bottom" align="end" sideOffset={4}>
-                {menus.map((item) => (
-                  <DropdownMenu.Item
-                    key={item.value}
-                    onSelect={() => item.onClick?.()}
-                  >
-                    {item.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
+      <SearchToolbar
+        value={keyword}
+        placeholder="Search keys"
+        onChange={setKeyword}
+        activeFilterCount={selectedType ? 1 : 0}
+        filterTrigger={typeFilterTrigger}
+      />
+
+      {items.map((item) => {
+        const avatarBg = getAvatarColor(item.name);
+        return (
+          <div className={styles.listItem} key={item.id}>
+            <ItemCard
+              icon={
+                <span
+                  className={styles.keyAvatar}
+                  style={{
+                    background: `color-mix(in srgb, ${avatarBg} 14%, transparent)`,
+                    color: avatarBg,
+                  }}
+                >
+                  {getAvatarLabel(item.name)}
+                </span>
+              }
+              title={
+                <span className={styles.nameWrap}>
+                  {item.name}
+                  {item.passphrase && (
+                    <LockIcon className={styles.lockIcon} aria-hidden="true" />
+                  )}
+                  {item.certificate && (
+                    <span className={styles.certBadge}>Signed certificate</span>
+                  )}
+                </span>
+              }
+              desc={
+                <span className={styles.monospace}>
+                  SHA256:{getKeyPreview(item.publicKey)}
+                </span>
+              }
+              extra={
+                <span
+                  className={styles.extraWrap}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <span className={styles.typeBadge}>
+                    {getKeyTypeLabel(item)}
+                  </span>
+                  {moreActions(item)}
+                </span>
+              }
+            />
           </div>
-        </div>
-      </div>
-      <AutoRepeatGrid
-        sx={{
-          gap: 2,
-        }}
-        itemWidth={280}
-      >
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            icon={<KeyIcon />}
-            title={item.name}
-            extra={
-              <div onClick={(event) => event.stopPropagation()}>
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger>
-                    <button
-                      type="button"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "inherit",
-                        padding: 4,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <MoreIcon />
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Content
-                    side="bottom"
-                    align="end"
-                    sideOffset={4}
-                  >
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        setEditKey(item);
-                        setIsOpenAddKey(true);
-                      }}
-                    >
-                      <EditIcon style={{ marginRight: 8 }} />
-                      Edit
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onSelect={() => onDeleteKey(item)}>
-                      <DeleteIcon style={{ marginRight: 8 }} />
-                      Delete
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              </div>
-            }
-          />
-        ))}
-      </AutoRepeatGrid>
-      {!items.length && (
+        );
+      })}
+
+      {!keys.length && (
         <Empty desc="There is no key yet, add it now.">
-          <Button onClick={() => setIsOpenAddKey(true)}>Add key</Button>
+          <Button
+            type="button"
+            size="3"
+            className={styles.emptyPrimary}
+            onClick={onAddKeyButtonClick}
+          >
+            <AddIcon />
+            New key
+          </Button>
+        </Empty>
+      )}
+
+      {!!keys.length && !items.length && (
+        <Empty desc="No keys match your search.">
+          <Button
+            type="button"
+            size="3"
+            variant="soft"
+            color="gray"
+            className={styles.emptySecondary}
+            onClick={() => {
+              setKeyword("");
+              setSelectedType(undefined);
+            }}
+          >
+            Clear search
+          </Button>
         </Empty>
       )}
 

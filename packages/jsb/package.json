@@ -1,0 +1,27 @@
+{
+  "name": "jsb",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "tsc": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.4",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

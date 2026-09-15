@@ -132,3 +132,6 @@ dist
 .DS_Store
 
 /target/
+
+# Embedded repo (HarmonyOS CodeGenie) - keep git from recursing/add
+harmonyos/.codegenie/

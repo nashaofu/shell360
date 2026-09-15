@@ -1,9 +1,9 @@
 import { useMemoizedFn, useRequest, useUnmount } from "ahooks";
+import { PtyShell } from "bridge/pty";
 import { Buffer } from "buffer";
 import { useRef, useState } from "react";
 import type { Terminal, TerminalSize } from "shared";
 import { oscParse, xtermBinaryToBytes } from "shared";
-import { PtyShell } from "tauri-plugin-pty";
 
 export interface UseLocalShellOpts {
   onClose?: () => void;
