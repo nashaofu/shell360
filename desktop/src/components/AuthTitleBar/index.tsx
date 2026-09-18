@@ -7,8 +7,8 @@ import {
   WindowMaximizeIcon,
   WindowMinimizeIcon,
   WindowRestoreIcon,
+  LogoIcon,
 } from "shared";
-import logo from "@/assets/logo.svg";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import styles from "./index.module.less";
 
@@ -41,7 +41,7 @@ export default function AuthTitleBar() {
     >
       {!isMacos && (
         <div className={styles.brand}>
-          <img src={logo} alt="Shell360" className={styles.logoImg} />
+          <LogoIcon aria-hidden="true" className={styles.logoImg} />
           <span className={styles.appName}>Shell360</span>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import { useCallback, useEffect, useMemo } from "react";
 
-import { useTerminalsAtomValue, WorkspaceIcon } from "shared";
+import { LogoIcon, useTerminalsAtomValue, WorkspaceIcon } from "shared";
 import { useGlobalStateAtomWithApi } from "@/atoms/globalState.atom";
 import {
   useSetTerminalViewVisible,
@@ -11,7 +11,6 @@ import ThemedPortal from "@/components/ThemedPortal";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import overlay from "@/utils/overlay";
 import styles from "./index.module.less";
-import logo from "./logo.svg";
 import Menus from "./Menus";
 
 const TABLET_MEDIA_QUERY = "(min-width: 840px)";
@@ -72,7 +71,7 @@ export default function Sidebar() {
     >
       <div className={styles.header}>
         <div className={styles.logoWrap}>
-          <img className={styles.logo} src={logo} alt="" />
+          <LogoIcon className={styles.logo} aria-hidden="true" />
           <span className={styles.logoText}>Shell360</span>
         </div>
       </div>

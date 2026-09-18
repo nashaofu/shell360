@@ -10,8 +10,8 @@ import {
   WindowMinimizeIcon,
   WindowRestoreIcon,
   WorkspaceIcon,
+  LogoIcon,
 } from "shared";
-import logo from "@/assets/logo.svg";
 import { useTerminalViewVisible } from "@/atoms/terminalView.atom";
 import { useUpdateAtom } from "@/atoms/update.atom";
 import QuickSearch from "@/components/QuickSearch";
@@ -63,7 +63,7 @@ export default function TitleBar() {
       <div className={styles.leftRail}>
         {!isMacos && (
           <div className={styles.brand}>
-            <img src={logo} alt="Shell360" className={styles.logoImg} />
+            <LogoIcon aria-hidden="true" className={styles.logoImg} />
             <span className={styles.appName}>Shell360</span>
           </div>
         )}

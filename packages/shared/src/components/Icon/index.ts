@@ -19,6 +19,7 @@ export { ReactComponent as FolderIcon } from "./svgs/folder.svg";
 export { ReactComponent as GridIcon } from "./svgs/grid.svg";
 export { ReactComponent as HostIcon } from "./svgs/host.svg";
 export { ReactComponent as JumpIcon } from "./svgs/jump.svg";
+export { ReactComponent as LogoIcon } from "../../assets/logo.svg";
 export { ReactComponent as KeyIcon } from "./svgs/key.svg";
 export { ReactComponent as KeyboardIcon } from "./svgs/keyboard.svg";
 export { ReactComponent as LabelIcon } from "./svgs/label.svg";
