@@ -566,6 +566,7 @@ impl Shell360Runtime {
             &request.username,
             AuthenticationData::KeyboardInteractive {
               prompts: request.prompts,
+              password: request.password,
             },
           )
           .await

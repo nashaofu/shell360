@@ -89,6 +89,7 @@ pub enum AuthenticationData {
   },
   KeyboardInteractive {
     prompts: Option<Vec<String>>,
+    password: Option<String>,
   },
   Agent,
 }
@@ -457,8 +458,8 @@ impl SshService {
         .await??;
         auth_result("Certificate", result, None)?
       }
-      AuthenticationData::KeyboardInteractive { prompts } => {
-        authenticate_keyboard_interactive(&mut handle, username, None, prompts).await?;
+      AuthenticationData::KeyboardInteractive { prompts, password } => {
+        authenticate_keyboard_interactive(&mut handle, username, password, prompts).await?;
         NextAuthStep::Done
       }
       AuthenticationData::Agent => return Err(SshError::AgentUnsupported),

@@ -14,12 +14,12 @@ import org.json.JSONObject
 import org.json.JSONTokener
 
 class PlatformHostServices(
-    private val context: Context,
-    private val fileBridge: AndroidFileBridge?,
-    private val closeWindow: () -> Unit,
-    private val backToBackground: () -> Unit,
-    private val resetApplication: () -> Unit,
-    private val setSystemBarsAppearance: (Boolean) -> Unit,
+    private var context: Context,
+    private var fileBridge: AndroidFileBridge?,
+    private var closeWindow: () -> Unit,
+    private var backToBackground: () -> Unit,
+    private var resetApplication: () -> Unit,
+    private var setSystemBarsAppearance: (Boolean) -> Unit,
 ) : HostServices {
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -32,6 +32,15 @@ class PlatformHostServices(
 
     fun detachCompletion() {
         completion = null
+    }
+
+    fun adopt(bindings: PlatformHostServices) {
+        context = bindings.context
+        fileBridge = bindings.fileBridge
+        closeWindow = bindings.closeWindow
+        backToBackground = bindings.backToBackground
+        resetApplication = bindings.resetApplication
+        setSystemBarsAppearance = bindings.setSystemBarsAppearance
     }
 
     override fun onHostCall(callId: String, primitive: String, paramsJson: String) {

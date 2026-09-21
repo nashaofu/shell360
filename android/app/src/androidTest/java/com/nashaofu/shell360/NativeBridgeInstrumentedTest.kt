@@ -6,6 +6,8 @@ import com.nashaofu.shell360.bridge.PlatformHostServices
 import com.nashaofu.shell360.bridge.RustBridge
 import com.nashaofu.shell360.ffi.JsbTransport
 import com.nashaofu.shell360.ffi.NativeJsb
+import com.nashaofu.shell360.nativeui.NativeSshFailure
+import com.nashaofu.shell360.nativeui.result
 import java.util.Collections
 import java.util.UUID
 import org.json.JSONObject
@@ -70,6 +72,24 @@ class NativeBridgeInstrumentedTest {
 
         assertFalse(response.has("error"))
         assertTrue(response.get("data") is String)
+    }
+
+    @Test
+    fun sshErrorResponsePreservesStructuredFailure() {
+        val result = JSONObject()
+            .put(
+                "error",
+                JSONObject()
+                    .put("code", "SSH_AUTH_FAILED")
+                    .put("message", "Authentication failed")
+                    .put("details", JSONObject().put("attempts", 3)),
+            )
+            .result()
+
+        val failure = result.exceptionOrNull() as NativeSshFailure
+        assertEquals("SSH_AUTH_FAILED", failure.code)
+        assertEquals("Authentication failed", failure.message)
+        assertEquals(3, failure.details?.getInt("attempts"))
     }
 
     private fun createHarness(): JsbHarness {

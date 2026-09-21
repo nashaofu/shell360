@@ -9,6 +9,7 @@ composeBom = "2026.06.01"
 jna = "5.19.1"
 webkit = "1.16.0"
 appcompat = "1.7.1"
+lifecycle = "2.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -21,6 +22,7 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

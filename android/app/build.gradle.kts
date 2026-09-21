@@ -7,17 +7,6 @@ plugins {
     id("shell360.android.native-build")
 }
 
-val debugWebViewHost = providers
-    .gradleProperty("devServerHost")
-    .orElse("127.0.0.1")
-    .get()
-val debugWebViewPort = providers
-    .gradleProperty("devServerPort")
-    .orElse("1421")
-    .get()
-val debugWebViewUrl = "http://$debugWebViewHost:$debugWebViewPort"
-
-val releaseWebViewOrigin = "https://appassets.androidplatform.net"
 val signingStoreFile = providers
     .environmentVariable("SIGNING_STORE_FILE")
     .orNull
@@ -33,9 +22,15 @@ val tauriConfigJson = JsonSlurper().parse(tauriConfig) as? Map<*, *>
     ?: error("Invalid JSON in ${tauriConfig.path}")
 val tauriVersion = tauriConfigJson["version"] as? String
     ?: error("Unable to read version from ${tauriConfig.path}")
-val androidVersionCode = (System.currentTimeMillis() / 60_000L)
-    .also { require(it in 1..2_100_000_000L) { "Invalid calculated version code: $it" } }
-    .toInt()
+val androidVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
+    .orElse(providers.gradleProperty("androidVersionCode"))
+    .map { value ->
+        value.toIntOrNull()?.also { require(it in 1..2_100_000_000) {
+            "ANDROID_VERSION_CODE must be between 1 and 2100000000"
+        } } ?: error("ANDROID_VERSION_CODE must be an integer")
+    }
+    .orElse(1)
+    .get()
 
 fun String.asBuildConfigString() = "\"$this\""
 
@@ -58,7 +53,7 @@ android {
     defaultConfig {
         applicationId = "com.nashaofu.shell360"
         minSdk = shell360NativeBuild.androidApiLevel.get()
-        targetSdk = 36
+        targetSdk = 37
         versionCode = androidVersionCode
         versionName = tauriVersion
 
@@ -74,21 +69,11 @@ android {
     }
     buildTypes {
         debug {
-            buildConfigField("String", "WEBVIEW_URL", debugWebViewUrl.asBuildConfigString())
-            buildConfigField("String", "WEBVIEW_ORIGIN", debugWebViewUrl.asBuildConfigString())
         }
         release {
-            buildConfigField(
-                "String",
-                "WEBVIEW_URL",
-                "$releaseWebViewOrigin/index.html".asBuildConfigString(),
-            )
-            buildConfigField(
-                "String",
-                "WEBVIEW_ORIGIN",
-                releaseWebViewOrigin.asBuildConfigString(),
-            )
-            signingConfig = signingConfigs.getByName("release")
+            if (signingStoreFile != null && signingStorePassword != null && signingKeyPassword != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 enable = true
             }
@@ -124,7 +109,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.webkit)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(project(":terminal-view"))
     implementation(libs.jna) {
         artifact {
             type = "aar"
