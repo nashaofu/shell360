@@ -7,10 +7,9 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-/captures
 .DS_Store
-build
+/build
+/captures
 .externalNativeBuild
 .cxx
 local.properties
-.kotlin
