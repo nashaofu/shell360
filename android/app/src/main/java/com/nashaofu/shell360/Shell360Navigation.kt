@@ -1,30 +1,19 @@
 package com.nashaofu.shell360
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountTree
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Router
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalDrawerSheet
@@ -38,52 +27,41 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
-import com.nashaofu.shell360.feature.hosts.HostsScreen
-
-private enum class Route(val title: String) {
-    Workspace("Workspace"),
-    Hosts("Hosts"),
-    PortForwardings("Port Forwardings"),
-    Keys("Keys"),
-    KnownHosts("Known Hosts"),
-    Settings("Settings"),
-}
-
-private val Route.description: String
-    get() = when (this) {
-        Route.Workspace -> "Your active SSH and SFTP sessions appear here."
-        Route.Hosts -> "Connect to your saved SSH hosts from one place."
-        Route.PortForwardings -> "Create and manage secure local and remote tunnels."
-        Route.Keys -> "Keep the keys used to authenticate your connections."
-        Route.KnownHosts -> "Review trusted host fingerprints and identities."
-        Route.Settings -> "Tune Shell360 to match the way you work."
-    }
-
-private fun Route.icon() = when (this) {
-    Route.Workspace -> Icons.Filled.Terminal
-    Route.Hosts -> Icons.Filled.Router
-    Route.PortForwardings -> Icons.Filled.AccountTree
-    Route.Keys -> Icons.Filled.Key
-    Route.KnownHosts -> Icons.Filled.VerifiedUser
-    Route.Settings -> Icons.Filled.Settings
-}
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.nashaofu.shell360.app.navigation.TopLevelDestination
+import com.nashaofu.shell360.app.navigation.Shell360NavHost
+import com.nashaofu.shell360.app.navigation.description
+import com.nashaofu.shell360.app.navigation.icon
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun Shell360Navigation() {
-    var currentRoute by remember { mutableStateOf(Route.Hosts) }
-    val hasOpenSessions = false
+    val navController = rememberNavController()
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        ?: TopLevelDestination.Hosts.route
+    val navigateToTopLevel: (TopLevelDestination) -> Unit = { destination ->
+        navController.navigate(destination.route) {
+            popUpTo(TopLevelDestination.Hosts.route) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val menuScrollState = rememberScrollState()
+
+    BackHandler(enabled = drawerState.isOpen) {
+        scope.launch { drawerState.close() }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -130,11 +108,10 @@ fun Shell360Navigation() {
                             modifier = Modifier.padding(horizontal = 28.dp),
                         )
                         DrawerRouteItem(
-                            destination = Route.Workspace,
-                            selected = currentRoute == Route.Workspace,
-                            enabled = hasOpenSessions,
+                            destination = TopLevelDestination.Workspace,
+                            selected = currentRoute == TopLevelDestination.Workspace.route,
                             onClick = {
-                                currentRoute = Route.Workspace
+                                navigateToTopLevel(TopLevelDestination.Workspace)
                                 scope.launch { drawerState.close() }
                             },
                         )
@@ -151,14 +128,14 @@ fun Shell360Navigation() {
                                 color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 6.dp),
                             )
-                            Route.entries
-                                .filter { it != Route.Workspace && it != Route.Settings }
+                            TopLevelDestination.entries
+                                .filter { it != TopLevelDestination.Workspace && it != TopLevelDestination.Settings }
                                 .forEach { destination ->
                                     DrawerRouteItem(
                                         destination = destination,
-                                        selected = destination == currentRoute,
+                                        selected = destination.route == currentRoute,
                                         onClick = {
-                                            currentRoute = destination
+                                            navigateToTopLevel(destination)
                                             scope.launch { drawerState.close() }
                                         },
                                     )
@@ -167,10 +144,10 @@ fun Shell360Navigation() {
                     }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
                     DrawerRouteItem(
-                        destination = Route.Settings,
-                        selected = currentRoute == Route.Settings,
+                        destination = TopLevelDestination.Settings,
+                        selected = currentRoute == TopLevelDestination.Settings.route,
                         onClick = {
-                            currentRoute = Route.Settings
+                            navigateToTopLevel(TopLevelDestination.Settings)
                             scope.launch { drawerState.close() }
                         },
                     )
@@ -179,19 +156,12 @@ fun Shell360Navigation() {
         },
     ) {
         Scaffold(
-            topBar = {
-                if (currentRoute != Route.Hosts) {
-                    PageHeader(
-                        route = currentRoute,
-                        onOpenNavigation = { scope.launch { drawerState.open() } },
-                    )
-                }
-            },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerLowest,
         ) { contentPadding ->
-            RouteScreen(
+            Shell360NavHost(
                 modifier = Modifier.padding(contentPadding),
-                route = currentRoute,
+                navController = navController,
                 onOpenNavigation = { scope.launch { drawerState.open() } },
             )
         }
@@ -199,42 +169,8 @@ fun Shell360Navigation() {
 }
 
 @Composable
-private fun PageHeader(
-    route: Route,
-    onOpenNavigation: () -> Unit,
-) {
-    Surface(
-        color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp,
-        shadowElevation = 2.dp,
-    ) {
-        Column(modifier = Modifier.statusBarsPadding()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 64.dp)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onOpenNavigation) {
-                    Icon(
-                        imageVector = Icons.Filled.Menu,
-                        contentDescription = "Open navigation menu",
-                    )
-                }
-                Text(
-                    text = route.title,
-                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun DrawerRouteItem(
-    destination: Route,
+    destination: TopLevelDestination,
     selected: Boolean,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -243,7 +179,7 @@ private fun DrawerRouteItem(
         icon = {
             Icon(
                 imageVector = destination.icon(),
-                contentDescription = null,
+                contentDescription = destination.title,
             )
         },
         label = { Text(destination.title) },
@@ -253,65 +189,4 @@ private fun DrawerRouteItem(
             .padding(horizontal = 12.dp)
             .alpha(if (enabled) 1f else 0.45f),
     )
-}
-
-@Composable
-private fun RouteScreen(
-    route: Route,
-    modifier: Modifier = Modifier,
-    onOpenNavigation: () -> Unit,
-) {
-    if (route == Route.Hosts) {
-        HostsScreen(onOpenNavigation = onOpenNavigation)
-        return
-    }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-    ) {
-        Text(
-            text = "${route.title.uppercase()} / OVERVIEW",
-            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-        )
-        Surface(
-            modifier = Modifier.size(80.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "•",
-                    style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = route.title,
-                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-            )
-            Text(
-                text = "Ready when you are",
-                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        }
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-        ) {
-            Text(
-                text = route.description,
-                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-            )
-        }
-    }
 }

@@ -7,13 +7,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.nashaofu.shell360.ui.theme.Shell360Theme
+import com.nashaofu.shell360.ui.theme.ThemePreferences
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Shell360Theme {
+            val themeMode = ThemePreferences.mode
+            Shell360Theme(themeMode = themeMode) {
                 Shell360Navigation()
             }
         }
@@ -23,7 +25,7 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun Shell360NavigationPreview() {
-    Shell360Theme {
+    Shell360Theme(themeMode = ThemePreferences.mode) {
         Shell360Navigation()
     }
 }

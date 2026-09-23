@@ -13,16 +13,8 @@ data class HostItem(
     val tags: List<String> = emptyList(),
 )
 
-data class HostsUiState(
-    val hosts: List<HostItem> = emptyList(),
-    val query: String = "",
-    val selectedTag: String? = null,
-    val editorHost: HostItem? = null,
-    val isEditorOpen: Boolean = false,
-)
-
 class HostsViewModel {
-    var uiState by mutableStateOf(HostsUiState())
+    var uiState: HostsUiState by mutableStateOf(HostsUiState())
         private set
 
     val visibleHosts: List<HostItem>
@@ -44,30 +36,38 @@ class HostsViewModel {
     val tags: List<String>
         get() = uiState.hosts.flatMap { it.tags }.distinct().sorted()
 
-    fun setQuery(query: String) {
-        uiState = uiState.copy(query = query)
+    fun onAction(action: HostsAction) {
+        uiState = when (action) {
+            is HostsAction.QueryChanged -> uiState.copy(query = action.value)
+            is HostsAction.TagSelected -> uiState.copy(selectedTag = action.value)
+            HostsAction.AddClicked -> uiState.copy(editorHost = null, isEditorOpen = true)
+            is HostsAction.EditClicked -> uiState.copy(editorHost = action.host, isEditorOpen = true)
+            is HostsAction.DuplicateClicked -> uiState.copy(
+                editorHost = action.host.copy(id = "", name = "${action.host.name} Copy"),
+                isEditorOpen = true,
+            )
+            is HostsAction.DeleteClicked -> uiState.copy(deleteTarget = action.host)
+            HostsAction.DeleteDismissed -> uiState.copy(deleteTarget = null)
+            HostsAction.DeleteConfirmed -> uiState.deleteTarget?.let {
+                uiState.copy(
+                    deleteTarget = null,
+                    feedbackMessage = "Hosts storage is not connected on Android yet.",
+                )
+            } ?: uiState
+            HostsAction.EditorDismissed -> uiState.copy(editorHost = null, isEditorOpen = false)
+            is HostsAction.HostSaved -> {
+                uiState.copy(
+                    editorHost = null,
+                    isEditorOpen = false,
+                    feedbackMessage = "Hosts storage is not connected on Android yet.",
+                )
+            }
+            HostsAction.ClearFiltersClicked -> uiState.copy(query = "", selectedTag = null)
+            is HostsAction.ConnectionRequested -> uiState.copy(feedbackMessage = "${action.protocol} runtime is not connected on Android yet.")
+        }
     }
 
-    fun setSelectedTag(tag: String?) {
-        uiState = uiState.copy(selectedTag = tag)
-    }
-
-    fun openEditor(host: HostItem? = null) {
-        uiState = uiState.copy(editorHost = host, isEditorOpen = true)
-    }
-
-    fun closeEditor() {
-        uiState = uiState.copy(editorHost = null, isEditorOpen = false)
-    }
-
-    fun saveHost(host: HostItem) {
-        val updated = uiState.hosts.toMutableList()
-        val index = updated.indexOfFirst { it.id == host.id }
-        if (index >= 0) updated[index] = host else updated.add(host)
-        uiState = uiState.copy(hosts = updated, editorHost = null, isEditorOpen = false)
-    }
-
-    fun deleteHost(host: HostItem) {
-        uiState = uiState.copy(hosts = uiState.hosts.filterNot { it.id == host.id })
+    fun dismissFeedback() {
+        uiState = uiState.copy(feedbackMessage = null)
     }
 }
