@@ -4,14 +4,17 @@ import com.nashaofu.shell360.ui.theme.ThemeMode
 
 sealed interface SettingsAction {
     data class ThemeSelected(val value: ThemeMode) : SettingsAction
-    data object ExportClicked : SettingsAction
-    data object ImportClicked : SettingsAction
-    data object CryptoToggleClicked : SettingsAction
-    data object ResetClicked : SettingsAction
-    data object ConfirmImport : SettingsAction
-    data object ConfirmReset : SettingsAction
-    data object PrivacyPolicyClicked : SettingsAction
-    data object AboutClicked : SettingsAction
-    data object DialogDismissed : SettingsAction
+    data object ExportRequested : SettingsAction
+    data object ImportRequested : SettingsAction
+    data class CryptoEnableChanged(val value: Boolean) : SettingsAction
+    data object InitCryptoDismissed : SettingsAction
+    data class InitCryptoSubmitted(val password: String) : SettingsAction
+    data object ChangePasswordDismissed : SettingsAction
+    data class ChangePasswordSubmitted(
+        val oldPassword: String,
+        val newPassword: String,
+    ) : SettingsAction
+
+    data class Feedback(val message: String) : SettingsAction
     data object FeedbackDismissed : SettingsAction
 }

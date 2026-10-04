@@ -1,57 +1,35 @@
 package com.nashaofu.shell360.feature.hosts
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.UploadFile
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,241 +37,379 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
+import com.nashaofu.shell360.core.data.HostModel
+import com.nashaofu.shell360.core.data.SessionKind
+import com.nashaofu.shell360.core.data.SessionModel
+import com.nashaofu.shell360.core.data.SessionStatus
+import com.nashaofu.shell360.core.data.Shell360Store
+import com.nashaofu.shell360.ui.components.AppAccentButton
+import com.nashaofu.shell360.ui.components.AppDialog
+import com.nashaofu.shell360.ui.components.AppButton
+import com.nashaofu.shell360.ui.components.AppPageContent
+import com.nashaofu.shell360.ui.components.AppCard
+import com.nashaofu.shell360.ui.components.AppErrorText
+import com.nashaofu.shell360.ui.components.AppIconTile
+import com.nashaofu.shell360.ui.components.AppOutlinedButton
+import com.nashaofu.shell360.ui.components.AppSnackbarHost
+import com.nashaofu.shell360.ui.components.AppSoftButton
+import com.nashaofu.shell360.ui.components.AppStatusDot
+import com.nashaofu.shell360.ui.components.AppTag
+import com.nashaofu.shell360.ui.components.AppTextButton
+import com.nashaofu.shell360.ui.components.AppTopBar
+import com.nashaofu.shell360.ui.components.EmptyState
+import com.nashaofu.shell360.ui.components.FeedbackEffect
+import com.nashaofu.shell360.ui.components.FilterButton
+import com.nashaofu.shell360.ui.components.SearchToolbar
+import com.nashaofu.shell360.ui.components.rememberFeedbackHost
+import com.nashaofu.shell360.ui.theme.AppSizes
+import com.nashaofu.shell360.ui.theme.AppTheme
+import com.nashaofu.shell360.ui.theme.AppType
+import com.nashaofu.shell360.ui.theme.AppSpacing
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun HostsScreen(
     viewModel: HostsViewModel = remember { HostsViewModel() },
-    onOpenSsh: ((HostItem) -> Unit)? = null,
-    onOpenSftp: ((HostItem) -> Unit)? = null,
     onOpenNavigation: () -> Unit = {},
+    onOpenSession: (String) -> Unit = {},
+    onAddHost: () -> Unit = {},
+    onEditHost: (String) -> Unit = {},
 ) {
     val state = viewModel.uiState
-    if (state.isEditorOpen) {
-        HostEditorPage(
-            host = state.editorHost,
-            onDismiss = { viewModel.onAction(HostsAction.EditorDismissed) },
-            onSave = { viewModel.onAction(HostsAction.HostSaved(it)) },
-        )
-        return
+    val hosts = Shell360Store.hosts
+    val sessions = Shell360Store.sessions
+    val snackbarHostState = rememberFeedbackHost()
+
+    FeedbackEffect(state.feedbackMessage, snackbarHostState) {
+        viewModel.onAction(HostsAction.FeedbackDismissed)
     }
+
+    val visibleHosts = filterHosts(hosts, state.query, state.selectedTag)
+    val tags = collectTags(hosts)
+
+    fun openSession(host: HostModel, kind: SessionKind) {
+        val session = Shell360Store.openSession(host, kind)
+        onOpenSession(session.id)
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = onOpenNavigation) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open navigation menu")
-                    }
-                },
-                title = {
-                    Text("Hosts", fontWeight = FontWeight.SemiBold)
-                },
+            AppTopBar(
+                title = "Hosts",
+                onOpenNavigation = onOpenNavigation,
                 actions = {
-                    IconButton(onClick = { viewModel.onAction(HostsAction.AddClicked) }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add host")
-                    }
-                },
-            )
-        },
-        snackbarHost = {
-            state.feedbackMessage?.let { message ->
-                Snackbar(action = { TextButton(onClick = viewModel::dismissFeedback) { Text("Dismiss") } }) {
-                    Text(message)
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-            Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            ) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = { viewModel.onAction(HostsAction.QueryChanged(it)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search hosts") },
-                trailingIcon = if (state.query.isNotEmpty()) {
-                    { IconButton(onClick = { viewModel.onAction(HostsAction.QueryChanged("")) }) { Icon(Icons.Default.Close, "Clear search") } }
-                } else null,
-                placeholder = { Text("Search by name, host, or tag") },
-            )
-            if (viewModel.tags.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = state.selectedTag == null,
-                        onClick = { viewModel.onAction(HostsAction.TagSelected(null)) },
-                        label = { Text("All") },
-                    )
-                    viewModel.tags.forEach { tag ->
-                        FilterChip(
-                            selected = state.selectedTag == tag,
-                            onClick = { viewModel.onAction(HostsAction.TagSelected(if (state.selectedTag == tag) null else tag)) },
-                            label = { Text(tag) },
+                    IconButton(
+                        onClick = onAddHost,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "New Host",
+                            tint = AppTheme.colors.textPrimary,
                         )
                     }
-                }
-            }
-            if (state.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (viewModel.visibleHosts.isEmpty()) {
-                HostsEmptyState(
-                    hasHosts = state.hosts.isNotEmpty(),
-                    onAdd = { viewModel.onAction(HostsAction.AddClicked) },
-                    onClear = { viewModel.onAction(HostsAction.ClearFiltersClicked) },
+                },
+            )
+        },
+        snackbarHost = { AppSnackbarHost(snackbarHostState) },
+        containerColor = AppTheme.colors.bgPage,
+    ) { padding ->
+        AppPageContent(modifier = Modifier.padding(padding)) {
+            Spacer(Modifier.height(AppSpacing.sm))
+            SearchToolbar(
+                value = state.query,
+                placeholder = "Search hosts",
+                onValueChange = { viewModel.onAction(HostsAction.QueryChanged(it)) },
+                trailing = {
+                    TagFilterButton(
+                        selected = state.selectedTag,
+                        tags = tags,
+                        onSelect = { viewModel.onAction(HostsAction.TagSelected(it)) },
+                    )
+                },
+            )
+            Spacer(Modifier.height(AppSpacing.lg))
+
+            when {
+                hosts.isEmpty() -> EmptyState(
+                    modifier = Modifier.weight(1f),
+                    desc = "There is no host yet, add it now.",
+                    action = {
+                        AppButton(onClick = onAddHost) {
+                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(AppSizes.buttonIcon))
+                            Spacer(Modifier.width(AppSpacing.sm))
+                            Text("New Host", style = AppType.buttonLabel)
+                        }
+                    },
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 96.dp),
+
+                visibleHosts.isEmpty() -> EmptyState(
+                    modifier = Modifier.weight(1f),
+                    title = "No hosts match your search.",
+                    desc = "Try another search or clear your filters.",
+                    icon = Icons.Filled.Dns,
+                    action = {
+                        AppSoftButton(onClick = { viewModel.onAction(HostsAction.ClearFiltersClicked) }) {
+                            Text("Clear search", style = AppType.buttonLabel)
+                        }
+                    },
+                )
+
+                else -> LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
+                    contentPadding = PaddingValues(bottom = AppSpacing.xl),
                 ) {
-                    items(viewModel.visibleHosts, key = { it.id }) { host ->
-                        HostCard(
+                    items(visibleHosts, key = { it.id }) { host ->
+                        HostCardItem(
                             host = host,
-                            onEdit = { viewModel.onAction(HostsAction.EditClicked(host)) },
+                            sessions = sessions,
+                            onEdit = { onEditHost(host.id) },
                             onDuplicate = { viewModel.onAction(HostsAction.DuplicateClicked(host)) },
                             onDelete = { viewModel.onAction(HostsAction.DeleteClicked(host)) },
-                            onOpenSsh = { onOpenSsh?.invoke(host) ?: viewModel.onAction(HostsAction.ConnectionRequested("SSH")) },
-                            onOpenSftp = { onOpenSftp?.invoke(host) ?: viewModel.onAction(HostsAction.ConnectionRequested("SFTP")) },
+                            onOpen = { kind -> openSession(host, kind) },
+                            onRetry = { kind ->
+                                sessions
+                                    .lastOrNull { it.hostId == host.id && it.kind == kind }
+                                    ?.let { Shell360Store.closeSession(it.id) }
+                                openSession(host, kind)
+                            },
                         )
                     }
                 }
             }
         }
     }
+
     state.deleteTarget?.let { host ->
-        AlertDialog(
-            onDismissRequest = { viewModel.onAction(HostsAction.DeleteDismissed) },
-            title = { Text("Delete host?") },
-            text = { Text("Remove ${host.name} from the saved hosts list?") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.onAction(HostsAction.DeleteConfirmed) }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.onAction(HostsAction.DeleteDismissed) }) { Text("Cancel") }
+        AppDialog(
+            open = true,
+            title = "Delete Confirmation",
+            message = "Are you sure to delete the host: ${host.title}?",
+            onDismiss = { viewModel.onAction(HostsAction.DeleteDismissed) },
+            actions = {
+                AppTextButton(
+                    onClick = { viewModel.onAction(HostsAction.DeleteConfirmed) },
+                    danger = true,
+                ) { Text("Delete", style = AppType.buttonLabel) }
+                AppTextButton(onClick = { viewModel.onAction(HostsAction.DeleteDismissed) }) {
+                    Text("Cancel", style = AppType.buttonLabel)
+                }
             },
         )
     }
+
 }
 
 @Composable
-private fun HostsEmptyState(hasHosts: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(bottom = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(72.dp)) {
-            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Terminal, "Terminal session", modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary) }
+private fun TagFilterButton(
+    selected: String?,
+    tags: List<String>,
+    onSelect: (String?) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        FilterButton(
+            label = selected ?: "All",
+            active = selected != null,
+            onClick = { expanded = true },
+            leadingIcon = Icons.AutoMirrored.Filled.Label,
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            FilterMenuItem("All", selected == null) {
+                expanded = false
+                onSelect(null)
+            }
+            tags.forEach { tag ->
+                FilterMenuItem(tag, selected == tag) {
+                    expanded = false
+                    onSelect(tag)
+                }
+            }
         }
-        Spacer(Modifier.height(18.dp))
-        Text(if (hasHosts) "No matching hosts" else "No hosts yet", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        Text(
-            if (hasHosts) "Try another search or clear your filters." else "Add a host to start an SSH or SFTP session.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Spacer(Modifier.height(20.dp))
-        if (hasHosts) OutlinedButton(onClick = onClear) { Text("Clear filters") } else Button(onClick = onAdd) { Icon(Icons.Default.Add, "Add host"); Spacer(Modifier.width(8.dp)); Text("Add host") }
     }
 }
 
 @Composable
-private fun HostCard(host: HostItem, onEdit: () -> Unit, onDuplicate: () -> Unit, onDelete: () -> Unit, onOpenSsh: () -> Unit, onOpenSftp: () -> Unit) {
+private fun FilterMenuItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(label, style = AppType.body, color = AppTheme.colors.textPrimary) },
+        onClick = onClick,
+        trailingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = AppTheme.colors.accent,
+                    modifier = Modifier.size(AppSizes.buttonIcon),
+                )
+            }
+        } else {
+            null
+        },
+    )
+}
+
+@Composable
+private fun HostCardItem(
+    host: HostModel,
+    sessions: List<SessionModel>,
+    onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
+    onOpen: (SessionKind) -> Unit,
+    onRetry: (SessionKind) -> Unit,
+) {
     var menuOpen by remember { mutableStateOf(false) }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(18.dp)) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                    Text(host.name.take(1).uppercase(), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+    val colors = AppTheme.colors
+
+    val sshSession = sessions.lastOrNull { it.hostId == host.id && it.kind == SessionKind.Terminal }
+    val sftpSession = sessions.lastOrNull { it.hostId == host.id && it.kind == SessionKind.Sftp }
+    val sshPending = sshSession?.status == SessionStatus.Pending
+    val sftpPending = sftpSession?.status == SessionStatus.Pending
+    val sshFailed = sshSession?.status == SessionStatus.Failed
+    val sftpFailed = sftpSession?.status == SessionStatus.Failed
+
+    val sshLabel = when {
+        sshPending -> "Connecting…"
+        sshFailed -> "Failed"
+        else -> "SSH"
+    }
+    val sftpLabel = when {
+        sftpPending -> "Connecting…"
+        sftpFailed -> "Failed"
+        else -> "SFTP"
+    }
+    val errorMessage = (sshSession?.takeIf { sshFailed }?.error ?: sftpSession?.takeIf { sftpFailed }?.error)
+        ?: if (sshFailed || sftpFailed) "Connection failed" else null
+
+    val dotColor = when {
+        sshFailed || sftpFailed -> colors.statusError
+        sshPending || sftpPending -> colors.statusWarning
+        sshSession != null || sftpSession != null -> colors.accent
+        else -> colors.statusOffline
+    }
+
+    AppCard() {
+        Column(
+            modifier = Modifier.padding(AppSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
+        ) {
+            Row(verticalAlignment = Alignment.Top) {
+                AppIconTile {
+                    Text(
+                        text = host.title.take(1).uppercase(),
+                        style = AppType.cardTitle,
+                        color = colors.accentText,
+                    )
                 }
-                Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                    Text(host.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text("${host.username}@${host.hostname}:${host.port}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(
+                    modifier = Modifier
+                        .padding(start = AppSpacing.md)
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                    ) {
+                        Text(
+                            text = host.title,
+                            style = AppType.cardTitle,
+                            color = colors.textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        AppStatusDot(color = dotColor)
+                    }
+                    Text(
+                        text = host.description,
+                        style = AppType.mono,
+                        color = colors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
-                Box {
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, "More host actions") }
+                Box(Modifier.padding(top = AppSpacing.xs)) {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "More actions for ${host.title}",
+                            tint = colors.textSecondary,
+                        )
+                    }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text("Edit") }, onClick = { menuOpen = false; onEdit() }, leadingIcon = { Icon(Icons.Default.Edit, "Edit host") })
-                        DropdownMenuItem(text = { Text("Duplicate") }, onClick = { menuOpen = false; onDuplicate() }, leadingIcon = { Icon(Icons.Default.ContentCopy, "Duplicate host") })
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() }, leadingIcon = { Icon(Icons.Default.DeleteOutline, "Delete host") })
+                        DropdownMenuItem(
+                            text = { Text("Edit", style = AppType.body, color = colors.textPrimary) },
+                            onClick = {
+                                menuOpen = false
+                                onEdit()
+                            },
+                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Duplicate", style = AppType.body, color = colors.textPrimary) },
+                            onClick = {
+                                menuOpen = false
+                                onDuplicate()
+                            },
+                            leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete", style = AppType.body, color = colors.errorText) },
+                            onClick = {
+                                menuOpen = false
+                                onDelete()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.DeleteOutline,
+                                    contentDescription = null,
+                                    tint = colors.errorText,
+                                )
+                            },
+                        )
                     }
                 }
             }
-            if (host.tags.isNotEmpty()) {
-                Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) { host.tags.forEach { AssistChip(onClick = {}, label = { Text(it) }) } }
-            }
-            HorizontalDivider(Modifier.padding(vertical = 14.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(onClick = onOpenSsh, modifier = Modifier.weight(1f)) { Icon(Icons.Default.Terminal, "Open SSH"); Spacer(Modifier.width(6.dp)); Text("SSH") }
-                OutlinedButton(onClick = onOpenSftp, modifier = Modifier.weight(1f)) { Icon(Icons.Default.UploadFile, "Open SFTP"); Spacer(Modifier.width(6.dp)); Text("SFTP") }
-            }
-        }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HostEditorPage(host: HostItem?, onDismiss: () -> Unit, onSave: (HostItem) -> Unit) {
-    var name by remember(host) { mutableStateOf(host?.name.orEmpty()) }
-    var hostname by remember(host) { mutableStateOf(host?.hostname.orEmpty()) }
-    var username by remember(host) { mutableStateOf(host?.username.orEmpty()) }
-    var port by remember(host) { mutableStateOf(host?.port?.toString() ?: "22") }
-    var tag by remember(host) { mutableStateOf(host?.tags?.firstOrNull().orEmpty()) }
-    var showDiscard by remember { mutableStateOf(false) }
-    val isDirty = name != host?.name.orEmpty() || hostname != host?.hostname.orEmpty() || username != host?.username.orEmpty() || port != (host?.port?.toString() ?: "22") || tag != host?.tags?.firstOrNull().orEmpty()
-    val requestDismiss = { if (isDirty) showDiscard = true else onDismiss() }
-    BackHandler(onBack = requestDismiss)
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = { IconButton(onClick = requestDismiss) { Icon(Icons.Default.Close, "Close editor") } },
-                title = { Text(if (host == null) "Add host" else "Edit host") },
-                actions = {
-                    TextButton(enabled = name.isNotBlank() && hostname.isNotBlank(), onClick = {
-                        onSave(HostItem(host?.id ?: "host-${System.currentTimeMillis()}", name.trim(), hostname.trim(), username.trim(), port.toIntOrNull() ?: 22, tag.trim().takeIf { it.isNotEmpty() }?.let(::listOf).orEmpty()))
-                    }) { Text("Save") }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text("Basic information", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-            OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            OutlinedTextField(hostname, { hostname = it }, label = { Text("Hostname") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(username, { username = it }, label = { Text("Username") }, modifier = Modifier.weight(1f), singleLine = true)
-                OutlinedTextField(port, { port = it.filter(Char::isDigit) }, label = { Text("Port") }, modifier = Modifier.width(92.dp), singleLine = true)
+            if (host.tags.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                    host.tags.forEach { tag -> AppTag(tag) }
+                }
             }
-            Text("Organization", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-            OutlinedTextField(tag, { tag = it }, label = { Text("Tag (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Text("Authentication settings will be added here when Android host storage is connected.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            if (errorMessage != null) {
+                AppErrorText(errorMessage)
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                AppAccentButton(
+                    onClick = {
+                        if (sshFailed) onRetry(SessionKind.Terminal) else onOpen(SessionKind.Terminal)
+                    },
+                    enabled = !sshPending || sshFailed,
+                    error = sshFailed,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(Icons.Filled.Terminal, contentDescription = null, modifier = Modifier.size(AppSizes.buttonIcon))
+                    Spacer(Modifier.width(AppSpacing.sm))
+                    Text(sshLabel, style = AppType.buttonLabel)
+                }
+                AppOutlinedButton(
+                    onClick = {
+                        if (sftpFailed) onRetry(SessionKind.Sftp) else onOpen(SessionKind.Sftp)
+                    },
+                    enabled = !sftpPending || sftpFailed,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(Icons.Filled.UploadFile, contentDescription = null, modifier = Modifier.size(AppSizes.buttonIcon))
+                    Spacer(Modifier.width(AppSpacing.sm))
+                    Text(sftpLabel, style = AppType.buttonLabel)
+                }
+            }
         }
-    }
-    if (showDiscard) {
-        AlertDialog(
-            onDismissRequest = { showDiscard = false },
-            title = { Text("Discard changes?") },
-            text = { Text("Your changes will not be saved.") },
-            confirmButton = { TextButton(onClick = onDismiss) { Text("Discard") } },
-            dismissButton = { TextButton(onClick = { showDiscard = false }) { Text("Keep editing") } },
-        )
     }
 }

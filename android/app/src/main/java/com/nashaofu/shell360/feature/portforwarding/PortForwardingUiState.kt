@@ -1,28 +1,29 @@
 package com.nashaofu.shell360.feature.portforwarding
 
-enum class PortForwardingType(val label: String) {
-    Local("Local tunnel"),
-    Remote("Remote tunnel"),
-    Dynamic("Dynamic tunnel"),
-}
-
-data class PortForwardingItem(
-    val id: String,
-    val name: String,
-    val type: PortForwardingType,
-    val hostId: String,
-    val localAddress: String,
-    val localPort: Int,
-    val remoteAddress: String = "",
-    val remotePort: Int? = null,
-)
+import com.nashaofu.shell360.core.data.Shell360Store
+import com.nashaofu.shell360.core.data.TunnelModel
 
 data class PortForwardingUiState(
-    val items: List<PortForwardingItem> = emptyList(),
-    val isLoading: Boolean = false,
     val query: String = "",
-    val editorItem: PortForwardingItem? = null,
+    val editorItem: TunnelModel? = null,
     val isEditorOpen: Boolean = false,
-    val pendingDelete: PortForwardingItem? = null,
+    val deleteTarget: TunnelModel? = null,
     val feedbackMessage: String? = null,
+    val unknownKeyTunnel: TunnelModel? = null,
 )
+
+fun filterTunnels(items: List<TunnelModel>, query: String): List<TunnelModel> {
+    val keyword = query.trim().lowercase()
+    if (keyword.isEmpty()) return items
+    return items.filter { item ->
+        val host = Shell360Store.hostById(item.hostId)
+        listOf(
+            item.name,
+            item.type.label,
+            "${item.localAddress}:${item.localPort}",
+            "${item.remoteAddress}:${item.remotePort ?: ""}",
+            host?.title.orEmpty(),
+            host?.hostname.orEmpty(),
+        ).any { it.lowercase().contains(keyword) }
+    }
+}

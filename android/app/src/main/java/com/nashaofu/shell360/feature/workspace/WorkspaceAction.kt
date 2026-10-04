@@ -4,7 +4,6 @@ sealed interface WorkspaceAction {
     data object SessionPickerOpened : WorkspaceAction
     data object SessionPickerClosed : WorkspaceAction
     data class SessionSelected(val sessionId: String) : WorkspaceAction
-    data object HostsRequested : WorkspaceAction
-    data object CloseSessionRequested : WorkspaceAction
+    data class SessionClosed(val sessionId: String) : WorkspaceAction
     data object FeedbackDismissed : WorkspaceAction
 }

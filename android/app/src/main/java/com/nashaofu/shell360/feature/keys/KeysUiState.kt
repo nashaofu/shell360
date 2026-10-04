@@ -1,29 +1,28 @@
 package com.nashaofu.shell360.feature.keys
 
-enum class KeyType(val label: String) {
-    Ed25519("Ed25519"),
-    RSA("RSA"),
-    ECDSA("ECDSA"),
-}
+import com.nashaofu.shell360.core.data.KeyModel
 
-data class KeyItem(
-    val id: String,
-    val name: String,
-    val type: KeyType,
-    val publicKey: String,
-    val privateKey: String = "",
-    val passphrase: String = "",
-    val certificate: String = "",
-)
+val KEY_TYPE_OPTIONS = listOf("Ed25519", "RSA", "ECDSA")
 
 data class KeysUiState(
-    val keys: List<KeyItem> = emptyList(),
-    val isLoading: Boolean = false,
     val query: String = "",
-    val selectedType: KeyType? = null,
-    val editorKey: KeyItem? = null,
+    val selectedType: String? = null,
+    val editorKey: KeyModel? = null,
     val isEditorOpen: Boolean = false,
     val isGeneratorOpen: Boolean = false,
-    val pendingDelete: KeyItem? = null,
+    val deleteTarget: KeyModel? = null,
     val feedbackMessage: String? = null,
 )
+
+fun filterKeys(keys: List<KeyModel>, query: String, selectedType: String?): List<KeyModel> {
+    val keyword = query.trim().lowercase()
+    return keys.filter { key ->
+        if (selectedType != null && key.typeLabel != selectedType) {
+            return@filter false
+        }
+        if (keyword.isEmpty()) {
+            return@filter true
+        }
+        key.name.lowercase().contains(keyword) || key.publicKey.lowercase().contains(keyword)
+    }
+}

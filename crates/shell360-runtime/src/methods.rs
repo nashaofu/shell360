@@ -172,10 +172,13 @@ mod tests {
   fn checked_in_bridge_method_type_is_current() {
     let declaration = std::fs::read_to_string(concat!(
       env!("CARGO_MANIFEST_DIR"),
-      "/../../bridge/src/jsb-methods.ts"
+      "/../../packages/bridge/src/jsb-methods.ts"
     ))
     .expect("read checked-in bridge method type");
-    assert_eq!(declaration.trim(), method_typescript().trim());
+    assert_eq!(
+      declaration.replace("\r\n", "\n").trim(),
+      method_typescript().trim()
+    );
   }
 
   #[test]

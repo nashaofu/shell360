@@ -3,19 +3,13 @@ package com.nashaofu.shell360.feature.keys
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.nashaofu.shell360.core.data.Shell360Store
+import com.nashaofu.shell360.core.runtime.AndroidRuntime
+import kotlinx.coroutines.launch
 
 class KeysViewModel {
     var uiState: KeysUiState by mutableStateOf(KeysUiState())
         private set
-
-    val visibleKeys: List<KeyItem>
-        get() {
-            val query = uiState.query.trim().lowercase()
-            return uiState.keys.filter { key ->
-                (uiState.selectedType == null || uiState.selectedType == key.type) &&
-                    (query.isEmpty() || key.name.lowercase().contains(query) || key.publicKey.lowercase().contains(query))
-            }
-        }
 
     fun onAction(action: KeysAction) {
         uiState = when (action) {
@@ -24,34 +18,31 @@ class KeysViewModel {
             KeysAction.AddClicked -> uiState.copy(editorKey = null, isEditorOpen = true)
             KeysAction.GenerateClicked -> uiState.copy(isGeneratorOpen = true)
             is KeysAction.EditClicked -> uiState.copy(editorKey = action.key, isEditorOpen = true)
-            is KeysAction.DeleteClicked -> uiState.copy(pendingDelete = action.key)
-            is KeysAction.DuplicateClicked -> uiState.copy(editorKey = action.key.copy(id = "key-${System.currentTimeMillis()}", name = "${action.key.name} Copy"), isEditorOpen = true)
+            is KeysAction.DuplicateClicked -> {
+                val copy = Shell360Store.duplicateKey(action.key)
+                uiState.copy(editorKey = copy, isEditorOpen = true)
+            }
+
+            is KeysAction.DeleteClicked -> uiState.copy(deleteTarget = action.key)
+            KeysAction.DeleteDismissed -> uiState.copy(deleteTarget = null)
+            KeysAction.DeleteConfirmed -> {
+                val target = uiState.deleteTarget
+                if (target != null) AndroidRuntime.scope.launch {
+                    runCatching { AndroidRuntime.deleteKey(target) }
+                        .onSuccess { Shell360Store.deleteKey(target.id) }
+                        .onFailure { uiState = uiState.copy(feedbackMessage = it.message ?: "Could not delete key") }
+                }
+                uiState.copy(deleteTarget = null)
+            }
+
             KeysAction.EditorDismissed -> uiState.copy(editorKey = null, isEditorOpen = false)
             KeysAction.GeneratorDismissed -> uiState.copy(isGeneratorOpen = false)
-            is KeysAction.Saved -> {
-                uiState.copy(
-                    editorKey = null,
-                    isEditorOpen = false,
-                    feedbackMessage = "Keys storage is not connected on Android yet.",
-                )
-            }
-            KeysAction.GenerationRequested -> uiState.copy(
-                isGeneratorOpen = false,
-                feedbackMessage = "Key generation is not connected on Android yet.",
-            )
+            KeysAction.ClearFiltersClicked -> uiState.copy(query = "", selectedType = null)
             KeysAction.FeedbackDismissed -> uiState.copy(feedbackMessage = null)
         }
     }
 
-    fun confirmDelete() {
-        if (uiState.pendingDelete == null) return
-        uiState = uiState.copy(
-            pendingDelete = null,
-            feedbackMessage = "Keys storage is not connected on Android yet.",
-        )
-    }
-
-    fun cancelDelete() {
-        uiState = uiState.copy(pendingDelete = null)
+    fun showFeedback(message: String) {
+        uiState = uiState.copy(feedbackMessage = message)
     }
 }

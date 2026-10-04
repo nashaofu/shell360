@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Shell360"
 include(":app")
- 

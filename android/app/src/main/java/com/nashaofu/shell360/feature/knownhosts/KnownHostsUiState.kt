@@ -1,17 +1,19 @@
 package com.nashaofu.shell360.feature.knownhosts
 
-data class KnownHostItem(
-    val id: String,
-    val host: String,
-    val type: String,
-    val fingerprint: String,
-    val marker: String? = null,
-)
+import com.nashaofu.shell360.core.data.KnownHostModel
 
 data class KnownHostsUiState(
-    val items: List<KnownHostItem> = emptyList(),
-    val isLoading: Boolean = false,
     val query: String = "",
-    val pendingDelete: KnownHostItem? = null,
+    val deleteTarget: KnownHostModel? = null,
     val feedbackMessage: String? = null,
 )
+
+fun filterKnownHosts(items: List<KnownHostModel>, query: String): List<KnownHostModel> {
+    val keyword = query.trim().lowercase()
+    if (keyword.isEmpty()) return items
+    return items.filter { item ->
+        listOf(item.host, item.type, item.key, item.marker).any {
+            it.lowercase().contains(keyword)
+        }
+    }
+}

@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 enum class TopLevelDestination(val title: String, val route: String) {
     Workspace("Workspace", "workspace"),
     Hosts("Hosts", "hosts"),
-    PortForwardings("Port Forwarding", "port-forwarding"),
+    PortForwardings("Tunnels", "port-forwarding"),
     Keys("Keys", "keys"),
     KnownHosts("Known Hosts", "known-hosts"),
     Settings("Settings", "settings"),

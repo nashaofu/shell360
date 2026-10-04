@@ -1,45 +1,213 @@
 package com.nashaofu.shell360.ui.theme
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-val ShellGreen = Color(0xFF216E45)
-val ShellOnGreen = Color(0xFFFFFFFF)
-val ShellGreenContainer = Color(0xFFB6F1C9)
-val ShellOnGreenContainer = Color(0xFF002110)
-val ShellSecondary = Color(0xFF4F6356)
-val ShellOnSecondary = Color(0xFFFFFFFF)
-val ShellSecondaryContainer = Color(0xFFD2E8D7)
-val ShellOnSecondaryContainer = Color(0xFF0C1F13)
-val ShellBackground = Color(0xFFF9FBF8)
-val ShellOnBackground = Color(0xFF191D19)
-val ShellSurface = Color(0xFFFFFFFF)
-val ShellOnSurface = Color(0xFF191D19)
-val ShellSurfaceVariant = Color(0xFFDDE8DE)
-val ShellOnSurfaceVariant = Color(0xFF414941)
-val ShellOutline = Color(0xFF717971)
-val ShellOutlineVariant = Color(0xFFC1CCC1)
-val ShellError = Color(0xFFBA1A1A)
-val ShellOnError = Color(0xFFFFFFFF)
-val ShellErrorContainer = Color(0xFFFFDAD6)
-val ShellOnErrorContainer = Color(0xFF410002)
+/**
+ * Android mirror of `design/tokens.json` (`color.light` / `color.dark`).
+ * Key names must stay identical to the JSON — `DesignTokensTest` fails otherwise.
+ */
+val LightColorTokens: Map<String, Color> = mapOf(
+    "primary" to Color(0xFF1B6A46),
+    "onPrimary" to Color(0xFFFFFFFF),
+    "primaryContainer" to Color(0xFFD7F0E1),
+    "onPrimaryContainer" to Color(0xFF082F1D),
+    "secondary" to Color(0xFF52645A),
+    "onSecondary" to Color(0xFFFFFFFF),
+    "secondaryContainer" to Color(0xFFDEE8E1),
+    "onSecondaryContainer" to Color(0xFF14261B),
+    "tertiary" to Color(0xFF3F6470),
+    "onTertiary" to Color(0xFFFFFFFF),
+    "tertiaryContainer" to Color(0xFFD3EAF0),
+    "onTertiaryContainer" to Color(0xFF102D35),
+    "error" to Color(0xFFB3261E),
+    "onError" to Color(0xFFFFFFFF),
+    "errorContainer" to Color(0xFFF9DEDC),
+    "onErrorContainer" to Color(0xFF410E0B),
+    "background" to Color(0xFFF6F8F6),
+    "onBackground" to Color(0xFF1A211C),
+    "surface" to Color(0xFFFFFFFF),
+    "onSurface" to Color(0xFF1A211C),
+    "surfaceVariant" to Color(0xFFE8EEE9),
+    "onSurfaceVariant" to Color(0xFF46524A),
+    "surfaceDim" to Color(0xFFD9E0DA),
+    "surfaceBright" to Color(0xFFFFFFFF),
+    "surfaceContainerLowest" to Color(0xFFFFFFFF),
+    "surfaceContainerLow" to Color(0xFFF2F5F2),
+    "surfaceContainer" to Color(0xFFEDF1ED),
+    "surfaceContainerHigh" to Color(0xFFE6EBE6),
+    "surfaceContainerHighest" to Color(0xFFDEE5DF),
+    "outline" to Color(0xFF707B73),
+    "outlineVariant" to Color(0xFFC7D0C9),
+    "inverseSurface" to Color(0xFF2D342F),
+    "inverseOnSurface" to Color(0xFFEFF2EF),
+    "inversePrimary" to Color(0xFFA6D8B8),
+    "scrim" to Color(0xFF000000),
+    "success" to Color(0xFF216B49),
+    "onSuccess" to Color(0xFFFFFFFF),
+    "successContainer" to Color(0xFFD7F0E1),
+    "onSuccessContainer" to Color(0xFF082F1D),
+    "warning" to Color(0xFF775A14),
+    "onWarning" to Color(0xFFFFFFFF),
+    "warningContainer" to Color(0xFFF6E7B8),
+    "onWarningContainer" to Color(0xFF2B2108),
+    "info" to Color(0xFF315E87),
+    "onInfo" to Color(0xFFFFFFFF),
+    "infoContainer" to Color(0xFFDCEBFA),
+    "onInfoContainer" to Color(0xFF102B44),
+)
 
-val ShellDarkGreen = Color(0xFF8BD5A7)
-val ShellDarkOnGreen = Color(0xFF00391F)
-val ShellDarkGreenContainer = Color(0xFF00532E)
-val ShellDarkOnGreenContainer = Color(0xFFB6F1C9)
-val ShellDarkSecondary = Color(0xFFB4CCB9)
-val ShellDarkOnSecondary = Color(0xFF20352A)
-val ShellDarkSecondaryContainer = Color(0xFF354B3C)
-val ShellDarkOnSecondaryContainer = Color(0xFFD0E8D4)
-val ShellDarkBackground = Color(0xFF101411)
-val ShellDarkOnBackground = Color(0xFFE1E4DF)
-val ShellDarkSurface = Color(0xFF191D19)
-val ShellDarkOnSurface = Color(0xFFE1E4DF)
-val ShellDarkSurfaceVariant = Color(0xFF414941)
-val ShellDarkOnSurfaceVariant = Color(0xFFC1CCC1)
-val ShellDarkOutline = Color(0xFF8B938B)
-val ShellDarkOutlineVariant = Color(0xFF414941)
-val ShellDarkError = Color(0xFFFFB4AB)
-val ShellDarkOnError = Color(0xFF690005)
-val ShellDarkErrorContainer = Color(0xFF93000A)
-val ShellDarkOnErrorContainer = Color(0xFFFFDAD6)
+val DarkColorTokens: Map<String, Color> = mapOf(
+    "primary" to Color(0xFFA6D8B8),
+    "onPrimary" to Color(0xFF0C3925),
+    "primaryContainer" to Color(0xFF1C5137),
+    "onPrimaryContainer" to Color(0xFFD7F0E1),
+    "secondary" to Color(0xFFBBCBC0),
+    "onSecondary" to Color(0xFF26372C),
+    "secondaryContainer" to Color(0xFF3A4B40),
+    "onSecondaryContainer" to Color(0xFFD7E5DA),
+    "tertiary" to Color(0xFFB6D5DE),
+    "onTertiary" to Color(0xFF20363D),
+    "tertiaryContainer" to Color(0xFF354D55),
+    "onTertiaryContainer" to Color(0xFFD3EAF0),
+    "error" to Color(0xFFF2B8B5),
+    "onError" to Color(0xFF601410),
+    "errorContainer" to Color(0xFF8C1D18),
+    "onErrorContainer" to Color(0xFFF9DEDC),
+    "background" to Color(0xFF111713),
+    "onBackground" to Color(0xFFE1E8E2),
+    "surface" to Color(0xFF151C17),
+    "onSurface" to Color(0xFFE1E8E2),
+    "surfaceVariant" to Color(0xFF3B463E),
+    "onSurfaceVariant" to Color(0xFFC0CAC2),
+    "surfaceDim" to Color(0xFF111713),
+    "surfaceBright" to Color(0xFF343C36),
+    "surfaceContainerLowest" to Color(0xFF0C120E),
+    "surfaceContainerLow" to Color(0xFF19211B),
+    "surfaceContainer" to Color(0xFF1D251F),
+    "surfaceContainerHigh" to Color(0xFF27302A),
+    "surfaceContainerHighest" to Color(0xFF323B35),
+    "outline" to Color(0xFF89958C),
+    "outlineVariant" to Color(0xFF3D4941),
+    "inverseSurface" to Color(0xFFE1E8E2),
+    "inverseOnSurface" to Color(0xFF2D342F),
+    "inversePrimary" to Color(0xFF1B6A46),
+    "scrim" to Color(0xFF000000),
+    "success" to Color(0xFFA6D8B8),
+    "onSuccess" to Color(0xFF0C3925),
+    "successContainer" to Color(0xFF1C5137),
+    "onSuccessContainer" to Color(0xFFD7F0E1),
+    "warning" to Color(0xFFE9CA76),
+    "onWarning" to Color(0xFF3D2F0C),
+    "warningContainer" to Color(0xFF58451A),
+    "onWarningContainer" to Color(0xFFF6E7B8),
+    "info" to Color(0xFFB0CBE8),
+    "onInfo" to Color(0xFF22394F),
+    "infoContainer" to Color(0xFF334B63),
+    "onInfoContainer" to Color(0xFFDCEBFA),
+)
+
+/**
+ * Thin semantic aliases over the Material 3 [ColorScheme] used by `ui/components`
+ * and the feature screens, so界面代码 expresses intent instead of guessing roles.
+ */
+@Immutable
+data class AppColors(
+    val bgPage: Color,
+    val bgFrame: Color,
+    val bgSurface: Color,
+    val bgSubtle: Color,
+    val bgPressed: Color,
+    val borderSubtle: Color,
+    val borderStrong: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textMuted: Color,
+    val accent: Color,
+    val accentHover: Color,
+    val accentSoft: Color,
+    val accentBorder: Color,
+    val accentText: Color,
+    val onAccent: Color,
+    val statusSuccess: Color,
+    val statusWarning: Color,
+    val statusError: Color,
+    val statusInfo: Color,
+    val statusOffline: Color,
+    val errorSoft: Color,
+    val errorBorder: Color,
+    val errorText: Color,
+    val scrim: Color,
+    val overlay: Color,
+)
+
+fun appColorsOf(scheme: ColorScheme, tokens: Map<String, Color>): AppColors = AppColors(
+    bgPage = scheme.background,
+    bgFrame = scheme.surfaceContainerLow,
+    bgSurface = scheme.surfaceContainerLowest,
+    bgSubtle = scheme.surfaceContainerHigh,
+    bgPressed = scheme.surfaceContainerHighest,
+    borderSubtle = scheme.outlineVariant,
+    borderStrong = scheme.outline,
+    textPrimary = scheme.onSurface,
+    textSecondary = scheme.onSurfaceVariant,
+    textMuted = scheme.outline,
+    accent = scheme.primary,
+    accentHover = scheme.primary,
+    accentSoft = scheme.primaryContainer,
+    accentBorder = scheme.outlineVariant,
+    accentText = scheme.onPrimaryContainer,
+    onAccent = scheme.onPrimary,
+    statusSuccess = tokens.getValue("success"),
+    statusWarning = tokens.getValue("warning"),
+    statusError = scheme.error,
+    statusInfo = tokens.getValue("info"),
+    statusOffline = scheme.outline,
+    errorSoft = scheme.errorContainer,
+    errorBorder = scheme.error,
+    errorText = scheme.error,
+    scrim = scheme.scrim,
+    overlay = scheme.scrim.copy(alpha = 0.32f),
+)
+
+val LocalAppColors = staticCompositionLocalOf { appColorsOfLightPlaceholder() }
+
+private fun appColorsOfLightPlaceholder(): AppColors = AppColors(
+    bgPage = Color(0xFFF6F8F6),
+    bgFrame = Color(0xFFF2F5F2),
+    bgSurface = Color(0xFFFFFFFF),
+    bgSubtle = Color(0xFFE6EBE6),
+    bgPressed = Color(0xFFDEE5DF),
+    borderSubtle = Color(0xFFC7D0C9),
+    borderStrong = Color(0xFF707B73),
+    textPrimary = Color(0xFF1A211C),
+    textSecondary = Color(0xFF46524A),
+    textMuted = Color(0xFF707B73),
+    accent = Color(0xFF1B6A46),
+    accentHover = Color(0xFF1B6A46),
+    accentSoft = Color(0xFFD7F0E1),
+    accentBorder = Color(0xFFC7D0C9),
+    accentText = Color(0xFF082F1D),
+    onAccent = Color(0xFFFFFFFF),
+    statusSuccess = Color(0xFF1B6A46),
+    statusWarning = Color(0xFF775A14),
+    statusError = Color(0xFFB3261E),
+    statusInfo = Color(0xFF315E87),
+    statusOffline = Color(0xFF707B73),
+    errorSoft = Color(0xFFF9DEDC),
+    errorBorder = Color(0xFFB3261E),
+    errorText = Color(0xFFB3261E),
+    scrim = Color(0xFF000000),
+    overlay = Color(0x52000000),
+)
+
+object AppTheme {
+    val colors: AppColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppColors.current
+}

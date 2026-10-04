@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 enum class ThemeMode(val label: String) {
-    System("System"),
+    System("Auto"),
     Light("Light"),
     Dark("Dark"),
 }
