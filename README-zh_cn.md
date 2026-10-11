@@ -32,24 +32,39 @@
 
 <p align="center">
   <a href="https://apps.apple.com/app/shell360/id6502880351">
-    <img src="./resources/app-store.svg" width="123" alt="在 App Store 上下载" />
+    <img src="./resources/app-store.svg" width="123" alt="Download on the App Store" />
   </a>
   <a href="https://play.google.com/store/apps/details?id=com.nashaofu.shell360">
-    <img src="./resources/GooglePlay.png" width="140" alt="在 Google Play 上下载" />
+    <img src="./resources/GooglePlay.png" width="140" alt="Download on Google Play" />
+  </a>
+  <a href="https://appgallery.huawei.com/app/detail?id=com.nashaofu.shell360">
+    <img src="./resources/AppGallery.svg" width="119" alt="Download on App Gallery" />
   </a>
 </p>
 <p align="center">
   <a href="https://github.com/nashaofu/shell360/releases">
-    <img src="https://img.shields.io/badge/下载%20Windows%20版本-blue?style=for-the-badge" alt="下载 Windows 版本" />
+    <img
+      src="https://img.shields.io/badge/Download%20for%20Windows-blue?style=for-the-badge"
+      alt="Download for Windows"
+    />
   </a>
   <a href="https://github.com/nashaofu/shell360/releases">
-    <img src="https://img.shields.io/badge/下载%20macOS%20版本-blue?style=for-the-badge" alt="下载 macOS 版本" />
+    <img src="https://img.shields.io/badge/Download%20for%20macOS-blue?style=for-the-badge" alt="Download for macOS" />
   </a>
   <a href="https://github.com/nashaofu/shell360/releases">
-    <img src="https://img.shields.io/badge/下载%20Linux%20版本-blue?style=for-the-badge" alt="下载 Linux 版本" />
+    <img src="https://img.shields.io/badge/Download%20for%20Linux-blue?style=for-the-badge" alt="Download for Linux" />
   </a>
   <a href="https://github.com/nashaofu/shell360/releases">
-    <img src="https://img.shields.io/badge/下载%20Android%20版本-blue?style=for-the-badge" alt="下载 Android 版本" />
+    <img
+      src="https://img.shields.io/badge/Download%20for%20Android-blue?style=for-the-badge"
+      alt="Download for Android"
+    />
+  </a>
+    <a href="https://github.com/nashaofu/shell360/releases">
+    <img
+      src="https://img.shields.io/badge/Download%20for%20HarmonyOS-blue?style=for-the-badge"
+      alt="Download for HarmonyOS"
+    />
   </a>
 </p>
 
