@@ -37,6 +37,9 @@ Download the latest version of Shell360 for your platform:
   <a href="https://play.google.com/store/apps/details?id=com.nashaofu.shell360">
     <img src="./resources/GooglePlay.png" width="140" alt="Download on Google Play" />
   </a>
+  <a href="https://appgallery.huawei.com/app/detail?id=com.nashaofu.shell360">
+    <img src="./resources/AppGallery.svg" width="142" alt="Download on App Gallery" />
+  </a>
 </p>
 <p align="center">
   <a href="https://github.com/nashaofu/shell360/releases">
@@ -127,7 +130,6 @@ This project is licensed under the terms of the GNU General Public License v3.0 
 See the [LICENSE](./LICENSE) file for details.
 
 SPDX-License-Identifier: GPL-3.0-or-later
-
 
 ## Star History
 
