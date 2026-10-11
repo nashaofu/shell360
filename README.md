@@ -38,7 +38,7 @@ Download the latest version of Shell360 for your platform:
     <img src="./resources/GooglePlay.png" width="140" alt="Download on Google Play" />
   </a>
   <a href="https://appgallery.huawei.com/app/detail?id=com.nashaofu.shell360">
-    <img src="./resources/AppGallery.svg" width="142" alt="Download on App Gallery" />
+    <img src="./resources/AppGallery.svg" width="119" alt="Download on App Gallery" />
   </a>
 </p>
 <p align="center">
@@ -58,6 +58,12 @@ Download the latest version of Shell360 for your platform:
     <img
       src="https://img.shields.io/badge/Download%20for%20Android-blue?style=for-the-badge"
       alt="Download for Android"
+    />
+  </a>
+    <a href="https://github.com/nashaofu/shell360/releases">
+    <img
+      src="https://img.shields.io/badge/Download%20for%20HarmonyOS-blue?style=for-the-badge"
+      alt="Download for HarmonyOS"
     />
   </a>
 </p>
