@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="256"
-    android:viewportHeight="256">
-    <group
-        android:pivotX="128"
-        android:pivotY="128"
-        android:scaleX="0.64"
-        android:scaleY="0.64">
-        <path
-            android:fillColor="@color/launcher_foreground"
-            android:pathData="M120.781,116L51,68V92L102.734,128L51,164V188L120.781,140V116Z" />
-        <path
-            android:fillColor="@color/launcher_foreground"
-            android:pathData="M205,164H135.219V188H205V164Z" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="256" android:viewportHeight="256">
+    <group android:pivotX="128" android:pivotY="128" android:scaleX="0.85" android:scaleY="0.85">
+        <path android:fillColor="@color/launcher_background" android:strokeColor="@color/launcher_accent" android:strokeWidth="8" android:strokeLineJoin="round" android:pathData="M128,40L202,83L202,169L128,212L54,169L54,83Z" />
+        <path android:fillColor="@color/launcher_foreground" android:pathData="M125,115.5L82,90L82,106L109,122L82,138L82,154L125,128.5Z" />
+        <path android:fillColor="#00000000" android:strokeColor="@color/launcher_foreground" android:strokeWidth="16" android:strokeLineCap="square" android:pathData="M139,151L173,151" />
     </group>
 </vector>

@@ -13,6 +13,7 @@
           "value": "dark"
         }
       ],
+      "filename": "logo-dark.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"
@@ -24,6 +25,7 @@
           "value": "tinted"
         }
       ],
+      "filename": "logo-tinted.png",
       "idiom": "universal",
       "platform": "ios",
       "size": "1024x1024"

@@ -11,6 +11,7 @@
     "check:fix": "biome check . --write",
     "tsc": "pnpm --filter \"*\" run tsc",
     "build": "pnpm --filter \"*\" run build",
+    "icons:generate": "node scripts/generate-icons.ts",
     "android:dev": "node scripts/android/index.ts dev",
     "android:build": "node scripts/android/index.ts build",
     "ios:web-assets": "node scripts/ios/index.ts web-assets",

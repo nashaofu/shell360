@@ -66,6 +66,8 @@ pnpm run ios:build-native --platform iphonesimulator --configuration Debug --arc
 
 Android dev helpers live in `scripts/android/`: `constants.ts` resolves shared paths and environment variables; `adb.ts`, `devices.ts`, and `emulator.ts` handle device discovery and startup; `gradle.ts` runs the wrapper; `commands.ts` coordinates build and development lifecycles; and `index.ts` provides the CLI.
 
+The app brand icon source is `resources/icon.svg`. Regenerate the desktop, Android, iOS, HarmonyOS, and web icon assets with `pnpm run icons:generate`; the script uses the installed Tauri CLI SVG renderer and applies Windows' 2px-per-48px outer-corner grid to ICO and Appx assets. Commit generated outputs with the source SVG. Keep functional UI icons in `packages/shared/src/components/Icon/svgs/` specific to their action.
+
 ## Agent Workflow
 
 - After making changes, determine which parts of the codebase were modified:
