@@ -66,7 +66,7 @@ const tintedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="2
 
 try {
   const squareSvg = sourceSvg.replace('rx="56"', 'rx="0"');
-  const windowsCornerRadius = ((2 / 48) * 256).toString();
+  const windowsCornerRadius = ((6 / 48) * 256).toString();
   const windowsSvg = sourceSvg.replace(
     'rx="56"',
     `rx="${windowsCornerRadius}"`,
