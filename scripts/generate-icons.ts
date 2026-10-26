@@ -64,9 +64,14 @@ const foregroundSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" heigh
 
 const tintedSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><rect width="256" height="256" fill="#171E35"/><path d="M128 40L202 83V169L128 212L54 169V83L128 40Z" fill="none" stroke="#F5F7FF" stroke-width="8" stroke-linejoin="round"/><path d="M125 115.5L82 90V106L109 122L82 138V154L125 128.5Z" fill="#F5F7FF"/><path d="M139 151H173" fill="none" stroke="#F5F7FF" stroke-width="16" stroke-linecap="square"/></svg>`;
 
+const androidArtworkScale = 0.6;
+const androidArtworkOffset = ((1 - androidArtworkScale) * 128).toFixed(1);
+const androidArtworkTransform = `translate(${androidArtworkOffset} ${androidArtworkOffset}) scale(${androidArtworkScale})`;
+const androidIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><rect width="256" height="256" fill="#171E35"/><g transform="${androidArtworkTransform}"><path d="M128 40L202 83V169L128 212L54 169V83L128 40Z" fill="#171E35" stroke="#2EC7DB" stroke-width="8" stroke-linejoin="round"/><path d="M125 115.5L82 90V106L109 122L82 138V154L125 128.5Z" fill="#F5F7FF"/><path d="M139 151H173" fill="none" stroke="#F5F7FF" stroke-width="16" stroke-linecap="square"/></g></svg>`;
+
 try {
   const squareSvg = sourceSvg.replace('rx="56"', 'rx="0"');
-  const windowsCornerRadius = ((6 / 48) * 256).toString();
+  const windowsCornerRadius = ((10 / 48) * 256).toString();
   const windowsSvg = sourceSvg.replace(
     'rx="56"',
     `rx="${windowsCornerRadius}"`,
@@ -82,6 +87,7 @@ try {
   const harmonyForegroundDir = path.join(tempDir, "harmony-foreground");
   const harmonyBackgroundDir = path.join(tempDir, "harmony-background");
   const startIconDir = path.join(tempDir, "start-icon");
+  const androidIconDir = path.join(tempDir, "android");
 
   await Promise.all([
     renderSvg(squareSvg, defaultDir),
@@ -90,6 +96,7 @@ try {
     renderSvg(darkSvg, darkDir, [1024]),
     renderSvg(tintedSvg, tintedDir, [1024]),
     renderSvg(foregroundSvg, harmonyForegroundDir, [1024]),
+    renderSvg(androidIconSvg, androidIconDir),
     renderSvg(
       '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><rect width="256" height="256" fill="#171E35"/></svg>',
       harmonyBackgroundDir,
@@ -147,7 +154,7 @@ try {
   for (const density of ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"]) {
     for (const name of ["ic_launcher.png", "ic_launcher_round.png"]) {
       await copyGenerated(
-        path.join(defaultDir, "android", `mipmap-${density}`),
+        path.join(androidIconDir, "android", `mipmap-${density}`),
         name,
         path.join(
           workspaceDir,
@@ -161,7 +168,7 @@ try {
 
   const androidForeground = `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="256" android:viewportHeight="256">
-    <group android:pivotX="128" android:pivotY="128" android:scaleX="0.85" android:scaleY="0.85">
+    <group android:pivotX="128" android:pivotY="128" android:scaleX="${androidArtworkScale}" android:scaleY="${androidArtworkScale}">
         <path android:fillColor="@color/launcher_background" android:strokeColor="@color/launcher_accent" android:strokeWidth="8" android:strokeLineJoin="round" android:pathData="M128,40L202,83L202,169L128,212L54,169L54,83Z" />
         <path android:fillColor="@color/launcher_foreground" android:pathData="M125,115.5L82,90L82,106L109,122L82,138L82,154L125,128.5Z" />
         <path android:fillColor="#00000000" android:strokeColor="@color/launcher_foreground" android:strokeWidth="16" android:strokeLineCap="square" android:pathData="M139,151L173,151" />
@@ -170,7 +177,7 @@ try {
 `;
   const androidMonochrome = `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="256" android:viewportHeight="256">
-    <group android:pivotX="128" android:pivotY="128" android:scaleX="0.85" android:scaleY="0.85">
+    <group android:pivotX="128" android:pivotY="128" android:scaleX="${androidArtworkScale}" android:scaleY="${androidArtworkScale}">
         <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="8" android:strokeLineJoin="round" android:pathData="M128,40L202,83L202,169L128,212L54,169L54,83Z" />
         <path android:fillColor="#FFFFFFFF" android:pathData="M125,115.5L82,90L82,106L109,122L82,138L82,154L125,128.5Z" />
         <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="16" android:strokeLineCap="square" android:pathData="M139,151L173,151" />
