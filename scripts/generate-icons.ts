@@ -76,12 +76,16 @@ try {
     'rx="56"',
     `rx="${windowsCornerRadius}"`,
   );
+  const macosArtworkScale = 0.84;
+  const macosArtworkOffset = ((1 - macosArtworkScale) * 128).toFixed(1);
+  const macosSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><g transform="translate(${macosArtworkOffset} ${macosArtworkOffset}) scale(${macosArtworkScale})">${sourceSvg.replace(/^\s*<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "")}</g></svg>`;
   const darkSvg = squareSvg
     .replaceAll("#171E35", "#0D1225")
     .replaceAll("#2EC7DB", "#60DDEA");
   const faviconDir = path.join(tempDir, "favicon");
   const defaultDir = path.join(tempDir, "default");
   const windowsDir = path.join(tempDir, "windows");
+  const macosDir = path.join(tempDir, "macos");
   const darkDir = path.join(tempDir, "dark");
   const tintedDir = path.join(tempDir, "tinted");
   const harmonyForegroundDir = path.join(tempDir, "harmony-foreground");
@@ -92,6 +96,7 @@ try {
   await Promise.all([
     renderSvg(squareSvg, defaultDir),
     renderSvg(windowsSvg, windowsDir),
+    renderSvg(macosSvg, macosDir),
     renderSvg(sourceSvg, faviconDir, [16, 32, 48, 64]),
     renderSvg(darkSvg, darkDir, [1024]),
     renderSvg(tintedSvg, tintedDir, [1024]),
@@ -117,7 +122,6 @@ try {
     "Square150x150Logo.png",
     "Square284x284Logo.png",
     "Square310x310Logo.png",
-    "icon.icns",
     "icon.ico",
   ]);
   for (const filename of [
@@ -138,7 +142,12 @@ try {
     "icon.icns",
     "icon.ico",
   ]) {
-    const sourceDir = windowsIconFiles.has(filename) ? windowsDir : defaultDir;
+    const sourceDir =
+      filename === "icon.icns"
+        ? macosDir
+        : windowsIconFiles.has(filename)
+          ? windowsDir
+          : defaultDir;
     await copyGenerated(
       sourceDir,
       filename,
