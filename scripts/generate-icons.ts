@@ -117,6 +117,7 @@ try {
     "Square150x150Logo.png",
     "Square284x284Logo.png",
     "Square310x310Logo.png",
+    "icon.icns",
     "icon.ico",
   ]);
   for (const filename of [
