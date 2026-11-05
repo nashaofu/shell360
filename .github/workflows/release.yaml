@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    branches:
-      - dev
     tags:
       - v*.*.*
 
@@ -102,7 +100,7 @@ jobs:
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.host }}
-    # if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
