@@ -203,15 +203,15 @@ GET shell360-binary://channel/v1/{channelId}/receive
 
 ## 8. 状态码
 
-| 状态码 | 含义 |
-| --- | --- |
-| `200` | GET 成功返回一个二进制帧 |
-| `204` | POST 已处理，或 GET 时队列暂时为空 |
-| `404` | 路由无效或 Channel 不存在 |
-| `405` | 请求方法与端点不匹配 |
-| `413` | 请求体超过 10 MiB 或无法安全读取 |
-| `500` | `NativeJsb.receiveBinary` 处理失败 |
-| `503` | NativeJsb 尚未挂载或已经释放 |
+| 状态码 | 含义                               |
+| ------ | ---------------------------------- |
+| `200`  | GET 成功返回一个二进制帧           |
+| `204`  | POST 已处理，或 GET 时队列暂时为空 |
+| `404`  | 路由无效或 Channel 不存在          |
+| `405`  | 请求方法与端点不匹配               |
+| `413`  | 请求体超过 10 MiB 或无法安全读取   |
+| `500`  | `NativeJsb.receiveBinary` 处理失败 |
+| `503`  | NativeJsb 尚未挂载或已经释放       |
 
 响应统一设置 `Cache-Control: no-store`，避免 WebKit 缓存二进制 Channel 数据。
 

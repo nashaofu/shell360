@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "eventemitter3": "^5.0.4",
-    "uuid": "^14.0.2"
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "typescript": "^7.0.2"

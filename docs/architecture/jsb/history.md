@@ -90,13 +90,13 @@ WebView hosts become instruction executors. A new Rust method changes only the R
 
 ### Compatibility mapping
 
-| Previous Android path | Engine path | Behavior |
-| --- | --- | --- |
-| `Jsb.dispatch` plus `registerAndroidRoutes` | `JsbEngine.on_control_frame` | Same invoke response envelope; routing is Rust-owned |
-| `WebViewBridge` channel map | `JsbPortBridge` plus engine channel state | Same transferred WebMessagePort and binary support |
-| `bindShellChannel` | Engine `(clientId, shellId) -> channelId` binding | Same targeted shell byte delivery without host business parsing |
-| `AndroidBridgeServices` | `PlatformHostServices` | Same Android system calls; errors are returned to the Rust envelope builder |
-| Android scoped SFTP route branches | Engine HostCall orchestration | Same URI-to-staging transfer with the business invoke owned by Rust |
+| Previous Android path                       | Engine path                                       | Behavior                                                                    |
+| ------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `Jsb.dispatch` plus `registerAndroidRoutes` | `JsbEngine.on_control_frame`                      | Same invoke response envelope; routing is Rust-owned                        |
+| `WebViewBridge` channel map                 | `JsbPortBridge` plus engine channel state         | Same transferred WebMessagePort and binary support                          |
+| `bindShellChannel`                          | Engine `(clientId, shellId) -> channelId` binding | Same targeted shell byte delivery without host business parsing             |
+| `AndroidBridgeServices`                     | `PlatformHostServices`                            | Same Android system calls; errors are returned to the Rust envelope builder |
+| Android scoped SFTP route branches          | Engine HostCall orchestration                     | Same URI-to-staging transfer with the business invoke owned by Rust         |
 
 ### Verification
 
@@ -131,23 +131,23 @@ WebView hosts become instruction executors. A new Rust method changes only the R
 
 ### 现状梳理
 
-| 层 | 位置 | 统一性 | 说明 |
-| --- | --- | --- | --- |
-| 前端能力 API | `bridge/src/*.ts` | 保持现状 | 对外暴露的 `BridgeBackend` 接口与调用签名不变（ADR-0003） |
-| 前端 JSB 框架 | `jsb/src/*.ts` | 保持现状 | 只通过 `window.__JSB__.openChannel/closeChannel` + MessagePort 协议与原生通信 |
-| 原生传输 | 各宿主 | 平台各自实现 | Android/HarmonyOS 用 WebMessagePort；iOS 用 WKScriptMessage（二进制走 Base64） |
-| JSB 引擎（统一点） | `crates/jsb-core` | Rust 统一 | `JsbEngine` + 方法名允许集 + `MethodInvoker` 委托 |
-| FFI 边界 | `crates/shell360-ffi` / `crates/shell360_ohrs` | 统一生成 | 同一份引擎导出到三端 |
-| 业务运行时 | `crates/shell360-runtime` | Rust 统一 | 唯一业务实现 |
+| 层                 | 位置                                           | 统一性       | 说明                                                                           |
+| ------------------ | ---------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
+| 前端能力 API       | `bridge/src/*.ts`                              | 保持现状     | 对外暴露的 `BridgeBackend` 接口与调用签名不变（ADR-0003）                      |
+| 前端 JSB 框架      | `jsb/src/*.ts`                                 | 保持现状     | 只通过 `window.__JSB__.openChannel/closeChannel` + MessagePort 协议与原生通信  |
+| 原生传输           | 各宿主                                         | 平台各自实现 | Android/HarmonyOS 用 WebMessagePort；iOS 用 WKScriptMessage（二进制走 Base64） |
+| JSB 引擎（统一点） | `crates/jsb-core`                              | Rust 统一    | `JsbEngine` + 方法名允许集 + `MethodInvoker` 委托                              |
+| FFI 边界           | `crates/shell360-ffi` / `crates/shell360_ohrs` | 统一生成     | 同一份引擎导出到三端                                                           |
+| 业务运行时         | `crates/shell360-runtime`                      | Rust 统一    | 唯一业务实现                                                                   |
 
 三端宿主对照（均已迁移）：
 
-| 关注点 | Android | iOS | HarmonyOS |
-| --- | --- | --- | --- |
-| 路由 | `JsbPortBridge` → `NativeJsbEngine` | `WebViewContainer` → `NativeJsbEngine` | `MessagePortBridge` → `jsb_engine_*`（NAPI） |
-| 系统原语 | `PlatformHostServices.kt` | `IosHostServices.swift`（14 原语） | `HarmonyHostServices.ets`（14 原语） |
+| 关注点       | Android                                   | iOS                                      | HarmonyOS                                                |
+| ------------ | ----------------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| 路由         | `JsbPortBridge` → `NativeJsbEngine`       | `WebViewContainer` → `NativeJsbEngine`   | `MessagePortBridge` → `jsb_engine_*`（NAPI）             |
+| 系统原语     | `PlatformHostServices.kt`                 | `IosHostServices.swift`（14 原语）       | `HarmonyHostServices.ets`（14 原语）                     |
 | 二进制/Shell | 引擎 `(clientId, shellId)→channelId` 绑定 | 引擎 `pushShellBinary` / `onBinaryFrame` | 引擎 `jsbEnginePushShellBinary` / `jsbEngineBinaryFrame` |
-| 传输 | WebMessagePort | WKScriptMessage（Base64） | WebMessagePort |
+| 传输         | WebMessagePort                            | WKScriptMessage（Base64）                | WebMessagePort                                           |
 
 ### iOS 通道模型映射
 
@@ -227,27 +227,27 @@ JSON/base64 的 `ssh.shell.send` invoke 路径。
 
 方法族归属（P0）：
 
-| Family | Android | iOS | HarmonyOS | 归属 |
-| --- | --- | --- | --- | --- |
-| `bridge.health` | local | local | Rust pass-through | drifted |
-| `core.healthCheck` | absent | local/Rust | absent | iOS-only redundant route |
-| `app.*` | Rust | Rust | Rust | Rust-owned |
-| `machineUid.*` | Rust | Rust | Rust | Rust-owned |
-| `clipboard.*`/`dialog.*`/`core.openUrl`/`window.close` | platform | platform | Rust-to-platform | host capabilities |
-| `fs.*` | platform scoped | local file APIs | Rust-to-platform | transitional Host primitive |
-| `keygen.*`/`data.*`/`ssh.*` | Rust pass-through | Rust pass-through | Rust pass-through | duplicated routing |
+| Family                                                 | Android           | iOS               | HarmonyOS         | 归属                        |
+| ------------------------------------------------------ | ----------------- | ----------------- | ----------------- | --------------------------- |
+| `bridge.health`                                        | local             | local             | Rust pass-through | drifted                     |
+| `core.healthCheck`                                     | absent            | local/Rust        | absent            | iOS-only redundant route    |
+| `app.*`                                                | Rust              | Rust              | Rust              | Rust-owned                  |
+| `machineUid.*`                                         | Rust              | Rust              | Rust              | Rust-owned                  |
+| `clipboard.*`/`dialog.*`/`core.openUrl`/`window.close` | platform          | platform          | Rust-to-platform  | host capabilities           |
+| `fs.*`                                                 | platform scoped   | local file APIs   | Rust-to-platform  | transitional Host primitive |
+| `keygen.*`/`data.*`/`ssh.*`                            | Rust pass-through | Rust pass-through | Rust pass-through | duplicated routing          |
 
 ### 6.2 错误码与帧上限漂移（P0）
 
-| Condition | Android | iOS | HarmonyOS |
-| --- | --- | --- | --- |
-| not connected | `JSB_INVALID_MESSAGE` | `JSB_NOT_CONNECTED` | `JSB_INVALID_MESSAGE` |
-| malformed invoke | `JSB_INVALID_MESSAGE`（多种原因） | `JSB_INVALID_MESSAGE`（generic） | `JSB_INVALID_MESSAGE`（native Error 文本） |
-| missing method | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` | `JSB_UNSUPPORTED` |
-| handler failure | `JSB_NATIVE_ERROR` 或结构化 native code | `JSB_NATIVE_ERROR` 或 `BridgeCallbackError` | 归一 runtime error 或 `JSB_NATIVE_ERROR` |
-| invalid channel ID | `JSB_CHANNEL_INVALID_ID` | 空 ID 静默忽略，其余不校验 | `JSB_CHANNEL_OPEN_FAILED` |
-| request too large | `JSB_MESSAGE_TOO_LARGE`（1 MiB 文本 / 10 MiB 二进制，可配） | 无上限 | 无上限 |
-| picker/系统失败 | 结构化 `BRIDGE_*` | 结构化 `BRIDGE_*` | 多条原始 `Error` 消息 |
+| Condition          | Android                                                     | iOS                                         | HarmonyOS                                  |
+| ------------------ | ----------------------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
+| not connected      | `JSB_INVALID_MESSAGE`                                       | `JSB_NOT_CONNECTED`                         | `JSB_INVALID_MESSAGE`                      |
+| malformed invoke   | `JSB_INVALID_MESSAGE`（多种原因）                           | `JSB_INVALID_MESSAGE`（generic）            | `JSB_INVALID_MESSAGE`（native Error 文本） |
+| missing method     | `JSB_UNSUPPORTED`                                           | `JSB_UNSUPPORTED`                           | `JSB_UNSUPPORTED`                          |
+| handler failure    | `JSB_NATIVE_ERROR` 或结构化 native code                     | `JSB_NATIVE_ERROR` 或 `BridgeCallbackError` | 归一 runtime error 或 `JSB_NATIVE_ERROR`   |
+| invalid channel ID | `JSB_CHANNEL_INVALID_ID`                                    | 空 ID 静默忽略，其余不校验                  | `JSB_CHANNEL_OPEN_FAILED`                  |
+| request too large  | `JSB_MESSAGE_TOO_LARGE`（1 MiB 文本 / 10 MiB 二进制，可配） | 无上限                                      | 无上限                                     |
+| picker/系统失败    | 结构化 `BRIDGE_*`                                           | 结构化 `BRIDGE_*`                           | 多条原始 `Error` 消息                      |
 
 统一后：方法表唯一来源 `shell360-runtime::methods::method_specs()`，错误码由 `jsb-core`
 （框架码）与 `shell360-runtime`（业务/宿主码）统一产生，帧上限默认 1 MiB 文本 / 10 MiB
@@ -397,15 +397,15 @@ errorCode
 
 ### 7.5 风险与应对
 
-| 风险 | 影响 | 应对 |
-| --- | --- | --- |
-| Rust 持锁调用平台 callback | 重入或死锁 | 严格禁止锁内跨 FFI 调用 |
-| callback 线程不符合 WebView 要求 | 崩溃或消息丢失 | 平台 transport 显式切换 UI 主线程 |
-| completion 与 Channel close 竞争 | 重复响应或泄漏 | pending token 原子完成并做一次性消费 |
-| transport callback 生命周期短于 `Jsb` | use-after-free 或发送失败 | 平台 owner 显式管理 attach/detach/shutdown |
-| 三端同时迁移导致回归面过大 | 难以定位问题 | Android 试点后按平台逐个迁移 |
-| HostCall 过早从 core 删除 | 现有平台能力中断 | completion 路径稳定且三端迁移后再清理 |
-| 接口名称对齐但协议行为漂移 | 前端兼容性回归 | golden test 固定线上 JSON 和 Channel control 字节 |
+| 风险                                  | 影响                      | 应对                                              |
+| ------------------------------------- | ------------------------- | ------------------------------------------------- |
+| Rust 持锁调用平台 callback            | 重入或死锁                | 严格禁止锁内跨 FFI 调用                           |
+| callback 线程不符合 WebView 要求      | 崩溃或消息丢失            | 平台 transport 显式切换 UI 主线程                 |
+| completion 与 Channel close 竞争      | 重复响应或泄漏            | pending token 原子完成并做一次性消费              |
+| transport callback 生命周期短于 `Jsb` | use-after-free 或发送失败 | 平台 owner 显式管理 attach/detach/shutdown        |
+| 三端同时迁移导致回归面过大            | 难以定位问题              | Android 试点后按平台逐个迁移                      |
+| HostCall 过早从 core 删除             | 现有平台能力中断          | completion 路径稳定且三端迁移后再清理             |
+| 接口名称对齐但协议行为漂移            | 前端兼容性回归            | golden test 固定线上 JSON 和 Channel control 字节 |
 
 ### 7.6 完成标准
 
@@ -446,19 +446,19 @@ errorCode
 
 统一迁移中删除了 JSB 领域所有 `Engine` 与输出列表命名：
 
-| 迁移前 | 迁移后 |
-| --- | --- |
-| `JsbEngine` | `Jsb` |
-| `NativeJsbEngine` | `NativeJsb` |
-| `EngineErrorPayload` | `JsbErrorPayload` |
-| `EngineOutput` | 删除 |
-| `NativeEngineOutput` | 删除 |
-| `NativeEngineOutputKind` | 删除 |
-| `engine.rs` | `jsb.rs` |
-| `initialize_jsb_engine` | `initialize_jsb` |
-| `jsb_engine_*` | `jsb_*` |
-| `createJsbEngine` | `createJsb` |
-| 局部变量 `engine` | `jsb` |
+| 迁移前                   | 迁移后            |
+| ------------------------ | ----------------- |
+| `JsbEngine`              | `Jsb`             |
+| `NativeJsbEngine`        | `NativeJsb`       |
+| `EngineErrorPayload`     | `JsbErrorPayload` |
+| `EngineOutput`           | 删除              |
+| `NativeEngineOutput`     | 删除              |
+| `NativeEngineOutputKind` | 删除              |
+| `engine.rs`              | `jsb.rs`          |
+| `initialize_jsb_engine`  | `initialize_jsb`  |
+| `jsb_engine_*`           | `jsb_*`           |
+| `createJsbEngine`        | `createJsb`       |
+| 局部变量 `engine`        | `jsb`             |
 
 不为替换名称新增同义的 `JsbOutput`、`JsbOperation` 或 `JsbCommand`；目标模型没有需要平台解释的
 返回列表。依赖库中无关的 `base64::Engine`（SSH shell 发送路径）不在改名范围。

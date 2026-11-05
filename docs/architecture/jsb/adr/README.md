@@ -8,11 +8,11 @@
 
 ## 索引
 
-| 编号 | 标题 | 状态 |
-| --- | --- | --- |
-| [0002](./0002-host-services.md) | HostServices primitive boundary | Accepted |
-| [0003](./0003-typescript-adaptation.md) | TypeScript adaptation boundary | Accepted |
-| [0004](./0004-back-press-layering.md) | Route native back-press through the bridge capability layer | Accepted |
+| 编号                                    | 标题                                                        | 状态     |
+| --------------------------------------- | ----------------------------------------------------------- | -------- |
+| [0002](./0002-host-services.md)         | HostServices primitive boundary                             | Accepted |
+| [0003](./0003-typescript-adaptation.md) | TypeScript adaptation boundary                              | Accepted |
+| [0004](./0004-back-press-layering.md)   | Route native back-press through the bridge capability layer | Accepted |
 
 ADR-0001（`JsbEngine` contract and method-table design）已被
 [`rust-owned` 直连 transport 架构](../architecture.md)取代，归档于 [`../history.md`](../history.md)。

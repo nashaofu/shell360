@@ -8,15 +8,15 @@ Status: Accepted.
 
 ## Expected files and equivalence mapping
 
-| Area/file | Allowed adaptation | Equivalence requirement |
-| --- | --- | --- |
-| `jsb/src/{types,protocol,jsb,jsb_channel,channel_registry}.ts` | generated method type and frozen envelope parsing | same open/close and invoke/event behavior |
-| `bridge/src/native.ts` | replace stringly method typing and legacy adapter plumbing | each old `transport.invoke(method, params)` reaches the same capability and returns the same shape |
-| `bridge/src/runtime.ts` | provider/backend installation wiring | native selects native; desktop selects Tauri exactly as before |
-| `bridge/src/backend.ts` and capability subpaths | generated types/imports/capability truth | public capability semantics unchanged |
-| `mobile/src/index.tsx` | backend provider/install call only, if signature changes | same startup order and rendered tree |
-| `shared/src` hooks/atoms using `bridge/*` | import/type/call-signature adaptation only if compilation requires it | old bridge call maps one-to-one to new bridge call |
-| `desktop/src/index.tsx` | no expected change; wiring-only change requires explicit review | Tauri backend selection and result unchanged |
+| Area/file                                                      | Allowed adaptation                                                    | Equivalence requirement                                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `jsb/src/{types,protocol,jsb,jsb_channel,channel_registry}.ts` | generated method type and frozen envelope parsing                     | same open/close and invoke/event behavior                                                          |
+| `bridge/src/native.ts`                                         | replace stringly method typing and legacy adapter plumbing            | each old `transport.invoke(method, params)` reaches the same capability and returns the same shape |
+| `bridge/src/runtime.ts`                                        | provider/backend installation wiring                                  | native selects native; desktop selects Tauri exactly as before                                     |
+| `bridge/src/backend.ts` and capability subpaths                | generated types/imports/capability truth                              | public capability semantics unchanged                                                              |
+| `mobile/src/index.tsx`                                         | backend provider/install call only, if signature changes              | same startup order and rendered tree                                                               |
+| `shared/src` hooks/atoms using `bridge/*`                      | import/type/call-signature adaptation only if compilation requires it | old bridge call maps one-to-one to new bridge call                                                 |
+| `desktop/src/index.tsx`                                        | no expected change; wiring-only change requires explicit review       | Tauri backend selection and result unchanged                                                       |
 
 Current repository search does not justify changes to component JSX, CSS/Less, route declarations, visible strings, or interaction ordering. Such a need is a stop-and-confirm item, not an implementation detail.
 

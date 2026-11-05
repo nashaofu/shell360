@@ -54,14 +54,14 @@ Rust 输出列表。
 
 分层职责：
 
-| 层 | 语言 | 职责 | 是否含业务 |
-| --- | --- | --- | --- |
-| `bridge` | TS | 业务调用，`jsb.invoke` 的类型安全封装 | ✅ 业务 |
-| `jsb` | TS | JSB 协议/通道/事件的纯框架 | ❌ 纯框架 |
-| 各端对接 | Kotlin/Swift/ArkTS | 传输适配 + `HostServices` 系统原语 | 系统原语，非 JSB 业务 |
-| `shell360-ffi` / `shell360_ohrs` | Rust | UniFFI / NAPI 绑定，包装 `jsb-core` | ❌ 仅绑定 |
-| `jsb-core` | Rust | JSB 引擎纯框架 | ❌ 纯框架 |
-| `shell360-runtime` | Rust | 业务调度 + 方法表 | ✅ 业务 |
+| 层                               | 语言               | 职责                                  | 是否含业务            |
+| -------------------------------- | ------------------ | ------------------------------------- | --------------------- |
+| `bridge`                         | TS                 | 业务调用，`jsb.invoke` 的类型安全封装 | ✅ 业务               |
+| `jsb`                            | TS                 | JSB 协议/通道/事件的纯框架            | ❌ 纯框架             |
+| 各端对接                         | Kotlin/Swift/ArkTS | 传输适配 + `HostServices` 系统原语    | 系统原语，非 JSB 业务 |
+| `shell360-ffi` / `shell360_ohrs` | Rust               | UniFFI / NAPI 绑定，包装 `jsb-core`   | ❌ 仅绑定             |
+| `jsb-core`                       | Rust               | JSB 引擎纯框架                        | ❌ 纯框架             |
+| `shell360-runtime`               | Rust               | 业务调度 + 方法表                     | ✅ 业务               |
 
 各端对接现状：
 
@@ -114,17 +114,17 @@ Rust 负责决定何时打开、发送、失败和关闭 JSB Channel，但具体
 
 Rust 与 TypeScript 使用相同的核心概念：
 
-| TypeScript `jsb` | Rust `jsb-core` | 含义 |
-| --- | --- | --- |
-| `JSB` | `Jsb` | JSB 实例 |
-| `JSBChannel` | Channel 状态（`jsb.rs` 内部结构，不公开） | 文本或二进制通道 |
-| `JSBInvokeRequest` | `JsbInvokeRequest`（`id`/`method`/`params_json`） | `invoke.request` 消息 |
-| `JSBInvokeResponse` | 无公开类型；`jsb.rs` 内部序列化响应/错误帧 | `invoke.response` 消息 |
-| `JSBEmitMessage` | 无公开类型；`emit(message_json)` 只寻址 control channel | 主动事件消息 |
-| `JSBErrorPayload` | `JsbErrorPayload`（`code`/`message`/`details`） | 协议错误结构 |
-| `invoke()` | `JsbHandler::invoke(..)` + `JsbInvokeCompletion` | JSB 方法调用语义 |
-| `openChannel()` | `open_channel()` | 打开 Channel |
-| `closeChannel()` | `close_channel()` | 关闭 Channel |
+| TypeScript `jsb`    | Rust `jsb-core`                                         | 含义                   |
+| ------------------- | ------------------------------------------------------- | ---------------------- |
+| `JSB`               | `Jsb`                                                   | JSB 实例               |
+| `JSBChannel`        | Channel 状态（`jsb.rs` 内部结构，不公开）               | 文本或二进制通道       |
+| `JSBInvokeRequest`  | `JsbInvokeRequest`（`id`/`method`/`params_json`）       | `invoke.request` 消息  |
+| `JSBInvokeResponse` | 无公开类型；`jsb.rs` 内部序列化响应/错误帧              | `invoke.response` 消息 |
+| `JSBEmitMessage`    | 无公开类型；`emit(message_json)` 只寻址 control channel | 主动事件消息           |
+| `JSBErrorPayload`   | `JsbErrorPayload`（`code`/`message`/`details`）         | 协议错误结构           |
+| `invoke()`          | `JsbHandler::invoke(..)` + `JsbInvokeCompletion`        | JSB 方法调用语义       |
+| `openChannel()`     | `open_channel()`                                        | 打开 Channel           |
+| `closeChannel()`    | `close_channel()`                                       | 关闭 Channel           |
 
 Rust 遵循 Rust 命名约定使用 `Jsb`，TypeScript 继续使用 `JSB`。
 
