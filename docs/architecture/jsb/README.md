@@ -20,12 +20,12 @@ jsb-core (Rust)        JSB 引擎纯框架          shell360-runtime (Rust) 业�
 
 ## 文档导航
 
-| 文档 | 内容 |
-| --- | --- |
+| 文档                                   | 内容                                                                                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | [`architecture.md`](./architecture.md) | 架构设计：分层职责、核心接口（`Jsb`/`JsbTransport`/`JsbHandler`）、消息流、平台适配、FFI 与线程、crate 边界、统一边界 |
-| [`protocol.md`](./protocol.md) | 协议规范：帧信封、帧序列、错误码、方法表、帧大小限制 |
-| [`adr/`](./adr/README.md) | 架构决策记录（当前有效的设计决策） |
-| [`history.md`](./history.md) | 历史：被取代的设计、迁移落地记录、P0 平台漂移 |
+| [`protocol.md`](./protocol.md)         | 协议规范：帧信封、帧序列、错误码、方法表、帧大小限制                                                                  |
+| [`adr/`](./adr/README.md)              | 架构决策记录（当前有效的设计决策）                                                                                    |
+| [`history.md`](./history.md)           | 历史：被取代的设计、迁移落地记录、P0 平台漂移                                                                         |
 
 平台宿主的当前说明见 [`../../platforms/`](../../platforms/)；旧的 iOS/HarmonyOS 联合实施草案已归档到 [`../../mobile-native/README.md`](../../mobile-native/README.md)，不作为当前接口依据。
 
@@ -34,11 +34,11 @@ jsb-core (Rust)        JSB 引擎纯框架          shell360-runtime (Rust) 业�
 Rust 测试与协议黄金样例（`crates/jsb-core/tests/fixtures/current_protocol.json`）不构成端到端
 设备证据。真机字节链路捕获仍待补齐：
 
-| 平台 | 完整真机捕获 | 状态 |
-| --- | --- | --- |
-| Android | 否 | 未捕获 |
-| iOS | 否 | 需 macOS / Xcode 与 iOS 运行时 |
-| HarmonyOS | 否 | 未捕获 |
+| 平台      | 完整真机捕获 | 状态                           |
+| --------- | ------------ | ------------------------------ |
+| Android   | 否           | 未捕获                         |
+| iOS       | 否           | 需 macOS / Xcode 与 iOS 运行时 |
+| HarmonyOS | 否           | 未捕获                         |
 
 一次平台捕获被接受的条件：包含时间戳、App 构建标识、OS/WebView 版本、channel ID、有序原始文本
 帧、二进制字节转储与精确复现步骤。静态测试与构建成功不能替代。捕获应存于

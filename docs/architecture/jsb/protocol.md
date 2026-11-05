@@ -26,7 +26,12 @@ JSB 在页面与宿主之间使用两类 Channel：
 ### 1.2 invoke 请求（页面 → 宿主）
 
 ```json
-{"type":"invoke.request","id":"...","method":"bridge.health","data":null}
+{
+  "type": "invoke.request",
+  "id": "...",
+  "method": "bridge.health",
+  "data": null
+}
 ```
 
 `id`、`method` 为非空字符串；无参数请求 `data` 为 `null`（不省略）。
@@ -36,13 +41,17 @@ JSB 在页面与宿主之间使用两类 Channel：
 成功：
 
 ```json
-{"type":"invoke.response","id":"...","data":{"status":"ok"}}
+{ "type": "invoke.response", "id": "...", "data": { "status": "ok" } }
 ```
 
 失败：
 
 ```json
-{"type":"invoke.response","id":"...","error":{"code":"...","message":"...","details":null}}
+{
+  "type": "invoke.response",
+  "id": "...",
+  "error": { "code": "...", "message": "...", "details": null }
+}
 ```
 
 `details` 可选；`jsb-core::reject` 对缺省 `details` 序列化为 `null`。
@@ -50,7 +59,7 @@ JSB 在页面与宿主之间使用两类 Channel：
 ### 1.4 emit 事件（宿主 → 页面）
 
 ```json
-{"type":"emit","event":"data.authedChange","payload":true}
+{ "type": "emit", "event": "data.authedChange", "payload": true }
 ```
 
 可选路由字段：`targetId`、`clientId`、`sequence`。`emit` 只发送到 control Channel。

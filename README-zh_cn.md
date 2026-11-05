@@ -20,6 +20,7 @@
   ```
 
 - Windows
+
   ```
   winget install nashaofu.shell360
   # or
