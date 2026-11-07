@@ -1,0 +1,9 @@
+{
+  "module": {
+    "name": "shell360_ohrs",
+    "type": "har",
+    "deviceTypes": [
+      "default"
+    ]
+  }
+}
