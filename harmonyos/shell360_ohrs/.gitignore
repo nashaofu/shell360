@@ -1,0 +1,8 @@
+/node_modules
+/oh_modules
+/.preview
+/build
+/libs
+/.cxx
+/.test
+/BuildProfile.ets

@@ -1,0 +1,7 @@
+{
+  name: "shell360_ohrs",
+  version: "0.1.0",
+  description: "Shell360 Rust N-API HarmonyOS bindings.",
+  main: "index.ets",
+  types: "libs/index.d.ts",
+}

@@ -38,7 +38,7 @@
     },
     {
       name: "shell360_ohrs",
-      srcPath: "../crates/shell360_ohrs/package",
+      srcPath: "./shell360_ohrs",
     },
   ],
 }

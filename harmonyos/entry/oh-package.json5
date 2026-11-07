@@ -6,6 +6,6 @@
   author: "",
   license: "",
   dependencies: {
-    shell360_ohrs: "file:../../crates/shell360_ohrs/package",
+    shell360_ohrs: "file:../shell360_ohrs",
   },
 }
