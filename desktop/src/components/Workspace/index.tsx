@@ -122,18 +122,6 @@ export default function Workspace() {
   );
 
   useEffect(() => {
-    return () => {
-      for (const d of disposablesRef.current) {
-        d.dispose();
-      }
-      apiRef.current = null;
-      addedIdsRef.current.clear();
-      syncingRef.current.clear();
-      disposablesRef.current = [];
-    };
-  }, []);
-
-  useEffect(() => {
     if (terminalsState.size === 0) setVisible(false);
   }, [terminalsState, setVisible]);
 
